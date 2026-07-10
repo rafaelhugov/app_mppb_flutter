@@ -22,9 +22,10 @@ class MainLayout extends ConsumerWidget {
       return 3; // Outras páginas restritas ficarão no slot 4
     } else {
       if (location == '/') return 0;
-      if (location == '/noticias') return 1;
+      if (location == '/processos') return 1;
       if (location == '/diario_oficial') return 2;
-      return 3;
+      if (location == '/noticias') return 3;
+      return 0;
     }
   }
 
@@ -50,13 +51,13 @@ class MainLayout extends ConsumerWidget {
           context.go('/');
           break;
         case 1:
-          context.go('/noticias');
+          context.go('/processos');
           break;
         case 2:
           context.go('/diario_oficial');
           break;
         case 3:
-          _showMaisMenu(context, isAuthenticated);
+          context.go('/noticias');
           break;
       }
     }
@@ -252,14 +253,6 @@ class MainLayout extends ConsumerWidget {
         label4 = 'Diário';
         icon4 = Icons.description;
       }
-    } else {
-      if (location == '/processos') {
-        label4 = 'Processos';
-        icon4 = Icons.gavel;
-      } else if (location == '/login') {
-        label4 = 'Login';
-        icon4 = Icons.lock;
-      }
     }
 
     return Scaffold(
@@ -296,11 +289,11 @@ class MainLayout extends ConsumerWidget {
                 : [
                     _buildNavItem(0, Icons.home, 'Início', selectedIndex, isAuthenticated, () => _onItemTapped(0, context, isAuthenticated)),
                     const SizedBox(width: 4),
-                    _buildNavItem(1, Icons.newspaper, 'Notícias', selectedIndex, isAuthenticated, () => _onItemTapped(1, context, isAuthenticated)),
+                    _buildNavItem(1, Icons.gavel, 'Processos', selectedIndex, isAuthenticated, () => _onItemTapped(1, context, isAuthenticated)),
                     const SizedBox(width: 4),
                     _buildNavItem(2, Icons.description, 'Diário', selectedIndex, isAuthenticated, () => _onItemTapped(2, context, isAuthenticated)),
                     const SizedBox(width: 4),
-                    _buildNavItem(3, icon4, label4, selectedIndex, isAuthenticated, () => _onItemTapped(3, context, isAuthenticated)),
+                    _buildNavItem(3, Icons.newspaper, 'Notícias', selectedIndex, isAuthenticated, () => _onItemTapped(3, context, isAuthenticated)),
                   ],
             ),
           ),

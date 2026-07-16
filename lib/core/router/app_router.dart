@@ -1,0 +1,129 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../features/auth/providers/auth_provider.dart';
+import '../../features/auth/ui/login_page.dart';
+import '../../features/carteira/ui/carteira_page.dart';
+import '../../features/contra_cheque/ui/contra_cheque_page.dart';
+import '../../features/dashboard/ui/dashboard_page.dart';
+import '../../features/diario_oficial/ui/diario_oficial_page.dart';
+import '../../features/noticias/ui/noticias_page.dart';
+import '../../features/processos/ui/consulta_processos_page.dart';
+import '../../features/processos/ui/processo_detalhes_page.dart';
+import '../../features/public/ui/public_dashboard_page.dart';
+import '../../features/ferias/ui/ferias_page.dart';
+import '../../features/ferias/ui/nova_solicitacao_ferias_page.dart';
+import '../../features/pagamentos/ui/pagamentos_page.dart';
+import '../ui/main_layout.dart';
+
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+  RouterNotifier(this._ref) {
+    _ref.listen(authProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+}
+
+final routerNotifierProvider = Provider<RouterNotifier>((ref) => RouterNotifier(ref));
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final notifier = ref.watch(routerNotifierProvider);
+
+  // Lista de rotas que exigem autenticação
+  final restrictedRoutes = ['/restrito', '/carteira', '/contracheque', '/pagamentos', '/ferias'];
+
+  return GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    refreshListenable: notifier,
+    initialLocation: '/',
+    redirect: (context, state) {
+      final authState = ref.read(authProvider);
+      final isGoingToLogin = state.matchedLocation == '/login';
+      final isRestricted = restrictedRoutes.any((route) => state.matchedLocation.startsWith(route));
+      final isAuthenticated = authState.isAuthenticated;
+
+      // Se tentar acessar uma rota restrita sem estar logado
+      if (isRestricted && !isAuthenticated) {
+        return '/login';
+      }
+
+      // Se já estiver logado e tentar ir para o login ou para a rota inicial pública, joga pro dashboard restrito
+      if (isAuthenticated && (isGoingToLogin || state.matchedLocation == '/')) {
+        return '/restrito';
+      }
+
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginPage(),
+      ),
+      ShellRoute(
+        navigatorKey: _shellNavigatorKey,
+        builder: (context, state, child) {
+          return MainLayout(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => const PublicDashboardPage(),
+          ),
+          GoRoute(
+            path: '/restrito',
+            builder: (context, state) => const DashboardPage(),
+          ),
+          GoRoute(
+            path: '/carteira',
+            builder: (context, state) => const CarteiraPage(),
+          ),
+          GoRoute(
+            path: '/contracheque',
+            builder: (context, state) => const ContraChequePage(),
+          ),
+          GoRoute(
+            path: '/ferias',
+            builder: (context, state) => const FeriasPage(),
+          ),
+          GoRoute(
+            path: '/pagamentos',
+            builder: (context, state) => const PagamentosPage(),
+          ),
+          GoRoute(
+            path: '/ferias/nova',
+            builder: (context, state) => const NovaSolicitacaoFeriasPage(),
+          ),
+          GoRoute(
+            path: '/diario_oficial',
+            builder: (context, state) => const DiarioOficialPage(),
+          ),
+          GoRoute(
+            path: '/noticias',
+            builder: (context, state) => const NoticiasPage(),
+          ),
+          GoRoute(
+            path: '/processos',
+            builder: (context, state) => const ConsultaProcessosPage(),
+          ),
+          GoRoute(
+            path: '/processos/:id/detalhes',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              final captchaToken = state.uri.queryParameters['captchaToken'] ?? '';
+              final captchaValue = state.uri.queryParameters['captchaValue'] ?? '';
+              return ProcessoDetalhesPage(
+                idProcesso: id,
+                captchaToken: captchaToken,
+                captchaValue: captchaValue,
+              );
+            },
+          ),
+        ],
+      ),
+    ],
+  );
+});

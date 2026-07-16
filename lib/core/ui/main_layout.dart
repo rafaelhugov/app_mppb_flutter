@@ -15,8 +15,10 @@ class MainLayout extends ConsumerWidget {
     
     if (isAuthenticated) {
       if (location == '/restrito') return 0;
-      if (location == '/carteira') return 1; // actually it's contracheque at 1, carteira at 2? Let's check below.
-      if (!isOnline) return 0;
+      if (!isOnline) {
+        if (location == '/carteira') return 1;
+        return 0;
+      }
       if (location == '/contracheque') return 1;
       if (location == '/carteira') return 2;
       return 3; // Outras páginas restritas ficarão no slot 4

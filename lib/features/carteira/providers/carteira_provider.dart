@@ -50,30 +50,31 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
 
     try {
       final token = await secureStorage.read(key: 'auth_token');
-      
+
       // 1. Tentar buscar da API (Online) passando o token via Query Parameter
       final response = await dio.get(
         '/carteiras-funcionais/dados',
         queryParameters: token != null ? {'token': token} : null,
       );
-      
+
       if (response.statusCode == 200) {
         final responseData = response.data as Map<String, dynamic>;
-        
+
         // Injetar URL da foto assim como no Vue
         if (token != null) {
-          responseData['foto'] = '${dio.options.baseUrl}/carteiras-funcionais/foto?token=$token';
+          responseData['foto'] =
+              '${dio.options.baseUrl}/carteiras-funcionais/foto?token=$token';
         }
 
         final carteira = UsuarioCarteira.fromJson(responseData);
-        
+
         // 2. Salvar no cache seguro para uso offline
         await secureStorage.write(
-          key: _cacheKey, 
-          value: jsonEncode(carteira.toJson())
+          key: _cacheKey,
+          value: jsonEncode(carteira.toJson()),
         );
 
-        state = state.copyWith(
+        state = CarteiraState(
           isLoading: false,
           data: carteira,
           isOffline: false,
@@ -87,11 +88,10 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
       }
     } on DioException catch (e) {
       // Se for erro de rede ou timeout, tentar buscar do cache offline
-      if (e.type == DioExceptionType.connectionTimeout || 
+      if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.unknown ||
           e.type == DioExceptionType.connectionError) {
-        
         await _loadFromCache('Sem conexão. Exibindo dados salvos offline.');
       } else {
         state = state.copyWith(
@@ -109,10 +109,10 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
     try {
       final secureStorage = ref.read(secureStorageProvider);
       final cachedStr = await secureStorage.read(key: _cacheKey);
-      
+
       if (cachedStr != null && cachedStr.isNotEmpty) {
         final carteira = UsuarioCarteira.fromJson(jsonDecode(cachedStr));
-        state = state.copyWith(
+        state = CarteiraState(
           isLoading: false,
           data: carteira,
           isOffline: true,
@@ -126,7 +126,8 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Você está offline e ocorreu um erro ao ler os dados salvos.',
+        errorMessage:
+            'Você está offline e ocorreu um erro ao ler os dados salvos.',
       );
     }
   }

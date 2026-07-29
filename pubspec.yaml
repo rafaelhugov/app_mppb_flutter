@@ -47,6 +47,8 @@ dependencies:
   connectivity_plus: ^7.2.0
   cached_network_image: ^3.4.1
   just_the_tooltip: ^0.0.12
+  pdf: ^3.11.1
+  printing: ^5.13.4
 
 dev_dependencies:
   flutter_test:
@@ -63,7 +65,12 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/mppb_icon.png"
+  image_path: "assets/icons/app/icon_1024.png"
+  image_path_android: "assets/icons/app/icon_1024.png"
+  image_path_ios: "assets/icons/app/ios_mppb.png"
+  adaptive_icon_background: "assets/icons/app/ic_launcher_background.png"
+  adaptive_icon_foreground: "assets/icons/app/icon_1024.png"
+  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -81,6 +88,7 @@ flutter:
     - assets/images/
     - assets/images/carteirafuncional/assinatura/
     - assets/images/carteirafuncional/icons/
+    - assets/icons/app/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

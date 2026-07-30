@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../carteira/providers/carteira_provider.dart';
@@ -16,22 +17,23 @@ class DashboardPage extends ConsumerStatefulWidget {
   ConsumerState<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTickerProviderStateMixin {
+class _DashboardPageState extends ConsumerState<DashboardPage>
+    with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController(viewportFraction: 0.92);
   int _currentNewsIndex = 0;
-  
+
   late final AnimationController _blinkController;
   late final Animation<double> _blinkAnimation;
 
   @override
   void initState() {
     super.initState();
-    
+
     _blinkController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
-    
+
     _blinkAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _blinkController, curve: Curves.easeInOut),
     );
@@ -54,20 +56,32 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
     if (asked == 'true') return;
 
     final localAuth = LocalAuthentication();
-    final isSupported = await localAuth.isDeviceSupported();
+    final bool isSupported;
+    try {
+      isSupported = await localAuth.isDeviceSupported();
+    } on MissingPluginException {
+      await ref.read(authProvider.notifier).dismissBiometricPrompt();
+      return;
+    } catch (_) {
+      await ref.read(authProvider.notifier).dismissBiometricPrompt();
+      return;
+    }
+
     if (!isSupported) {
-      ref.read(authProvider.notifier).dismissBiometricPrompt();
+      await ref.read(authProvider.notifier).dismissBiometricPrompt();
       return;
     }
 
     if (!mounted) return;
-    
+
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: const Text('Habilitar Biometria'),
-        content: const Text('Deseja habilitar o login por biometria ou FaceID para não precisar digitar sua senha nos próximos acessos?'),
+        content: const Text(
+          'Deseja habilitar o login por biometria ou FaceID para não precisar digitar sua senha nos próximos acessos?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -78,20 +92,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
             child: const Text('Habilitar'),
           ),
         ],
-      )
+      ),
     );
 
     if (result == true) {
-      final authenticated = await localAuth.authenticate(
-        localizedReason: 'Confirme sua identidade para habilitar a biometria',
-        biometricOnly: false,
-        persistAcrossBackgrounding: true,
-      );
+      final bool authenticated;
+      try {
+        authenticated = await localAuth.authenticate(
+          localizedReason: 'Confirme sua identidade para habilitar a biometria',
+          biometricOnly: false,
+          persistAcrossBackgrounding: true,
+        );
+      } on MissingPluginException {
+        await ref.read(authProvider.notifier).dismissBiometricPrompt();
+        return;
+      } catch (_) {
+        await ref.read(authProvider.notifier).dismissBiometricPrompt();
+        return;
+      }
+
       if (authenticated) {
         await ref.read(authProvider.notifier).enableBiometricLogin();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Biometria habilitada com sucesso!'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Biometria habilitada com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
           );
         }
       } else {
@@ -121,10 +148,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final carteiraState = ref.watch(carteiraProvider);
-    final isOnline = ref.watch(connectivityProvider);
+    final hasInternet = ref.watch(connectivityProvider);
+    final isOnline = hasInternet;
     final usuario = carteiraState.data;
 
-    final firstName = usuario?.nome?.split(' ').firstWhere((e) => e.isNotEmpty, orElse: () => 'Usuário') ?? 'Usuário';
+    final firstName =
+        usuario?.nome
+            ?.split(' ')
+            .firstWhere((e) => e.isNotEmpty, orElse: () => 'Usuário') ??
+        'Usuário';
     final userRole = usuario?.cargo ?? 'Membro ou Servidor';
 
     final noticiaState = ref.watch(noticiaProvider);
@@ -138,15 +170,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0x33523829),
-              Color(0x00523829),
-            ],
+            colors: [Color(0x33523829), Color(0x00523829)],
             stops: [0.0, 0.3],
           ),
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(left: 20, right: 20, top: 18, bottom: 116),
+          padding: const EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 18,
+            bottom: 116,
+          ),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
@@ -156,18 +190,29 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                   // HERO CARD
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 18,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0x3DD6A92F)),
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF241D19), Color(0xFF3A241D), Color(0xFF8F2A1D)],
+                        colors: [
+                          Color(0xFF241D19),
+                          Color(0xFF3A241D),
+                          Color(0xFF8F2A1D),
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         stops: [0.0, 0.48, 1.0],
                       ),
                       boxShadow: const [
-                        BoxShadow(color: Color(0x332E1E16), blurRadius: 34, offset: Offset(0, 18)),
+                        BoxShadow(
+                          color: Color(0x332E1E16),
+                          blurRadius: 34,
+                          offset: Offset(0, 18),
+                        ),
                       ],
                     ),
                     child: Stack(
@@ -197,7 +242,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                 children: [
                                   TextSpan(
                                     text: firstName.toUpperCase(),
-                                    style: const TextStyle(color: Color(0xFFE5B84C)),
+                                    style: const TextStyle(
+                                      color: Color(0xFFE5B84C),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -231,13 +278,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0x3DD6A92F)),
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF2E2722), Color(0xFF201A16), Color(0xFF3A241D)],
+                          colors: [
+                            Color(0xFF2E2722),
+                            Color(0xFF201A16),
+                            Color(0xFF3A241D),
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           stops: [0.0, 0.54, 1.0],
                         ),
                         boxShadow: const [
-                          BoxShadow(color: Color(0x332E1E16), blurRadius: 32, offset: Offset(0, 16)),
+                          BoxShadow(
+                            color: Color(0x332E1E16),
+                            blurRadius: 32,
+                            offset: Offset(0, 16),
+                          ),
                         ],
                       ),
                       child: Stack(
@@ -281,7 +336,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                   FadeTransition(
                                     opacity: _blinkAnimation,
                                     child: Container(
-                                      width: 8, height: 8,
+                                      width: 8,
+                                      height: 8,
                                       decoration: const BoxDecoration(
                                         color: Color(0xFFE5B84C),
                                         shape: BoxShape.circle,
@@ -301,18 +357,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                             ],
                           ),
                           Positioned(
-                            right: 0, top: 0,
+                            right: 0,
+                            top: 0,
                             child: Container(
-                              width: 52, height: 52,
+                              width: 52,
+                              height: 52,
                               decoration: BoxDecoration(
                                 color: const Color(0xFFE5B84C),
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Icon(Icons.badge, color: Color(0xFF241D19), size: 30),
+                              child: const Icon(
+                                Icons.badge,
+                                color: Color(0xFF241D19),
+                                size: 30,
+                              ),
                             ),
                           ),
                           const Positioned(
-                            right: 0, bottom: 0,
+                            right: 0,
+                            bottom: 0,
                             child: Row(
                               children: [
                                 Text(
@@ -324,7 +387,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                   ),
                                 ),
                                 SizedBox(width: 6),
-                                Icon(Icons.arrow_forward, color: Color(0xFFE5B84C), size: 16),
+                                Icon(
+                                  Icons.arrow_forward,
+                                  color: Color(0xFFE5B84C),
+                                  size: 16,
+                                ),
                               ],
                             ),
                           ),
@@ -369,10 +436,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                       Container(
                         height: 280,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Center(child: CircularProgressIndicator(color: Color(0xFF8F2A1D))),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF8F2A1D),
+                          ),
+                        ),
                       )
                     else if (carouselNews.isEmpty)
                       Container(
@@ -385,7 +456,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.newspaper, color: Color(0xFF8F2A1D), size: 24),
+                            Icon(
+                              Icons.newspaper,
+                              color: Color(0xFF8F2A1D),
+                              size: 24,
+                            ),
                             SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -422,13 +497,20 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF7EFE3),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0x599C7A54)),
+                                  border: Border.all(
+                                    color: const Color(0x599C7A54),
+                                  ),
                                   boxShadow: const [
-                                    BoxShadow(color: Color(0x24432B1D), blurRadius: 30, offset: Offset(0, 14)),
+                                    BoxShadow(
+                                      color: Color(0x24432B1D),
+                                      blurRadius: 30,
+                                      offset: Offset(0, 14),
+                                    ),
                                   ],
                                 ),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
                                     // IMAGE
                                     Expanded(
@@ -437,24 +519,43 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                         onTap: () => _openNews(noticia.link),
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            borderRadius: const BorderRadius.only(
-                                              topLeft: Radius.circular(15),
-                                              topRight: Radius.circular(15),
-                                            ),
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  topLeft: Radius.circular(15),
+                                                  topRight: Radius.circular(15),
+                                                ),
                                             gradient: const LinearGradient(
-                                              colors: [Color(0xFF2E2722), Color(0xFF3A241D), Color(0xFF8F2A1D)],
+                                              colors: [
+                                                Color(0xFF2E2722),
+                                                Color(0xFF3A241D),
+                                                Color(0xFF8F2A1D),
+                                              ],
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                             ),
-                                            image: noticia.imagemUrl != null && noticia.imagemUrl!.isNotEmpty
+                                            image:
+                                                noticia.imagemUrl != null &&
+                                                    noticia
+                                                        .imagemUrl!
+                                                        .isNotEmpty
                                                 ? DecorationImage(
-                                                    image: NetworkImage(noticia.imagemUrl!),
+                                                    image: NetworkImage(
+                                                      noticia.imagemUrl!,
+                                                    ),
                                                     fit: BoxFit.cover,
                                                   )
                                                 : null,
                                           ),
-                                          child: (noticia.imagemUrl == null || noticia.imagemUrl!.isEmpty)
-                                              ? const Center(child: Icon(Icons.newspaper, color: Color(0xFFE5B84C), size: 42))
+                                          child:
+                                              (noticia.imagemUrl == null ||
+                                                  noticia.imagemUrl!.isEmpty)
+                                              ? const Center(
+                                                  child: Icon(
+                                                    Icons.newspaper,
+                                                    color: Color(0xFFE5B84C),
+                                                    size: 42,
+                                                  ),
+                                                )
                                               : null,
                                         ),
                                       ),
@@ -463,18 +564,31 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                     Expanded(
                                       flex: 11,
                                       child: Padding(
-                                        padding: const EdgeInsets.only(left: 18, right: 16, top: 16, bottom: 10),
+                                        padding: const EdgeInsets.only(
+                                          left: 18,
+                                          right: 16,
+                                          top: 16,
+                                          bottom: 10,
+                                        ),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 9,
+                                                    vertical: 7,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: const Color(0xFF2E2722),
-                                                borderRadius: BorderRadius.circular(999),
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
                                               ),
                                               child: Text(
-                                                (noticia.categoria ?? 'Destaque').toUpperCase(),
+                                                (noticia.categoria ??
+                                                        'Destaque')
+                                                    .toUpperCase(),
                                                 style: const TextStyle(
                                                   color: Color(0xFFE5B84C),
                                                   fontSize: 10,
@@ -487,11 +601,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                             const SizedBox(height: 8),
                                             Text(
                                               dateFormatted,
-                                              style: const TextStyle(color: Color(0xFF806F5E), fontSize: 12, fontWeight: FontWeight.w800),
+                                              style: const TextStyle(
+                                                color: Color(0xFF806F5E),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w800,
+                                              ),
                                             ),
                                             const SizedBox(height: 8),
                                             Text(
-                                              noticia.titulo ?? '',
+                                              noticia.titulo,
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
@@ -521,28 +639,47 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                     ),
                                     // ACTIONS
                                     Padding(
-                                      padding: const EdgeInsets.only(left: 18, right: 16, bottom: 16),
+                                      padding: const EdgeInsets.only(
+                                        left: 18,
+                                        right: 16,
+                                        bottom: 16,
+                                      ),
                                       child: Row(
                                         children: [
                                           Expanded(
                                             child: ElevatedButton(
-                                              onPressed: () => _openNews(noticia.link),
+                                              onPressed: () =>
+                                                  _openNews(noticia.link),
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF8F2A1D),
-                                                foregroundColor: const Color(0xFFFFF8EA),
+                                                backgroundColor: const Color(
+                                                  0xFF8F2A1D,
+                                                ),
+                                                foregroundColor: const Color(
+                                                  0xFFFFF8EA,
+                                                ),
                                                 elevation: 0,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
                                                 minimumSize: const Size(0, 40),
-                                                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                                                textStyle: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w900,
+                                                ),
                                               ),
                                               child: const FittedBox(
                                                 fit: BoxFit.scaleDown,
                                                 child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
                                                   children: [
                                                     Text('Ler notícia'),
                                                     SizedBox(width: 6),
-                                                    Icon(Icons.open_in_new, size: 16),
+                                                    Icon(
+                                                      Icons.open_in_new,
+                                                      size: 16,
+                                                    ),
                                                   ],
                                                 ),
                                               ),
@@ -550,14 +687,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                                           ),
                                           const SizedBox(width: 8),
                                           ElevatedButton(
-                                            onPressed: () => context.go('/noticias'),
+                                            onPressed: () =>
+                                                context.go('/noticias'),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(0xFFEAD4A3),
-                                              foregroundColor: const Color(0xFF5C3C22),
+                                              backgroundColor: const Color(
+                                                0xFFEAD4A3,
+                                              ),
+                                              foregroundColor: const Color(
+                                                0xFF5C3C22,
+                                              ),
                                               elevation: 0,
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
                                               minimumSize: const Size(0, 40),
-                                              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                                              textStyle: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w900,
+                                              ),
                                             ),
                                             child: const Text('Todas'),
                                           ),
@@ -583,7 +731,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                             height: 7,
                             width: _currentNewsIndex == index ? 20 : 7,
                             decoration: BoxDecoration(
-                              color: _currentNewsIndex == index ? const Color(0xFF8F2A1D) : const Color(0x338F2A1D),
+                              color: _currentNewsIndex == index
+                                  ? const Color(0xFF8F2A1D)
+                                  : const Color(0x338F2A1D),
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -618,7 +768,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                       ],
                     ),
                     const SizedBox(height: 10),
-                    
+
                     GridView.count(
                       crossAxisCount: 2,
                       crossAxisSpacing: 10,
@@ -627,11 +777,41 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                       physics: const NeverScrollableScrollPhysics(),
                       childAspectRatio: 0.9,
                       children: [
-                        _buildServiceCard(context, 'Contracheque', 'Consulta mensal', Icons.receipt_long, '/contracheque'),
-                        _buildServiceCard(context, 'Pagamentos', 'Área Financeira', Icons.assignment, '/pagamentos'),
-                        _buildServiceCard(context, 'Férias e Licenças', 'Solicitações', Icons.event_available, '/ferias'),
-                        _buildServiceCard(context, 'Processos', 'Consulta', Icons.gavel, '/processos'),
-                        _buildServiceCard(context, 'Diário Oficial', 'Publicações', Icons.article, '/diario_oficial'),
+                        _buildServiceCard(
+                          context,
+                          'Contracheque',
+                          'Consulta mensal',
+                          Icons.receipt_long,
+                          '/contracheque',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Pagamentos',
+                          'Área Financeira',
+                          Icons.assignment,
+                          '/pagamentos',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Concessões',
+                          'Consulta',
+                          Icons.event_available,
+                          '/concessao-folga',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Processos',
+                          'Consulta',
+                          Icons.gavel,
+                          '/processos',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Diário Oficial',
+                          'Publicações',
+                          Icons.article,
+                          '/diario_oficial',
+                        ),
                       ],
                     ),
                   ] else ...[
@@ -640,7 +820,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                       child: Center(
                         child: Column(
                           children: [
-                            Icon(Icons.wifi_off, color: Color(0xFF806F5E), size: 48),
+                            Icon(
+                              Icons.wifi_off,
+                              color: Color(0xFF806F5E),
+                              size: 48,
+                            ),
                             SizedBox(height: 16),
                             Text(
                               'Você está offline',
@@ -674,7 +858,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
     );
   }
 
-  Widget _buildServiceCard(BuildContext context, String title, String subtitle, IconData icon, String route) {
+  Widget _buildServiceCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    String route,
+  ) {
     return InkWell(
       onTap: () => context.go(route),
       borderRadius: BorderRadius.circular(14),
@@ -685,14 +875,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0x599C7A54)),
           boxShadow: const [
-            BoxShadow(color: Color(0x1E432B1D), blurRadius: 26, offset: Offset(0, 12)),
+            BoxShadow(
+              color: Color(0x1E432B1D),
+              blurRadius: 26,
+              offset: Offset(0, 12),
+            ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 36, height: 36,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: const Color(0xFFEAD4A3),
                 borderRadius: BorderRadius.circular(12),
@@ -727,7 +922,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> with SingleTicker
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Color(0xFF8F2A1D), size: 16),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Color(0xFF8F2A1D),
+                  size: 16,
+                ),
               ],
             ),
           ],

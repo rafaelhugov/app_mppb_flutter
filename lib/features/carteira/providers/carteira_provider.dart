@@ -35,6 +35,7 @@ class CarteiraState {
 
 class CarteiraNotifier extends Notifier<CarteiraState> {
   static const _cacheKey = 'carteira_cache_data';
+  static const _cacheUsernameKey = 'carteira_cache_username';
 
   @override
   CarteiraState build() {
@@ -50,21 +51,24 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
 
     try {
       final token = await secureStorage.read(key: 'auth_token');
+      final username = await secureStorage.read(key: 'auth_username');
+      if (token == null || token.trim().isEmpty) {
+        await _loadFromCache('Não foi possível carregar a carteira funcional.');
+        return;
+      }
 
       // 1. Tentar buscar da API (Online) passando o token via Query Parameter
       final response = await dio.get(
         '/carteiras-funcionais/dados',
-        queryParameters: token != null ? {'token': token} : null,
+        queryParameters: {'token': token},
       );
 
       if (response.statusCode == 200) {
         final responseData = response.data as Map<String, dynamic>;
 
         // Injetar URL da foto assim como no Vue
-        if (token != null) {
-          responseData['foto'] =
-              '${dio.options.baseUrl}/carteiras-funcionais/foto?token=$token';
-        }
+        responseData['foto'] =
+            '${dio.options.baseUrl}/carteiras-funcionais/foto?token=$token';
 
         final carteira = UsuarioCarteira.fromJson(responseData);
 
@@ -73,6 +77,9 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
           key: _cacheKey,
           value: jsonEncode(carteira.toJson()),
         );
+        if (username != null && username.trim().isNotEmpty) {
+          await secureStorage.write(key: _cacheUsernameKey, value: username);
+        }
 
         state = CarteiraState(
           isLoading: false,
@@ -94,21 +101,29 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
           e.type == DioExceptionType.connectionError) {
         await _loadFromCache('Sem conexão. Exibindo dados salvos offline.');
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage: 'Erro ao buscar dados da carteira: ${e.message}',
-        );
+        await _loadFromCache(_mensagemErroCarteira(e.response?.statusCode));
       }
     } catch (e) {
       // Erro genérico
-      await _loadFromCache('Sem conexão. Exibindo dados salvos offline.');
+      await _loadFromCache('Não foi possível carregar a carteira funcional.');
     }
   }
 
   Future<void> _loadFromCache(String fallbackMessage) async {
     try {
       final secureStorage = ref.read(secureStorageProvider);
+      final currentUsername = await secureStorage.read(key: 'auth_username');
+      final cachedUsername = await secureStorage.read(key: _cacheUsernameKey);
       final cachedStr = await secureStorage.read(key: _cacheKey);
+
+      if (currentUsername != null &&
+          cachedUsername != null &&
+          currentUsername != cachedUsername) {
+        await secureStorage.delete(key: _cacheKey);
+        await secureStorage.delete(key: _cacheUsernameKey);
+        state = CarteiraState(isLoading: false, errorMessage: fallbackMessage);
+        return;
+      }
 
       if (cachedStr != null && cachedStr.isNotEmpty) {
         final carteira = UsuarioCarteira.fromJson(jsonDecode(cachedStr));
@@ -118,10 +133,7 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
           isOffline: true,
         );
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage: 'Você está offline e não há dados salvos.',
-        );
+        state = state.copyWith(isLoading: false, errorMessage: fallbackMessage);
       }
     } catch (e) {
       state = state.copyWith(
@@ -130,6 +142,16 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
             'Você está offline e ocorreu um erro ao ler os dados salvos.',
       );
     }
+  }
+
+  String _mensagemErroCarteira(int? statusCode) {
+    if (statusCode == 401) {
+      return 'Sessão expirada. Faça login novamente.';
+    }
+    if (statusCode == 404) {
+      return 'Carteira funcional não encontrada.';
+    }
+    return 'Não foi possível carregar a carteira funcional.';
   }
 }
 

@@ -2,10 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../storage/secure_storage.dart';
 import '../../features/auth/providers/auth_provider.dart';
+
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: const String.fromEnvironment('API_URL', defaultValue: 'https://aplicativo-api.mppb.mp.br'),
+      baseUrl: const String.fromEnvironment(
+        'API_URL',
+        defaultValue: 'https://aplicativo-api.mppb.mp.br',
+      ),
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
     ),
@@ -22,7 +26,8 @@ final dioProvider = Provider<Dio>((ref) {
         return handler.next(options);
       },
       onError: (DioException e, handler) {
-        if (e.response?.statusCode == 401) {
+        final skipAuthLogout = e.requestOptions.extra['skipAuthLogout'] == true;
+        if (e.response?.statusCode == 401 && !skipAuthLogout) {
           // Trigger logout using the provider
           ref.read(authProvider.notifier).logout();
         }

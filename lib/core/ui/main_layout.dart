@@ -10,9 +10,13 @@ class MainLayout extends ConsumerWidget {
 
   const MainLayout({super.key, required this.child});
 
-  int _calculateSelectedIndex(BuildContext context, bool isAuthenticated, bool isOnline) {
+  int _calculateSelectedIndex(
+    BuildContext context,
+    bool isAuthenticated,
+    bool isOnline,
+  ) {
     final location = GoRouterState.of(context).matchedLocation;
-    
+
     if (isAuthenticated) {
       if (location == '/restrito') return 0;
       if (!isOnline) {
@@ -73,14 +77,26 @@ class MainLayout extends ConsumerWidget {
         return Container(
           decoration: const BoxDecoration(
             color: Color(0xFFFDF7EF),
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
             boxShadow: [
-              BoxShadow(color: Color(0x29432B1D), blurRadius: 40, offset: Offset(0, -8)),
+              BoxShadow(
+                color: Color(0x29432B1D),
+                blurRadius: 40,
+                offset: Offset(0, -8),
+              ),
             ],
           ),
           child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 32),
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 32,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -105,7 +121,11 @@ class MainLayout extends ConsumerWidget {
                             color: const Color(0xFF9C7A54).withAlpha(36),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.close, color: Color(0xFF73543E), size: 18),
+                          child: const Icon(
+                            Icons.close,
+                            color: Color(0xFF73543E),
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],
@@ -115,19 +135,84 @@ class MainLayout extends ConsumerWidget {
                     spacing: 10,
                     runSpacing: 10,
                     alignment: WrapAlignment.start,
-                    children: isAuthenticated ? [
-                      SizedBox(width: (MediaQuery.of(context).size.width - 70) / 4, child: _buildMenuShortcut(ctx, Icons.newspaper, 'Notícias', '/noticias')),
-                      SizedBox(width: (MediaQuery.of(context).size.width - 70) / 4, child: _buildMenuShortcut(ctx, Icons.description, 'Diário', '/diario_oficial')),
-                      SizedBox(width: (MediaQuery.of(context).size.width - 70) / 4, child: _buildMenuShortcut(ctx, Icons.assignment, 'Pagamentos', '/pagamentos')),
-                      SizedBox(width: (MediaQuery.of(context).size.width - 70) / 4, child: _buildMenuShortcut(ctx, Icons.flight_takeoff, 'Férias', '/ferias')),
-                      SizedBox(width: (MediaQuery.of(context).size.width - 70) / 4, child: _buildMenuShortcut(ctx, Icons.gavel, 'Processos', '/processos')),
-                    ] : [
-                      SizedBox(width: (MediaQuery.of(context).size.width - 70) / 4, child: _buildMenuShortcut(ctx, Icons.gavel, 'Processos', '/processos')),
-                      SizedBox(width: (MediaQuery.of(context).size.width - 70) / 4, child: _buildMenuShortcut(ctx, Icons.lock, 'Área Restrita', '/login')),
-                    ],
+                    children: isAuthenticated
+                        ? [
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.newspaper,
+                                'Notícias',
+                                '/noticias',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.description,
+                                'Diário',
+                                '/diario_oficial',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.assignment,
+                                'Pagamentos',
+                                '/pagamentos',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.event_available,
+                                'Concessões',
+                                '/concessao-folga',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.gavel,
+                                'Processos',
+                                '/processos',
+                              ),
+                            ),
+                          ]
+                        : [
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.gavel,
+                                'Processos',
+                                '/processos',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.lock,
+                                'Área Restrita',
+                                '/login',
+                              ),
+                            ),
+                          ],
                   ),
                 ],
-          ),
+              ),
             ),
           ),
         );
@@ -135,7 +220,12 @@ class MainLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildMenuShortcut(BuildContext context, IconData icon, String label, String route) {
+  Widget _buildMenuShortcut(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String route,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.pop(context);
@@ -183,9 +273,16 @@ class MainLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label, int selectedIndex, bool isAuthenticated, VoidCallback onTap) {
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    String label,
+    int selectedIndex,
+    bool isAuthenticated,
+    VoidCallback onTap,
+  ) {
     final isSelected = index == selectedIndex;
-    
+
     // As cores do layout restrito (amarelo)
     final selectedBgColor = const Color(0xFFF4DC96);
     final selectedIconColor = const Color(0xFF8A6A00);
@@ -208,7 +305,11 @@ class MainLayout extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: isSelected ? selectedIconColor : unselectedColor),
+              Icon(
+                icon,
+                size: 20,
+                color: isSelected ? selectedIconColor : unselectedColor,
+              ),
               const SizedBox(height: 3),
               Text(
                 label,
@@ -230,11 +331,16 @@ class MainLayout extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final isAuthenticated = authState.isAuthenticated;
-    final isOnline = ref.watch(connectivityProvider);
+    final hasInternet = ref.watch(connectivityProvider);
+    final isOnline = hasInternet;
     final location = GoRouterState.of(context).matchedLocation;
 
     final isHiddenPage = location == '/login' || location.contains('/detalhes');
-    final selectedIndex = _calculateSelectedIndex(context, isAuthenticated, isOnline);
+    final selectedIndex = _calculateSelectedIndex(
+      context,
+      isAuthenticated,
+      isOnline,
+    );
 
     String label4 = 'Mais';
     IconData icon4 = Icons.grid_view;
@@ -242,9 +348,9 @@ class MainLayout extends ConsumerWidget {
       if (location == '/pagamentos') {
         label4 = 'Pagamentos';
         icon4 = Icons.assignment;
-      } else if (location == '/ferias') {
-        label4 = 'Férias';
-        icon4 = Icons.flight_takeoff;
+      } else if (location == '/concessao-folga') {
+        label4 = 'Folga';
+        icon4 = Icons.event_available;
       } else if (location == '/processos') {
         label4 = 'Processos';
         icon4 = Icons.gavel;
@@ -260,45 +366,131 @@ class MainLayout extends ConsumerWidget {
     return Scaffold(
       appBar: isHiddenPage ? null : const MppbAppBar(),
       body: child,
-      bottomNavigationBar: isHiddenPage 
-        ? null 
-        : Container(
-            height: 82,
-            padding: const EdgeInsets.only(left: 12, right: 12, top: 10, bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(245),
-              border: Border(top: BorderSide(color: const Color(0xFF9C7A54).withAlpha(56), width: 1.0)),
+      bottomNavigationBar: isHiddenPage
+          ? null
+          : Container(
+              height: 82,
+              padding: const EdgeInsets.only(
+                left: 12,
+                right: 12,
+                top: 10,
+                bottom: 12,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(245),
+                border: Border(
+                  top: BorderSide(
+                    color: const Color(0xFF9C7A54).withAlpha(56),
+                    width: 1.0,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: isAuthenticated
+                    ? isOnline
+                          ? [
+                              _buildNavItem(
+                                0,
+                                Icons.home,
+                                'Início',
+                                selectedIndex,
+                                isAuthenticated,
+                                () =>
+                                    _onItemTapped(0, context, isAuthenticated),
+                              ),
+                              const SizedBox(width: 4),
+                              _buildNavItem(
+                                1,
+                                Icons.receipt_long,
+                                'Contracheque',
+                                selectedIndex,
+                                isAuthenticated,
+                                () =>
+                                    _onItemTapped(1, context, isAuthenticated),
+                              ),
+                              const SizedBox(width: 4),
+                              _buildNavItem(
+                                2,
+                                Icons.badge,
+                                'Carteira',
+                                selectedIndex,
+                                isAuthenticated,
+                                () =>
+                                    _onItemTapped(2, context, isAuthenticated),
+                              ),
+                              const SizedBox(width: 4),
+                              _buildNavItem(
+                                3,
+                                icon4,
+                                label4,
+                                selectedIndex,
+                                isAuthenticated,
+                                () =>
+                                    _onItemTapped(3, context, isAuthenticated),
+                              ),
+                            ]
+                          : [
+                              _buildNavItem(
+                                0,
+                                Icons.home,
+                                'Início',
+                                selectedIndex,
+                                isAuthenticated,
+                                () =>
+                                    _onItemTapped(0, context, isAuthenticated),
+                              ),
+                              const SizedBox(width: 4),
+                              _buildNavItem(
+                                1,
+                                Icons.badge,
+                                'Carteira',
+                                selectedIndex,
+                                isAuthenticated,
+                                () =>
+                                    _onItemTapped(2, context, isAuthenticated),
+                              ),
+                              const Spacer(),
+                              const Spacer(),
+                            ]
+                    : [
+                        _buildNavItem(
+                          0,
+                          Icons.home,
+                          'Início',
+                          selectedIndex,
+                          isAuthenticated,
+                          () => _onItemTapped(0, context, isAuthenticated),
+                        ),
+                        const SizedBox(width: 4),
+                        _buildNavItem(
+                          1,
+                          Icons.gavel,
+                          'Processos',
+                          selectedIndex,
+                          isAuthenticated,
+                          () => _onItemTapped(1, context, isAuthenticated),
+                        ),
+                        const SizedBox(width: 4),
+                        _buildNavItem(
+                          2,
+                          Icons.description,
+                          'Diário',
+                          selectedIndex,
+                          isAuthenticated,
+                          () => _onItemTapped(2, context, isAuthenticated),
+                        ),
+                        const SizedBox(width: 4),
+                        _buildNavItem(
+                          3,
+                          Icons.newspaper,
+                          'Notícias',
+                          selectedIndex,
+                          isAuthenticated,
+                          () => _onItemTapped(3, context, isAuthenticated),
+                        ),
+                      ],
+              ),
             ),
-            child: Row(
-              children: isAuthenticated 
-                ? isOnline
-                  ? [
-                      _buildNavItem(0, Icons.home, 'Início', selectedIndex, isAuthenticated, () => _onItemTapped(0, context, isAuthenticated)),
-                      const SizedBox(width: 4),
-                      _buildNavItem(1, Icons.receipt_long, 'Contracheque', selectedIndex, isAuthenticated, () => _onItemTapped(1, context, isAuthenticated)),
-                      const SizedBox(width: 4),
-                      _buildNavItem(2, Icons.badge, 'Carteira', selectedIndex, isAuthenticated, () => _onItemTapped(2, context, isAuthenticated)),
-                      const SizedBox(width: 4),
-                      _buildNavItem(3, icon4, label4, selectedIndex, isAuthenticated, () => _onItemTapped(3, context, isAuthenticated)),
-                    ]
-                  : [
-                      _buildNavItem(0, Icons.home, 'Início', selectedIndex, isAuthenticated, () => _onItemTapped(0, context, isAuthenticated)),
-                      const SizedBox(width: 4),
-                      _buildNavItem(1, Icons.badge, 'Carteira', selectedIndex, isAuthenticated, () => _onItemTapped(2, context, isAuthenticated)),
-                      const Spacer(),
-                      const Spacer(),
-                    ]
-                : [
-                    _buildNavItem(0, Icons.home, 'Início', selectedIndex, isAuthenticated, () => _onItemTapped(0, context, isAuthenticated)),
-                    const SizedBox(width: 4),
-                    _buildNavItem(1, Icons.gavel, 'Processos', selectedIndex, isAuthenticated, () => _onItemTapped(1, context, isAuthenticated)),
-                    const SizedBox(width: 4),
-                    _buildNavItem(2, Icons.description, 'Diário', selectedIndex, isAuthenticated, () => _onItemTapped(2, context, isAuthenticated)),
-                    const SizedBox(width: 4),
-                    _buildNavItem(3, Icons.newspaper, 'Notícias', selectedIndex, isAuthenticated, () => _onItemTapped(3, context, isAuthenticated)),
-                  ],
-            ),
-          ),
     );
   }
 }

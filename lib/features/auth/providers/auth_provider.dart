@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/secure_storage.dart';
 
@@ -9,7 +9,7 @@ class AuthState {
   final bool isAuthenticated;
   final String? errorMessage;
   final String? token;
-  
+
   // Para sabermos se o usuário acabou de logar e precisamos oferecer biometria
   final bool justLoggedIn;
   final String? tempUsername;
@@ -57,7 +57,7 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> _checkInitialAuth() async {
     final secureStorage = ref.read(secureStorageProvider);
     final token = await secureStorage.read(key: 'auth_token');
-    
+
     if (token != null && token.isNotEmpty) {
       state = state.copyWith(isAuthenticated: true, token: token);
     }
@@ -67,22 +67,23 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      // Cria uma instância de Dio específica para Auth, 
+      // Cria uma instância de Dio específica para Auth,
       // pois não precisamos dos interceptors normais de requisição autenticada
       final authDio = Dio();
-      
-      final siglaSistema = Platform.isIOS ? 'IOS' : 'ANDROID'; // Baseado no comportamento do Vue, mas adaptado
 
       final response = await authDio.post(
         'https://auth-api.mppb.mp.br/acesso/autoriza',
         data: {
           'login': username,
           'senha': password,
-          'siglaSistema': 'ANDROID', // O Vue enviou 'ANDROID' fixo, vamos manter compatibilidade
+          'siglaSistema':
+              'ANDROID', // O Vue enviou 'ANDROID' fixo, vamos manter compatibilidade
         },
         options: Options(
           headers: {'Content-Type': 'application/json'},
-          validateStatus: (status) => status! < 500, // Permite ler o status 401 sem lançar DioException de imediato
+          validateStatus: (status) =>
+              status! <
+              500, // Permite ler o status 401 sem lançar DioException de imediato
         ),
       );
 
@@ -95,7 +96,8 @@ class AuthNotifier extends Notifier<AuthState> {
       } else if (response.statusCode != 200) {
         state = state.copyWith(
           isLoading: false,
-          errorMessage: 'Erro na API de autenticação (Status: ${response.statusCode})',
+          errorMessage:
+              'Erro na API de autenticação (Status: ${response.statusCode})',
         );
         return false;
       }
@@ -113,7 +115,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
       // Salva no secure storage
       final secureStorage = ref.read(secureStorageProvider);
+      await _limparDadosLocaisSeTrocarUsuario(secureStorage, username);
       await secureStorage.write(key: 'auth_token', value: token);
+      await secureStorage.write(key: 'auth_username', value: username);
 
       state = state.copyWith(
         isLoading: false,
@@ -124,7 +128,6 @@ class AuthNotifier extends Notifier<AuthState> {
         tempPassword: password,
       );
       return true;
-
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -137,19 +140,54 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> enableBiometricLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
     if (state.tempUsername != null && state.tempPassword != null) {
-      await secureStorage.write(key: 'saved_username', value: state.tempUsername!);
-      await secureStorage.write(key: 'saved_password', value: state.tempPassword!);
+      await secureStorage.write(
+        key: 'saved_username',
+        value: state.tempUsername!,
+      );
+      await secureStorage.write(
+        key: 'saved_password',
+        value: state.tempPassword!,
+      );
       await secureStorage.write(key: 'biometrics_enabled', value: 'true');
       await secureStorage.write(key: 'biometrics_asked', value: 'true');
     }
     // Remove as temps após salvar
-    state = state.copyWith(justLoggedIn: false, tempUsername: null, tempPassword: null);
+    state = state.copyWith(
+      justLoggedIn: false,
+      tempUsername: null,
+      tempPassword: null,
+    );
+  }
+
+  Future<void> _limparDadosLocaisSeTrocarUsuario(
+    FlutterSecureStorage secureStorage,
+    String username,
+  ) async {
+    final currentUsername = await secureStorage.read(key: 'auth_username');
+    final savedUsername = await secureStorage.read(key: 'saved_username');
+
+    await secureStorage.delete(key: 'carteira_cache_data');
+
+    if (currentUsername != null && currentUsername != username) {
+      await secureStorage.delete(key: 'auth_token');
+    }
+
+    if (savedUsername != null && savedUsername != username) {
+      await secureStorage.delete(key: 'saved_username');
+      await secureStorage.delete(key: 'saved_password');
+      await secureStorage.delete(key: 'biometrics_enabled');
+      await secureStorage.delete(key: 'biometrics_asked');
+    }
   }
 
   Future<void> dismissBiometricPrompt() async {
     final secureStorage = ref.read(secureStorageProvider);
     await secureStorage.write(key: 'biometrics_asked', value: 'true');
-    state = state.copyWith(justLoggedIn: false, tempUsername: null, tempPassword: null);
+    state = state.copyWith(
+      justLoggedIn: false,
+      tempUsername: null,
+      tempPassword: null,
+    );
   }
 
   Future<bool> loginWithSavedCredentials() async {
@@ -166,9 +204,12 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> logout() async {
     final secureStorage = ref.read(secureStorageProvider);
     await secureStorage.delete(key: 'auth_token');
-    
-    // NOTA: NÃO apagamos saved_username, saved_password nem biometrics_enabled.
-    // Isso garante que no próximo acesso a biometria seja pedida.
+    await secureStorage.delete(key: 'auth_username');
+    await secureStorage.delete(key: 'carteira_cache_data');
+    await secureStorage.delete(key: 'saved_username');
+    await secureStorage.delete(key: 'saved_password');
+    await secureStorage.delete(key: 'biometrics_enabled');
+    await secureStorage.delete(key: 'biometrics_asked');
 
     state = AuthState(); // Reset state
   }

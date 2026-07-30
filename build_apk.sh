@@ -1,42 +1,48 @@
 #!/bin/bash
+set -euo pipefail
 
 # Adiciona o Flutter ao PATH
 export PATH="$PATH:/home/rafaelhugo/flutter/bin"
 
 echo "========================================="
-echo "Iniciando build do APK de teste..."
+echo "Iniciando build do APK..."
 echo "========================================="
 
 # Vai para o diretório correto caso o script seja chamado de outro lugar
-cd /home/rafaelhugo/projetosMPPB/app_mppb_flutter
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-if [ -n "$1" ]; then
-  CUSTOM_VERSION="$1"
-else
-  # Extrair a versão atual do pubspec.yaml
-  DEFAULT_VERSION=$(grep "^version: " pubspec.yaml | awk '{print $2}')
-  DEFAULT_VERSION_CLEAN=$(echo $DEFAULT_VERSION | sed 's/+/_/g')
-  read -p "Digite a versão para o APK (ex: 1.0.1_2) ou pressione Enter para usar a versão do pubspec ($DEFAULT_VERSION_CLEAN): " CUSTOM_VERSION
+PUBSPEC_VERSION="$(grep '^version: ' pubspec.yaml | awk '{print $2}')"
+
+if [ -z "$PUBSPEC_VERSION" ]; then
+  echo "❌ Não foi possível ler a versão no pubspec.yaml."
+  exit 1
 fi
 
-if [ -z "$CUSTOM_VERSION" ]; then
-  VERSION_CLEAN="$DEFAULT_VERSION_CLEAN"
-else
-  VERSION_CLEAN="$CUSTOM_VERSION"
+BUILD_NAME="${PUBSPEC_VERSION%%+*}"
+BUILD_NUMBER="${PUBSPEC_VERSION#*+}"
+VERSION_CLEAN="${PUBSPEC_VERSION/+/_}"
+NEW_APK_NAME="MPPB+_v${VERSION_CLEAN}.apk"
+OUTPUT_DIR="build/app/outputs/flutter-apk"
+
+if [ "$BUILD_NAME" = "$BUILD_NUMBER" ]; then
+  echo "❌ A versão do pubspec.yaml deve estar no formato version: x.y.z+n."
+  exit 1
 fi
 
-# Roda o comando de build
-flutter build apk
+echo "Versão: $BUILD_NAME"
+echo "Build: $BUILD_NUMBER"
+echo "Arquivo final: $NEW_APK_NAME"
+echo ""
 
-if [ $? -eq 0 ]; then
-  # Cria uma cópia com o nome incluindo a versão
-  NEW_APK_NAME="MPPB+_v${VERSION_CLEAN}.apk"
-  cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/${NEW_APK_NAME}"
+mkdir -p "$OUTPUT_DIR"
+rm -f "$OUTPUT_DIR"/MPPB+_v*.apk "$OUTPUT_DIR"/app-release.apk "$OUTPUT_DIR"/app-release.apk.sha1
 
-  echo ""
-  echo "✅ APK gerado com sucesso!"
-  echo "O arquivo está pronto em: build/app/outputs/flutter-apk/${NEW_APK_NAME}"
-else
-  echo ""
-  echo "❌ Falha ao gerar o APK. Verifique os logs acima."
-fi
+flutter build apk --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+
+mv "$OUTPUT_DIR/app-release.apk" "$OUTPUT_DIR/$NEW_APK_NAME"
+rm -f "$OUTPUT_DIR/app-release.apk.sha1"
+
+echo ""
+echo "✅ APK gerado com sucesso!"
+echo "O arquivo está pronto em: $OUTPUT_DIR/$NEW_APK_NAME"

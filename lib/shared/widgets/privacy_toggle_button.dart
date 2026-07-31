@@ -49,18 +49,24 @@ class _PrivacyToggleButtonState extends ConsumerState<PrivacyToggleButton> {
       child: JustTheTooltip(
         controller: _tooltipController,
         isModal: false,
+        barrierDismissible: false,
+        triggerMode: TooltipTriggerMode.manual,
+        showDuration: const Duration(seconds: 30),
         tailLength: 10,
         tailBaseWidth: 16,
         margin: const EdgeInsets.all(16),
         backgroundColor: const Color(0xFF8F2A1D),
-        content: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            'Os valores estão ocultos. Toque no olho para exibir.',
-            style: TextStyle(
-              color: Color(0xFFFFF8EA),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
+        content: InkWell(
+          onTap: _tooltipController.hideTooltip,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Text(
+              'Os valores estão ocultos. Toque no olho para exibir.',
+              style: TextStyle(
+                color: Color(0xFFFFF8EA),
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ),

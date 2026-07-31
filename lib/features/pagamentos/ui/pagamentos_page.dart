@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../providers/pagamentos_provider.dart';
 import '../models/pagamento_model.dart';
 import '../../../shared/providers/privacy_provider.dart';
+import '../../../shared/widgets/privacy_toggle_button.dart';
 
 class PagamentosPage extends ConsumerStatefulWidget {
   const PagamentosPage({super.key});
@@ -36,12 +37,13 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
       backgroundColor: const Color(0xFFDED4C5),
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: _buildHeader(),
-          ),
+          SliverToBoxAdapter(child: _buildHeader()),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 10.0,
+              ),
               child: _buildExercicioSelector(state),
             ),
           ),
@@ -67,12 +69,19 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, color: Color(0xFF8F2A1D), size: 24),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Color(0xFF8F2A1D),
+                        size: 24,
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           state.errorMessage!,
-                          style: const TextStyle(color: Color(0xFF8F2A1D), fontWeight: FontWeight.w800),
+                          style: const TextStyle(
+                            color: Color(0xFF8F2A1D),
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                     ],
@@ -82,14 +91,19 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
             )
           else if (state.dados != null)
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 10.0,
+              ),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   _buildResumoCard(state.dados!, isPrivacyEnabled),
                   const SizedBox(height: 24),
                   _buildSectionHeading(state.dados!.pagamentos.length),
                   const SizedBox(height: 12),
-                  ...state.dados!.pagamentos.map((p) => _buildPagamentoCard(p, isPrivacyEnabled)),
+                  ...state.dados!.pagamentos.map(
+                    (p) => _buildPagamentoCard(p, isPrivacyEnabled),
+                  ),
                   const SizedBox(height: 24),
                   const Center(
                     child: Text(
@@ -111,7 +125,10 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
               child: Center(
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 32,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF7EFE3),
                     borderRadius: BorderRadius.circular(16),
@@ -126,7 +143,11 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                           color: const Color(0xFF8F2A1D),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.assignment_late, color: Color(0xFFF7EFE3), size: 40),
+                        child: const Icon(
+                          Icons.assignment_late,
+                          color: Color(0xFFF7EFE3),
+                          size: 40,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -156,11 +177,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF241D19),
-            Color(0xFF3A241D),
-            Color(0xFF8F2A1D),
-          ],
+          colors: [Color(0xFF241D19), Color(0xFF3A241D), Color(0xFF8F2A1D)],
           stops: [0.0, 0.46, 1.0],
         ),
       ),
@@ -179,10 +196,18 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
               border: Border.all(color: const Color(0x70FFDE8E)),
               borderRadius: BorderRadius.circular(14),
               boxShadow: const [
-                BoxShadow(color: Color(0x4C24120C), offset: Offset(0, 12), blurRadius: 28),
+                BoxShadow(
+                  color: Color(0x4C24120C),
+                  offset: Offset(0, 12),
+                  blurRadius: 28,
+                ),
               ],
             ),
-            child: const Icon(Icons.assignment, color: Color(0xFF211713), size: 30),
+            child: const Icon(
+              Icons.assignment,
+              color: Color(0xFF211713),
+              size: 30,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -212,10 +237,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                 const SizedBox(height: 3),
                 const Text(
                   'Consulte os pagamentos por exercício.',
-                  style: TextStyle(
-                    color: Color(0xFFD8C5AA),
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Color(0xFFD8C5AA), fontSize: 13),
                 ),
               ],
             ),
@@ -225,7 +247,11 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
     );
   }
 
-  void _mostrarModalExercicio(BuildContext context, int exercicioAtual, List<int> anosDisponiveis) {
+  void _mostrarModalExercicio(
+    BuildContext context,
+    int exercicioAtual,
+    List<int> anosDisponiveis,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -236,7 +262,12 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
             color: Color(0xFFF7EFE3),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 40),
+          padding: const EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: 40,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +291,11 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                         color: const Color(0xFFEBE0D0),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.close, size: 18, color: Color(0xFF5A4A3D)),
+                      child: const Icon(
+                        Icons.close,
+                        size: 18,
+                        color: Color(0xFF5A4A3D),
+                      ),
                     ),
                   ),
                 ],
@@ -279,20 +314,29 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                     final isSelected = year == exercicioAtual;
                     return InkWell(
                       onTap: () {
-                        ref.read(pagamentosProvider.notifier).selecionarExercicio(year);
+                        ref
+                            .read(pagamentosProvider.notifier)
+                            .selecionarExercicio(year);
                         Navigator.pop(context);
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF8F2A1D) : const Color(0xFFEBE0D0),
+                          color: isSelected
+                              ? const Color(0xFF8F2A1D)
+                              : const Color(0xFFEBE0D0),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '$year',
                           style: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFF8F2A1D),
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF8F2A1D),
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -312,73 +356,108 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
     final bool hasAnos = state.anosDisponiveis.isNotEmpty;
     final int exercicioAtual = state.exercicioAtual;
     final int currentIndex = state.anosDisponiveis.indexOf(exercicioAtual);
-    final bool canGoBack = hasAnos && currentIndex < state.anosDisponiveis.length - 1; // Array decrecente
+    final bool canGoBack =
+        hasAnos &&
+        currentIndex < state.anosDisponiveis.length - 1; // Array decrecente
     final bool canGoForward = hasAnos && currentIndex > 0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7EFE3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x339C7A54)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0D432B1D), offset: Offset(0, 4), blurRadius: 10),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: canGoBack ? () => ref.read(pagamentosProvider.notifier).mudarExercicio(-1) : null,
-            icon: const Icon(Icons.chevron_left, size: 28),
-            color: const Color(0xFF8F2A1D),
-            disabledColor: const Color(0x408F2A1D),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBF4).withAlpha(242),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0x66FFFFFF), width: 1.2),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x263A241D),
+                offset: Offset(0, 10),
+                blurRadius: 22,
+              ),
+              BoxShadow(
+                color: Color(0x99FFFFFF),
+                offset: Offset(0, -3),
+                blurRadius: 10,
+              ),
+            ],
           ),
-          Expanded(
-            child: InkWell(
-              onTap: hasAnos ? () => _mostrarModalExercicio(context, exercicioAtual, state.anosDisponiveis) : null,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.calendar_today, color: Color(0xFF8F2A1D), size: 12),
-                        SizedBox(width: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                onPressed: canGoBack
+                    ? () => ref
+                          .read(pagamentosProvider.notifier)
+                          .mudarExercicio(-1)
+                    : null,
+                icon: const Icon(Icons.chevron_left_rounded, size: 28),
+                color: const Color(0xFF73543E),
+                disabledColor: const Color(0x4773543E),
+              ),
+              Expanded(
+                child: InkWell(
+                  onTap: hasAnos
+                      ? () => _mostrarModalExercicio(
+                          context,
+                          exercicioAtual,
+                          state.anosDisponiveis,
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.calendar_today,
+                              color: Color(0xFF8F2A1D),
+                              size: 12,
+                            ),
+                            SizedBox(width: 5),
+                            Text(
+                              'EXERCÍCIO',
+                              style: TextStyle(
+                                color: Color(0xFF9C7A54),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
                         Text(
-                          'EXERCÍCIO',
-                          style: TextStyle(
-                            color: Color(0xFF9C7A54),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
+                          '$exercicioAtual',
+                          style: const TextStyle(
+                            color: Color(0xFF2F2923),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$exercicioAtual',
-                      style: const TextStyle(
-                        color: Color(0xFF2F2923),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              IconButton(
+                onPressed: canGoForward
+                    ? () => ref
+                          .read(pagamentosProvider.notifier)
+                          .mudarExercicio(1)
+                    : null,
+                icon: const Icon(Icons.chevron_right_rounded, size: 28),
+                color: const Color(0xFF73543E),
+                disabledColor: const Color(0x4773543E),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: canGoForward ? () => ref.read(pagamentosProvider.notifier).mudarExercicio(1) : null,
-            icon: const Icon(Icons.chevron_right, size: 28),
-            color: const Color(0xFF8F2A1D),
-            disabledColor: const Color(0x408F2A1D),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -396,39 +475,54 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0x38D6A92F)),
         boxShadow: const [
-          BoxShadow(color: Color(0x382E1E16), offset: Offset(0, 16), blurRadius: 32),
+          BoxShadow(
+            color: Color(0x382E1E16),
+            offset: Offset(0, 16),
+            blurRadius: 32,
+          ),
         ],
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'RESUMO DO EXERCÍCIO',
-                style: TextStyle(
-                  color: Color(0xFFD8C5AA),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.7,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0x2EE5B84C),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0x4DE5B84C)),
-                ),
-                child: Text(
-                  '${dados.totalPagamentos} pagamento${dados.totalPagamentos != 1 ? 's' : ''}',
-                  style: const TextStyle(
-                    color: Color(0xFFE5B84C),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'RESUMO DO EXERCÍCIO',
+                    style: TextStyle(
+                      color: Color(0xFFD8C5AA),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.7,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0x2EE5B84C),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0x4DE5B84C)),
+                    ),
+                    child: Text(
+                      '${dados.totalPagamentos} pagamento${dados.totalPagamentos != 1 ? 's' : ''}',
+                      style: const TextStyle(
+                        color: Color(0xFFE5B84C),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              const PrivacyToggleButton(size: 42),
             ],
           ),
           const SizedBox(height: 20),
@@ -438,26 +532,52 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Valor Bruto Total', style: TextStyle(color: Color(0xFFCDBDA9), fontSize: 11, fontWeight: FontWeight.w700)),
+                    const Text(
+                      'Valor Bruto Total',
+                      style: TextStyle(
+                        color: Color(0xFFCDBDA9),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      isPrivacyEnabled ? '••••••' : formatadorMoeda.format(dados.totalBruto),
-                      style: const TextStyle(color: Color(0xFFE3C474), fontSize: 18, fontWeight: FontWeight.w900),
+                      isPrivacyEnabled
+                          ? '••••••'
+                          : formatadorMoeda.format(dados.totalBruto),
+                      style: const TextStyle(
+                        color: Color(0xFFE3C474),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Container(width: 1, height: 40, color: Colors.white.withOpacity(0.1)),
+              Container(width: 1, height: 40, color: const Color(0x1AFFFFFF)),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Valor Líquido Total', style: TextStyle(color: Color(0xFFCDBDA9), fontSize: 11, fontWeight: FontWeight.w700)),
+                    const Text(
+                      'Valor Líquido Total',
+                      style: TextStyle(
+                        color: Color(0xFFCDBDA9),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      isPrivacyEnabled ? '••••••' : formatadorMoeda.format(dados.totalLiquido),
-                      style: const TextStyle(color: Color(0xFF7EE8A2), fontSize: 18, fontWeight: FontWeight.w900),
+                      isPrivacyEnabled
+                          ? '••••••'
+                          : formatadorMoeda.format(dados.totalLiquido),
+                      style: const TextStyle(
+                        color: Color(0xFF7EE8A2),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ],
                 ),
@@ -485,7 +605,11 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
         ),
         Text(
           '$count item${count != 1 ? 's' : ''}',
-          style: const TextStyle(color: Color(0xFF73543E), fontSize: 12, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            color: Color(0xFF73543E),
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );
@@ -515,44 +639,88 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                       children: const [
                         Icon(Icons.folder, color: Color(0xFFB09E8C), size: 13),
                         SizedBox(width: 6),
-                        Text('PROCESSO', style: TextStyle(color: Color(0xFF8C7F70), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                        Text(
+                          'PROCESSO',
+                          style: TextStyle(
+                            color: Color(0xFF8C7F70),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Nº ${pag.nuProcesso}',
-                      style: TextStyle(color: const Color(0xFF3B2A20), fontSize: 17, fontWeight: FontWeight.w700, fontFamily: GoogleFonts.ebGaramond().fontFamily),
+                      style: TextStyle(
+                        color: const Color(0xFF3B2A20),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: GoogleFonts.ebGaramond().fontFamily,
+                      ),
                     ),
                     const SizedBox(height: 8),
                   ],
                   if (pag.documento != null) ...[
                     Row(
                       children: const [
-                        Icon(Icons.description, color: Color(0xFFB09E8C), size: 13),
+                        Icon(
+                          Icons.description,
+                          color: Color(0xFFB09E8C),
+                          size: 13,
+                        ),
                         SizedBox(width: 6),
-                        Text('DOCUMENTO', style: TextStyle(color: Color(0xFF8C7F70), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                        Text(
+                          'DOCUMENTO',
+                          style: TextStyle(
+                            color: Color(0xFF8C7F70),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Nº ${pag.documento}',
-                      style: TextStyle(color: const Color(0xFF3B2A20), fontSize: 17, fontWeight: FontWeight.w700, fontFamily: GoogleFonts.ebGaramond().fontFamily),
+                      style: TextStyle(
+                        color: const Color(0xFF3B2A20),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: GoogleFonts.ebGaramond().fontFamily,
+                      ),
                     ),
                     const SizedBox(height: 8),
                   ],
                   if (pag.dtPagamento != null)
                     Row(
                       children: [
-                        const Icon(Icons.event, color: Color(0xFF9C8E7E), size: 14),
+                        const Icon(
+                          Icons.event,
+                          color: Color(0xFF9C8E7E),
+                          size: 14,
+                        ),
                         const SizedBox(width: 6),
-                        Text('Pago em ${_formatarData(pag.dtPagamento)}', style: const TextStyle(color: Color(0xFF8C7F70), fontSize: 12, fontWeight: FontWeight.w500)),
+                        Text(
+                          'Pago em ${_formatarData(pag.dtPagamento)}',
+                          style: const TextStyle(
+                            color: Color(0xFF8C7F70),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                 ],
               ),
               if (pag.dsModalidadePag != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE1EFE6),
                     border: Border.all(color: const Color(0x263F7D49)),
@@ -560,11 +728,19 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.account_balance, color: Color(0xFF3F7D49), size: 12),
+                      const Icon(
+                        Icons.account_balance,
+                        color: Color(0xFF3F7D49),
+                        size: 12,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         _capitalize(pag.dsModalidadePag!),
-                        style: const TextStyle(color: Color(0xFF3F7D49), fontSize: 9, fontWeight: FontWeight.w900),
+                        style: const TextStyle(
+                          color: Color(0xFF3F7D49),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ],
                   ),
@@ -583,20 +759,42 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                   children: [
                     Row(
                       children: const [
-                        Icon(Icons.attach_money, color: Color(0xFFB09E8C), size: 13),
+                        Icon(
+                          Icons.attach_money,
+                          color: Color(0xFFB09E8C),
+                          size: 13,
+                        ),
                         SizedBox(width: 6),
-                        Text('VALOR BRUTO', style: TextStyle(color: Color(0xFF8C7F70), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                        Text(
+                          'VALOR BRUTO',
+                          style: TextStyle(
+                            color: Color(0xFF8C7F70),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isPrivacyEnabled ? '••••••' : formatadorMoeda.format(pag.vlBruto ?? 0),
-                      style: const TextStyle(color: Color(0xFF3B2A20), fontSize: 15, fontWeight: FontWeight.w800),
+                      isPrivacyEnabled
+                          ? '••••••'
+                          : formatadorMoeda.format(pag.vlBruto ?? 0),
+                      style: const TextStyle(
+                        color: Color(0xFF3B2A20),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Container(width: 1, height: 30, color: const Color(0x599C7A54)), // using dash or solid
+              Container(
+                width: 1,
+                height: 30,
+                color: const Color(0x599C7A54),
+              ), // using dash or solid
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -604,15 +802,33 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                   children: [
                     Row(
                       children: const [
-                        Icon(Icons.check_circle, color: Color(0xFFB09E8C), size: 13),
+                        Icon(
+                          Icons.check_circle,
+                          color: Color(0xFFB09E8C),
+                          size: 13,
+                        ),
                         SizedBox(width: 6),
-                        Text('VALOR LÍQUIDO', style: TextStyle(color: Color(0xFF8C7F70), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                        Text(
+                          'VALOR LÍQUIDO',
+                          style: TextStyle(
+                            color: Color(0xFF8C7F70),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isPrivacyEnabled ? '••••••' : formatadorMoeda.format(pag.vlLiquido ?? 0),
-                      style: const TextStyle(color: Color(0xFF3F7D49), fontSize: 15, fontWeight: FontWeight.w800),
+                      isPrivacyEnabled
+                          ? '••••••'
+                          : formatadorMoeda.format(pag.vlLiquido ?? 0),
+                      style: const TextStyle(
+                        color: Color(0xFF3F7D49),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
@@ -629,21 +845,34 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(Icons.receipt_long, color: Color(0xFF9C8E7E), size: 14),
+                    const Icon(
+                      Icons.receipt_long,
+                      color: Color(0xFF9C8E7E),
+                      size: 14,
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: RichText(
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         text: TextSpan(
-                          style: const TextStyle(color: Color(0xFF4A3E35), fontSize: 12, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            color: Color(0xFF4A3E35),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                           children: [
                             if (pag.cdElemento != null)
                               TextSpan(
                                 text: 'Elemento ${pag.cdElemento} — ',
-                                style: const TextStyle(color: Color(0xFF9C8E7E), fontWeight: FontWeight.w500),
+                                style: const TextStyle(
+                                  color: Color(0xFF9C8E7E),
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            TextSpan(text: pag.descricaoElemento ?? 'Pagamento'),
+                            TextSpan(
+                              text: pag.descricaoElemento ?? 'Pagamento',
+                            ),
                           ],
                         ),
                       ),
@@ -654,7 +883,10 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
               if (pag.sigla != null)
                 Container(
                   margin: const EdgeInsets.only(left: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0x1E8F2A1D),
                     border: Border.all(color: const Color(0x338F2A1D)),
@@ -662,7 +894,11 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                   ),
                   child: Text(
                     pag.sigla!,
-                    style: const TextStyle(color: Color(0xFF8F2A1D), fontSize: 9, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      color: Color(0xFF8F2A1D),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
             ],

@@ -7,8 +7,8 @@ import '../../models/tipo_concessao.dart';
 class ConcessaoFolgaColors {
   static const ferias = Color(0xFF2563EB);
   static const licenca = Color(0xFF7C3AED);
-  static const licencaEleitoral = Color(0xFFF97316);
-  static const plantao = Color(0xFFDC2626);
+  static const licencaEleitoral = Color(0xFFC16A2B);
+  static const plantao = Color(0xFF8F2A1D);
   static const diarias = Color(0xFF16A34A);
   static const outros = Color(0xFF6B7280);
   static const surface = Color(0xFFF7EFE3);

@@ -21,10 +21,28 @@ export PATH="$PATH:/home/rafaelhugo/flutter/bin"
 echo "========================================="
 echo "Iniciando o backend mobile-service (LOCAL)"
 echo "========================================="
-cd "$RESTAPI_DIR" || exit 1
 
-echo "Atualizando restapi-common local..."
-mvn -q -pl restapi-common -am install -DskipTests || exit 1
+COMMON_JAR="$HOME/.m2/repository/mppb/microservices/restapi-common/1.0.0/restapi-common-1.0.0.jar"
+COMMON_CHANGED=false
+if [ ! -f "$COMMON_JAR" ] || [ "${FORCE_COMMON_INSTALL:-0}" = "1" ]; then
+  COMMON_CHANGED=true
+elif find "$RESTAPI_DIR/restapi-common/pom.xml" "$RESTAPI_DIR/restapi-common/src" -newer "$COMMON_JAR" -print -quit | grep -q .; then
+  COMMON_CHANGED=true
+fi
+
+if [ "$COMMON_CHANGED" = "true" ]; then
+  echo "Atualizando restapi-common local para o mobile-service usar as mudanças recentes..."
+  if ! mvn -q -f "$RESTAPI_DIR/pom.xml" -pl restapi-common -am -DskipTests install; then
+    echo "========================================="
+    echo "Falha ao atualizar o restapi-common local."
+    echo "O mobile-service depende do artefato instalado no Maven local; sem isso,"
+    echo "mudanças em classes comuns como SecurityConfig podem não entrar no backend."
+    echo "========================================="
+    exit 1
+  fi
+else
+  echo "restapi-common local já está atualizado."
+fi
 
 cd "$BACKEND_DIR" || exit 1
 
@@ -35,11 +53,14 @@ if [ -f ".env.dev" ]; then
   set +a
 fi
 
+export POOL_MAX="${POOL_MAX:-5}"
+export POOL_MIN="${POOL_MIN:-1}"
+
 BACKEND_PORT="${PORT:-9003}"
 API_URL_LOCAL="http://127.0.0.1:${BACKEND_PORT}"
 
 : > "$BACKEND_LOG"
-mvn clean spring-boot:run -Dspring-boot.run.profiles=dev > "$BACKEND_LOG" 2>&1 &
+mvn spring-boot:run -Dspring-boot.run.profiles=dev > "$BACKEND_LOG" 2>&1 &
 BACKEND_PID=$!
 
 echo "Backend local iniciado com PID $BACKEND_PID"

@@ -758,7 +758,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                           ),
                         ),
                         const Text(
-                          '5 atalhos',
+                          '6 atalhos',
                           style: TextStyle(
                             color: Color(0xFF73543E),
                             fontSize: 12,
@@ -797,6 +797,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                           'Consulta',
                           Icons.event_available,
                           '/concessao-folga',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Designações',
+                          'Ativas',
+                          Icons.assignment_ind,
+                          '/designacoes',
                         ),
                         _buildServiceCard(
                           context,

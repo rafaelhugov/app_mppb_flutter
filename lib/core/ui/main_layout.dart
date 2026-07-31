@@ -20,22 +20,27 @@ class MainLayout extends ConsumerWidget {
     if (isAuthenticated) {
       if (location == '/restrito') return 0;
       if (!isOnline) {
-        if (location == '/carteira') return 1;
+        if (location == '/carteira') return 3;
         return 0;
       }
       if (location == '/contracheque') return 1;
-      if (location == '/carteira') return 2;
-      return 3; // Outras páginas restritas ficarão no slot 4
+      if (location == '/carteira') return 3;
+      return 4; // Outras páginas restritas ficam no último atalho.
     } else {
       if (location == '/') return 0;
       if (location == '/processos') return 1;
-      if (location == '/diario_oficial') return 2;
-      if (location == '/noticias') return 3;
+      if (location == '/diario_oficial') return 3;
+      if (location == '/noticias') return 4;
       return 0;
     }
   }
 
-  void _onItemTapped(int index, BuildContext context, bool isAuthenticated) {
+  void _onItemTapped(
+    int index,
+    BuildContext context,
+    bool isAuthenticated, {
+    String? extraRoute,
+  }) {
     if (isAuthenticated) {
       switch (index) {
         case 0:
@@ -45,10 +50,13 @@ class MainLayout extends ConsumerWidget {
           context.go('/contracheque');
           break;
         case 2:
-          context.go('/carteira');
+          _showMaisMenu(context, isAuthenticated);
           break;
         case 3:
-          _showMaisMenu(context, isAuthenticated);
+          context.go('/carteira');
+          break;
+        case 4:
+          context.go(extraRoute ?? '/concessao-folga');
           break;
       }
     } else {
@@ -60,9 +68,12 @@ class MainLayout extends ConsumerWidget {
           context.go('/processos');
           break;
         case 2:
-          context.go('/diario_oficial');
+          _showMaisMenu(context, isAuthenticated);
           break;
         case 3:
+          context.go('/diario_oficial');
+          break;
+        case 4:
           context.go('/noticias');
           break;
       }
@@ -182,6 +193,16 @@ class MainLayout extends ConsumerWidget {
                                   (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
+                                Icons.assignment_ind,
+                                'Designações',
+                                '/designacoes',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
                                 Icons.gavel,
                                 'Processos',
                                 '/processos',
@@ -189,6 +210,26 @@ class MainLayout extends ConsumerWidget {
                             ),
                           ]
                         : [
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.newspaper,
+                                'Notícias',
+                                '/noticias',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.description,
+                                'Diário',
+                                '/diario_oficial',
+                              ),
+                            ),
                             SizedBox(
                               width:
                                   (MediaQuery.of(context).size.width - 70) / 4,
@@ -278,49 +319,225 @@ class MainLayout extends ConsumerWidget {
     IconData icon,
     String label,
     int selectedIndex,
-    bool isAuthenticated,
     VoidCallback onTap,
   ) {
     final isSelected = index == selectedIndex;
 
-    // As cores do layout restrito (amarelo)
-    final selectedBgColor = const Color(0xFFF4DC96);
-    final selectedIconColor = const Color(0xFF8A6A00);
-    final selectedTextColor = const Color(0xFF8A6A00);
-    final unselectedColor = const Color(0xFF8A8F99);
+    const selectedBgColor = Color(0xFFFFF0C2);
+    const selectedIconColor = Color(0xFFA96A1D);
+    const selectedTextColor = Color(0xFF5E421E);
+    const unselectedColor = Color(0xFF8B8177);
 
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(24),
         splashColor: const Color(0xFF9C7A54).withAlpha(25),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           decoration: isSelected
               ? BoxDecoration(
                   color: selectedBgColor,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0x55E5B84C)),
                 )
               : null,
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 4),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
-                size: 20,
+                size: 21,
                 color: isSelected ? selectedIconColor : unselectedColor,
               ),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isSelected ? selectedTextColor : unselectedColor,
-                  fontWeight: FontWeight.w500,
-                  height: 1,
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isSelected ? selectedTextColor : unselectedColor,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    height: 1,
+                  ),
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoreButton(VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(32),
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF2F2923), Color(0xFF181310)],
+            ),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: const Color(0x66E5B84C), width: 1.2),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x3D2F2923),
+                blurRadius: 22,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.add_rounded,
+            color: Color(0xFFFFF8EA),
+            size: 34,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavBar({
+    required BuildContext context,
+    required bool isAuthenticated,
+    required bool isOnline,
+    required int selectedIndex,
+    required IconData extraIcon,
+    required String extraLabel,
+    required String extraRoute,
+  }) {
+    final children = isAuthenticated
+        ? isOnline
+              ? [
+                  _buildNavItem(
+                    0,
+                    Icons.home_rounded,
+                    'Início',
+                    selectedIndex,
+                    () => _onItemTapped(0, context, isAuthenticated),
+                  ),
+                  _buildNavItem(
+                    1,
+                    Icons.receipt_long_rounded,
+                    'Contracheque',
+                    selectedIndex,
+                    () => _onItemTapped(1, context, isAuthenticated),
+                  ),
+                  _buildMoreButton(
+                    () => _onItemTapped(2, context, isAuthenticated),
+                  ),
+                  _buildNavItem(
+                    3,
+                    Icons.badge_rounded,
+                    'Carteira',
+                    selectedIndex,
+                    () => _onItemTapped(3, context, isAuthenticated),
+                  ),
+                  _buildNavItem(
+                    4,
+                    extraIcon,
+                    extraLabel,
+                    selectedIndex,
+                    () => _onItemTapped(
+                      4,
+                      context,
+                      isAuthenticated,
+                      extraRoute: extraRoute,
+                    ),
+                  ),
+                ]
+              : [
+                  _buildNavItem(
+                    0,
+                    Icons.home_rounded,
+                    'Início',
+                    selectedIndex,
+                    () => _onItemTapped(0, context, isAuthenticated),
+                  ),
+                  const Spacer(),
+                  _buildMoreButton(
+                    () => _onItemTapped(2, context, isAuthenticated),
+                  ),
+                  const Spacer(),
+                  _buildNavItem(
+                    3,
+                    Icons.badge_rounded,
+                    'Carteira',
+                    selectedIndex,
+                    () => _onItemTapped(3, context, isAuthenticated),
+                  ),
+                ]
+        : [
+            _buildNavItem(
+              0,
+              Icons.home_rounded,
+              'Início',
+              selectedIndex,
+              () => _onItemTapped(0, context, isAuthenticated),
+            ),
+            _buildNavItem(
+              1,
+              Icons.gavel_rounded,
+              'Processos',
+              selectedIndex,
+              () => _onItemTapped(1, context, isAuthenticated),
+            ),
+            _buildMoreButton(() => _onItemTapped(2, context, isAuthenticated)),
+            _buildNavItem(
+              3,
+              Icons.description_rounded,
+              'Diário',
+              selectedIndex,
+              () => _onItemTapped(3, context, isAuthenticated),
+            ),
+            _buildNavItem(
+              4,
+              Icons.newspaper_rounded,
+              'Notícias',
+              selectedIndex,
+              () => _onItemTapped(4, context, isAuthenticated),
+            ),
+          ];
+
+    return Container(
+      height: 104,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+      decoration: const BoxDecoration(color: Color(0x00FFFFFF)),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Container(
+            height: 78,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBF4).withAlpha(238),
+              borderRadius: BorderRadius.circular(34),
+              border: Border.all(color: const Color(0x66FFFFFF), width: 1.3),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x303A241D),
+                  blurRadius: 28,
+                  offset: Offset(0, 12),
+                ),
+                BoxShadow(
+                  color: Color(0xCCFFFFFF),
+                  blurRadius: 14,
+                  offset: Offset(0, -4),
+                ),
+              ],
+            ),
+            child: Row(children: children),
           ),
         ),
       ),
@@ -342,154 +559,51 @@ class MainLayout extends ConsumerWidget {
       isOnline,
     );
 
-    String label4 = 'Mais';
-    IconData icon4 = Icons.grid_view;
+    String label4 = 'Folga';
+    IconData icon4 = Icons.event_available_rounded;
+    String route4 = '/concessao-folga';
     if (isAuthenticated) {
       if (location == '/pagamentos') {
         label4 = 'Pagamentos';
-        icon4 = Icons.assignment;
+        icon4 = Icons.assignment_rounded;
+        route4 = '/pagamentos';
       } else if (location == '/concessao-folga') {
         label4 = 'Folga';
-        icon4 = Icons.event_available;
+        icon4 = Icons.event_available_rounded;
+        route4 = '/concessao-folga';
+      } else if (location == '/designacoes') {
+        label4 = 'Designações';
+        icon4 = Icons.assignment_ind_rounded;
+        route4 = '/designacoes';
       } else if (location == '/processos') {
         label4 = 'Processos';
-        icon4 = Icons.gavel;
+        icon4 = Icons.gavel_rounded;
+        route4 = '/processos';
       } else if (location == '/noticias') {
         label4 = 'Notícias';
-        icon4 = Icons.newspaper;
+        icon4 = Icons.newspaper_rounded;
+        route4 = '/noticias';
       } else if (location == '/diario_oficial') {
         label4 = 'Diário';
-        icon4 = Icons.description;
+        icon4 = Icons.description_rounded;
+        route4 = '/diario_oficial';
       }
     }
 
     return Scaffold(
+      extendBody: !isHiddenPage,
       appBar: isHiddenPage ? null : const MppbAppBar(),
       body: child,
       bottomNavigationBar: isHiddenPage
           ? null
-          : Container(
-              height: 82,
-              padding: const EdgeInsets.only(
-                left: 12,
-                right: 12,
-                top: 10,
-                bottom: 12,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha(245),
-                border: Border(
-                  top: BorderSide(
-                    color: const Color(0xFF9C7A54).withAlpha(56),
-                    width: 1.0,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: isAuthenticated
-                    ? isOnline
-                          ? [
-                              _buildNavItem(
-                                0,
-                                Icons.home,
-                                'Início',
-                                selectedIndex,
-                                isAuthenticated,
-                                () =>
-                                    _onItemTapped(0, context, isAuthenticated),
-                              ),
-                              const SizedBox(width: 4),
-                              _buildNavItem(
-                                1,
-                                Icons.receipt_long,
-                                'Contracheque',
-                                selectedIndex,
-                                isAuthenticated,
-                                () =>
-                                    _onItemTapped(1, context, isAuthenticated),
-                              ),
-                              const SizedBox(width: 4),
-                              _buildNavItem(
-                                2,
-                                Icons.badge,
-                                'Carteira',
-                                selectedIndex,
-                                isAuthenticated,
-                                () =>
-                                    _onItemTapped(2, context, isAuthenticated),
-                              ),
-                              const SizedBox(width: 4),
-                              _buildNavItem(
-                                3,
-                                icon4,
-                                label4,
-                                selectedIndex,
-                                isAuthenticated,
-                                () =>
-                                    _onItemTapped(3, context, isAuthenticated),
-                              ),
-                            ]
-                          : [
-                              _buildNavItem(
-                                0,
-                                Icons.home,
-                                'Início',
-                                selectedIndex,
-                                isAuthenticated,
-                                () =>
-                                    _onItemTapped(0, context, isAuthenticated),
-                              ),
-                              const SizedBox(width: 4),
-                              _buildNavItem(
-                                1,
-                                Icons.badge,
-                                'Carteira',
-                                selectedIndex,
-                                isAuthenticated,
-                                () =>
-                                    _onItemTapped(2, context, isAuthenticated),
-                              ),
-                              const Spacer(),
-                              const Spacer(),
-                            ]
-                    : [
-                        _buildNavItem(
-                          0,
-                          Icons.home,
-                          'Início',
-                          selectedIndex,
-                          isAuthenticated,
-                          () => _onItemTapped(0, context, isAuthenticated),
-                        ),
-                        const SizedBox(width: 4),
-                        _buildNavItem(
-                          1,
-                          Icons.gavel,
-                          'Processos',
-                          selectedIndex,
-                          isAuthenticated,
-                          () => _onItemTapped(1, context, isAuthenticated),
-                        ),
-                        const SizedBox(width: 4),
-                        _buildNavItem(
-                          2,
-                          Icons.description,
-                          'Diário',
-                          selectedIndex,
-                          isAuthenticated,
-                          () => _onItemTapped(2, context, isAuthenticated),
-                        ),
-                        const SizedBox(width: 4),
-                        _buildNavItem(
-                          3,
-                          Icons.newspaper,
-                          'Notícias',
-                          selectedIndex,
-                          isAuthenticated,
-                          () => _onItemTapped(3, context, isAuthenticated),
-                        ),
-                      ],
-              ),
+          : _buildBottomNavBar(
+              context: context,
+              isAuthenticated: isAuthenticated,
+              isOnline: isOnline,
+              selectedIndex: selectedIndex,
+              extraIcon: icon4,
+              extraLabel: label4,
+              extraRoute: route4,
             ),
     );
   }

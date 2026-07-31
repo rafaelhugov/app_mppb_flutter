@@ -18,30 +18,38 @@ class ConcessaoFolgaLegend extends StatelessWidget {
     ];
 
     return Wrap(
-      spacing: 10,
+      spacing: 8,
       runSpacing: 8,
       children: tipos.map((tipo) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: tipo.color,
-                shape: BoxShape.circle,
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF241D19),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0x33A96A1D)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: tipo.color,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              tipo.label,
-              style: const TextStyle(
-                color: ConcessaoFolgaColors.muted,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+              const SizedBox(width: 6),
+              Text(
+                tipo.label,
+                style: const TextStyle(
+                  color: Color(0xFFEDE2CF),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       }).toList(),
     );

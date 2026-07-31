@@ -20,7 +20,7 @@ class DiarioOficialPage extends ConsumerWidget {
           await Future.delayed(const Duration(seconds: 1));
         },
         child: ListView(
-          padding: const EdgeInsets.only(bottom: 64.0),
+          padding: const EdgeInsets.only(bottom: 132.0),
           children: [
             _buildHeader(context, ref, state),
             if (state.selectedDate != null)
@@ -30,14 +30,21 @@ class DiarioOficialPage extends ConsumerWidget {
                   children: [
                     Text(
                       'Filtro: ${DateFormat('dd/MM/yyyy').format(state.selectedDate!)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5C534C)),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF5C534C),
+                      ),
                     ),
                     const Spacer(),
                     TextButton.icon(
-                      onPressed: () => ref.read(diarioOficialProvider.notifier).setFilterDate(null),
+                      onPressed: () => ref
+                          .read(diarioOficialProvider.notifier)
+                          .setFilterDate(null),
                       icon: const Icon(Icons.clear, size: 16),
                       label: const Text('Limpar filtro'),
-                      style: TextButton.styleFrom(foregroundColor: const Color(0xFF8F2A1D)),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF8F2A1D),
+                      ),
                     ),
                   ],
                 ),
@@ -50,14 +57,23 @@ class DiarioOficialPage extends ConsumerWidget {
             else if (state.errorMessage != null)
               _buildError(state.errorMessage!, ref)
             else
-              _buildListContent(state.paginatedDiarios, state.currentPage, state.totalPages, ref),
+              _buildListContent(
+                state.paginatedDiarios,
+                state.currentPage,
+                state.totalPages,
+                ref,
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, WidgetRef ref, DiarioOficialState state) {
+  Widget _buildHeader(
+    BuildContext context,
+    WidgetRef ref,
+    DiarioOficialState state,
+  ) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 34),
@@ -80,7 +96,12 @@ class DiarioOficialPage extends ConsumerWidget {
               children: const [
                 Text(
                   'MPPB+',
-                  style: TextStyle(color: Color(0xFFE3C474), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.9),
+                  style: TextStyle(
+                    color: Color(0xFFE3C474),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.9,
+                  ),
                 ),
                 SizedBox(height: 8),
                 Text(
@@ -89,21 +110,35 @@ class DiarioOficialPage extends ConsumerWidget {
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFFFFF8EA),
-                    shadows: [Shadow(color: Color(0x38000000), offset: Offset(0, 2), blurRadius: 12)],
+                    shadows: [
+                      Shadow(
+                        color: Color(0x38000000),
+                        offset: Offset(0, 2),
+                        blurRadius: 12,
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Acesse as edições do Diário Oficial\nEletrônico do MPPB.',
-                  style: TextStyle(fontSize: 15, color: Color(0xFFD8C5AA), height: 1.4),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFFD8C5AA),
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
           ),
           IconButton(
             icon: Icon(
-              state.selectedDate != null ? Icons.event_available : Icons.calendar_month,
-              color: state.selectedDate != null ? const Color(0xFFE3C474) : const Color(0xFFFFF8EA),
+              state.selectedDate != null
+                  ? Icons.event_available
+                  : Icons.calendar_month,
+              color: state.selectedDate != null
+                  ? const Color(0xFFE3C474)
+                  : const Color(0xFFFFF8EA),
               size: 28,
             ),
             onPressed: () => _selectDate(context, ref, state),
@@ -114,7 +149,11 @@ class DiarioOficialPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _selectDate(BuildContext context, WidgetRef ref, DiarioOficialState state) async {
+  Future<void> _selectDate(
+    BuildContext context,
+    WidgetRef ref,
+    DiarioOficialState state,
+  ) async {
     final validDates = state.diarios
         .map((d) => d.dataPublicacao)
         .where((d) => d != null)
@@ -164,10 +203,15 @@ class DiarioOficialPage extends ConsumerWidget {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            Text(error, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => ref.read(diarioOficialProvider.notifier).fetchDiarios(),
+              onPressed: () =>
+                  ref.read(diarioOficialProvider.notifier).fetchDiarios(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8F2A1D),
                 foregroundColor: Colors.white,
@@ -180,18 +224,28 @@ class DiarioOficialPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildListContent(List<DiarioOficial> diarios, int currentPage, int totalPages, WidgetRef ref) {
+  Widget _buildListContent(
+    List<DiarioOficial> diarios,
+    int currentPage,
+    int totalPages,
+    WidgetRef ref,
+  ) {
     if (diarios.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(40.0),
         child: Center(
-          child: Text('Nenhum diário oficial encontrado.', style: TextStyle(color: Color(0xFF635041))),
+          child: Text(
+            'Nenhum diário oficial encontrado.',
+            style: TextStyle(color: Color(0xFF635041)),
+          ),
         ),
       );
     }
 
     // Na página 1 e sem filtro, o primeiro item é a Última Edição. Nas demais páginas, todos são itens normais.
-    final hasLatest = currentPage == 1 && ref.read(diarioOficialProvider).selectedDate == null;
+    final hasLatest =
+        currentPage == 1 &&
+        ref.read(diarioOficialProvider).selectedDate == null;
     final startIndexForGrid = hasLatest ? 1 : 0;
 
     return Padding(
@@ -209,7 +263,9 @@ class DiarioOficialPage extends ConsumerWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _DiarioCard(diario: diarios[i], isLatest: false)),
+                  Expanded(
+                    child: _DiarioCard(diario: diarios[i], isLatest: false),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: i + 1 < diarios.length
@@ -229,9 +285,9 @@ class DiarioOficialPage extends ConsumerWidget {
   Widget _buildPagination(int currentPage, int totalPages, WidgetRef ref) {
     if (totalPages <= 1) return const SizedBox();
 
-    final onSelect = (int page) {
+    void onSelect(int page) {
       ref.read(diarioOficialProvider.notifier).setPage(page);
-    };
+    }
 
     List<Widget> pages = [];
     int start = (currentPage - 1).clamp(1, totalPages);
@@ -241,7 +297,18 @@ class DiarioOficialPage extends ConsumerWidget {
     if (start > 1) {
       pages.add(_buildPageButton(1, currentPage, onSelect));
       if (start > 2) {
-        pages.add(const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Text('...', style: TextStyle(color: Color(0xFF806F5E), fontWeight: FontWeight.w800))));
+        pages.add(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '...',
+              style: TextStyle(
+                color: Color(0xFF806F5E),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        );
       }
     }
 
@@ -251,7 +318,18 @@ class DiarioOficialPage extends ConsumerWidget {
 
     if (end < totalPages) {
       if (end < totalPages - 1) {
-        pages.add(const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Text('...', style: TextStyle(color: Color(0xFF806F5E), fontWeight: FontWeight.w800))));
+        pages.add(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '...',
+              style: TextStyle(
+                color: Color(0xFF806F5E),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        );
       }
       pages.add(_buildPageButton(totalPages, currentPage, onSelect));
     }
@@ -264,7 +342,9 @@ class DiarioOficialPage extends ConsumerWidget {
           icon: const Icon(Icons.chevron_left, size: 20),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          color: currentPage > 1 ? const Color(0xFF806F5E) : const Color(0xFFC0AFA2),
+          color: currentPage > 1
+              ? const Color(0xFF806F5E)
+              : const Color(0xFFC0AFA2),
           onPressed: currentPage > 1 ? () => onSelect(currentPage - 1) : null,
         ),
         ...pages,
@@ -272,14 +352,22 @@ class DiarioOficialPage extends ConsumerWidget {
           icon: const Icon(Icons.chevron_right, size: 20),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          color: currentPage < totalPages ? const Color(0xFF806F5E) : const Color(0xFFC0AFA2),
-          onPressed: currentPage < totalPages ? () => onSelect(currentPage + 1) : null,
+          color: currentPage < totalPages
+              ? const Color(0xFF806F5E)
+              : const Color(0xFFC0AFA2),
+          onPressed: currentPage < totalPages
+              ? () => onSelect(currentPage + 1)
+              : null,
         ),
       ],
     );
   }
 
-  Widget _buildPageButton(int page, int currentPage, void Function(int) onSelect) {
+  Widget _buildPageButton(
+    int page,
+    int currentPage,
+    void Function(int) onSelect,
+  ) {
     final isActive = page == currentPage;
     return GestureDetector(
       onTap: () => onSelect(page),
@@ -290,9 +378,19 @@ class DiarioOficialPage extends ConsumerWidget {
         alignment: Alignment.center,
         decoration: isActive
             ? BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFA63022), Color(0xFF7A1C11)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFA63022), Color(0xFF7A1C11)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(4),
-                boxShadow: const [BoxShadow(color: Color(0x337A1C11), offset: Offset(0, 4), blurRadius: 12)],
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x337A1C11),
+                    offset: Offset(0, 4),
+                    blurRadius: 12,
+                  ),
+                ],
               )
             : null,
         child: Text(
@@ -315,7 +413,8 @@ class _DiarioCard extends StatelessWidget {
   const _DiarioCard({required this.diario, required this.isLatest});
 
   Future<void> _abrirPdf(BuildContext context) async {
-    final urlPdf = 'https://ged-api.mppb.mp.br/public/arquivos/${diario.idArquivo}/file';
+    final urlPdf =
+        'https://ged-api.mppb.mp.br/public/arquivos/${diario.idArquivo}/file';
     final url = Uri.parse(urlPdf);
 
     if (await canLaunchUrl(url)) {
@@ -323,7 +422,9 @@ class _DiarioCard extends StatelessWidget {
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível abrir o PDF do Diário Oficial.')),
+          const SnackBar(
+            content: Text('Não foi possível abrir o PDF do Diário Oficial.'),
+          ),
         );
       }
     }
@@ -382,9 +483,19 @@ class _DiarioCard extends StatelessWidget {
               ),
               border: Border.all(color: const Color(0x70FFDE8E), width: 1),
               borderRadius: BorderRadius.circular(14),
-              boxShadow: const [BoxShadow(color: Color(0x4C24120C), offset: Offset(0, 12), blurRadius: 28)],
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x4C24120C),
+                  offset: Offset(0, 12),
+                  blurRadius: 28,
+                ),
+              ],
             ),
-            child: const Icon(Icons.newspaper, color: Color(0xFF211713), size: 26),
+            child: const Icon(
+              Icons.newspaper,
+              color: Color(0xFF211713),
+              size: 26,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
@@ -402,10 +513,7 @@ class _DiarioCard extends StatelessWidget {
             diario.dataPublicacao != null
                 ? 'Publicado em\n${DateFormat('dd/MM/yyyy').format(diario.dataPublicacao!)}'
                 : 'Data indisponível',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF806F5E),
-            ),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF806F5E)),
           ),
           const SizedBox(height: 20),
           Container(
@@ -418,7 +526,13 @@ class _DiarioCard extends StatelessWidget {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(8),
-              boxShadow: const [BoxShadow(color: Color(0x337A1C11), offset: Offset(0, 4), blurRadius: 12)],
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x337A1C11),
+                  offset: Offset(0, 4),
+                  blurRadius: 12,
+                ),
+              ],
             ),
             child: Material(
               color: Colors.transparent,
@@ -430,7 +544,11 @@ class _DiarioCard extends StatelessWidget {
                   children: const [
                     Text(
                       'Baixar PDF',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
                     ),
                     SizedBox(width: 8),
                     Icon(Icons.download, size: 16, color: Colors.white),

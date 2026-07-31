@@ -173,7 +173,7 @@ class _CalendarGrid extends StatelessWidget {
     const weekDays = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         color: const Color(0xFF241D19),
         borderRadius: BorderRadius.circular(24),
@@ -219,7 +219,7 @@ class _CalendarGrid extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           Row(
             children: weekDays
                 .map(
@@ -239,8 +239,9 @@ class _CalendarGrid extends StatelessWidget {
                 )
                 .toList(),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           GridView.builder(
+            padding: EdgeInsets.zero,
             itemCount: totalCells,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -248,7 +249,7 @@ class _CalendarGrid extends StatelessWidget {
               crossAxisCount: 7,
               mainAxisSpacing: 0,
               crossAxisSpacing: 0,
-              childAspectRatio: 1.12,
+              childAspectRatio: 1.72,
             ),
             itemBuilder: (context, index) {
               final dia = primeiroVisivel.add(Duration(days: index));
@@ -300,7 +301,7 @@ class _DayCell extends StatelessWidget {
           Positioned(
             left: rangeInfo.isStart ? 12 : 0,
             right: rangeInfo.isEnd ? 12 : 0,
-            bottom: 8,
+            bottom: 5,
             child: Container(
               height: 2.5,
               decoration: BoxDecoration(
@@ -329,14 +330,13 @@ class _DayCell extends StatelessWidget {
                     : currentMonth
                     ? const Color(0xFFEDE2CF)
                     : const Color(0xFF756A60),
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: _isToday || isInRange
                     ? FontWeight.w900
                     : FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 3),
-            const SizedBox(height: 7),
+            const SizedBox(height: 5),
           ],
         ),
       ],

@@ -1,14 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../network/connectivity_provider.dart';
 import 'mppb_app_bar.dart';
 
-class MainLayout extends ConsumerWidget {
+class MainLayout extends ConsumerStatefulWidget {
   final Widget child;
 
   const MainLayout({super.key, required this.child});
+
+  @override
+  ConsumerState<MainLayout> createState() => _MainLayoutState();
+}
+
+class _MainLayoutState extends ConsumerState<MainLayout> {
+  bool _isNavVisible = true;
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+
+    if (notification is UserScrollNotification) {
+      if (notification.direction == ScrollDirection.reverse && _isNavVisible) {
+        setState(() => _isNavVisible = false);
+      } else if (notification.direction == ScrollDirection.forward &&
+          !_isNavVisible) {
+        setState(() => _isNavVisible = true);
+      }
+    }
+
+    if (notification.metrics.pixels <= 12 && !_isNavVisible) {
+      setState(() => _isNavVisible = true);
+    }
+
+    return false;
+  }
 
   int _calculateSelectedIndex(
     BuildContext context,
@@ -530,11 +557,6 @@ class MainLayout extends ConsumerWidget {
                   blurRadius: 28,
                   offset: Offset(0, 12),
                 ),
-                BoxShadow(
-                  color: Color(0xCCFFFFFF),
-                  blurRadius: 14,
-                  offset: Offset(0, -4),
-                ),
               ],
             ),
             child: Row(children: children),
@@ -545,7 +567,7 @@ class MainLayout extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isAuthenticated = authState.isAuthenticated;
     final hasInternet = ref.watch(connectivityProvider);
@@ -593,17 +615,33 @@ class MainLayout extends ConsumerWidget {
     return Scaffold(
       extendBody: !isHiddenPage,
       appBar: isHiddenPage ? null : const MppbAppBar(),
-      body: child,
+      body: NotificationListener<ScrollNotification>(
+        onNotification: _handleScrollNotification,
+        child: widget.child,
+      ),
       bottomNavigationBar: isHiddenPage
           ? null
-          : _buildBottomNavBar(
-              context: context,
-              isAuthenticated: isAuthenticated,
-              isOnline: isOnline,
-              selectedIndex: selectedIndex,
-              extraIcon: icon4,
-              extraLabel: label4,
-              extraRoute: route4,
+          : IgnorePointer(
+              ignoring: !_isNavVisible,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                offset: _isNavVisible ? Offset.zero : const Offset(0, 1.18),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  opacity: _isNavVisible ? 1 : 0,
+                  child: _buildBottomNavBar(
+                    context: context,
+                    isAuthenticated: isAuthenticated,
+                    isOnline: isOnline,
+                    selectedIndex: selectedIndex,
+                    extraIcon: icon4,
+                    extraLabel: label4,
+                    extraRoute: route4,
+                  ),
+                ),
+              ),
             ),
     );
   }

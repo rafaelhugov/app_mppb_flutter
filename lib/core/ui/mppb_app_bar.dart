@@ -101,6 +101,27 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
         ],
       ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: TextButton.icon(
+            onPressed: () => context.go('/login'),
+            icon: const Icon(Icons.login_rounded, size: 18),
+            label: const Text('Entrar'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF8F2A1D),
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

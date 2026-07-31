@@ -624,12 +624,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           : IgnorePointer(
               ignoring: !_isNavVisible,
               child: AnimatedSlide(
-                duration: const Duration(milliseconds: 240),
-                curve: Curves.easeOutCubic,
+                duration: const Duration(milliseconds: 380),
+                curve: Curves.easeInOutCubic,
                 offset: _isNavVisible ? Offset.zero : const Offset(0, 1.18),
                 child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeInOutCubic,
                   opacity: _isNavVisible ? 1 : 0,
                   child: _buildBottomNavBar(
                     context: context,

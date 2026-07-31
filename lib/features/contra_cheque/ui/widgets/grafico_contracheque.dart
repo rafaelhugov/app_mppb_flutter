@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/providers/privacy_provider.dart';
+import '../../../../shared/widgets/privacy_toggle_button.dart';
 
 class GraficoContracheque extends ConsumerWidget {
   final double totalVantagens;
@@ -18,22 +19,27 @@ class GraficoContracheque extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currencyFormatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'pt_BR',
+      symbol: 'R\$',
+    );
     final isPrivacyEnabled = ref.watch(privacyProvider);
-    
+
     int percentDescontos = 0;
     if (totalVantagens > 0) {
       percentDescontos = ((totalDescontos / totalVantagens) * 100).round();
     }
-    final int percentLiquido = totalVantagens <= 0 ? 100 : 100 - percentDescontos;
+    final int percentLiquido = totalVantagens <= 0
+        ? 100
+        : 100 - percentDescontos;
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD6A92F).withOpacity(0.24)),
+        border: Border.all(color: const Color(0x3DD6A92F)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2E1E16).withOpacity(0.20),
+            color: Color(0x332E1E16),
             blurRadius: 32,
             offset: const Offset(0, 16),
           ),
@@ -41,11 +47,7 @@ class GraficoContracheque extends ConsumerWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF2E2722),
-            Color(0xFF201A16),
-            Color(0xFF3A241D),
-          ],
+          colors: [Color(0xFF2E2722), Color(0xFF201A16), Color(0xFF3A241D)],
           stops: [0.0, 0.54, 1.0],
         ),
       ),
@@ -55,7 +57,12 @@ class GraficoContracheque extends ConsumerWidget {
         children: [
           _buildHeader(),
           const SizedBox(height: 20),
-          _buildChartRow(currencyFormatter, percentDescontos, percentLiquido, isPrivacyEnabled),
+          _buildChartRow(
+            currencyFormatter,
+            percentDescontos,
+            percentLiquido,
+            isPrivacyEnabled,
+          ),
         ],
       ),
     );
@@ -100,20 +107,17 @@ class GraficoContracheque extends ConsumerWidget {
             ],
           ),
         ),
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE5B84C),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(Icons.account_balance_wallet, color: Color(0xFF241D19), size: 28),
-        ),
+        const PrivacyToggleButton(),
       ],
     );
   }
 
-  Widget _buildChartRow(NumberFormat formatter, int pDescontos, int pLiquido, bool isPrivacyEnabled) {
+  Widget _buildChartRow(
+    NumberFormat formatter,
+    int pDescontos,
+    int pLiquido,
+    bool isPrivacyEnabled,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Column(
@@ -122,9 +126,27 @@ class GraficoContracheque extends ConsumerWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildLegendCard('Líquido', salarioLiquido, pLiquido, const Color(0xFF3F7A4A), formatter, isPrivacyEnabled)),
+                Expanded(
+                  child: _buildLegendCard(
+                    'Líquido',
+                    salarioLiquido,
+                    pLiquido,
+                    const Color(0xFF3F7A4A),
+                    formatter,
+                    isPrivacyEnabled,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: _buildLegendCard('Descontos', totalDescontos, pDescontos, const Color(0xFF8F2A1D), formatter, isPrivacyEnabled)),
+                Expanded(
+                  child: _buildLegendCard(
+                    'Descontos',
+                    totalDescontos,
+                    pDescontos,
+                    const Color(0xFF8F2A1D),
+                    formatter,
+                    isPrivacyEnabled,
+                  ),
+                ),
               ],
             ),
           ],
@@ -135,7 +157,9 @@ class GraficoContracheque extends ConsumerWidget {
 
   Widget _buildDonutChart(NumberFormat formatter, bool isPrivacyEnabled) {
     // A porcentagem que a cor vermelha ocupa
-    final double fractionDescontos = totalVantagens > 0 ? (totalDescontos / totalVantagens) : 0;
+    final double fractionDescontos = totalVantagens > 0
+        ? (totalDescontos / totalVantagens)
+        : 0;
 
     return SizedBox(
       width: 190,
@@ -162,10 +186,10 @@ class GraficoContracheque extends ConsumerWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2E1E16).withOpacity(0.08),
+                  color: Color(0x142E1E16),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
-                )
+                ),
               ],
             ),
             child: Column(
@@ -182,7 +206,9 @@ class GraficoContracheque extends ConsumerWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  isPrivacyEnabled ? '••••••' : formatter.format(totalVantagens),
+                  isPrivacyEnabled
+                      ? '••••••'
+                      : formatter.format(totalVantagens),
                   style: const TextStyle(
                     color: Color(0xFF2F2923),
                     fontSize: 19,
@@ -197,13 +223,20 @@ class GraficoContracheque extends ConsumerWidget {
     );
   }
 
-  Widget _buildLegendCard(String label, double value, int percent, Color borderColor, NumberFormat formatter, bool isPrivacyEnabled) {
+  Widget _buildLegendCard(
+    String label,
+    double value,
+    int percent,
+    Color borderColor,
+    NumberFormat formatter,
+    bool isPrivacyEnabled,
+  ) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7EFE3).withOpacity(0.10),
+        color: const Color(0x1AF7EFE3),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5B84C).withOpacity(0.16)),
+        border: Border.all(color: const Color(0x29E5B84C)),
       ),
       child: Row(
         children: [
@@ -270,7 +303,7 @@ class DonutPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
-    
+
     // Convertemos frações para radianos (2 * pi é a volta completa)
     // O Vue usa conic-gradient(red 0%, red x%, green x%, green 100%) começando de "cima".
     // No Flutter, o 0 radiano é às 3 horas. Para começar às 12 horas, giramos -pi/2.
@@ -281,7 +314,7 @@ class DonutPainter extends CustomPainter {
     final redPaint = Paint()
       ..color = colorRed
       ..style = PaintingStyle.fill;
-      
+
     final greenPaint = Paint()
       ..color = colorGreen
       ..style = PaintingStyle.fill;

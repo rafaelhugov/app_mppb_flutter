@@ -4,39 +4,27 @@ import 'package:intl/intl.dart';
 import '../../models/ausencia_calendario.dart';
 import '../../models/solicitacao_concessao.dart';
 import '../../services/concessao_folga_service.dart';
-import 'concessao_folga_legend.dart';
 import 'concessao_folga_theme.dart';
 
-// ---------------------------------------------------------------------------
-// Range info for each day cell
-// ---------------------------------------------------------------------------
-
-class _RangeInfo {
+class RangeInfo {
   final bool inRange;
   final bool isStart;
   final bool isEnd;
   final Color color;
 
-  const _RangeInfo({
+  const RangeInfo({
     required this.inRange,
-    required this.isStart,
-    required this.isEnd,
-    required this.color,
+    this.isStart = false,
+    this.isEnd = false,
+    this.color = Colors.transparent,
   });
-
-  static const none = _RangeInfo(
-    inRange: false,
-    isStart: false,
-    isEnd: false,
-    color: Colors.transparent,
-  );
 }
 
 // ---------------------------------------------------------------------------
-// Public widget — StatelessWidget (no day selection needed)
+// Public widget
 // ---------------------------------------------------------------------------
 
-class ConcessaoFolgaCalendar extends StatelessWidget {
+class ConcessaoFolgaCalendar extends StatefulWidget {
   final DateTime mes;
   final List<AusenciaCalendario> ausencias;
   final bool isLoading;
@@ -61,118 +49,44 @@ class ConcessaoFolgaCalendar extends StatelessWidget {
   });
 
   @override
+  State<ConcessaoFolgaCalendar> createState() => _ConcessaoFolgaCalendarState();
+}
+
+class _ConcessaoFolgaCalendarState extends State<ConcessaoFolgaCalendar> {
+  @override
   Widget build(BuildContext context) {
-    if (isLoading && ausencias.isEmpty) {
+    if (widget.isLoading && widget.ausencias.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (errorMessage != null && ausencias.isEmpty) {
-      return _ErrorState(message: errorMessage!, onRetry: onRetry);
+    if (widget.errorMessage != null && widget.ausencias.isEmpty) {
+      return _ErrorState(
+        message: widget.errorMessage!,
+        onRetry: widget.onRetry,
+      );
     }
 
     return RefreshIndicator(
-      onRefresh: onRefresh,
+      onRefresh: widget.onRefresh,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
         children: [
-          _MonthHeader(
-            mes: mes,
-            onPreviousMonth: onPreviousMonth,
-            onNextMonth: onNextMonth,
-            onSelectMonth: onSelectMonth,
+          _CalendarGrid(
+            mes: widget.mes,
+            ausencias: widget.ausencias,
+            onPreviousMonth: widget.onPreviousMonth,
+            onNextMonth: widget.onNextMonth,
+            onSelectMonth: widget.onSelectMonth,
           ),
-          const SizedBox(height: 14),
-          const ConcessaoFolgaLegend(),
-          const SizedBox(height: 14),
-          _CalendarGrid(mes: mes, ausencias: ausencias),
-          const SizedBox(height: 14),
-          // Always-visible monthly summary
-          _MonthSummaryPanel(mes: mes, ausencias: ausencias),
-          if (errorMessage != null) ...[
+          if (widget.errorMessage != null) ...[
             const SizedBox(height: 14),
-            _InlineError(message: errorMessage!, onRetry: onRetry),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Month navigation header
-// ---------------------------------------------------------------------------
-
-class _MonthHeader extends StatelessWidget {
-  final DateTime mes;
-  final VoidCallback onPreviousMonth;
-  final VoidCallback onNextMonth;
-  final VoidCallback onSelectMonth;
-
-  const _MonthHeader({
-    required this.mes,
-    required this.onPreviousMonth,
-    required this.onNextMonth,
-    required this.onSelectMonth,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withAlpha(200),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x269C7A54)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _NavButton(
-            icon: Icons.chevron_left_rounded,
-            onTap: onPreviousMonth,
-            tooltip: 'Mês anterior',
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: onSelectMonth,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    ConcessaoFolgaService.nomeMesAno(mes)
-                        .split(' ')
-                        .first
-                        .toUpperCase(),
-                    style: const TextStyle(
-                      color: ConcessaoFolgaColors.brand,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  Text(
-                    ConcessaoFolgaService.nomeMesAno(mes).split(' ').last,
-                    style: const TextStyle(
-                      color: ConcessaoFolgaColors.muted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
+            _InlineError(
+              message: widget.errorMessage!,
+              onRetry: widget.onRetry,
             ),
-          ),
-          _NavButton(
-            icon: Icons.chevron_right_rounded,
-            onTap: onNextMonth,
-            tooltip: 'Próximo mês',
-          ),
+          ] else ...[
+            _SummaryPanel(mes: widget.mes, ausencias: widget.ausencias),
+          ],
         ],
       ),
     );
@@ -198,15 +112,11 @@ class _NavButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1E8D9),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: ConcessaoFolgaColors.brand, size: 22),
+          borderRadius: BorderRadius.circular(18),
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: Icon(icon, color: const Color(0xFFEDE2CF), size: 27),
           ),
         ),
       ),
@@ -215,42 +125,42 @@ class _NavButton extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Calendar grid — computes range info per day for highlighter effect
+// Calendar grid
 // ---------------------------------------------------------------------------
 
 class _CalendarGrid extends StatelessWidget {
   final DateTime mes;
   final List<AusenciaCalendario> ausencias;
+  final VoidCallback onPreviousMonth;
+  final VoidCallback onNextMonth;
+  final VoidCallback onSelectMonth;
 
-  const _CalendarGrid({required this.mes, required this.ausencias});
+  const _CalendarGrid({
+    required this.mes,
+    required this.ausencias,
+    required this.onPreviousMonth,
+    required this.onNextMonth,
+    required this.onSelectMonth,
+  });
 
-  /// Compute highlighter range info for a specific day.
-  /// [column] is 0=Sunday … 6=Saturday (column position in the grid row).
-  _RangeInfo _rangeInfoFor(
-    DateTime dia,
-    int column,
-    bool isLastDayOfMonth,
-  ) {
-    final normalized = normalizarData(dia);
+  RangeInfo _rangeInfoFor(DateTime dia) {
+    if (ausencias.isEmpty) return const RangeInfo(inRange: false);
 
+    final atual = normalizarData(dia);
     for (final ausencia in ausencias) {
-      if (!normalized.isBefore(ausencia.inicioNormalizado) &&
-          !normalized.isAfter(ausencia.fimNormalizado)) {
-        // Day is within this ausencia's range
-        final isStart =
-            normalized == ausencia.inicioNormalizado || column == 0;
-        final isEnd = normalized == ausencia.fimNormalizado ||
-            column == 6 ||
-            isLastDayOfMonth;
-        return _RangeInfo(
+      final inicio = ausencia.inicioNormalizado;
+      final fim = ausencia.fimNormalizado;
+
+      if (!atual.isBefore(inicio) && !atual.isAfter(fim)) {
+        return RangeInfo(
           inRange: true,
-          isStart: isStart,
-          isEnd: isEnd,
+          isStart: atual.isAtSameMomentAs(inicio) || dia.weekday == 7,
+          isEnd: atual.isAtSameMomentAs(fim) || dia.weekday == 6,
           color: ausencia.tipo.color,
         );
       }
     }
-    return _RangeInfo.none;
+    return const RangeInfo(inRange: false);
   }
 
   @override
@@ -259,72 +169,94 @@ class _CalendarGrid extends StatelessWidget {
     final diasNoMes = DateTime(mes.year, mes.month + 1, 0).day;
     final offset = primeiroDia.weekday % 7;
     final totalCells = ((offset + diasNoMes + 6) ~/ 7) * 7;
-    const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+    final primeiroVisivel = primeiroDia.subtract(Duration(days: offset));
+    const weekDays = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(230),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x269C7A54)),
+        color: const Color(0xFF241D19),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0x33111111)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 14,
-            offset: Offset(0, 4),
+            color: Color(0x24432B1D),
+            blurRadius: 24,
+            offset: Offset(0, 12),
           ),
         ],
       ),
       child: Column(
         children: [
-          // Week day labels row
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1E8D9),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: weekDays
-                  .map(
-                    (day) => Expanded(
-                      child: Center(
-                        child: Text(
-                          day,
-                          style: const TextStyle(
-                            color: ConcessaoFolgaColors.muted,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                          ),
+          Row(
+            children: [
+              _NavButton(
+                icon: Icons.chevron_left_rounded,
+                onTap: onPreviousMonth,
+                tooltip: 'Mês anterior',
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: onSelectMonth,
+                  child: Center(
+                    child: Text(
+                      ConcessaoFolgaService.nomeMesAno(
+                        mes,
+                      ).replaceFirst(' de ', ' '),
+                      style: const TextStyle(
+                        color: Color(0xFFF7EFE3),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              _NavButton(
+                icon: Icons.chevron_right_rounded,
+                onTap: onNextMonth,
+                tooltip: 'Próximo mês',
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: weekDays
+                .map(
+                  (day) => Expanded(
+                    child: Center(
+                      child: Text(
+                        day,
+                        style: const TextStyle(
+                          color: Color(0xFF9A8D80),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
-                  )
-                  .toList(),
-            ),
+                  ),
+                )
+                .toList(),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           GridView.builder(
             itemCount: totalCells,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              mainAxisSpacing: 0, // zero gap — highlight band must not be cut
+              mainAxisSpacing: 0,
               crossAxisSpacing: 0,
-              childAspectRatio: 1.7, // slim rows
+              childAspectRatio: 1.12,
             ),
             itemBuilder: (context, index) {
-              final dayNumber = index - offset + 1;
-              if (dayNumber < 1 || dayNumber > diasNoMes) {
-                return const SizedBox.shrink();
-              }
-              final dia = DateTime(mes.year, mes.month, dayNumber);
-              final column = index % 7;
-              final isLastDayOfMonth = dayNumber == diasNoMes;
-              final rangeInfo = _rangeInfoFor(dia, column, isLastDayOfMonth);
-
-              return _DayCell(dia: dia, rangeInfo: rangeInfo);
+              final dia = primeiroVisivel.add(Duration(days: index));
+              return _DayCell(
+                dia: dia,
+                currentMonth: dia.year == mes.year && dia.month == mes.month,
+                rangeInfo: _rangeInfoFor(dia),
+              );
             },
           ),
         ],
@@ -334,14 +266,19 @@ class _CalendarGrid extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Day cell — highlighter style
+// Day cell
 // ---------------------------------------------------------------------------
 
 class _DayCell extends StatelessWidget {
   final DateTime dia;
-  final _RangeInfo rangeInfo;
+  final bool currentMonth;
+  final RangeInfo rangeInfo;
 
-  const _DayCell({required this.dia, required this.rangeInfo});
+  const _DayCell({
+    required this.dia,
+    required this.currentMonth,
+    required this.rangeInfo,
+  });
 
   bool get _isToday {
     final now = DateTime.now();
@@ -351,69 +288,56 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isInRange = rangeInfo.inRange;
-
-    // Highlight border radius — only on the ends of the range
-    BorderRadius highlightRadius;
-    if (isInRange) {
-      if (rangeInfo.isStart && rangeInfo.isEnd) {
-        highlightRadius = BorderRadius.circular(8);
-      } else if (rangeInfo.isStart) {
-        highlightRadius = const BorderRadius.only(
-          topLeft: Radius.circular(8),
-          bottomLeft: Radius.circular(8),
-        );
-      } else if (rangeInfo.isEnd) {
-        highlightRadius = const BorderRadius.only(
-          topRight: Radius.circular(8),
-          bottomRight: Radius.circular(8),
-        );
-      } else {
-        highlightRadius = BorderRadius.zero;
-      }
-    } else {
-      highlightRadius = BorderRadius.zero;
-    }
+    final lineRadius = BorderRadius.horizontal(
+      left: rangeInfo.isStart ? const Radius.circular(999) : Radius.zero,
+      right: rangeInfo.isEnd ? const Radius.circular(999) : Radius.zero,
+    );
 
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Highlight band — fills left-right, 2px inset top/bottom for subtle row separation
         if (isInRange)
           Positioned(
-            left: 0,
-            right: 0,
-            top: 2,
-            bottom: 2,
+            left: rangeInfo.isStart ? 12 : 0,
+            right: rangeInfo.isEnd ? 12 : 0,
+            bottom: 8,
             child: Container(
+              height: 2.5,
               decoration: BoxDecoration(
-                color: rangeInfo.color.withAlpha(50),
-                borderRadius: highlightRadius,
+                color: rangeInfo.color,
+                borderRadius: lineRadius,
               ),
             ),
           ),
-        // Today circle
         if (_isToday)
           Container(
-            width: 26,
-            height: 26,
-            decoration: const BoxDecoration(
-              color: ConcessaoFolgaColors.brand,
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: const Color(0xFF8F2A1D),
               shape: BoxShape.circle,
             ),
           ),
-        // Day number
-        Text(
-          '${dia.day}',
-          style: TextStyle(
-            color: _isToday
-                ? Colors.white
-                : isInRange
-                    ? rangeInfo.color
-                    : ConcessaoFolgaColors.ink,
-            fontSize: 12,
-            fontWeight:
-                (isInRange || _isToday) ? FontWeight.w800 : FontWeight.w500,
-          ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${dia.day}',
+              style: TextStyle(
+                color: _isToday
+                    ? const Color(0xFFFFF8EA)
+                    : currentMonth
+                    ? const Color(0xFFEDE2CF)
+                    : const Color(0xFF756A60),
+                fontSize: 12,
+                fontWeight: _isToday || isInRange
+                    ? FontWeight.w900
+                    : FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 3),
+            const SizedBox(height: 7),
+          ],
         ),
       ],
     );
@@ -421,33 +345,37 @@ class _DayCell extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Always-visible monthly summary panel
+// Always-visible summary panel
 // ---------------------------------------------------------------------------
 
-class _MonthSummaryPanel extends StatelessWidget {
+class _SummaryPanel extends StatelessWidget {
   final DateTime mes;
   final List<AusenciaCalendario> ausencias;
 
-  const _MonthSummaryPanel({required this.mes, required this.ausencias});
+  const _SummaryPanel({required this.mes, required this.ausencias});
 
   @override
   Widget build(BuildContext context) {
-    // Filter to ausencias that intersect this month, sorted by start date
-    final relevantes = ausencias
-        .where((a) => a.intersectaMes(mes))
-        .toList()
-      ..sort((a, b) => a.inicioNormalizado.compareTo(b.inicioNormalizado));
+    // Only show events that overlap with this month
+    final primeiroDia = DateTime(mes.year, mes.month);
+    final ultimoDia = DateTime(mes.year, mes.month + 1, 0);
+
+    final relevantes = ausencias.where((a) {
+      return !a.fimNormalizado.isBefore(primeiroDia) &&
+          !a.inicioNormalizado.isAfter(ultimoDia);
+    }).toList();
 
     return Container(
+      margin: const EdgeInsets.only(top: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(230),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x269C7A54)),
+        color: const Color(0xFFF8F0E5),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0x33936F52)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: Color(0x18432B1D),
+            blurRadius: 18,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -463,8 +391,9 @@ class _MonthSummaryPanel extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1E8D9),
+                    color: const Color(0xFFE9D8C2),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0x33936F52)),
                   ),
                   child: const Icon(
                     Icons.list_alt_rounded,
@@ -489,8 +418,9 @@ class _MonthSummaryPanel extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1E8D9),
+                      color: const Color(0xFFE9D8C2),
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0x33936F52)),
                     ),
                     child: Text(
                       '${relevantes.length}',
@@ -504,7 +434,7 @@ class _MonthSummaryPanel extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0x1A9C7A54)),
+          const Divider(height: 1, color: Color(0x2673543E)),
           if (relevantes.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 22, horizontal: 16),
@@ -551,45 +481,45 @@ class _SummaryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('dd/MM');
-    final fmtFull = DateFormat('dd/MM/yyyy');
+    final dateFormat = DateFormat('dd/MM/yyyy');
 
-    // Clamp dates to the current month for display
-    final primeiroDia = DateTime(mes.year, mes.month);
-    final ultimoDia = DateTime(mes.year, mes.month + 1, 0);
+    final dataInicio = ausencia.dataInicio;
+    final dataFim = ausencia.dataFim;
 
-    final inicioDisplay = ausencia.inicioNormalizado.isBefore(primeiroDia)
-        ? primeiroDia
-        : ausencia.inicioNormalizado;
-    final fimDisplay = ausencia.fimNormalizado.isAfter(ultimoDia)
-        ? ultimoDia
-        : ausencia.fimNormalizado;
-
-    final sameDay = inicioDisplay == fimDisplay;
-
-    // Duration in days (within this month)
-    final duracao = fimDisplay.difference(inicioDisplay).inDays + 1;
+    final sameDay =
+        dataInicio.year == dataFim.year &&
+        dataInicio.month == dataFim.month &&
+        dataInicio.day == dataFim.day;
+    final duracao = dataFim.difference(dataInicio).inDays + 1;
+    final eventColor = ausencia.tipo.color;
+    final cardColor = Color.lerp(const Color(0xFFFFF8EA), eventColor, 0.18)!;
+    final cardBorder = Color.lerp(cardColor, eventColor, 0.38)!;
+    final chipColor = Color.lerp(const Color(0xFFFFF8EA), eventColor, 0.10)!;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
       decoration: BoxDecoration(
-        color: ausencia.tipo.color.withAlpha(18),
-        borderRadius: BorderRadius.circular(10),
-        border: Border(
-          left: BorderSide(color: ausencia.tipo.color, width: 3),
-        ),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: eventColor.withAlpha(24),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Color dot
           Padding(
             padding: const EdgeInsets.only(top: 3),
             child: Container(
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: ausencia.tipo.color,
+                color: eventColor,
                 shape: BoxShape.circle,
               ),
             ),
@@ -610,29 +540,39 @@ class _SummaryItem extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   sameDay
-                      ? fmtFull.format(inicioDisplay)
-                      : '${fmt.format(inicioDisplay)} → ${fmt.format(fimDisplay)}',
+                      ? dateFormat.format(dataInicio)
+                      : '${dateFormat.format(dataInicio)} a ${dateFormat.format(dataFim)}',
                   style: TextStyle(
-                    color: ausencia.tipo.color.withAlpha(200),
+                    color: eventColor,
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
+                if (ausencia.status?.isNotEmpty == true) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    ausencia.status!,
+                    style: const TextStyle(
+                      color: ConcessaoFolgaColors.muted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
           const SizedBox(width: 8),
-          // Duration badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
             decoration: BoxDecoration(
-              color: ausencia.tipo.color.withAlpha(30),
+              color: chipColor,
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: eventColor.withAlpha(170)),
             ),
             child: Text(
               duracao == 1 ? '1 dia' : '$duracao dias',
               style: TextStyle(
-                color: ausencia.tipo.color,
+                color: eventColor,
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
               ),
@@ -645,7 +585,7 @@ class _SummaryItem extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Error / Empty states (unchanged)
+// Error states
 // ---------------------------------------------------------------------------
 
 class _ErrorState extends StatelessWidget {

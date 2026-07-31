@@ -6,6 +6,7 @@ import '../../features/auth/ui/login_page.dart';
 import '../../features/carteira/ui/carteira_page.dart';
 import '../../features/contra_cheque/ui/contra_cheque_page.dart';
 import '../../features/dashboard/ui/dashboard_page.dart';
+import '../../features/designacoes/ui/designacoes_page.dart';
 import '../../features/diario_oficial/ui/diario_oficial_page.dart';
 import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/processos/ui/consulta_processos_page.dart';
@@ -45,11 +46,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/contracheque',
     '/pagamentos',
     '/concessao-folga',
+    '/designacoes',
   ];
   final onlineOnlyRoutes = [
     '/contracheque',
     '/pagamentos',
     '/concessao-folga',
+    '/designacoes',
     '/noticias',
     '/diario_oficial',
     '/processos',
@@ -115,6 +118,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/concessao-folga',
             builder: (context, state) => const ConcessaoFolgaPage(),
+          ),
+          GoRoute(
+            path: '/designacoes',
+            builder: (context, state) => const DesignacoesPage(),
           ),
           GoRoute(
             path: '/pagamentos',

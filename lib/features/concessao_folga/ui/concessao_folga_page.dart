@@ -40,6 +40,7 @@ class ConcessaoFolgaPage extends ConsumerWidget {
                 onNextMonth: () => notifier.mudarMes(1),
                 onSelectMonth: () =>
                     _selecionarMesAno(context, notifier, state.mesSelecionado),
+                onNavigateToMonth: (d) => notifier.selecionarMesAno(d.month, d.year),
               ),
               ConcessoesVigentesList(
                 concessoes: state.concessoes.concessoes,

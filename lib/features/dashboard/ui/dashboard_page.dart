@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/widgets/services_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
@@ -147,6 +148,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final isAuthenticated = authState.isAuthenticated;
     final carteiraState = ref.watch(carteiraProvider);
     final hasInternet = ref.watch(connectivityProvider);
     final isOnline = hasInternet;
@@ -175,11 +178,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
           ),
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(
+          padding: EdgeInsets.only(
             left: 20,
             right: 20,
             top: 18,
-            bottom: 116,
+            bottom: 100 + MediaQuery.paddingOf(context).bottom,
           ),
           child: Center(
             child: ConstrainedBox(
@@ -191,8 +194,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                      vertical: 20,
-                      horizontal: 18,
+                      vertical: 16,
+                      horizontal: 16,
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
@@ -229,13 +232,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                 letterSpacing: 0.9,
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 6),
                             RichText(
                               text: TextSpan(
                                 text: 'Bem-vindo,\n',
                                 style: const TextStyle(
                                   color: Color(0xFFFFF8EA),
-                                  fontSize: 26,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                   height: 1.18,
                                 ),
@@ -249,7 +252,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 6),
                             const Text(
                               'Acesse seus serviços funcionais em um só lugar.',
                               style: TextStyle(
@@ -272,8 +275,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
                       width: double.infinity,
-                      constraints: const BoxConstraints(minHeight: 172),
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0x3DD6A92F)),
@@ -310,17 +312,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                   letterSpacing: 0.9,
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               const Text(
                                 'Carteira Funcional',
                                 style: TextStyle(
                                   color: Color(0xFFFFF8EA),
-                                  fontSize: 22,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w900,
                                   height: 1.12,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 4),
                               Text(
                                 userRole.toUpperCase(),
                                 style: const TextStyle(
@@ -330,7 +332,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                   height: 1.3,
                                 ),
                               ),
-                              const SizedBox(height: 30),
+                              const SizedBox(height: 16),
                               Row(
                                 children: [
                                   FadeTransition(
@@ -360,16 +362,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                             right: 0,
                             top: 0,
                             child: Container(
-                              width: 52,
-                              height: 52,
+                              width: 44,
+                              height: 44,
                               decoration: BoxDecoration(
                                 color: const Color(0xFFE5B84C),
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
                                 Icons.badge,
                                 color: Color(0xFF241D19),
-                                size: 30,
+                                size: 24,
                               ),
                             ),
                           ),
@@ -403,6 +405,86 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                   const SizedBox(height: 18),
 
                   if (isOnline) ...[
+                    // SERVIÇOS
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        const Text(
+                          'Serviços',
+                          style: TextStyle(
+                            color: Color(0xFF2F2923),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => ServicesBottomSheet.show(context, isAuthenticated),
+                          child: const Text(
+                            'Ver todos',
+                            style: TextStyle(
+                              color: Color(0xFF8F2A1D),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    GridView(
+                      padding: EdgeInsets.zero,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        mainAxisExtent: 106,
+                      ),
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildServiceCard(
+                          context,
+                          'Pagamentos',
+                          'Área Financeira',
+                          Icons.assignment,
+                          '/pagamentos',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Designações',
+                          'Ativas',
+                          Icons.assignment_ind,
+                          '/designacoes',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Processos',
+                          'Consulta',
+                          Icons.gavel,
+                          '/processos',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Diário Oficial',
+                          'Publicações',
+                          Icons.article,
+                          '/diario_oficial',
+                        ),
+                        _buildServiceCard(
+                          context,
+                          'Ouvidoria',
+                          'Manifestações',
+                          Icons.record_voice_over,
+                          '/ouvidoria',
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 18),
+
                     // NOTÍCIAS
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -740,87 +822,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                         ),
                       ),
                     ],
-
-                    const SizedBox(height: 18),
-
-                    // SERVIÇOS
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        const Text(
-                          'Serviços',
-                          style: TextStyle(
-                            color: Color(0xFF2F2923),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const Text(
-                          '6 atalhos',
-                          style: TextStyle(
-                            color: Color(0xFF73543E),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    GridView.count(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      childAspectRatio: 0.9,
-                      children: [
-                        _buildServiceCard(
-                          context,
-                          'Contracheque',
-                          'Consulta mensal',
-                          Icons.receipt_long,
-                          '/contracheque',
-                        ),
-                        _buildServiceCard(
-                          context,
-                          'Pagamentos',
-                          'Área Financeira',
-                          Icons.assignment,
-                          '/pagamentos',
-                        ),
-                        _buildServiceCard(
-                          context,
-                          'Concessões',
-                          'Consulta',
-                          Icons.event_available,
-                          '/concessao-folga',
-                        ),
-                        _buildServiceCard(
-                          context,
-                          'Designações',
-                          'Ativas',
-                          Icons.assignment_ind,
-                          '/designacoes',
-                        ),
-                        _buildServiceCard(
-                          context,
-                          'Processos',
-                          'Consulta',
-                          Icons.gavel,
-                          '/processos',
-                        ),
-                        _buildServiceCard(
-                          context,
-                          'Diário Oficial',
-                          'Publicações',
-                          Icons.article,
-                          '/diario_oficial',
-                        ),
-                      ],
-                    ),
                   ] else ...[
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
@@ -876,7 +877,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       onTap: () => context.go(route),
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: const Color(0xFFF7EFE3),
           borderRadius: BorderRadius.circular(14),
@@ -901,10 +902,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
               ),
               child: Icon(icon, color: const Color(0xFF8F2A1D), size: 20),
             ),
-            const Spacer(),
+            const SizedBox(height: 8),
             Text(
               title,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: Color(0xFF2F2923),
@@ -913,9 +914,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                 height: 1.2,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(

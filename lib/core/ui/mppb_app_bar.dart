@@ -13,8 +13,10 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     if (isAuthenticated) {
       return AppBar(
+        toolbarHeight: 52,
         backgroundColor: const Color(0xFFFFFBF4),
         elevation: 0,
+        titleSpacing: 16,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
@@ -24,8 +26,8 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         title: Row(
           children: [
-            Image.asset('assets/images/brasao_mppb_sem_fundo.png', height: 36),
-            const SizedBox(width: 11),
+            Image.asset('assets/images/brasao_mppb_sem_fundo.png', height: 30),
+            const SizedBox(width: 8),
             const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,9 +37,10 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     'MPPB+',
                     style: TextStyle(
                       color: Color(0xFF241D19),
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0,
+                      height: 1.1,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -58,11 +61,11 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Color(0xFF8A6A00)),
+            icon: const Icon(Icons.notifications, color: Color(0xFF8A6A00), size: 24),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFF8F2A1D)),
+            icon: const Icon(Icons.logout, color: Color(0xFF8F2A1D), size: 24),
             onPressed: () async {
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) {
@@ -70,13 +73,16 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
               }
             },
           ),
+          const SizedBox(width: 4),
         ],
       );
     }
 
     return AppBar(
+      toolbarHeight: 52,
       backgroundColor: const Color(0xFFFFFBF4),
       elevation: 0,
+      titleSpacing: 16,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
         child: Container(
@@ -86,14 +92,14 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ),
       title: Row(
         children: [
-          Image.asset('assets/images/brasao_mppb_sem_fundo.png', height: 40),
-          const SizedBox(width: 10),
+          Image.asset('assets/images/brasao_mppb_sem_fundo.png', height: 30),
+          const SizedBox(width: 8),
           const Expanded(
             child: Text(
               'MPPB+',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 20,
+                fontSize: 22,
                 color: Color(0xFF241D19),
               ),
               overflow: TextOverflow.ellipsis,
@@ -126,5 +132,5 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(52);
 }

@@ -43,10 +43,11 @@ class ConnectivityNotifier extends Notifier<bool> {
 
   Future<bool> _hasInternetAccess() async {
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
+    Uri? probeUri;
 
     try {
       final baseUri = Uri.parse(_apiUrl);
-      final probeUri = baseUri.replace(path: '/api/public/noticias');
+      probeUri = baseUri.replace(path: '/api/public/noticias');
       final request = await client
           .getUrl(probeUri)
           .timeout(const Duration(seconds: 4));
@@ -56,6 +57,9 @@ class ConnectivityNotifier extends Notifier<bool> {
       await response.drain<void>();
       return response.statusCode >= 200 && response.statusCode < 500;
     } catch (e) {
+      print('=== CONNECTIVITY_PROVIDER ERROR ===');
+      print('Tried URL: ${probeUri ?? _apiUrl}');
+      print('Error: $e');
       return false;
     } finally {
       client.close(force: true);

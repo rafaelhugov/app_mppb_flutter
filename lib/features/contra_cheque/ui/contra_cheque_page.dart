@@ -5,6 +5,7 @@ import '../providers/contra_cheque_provider.dart';
 import 'widgets/competencia_selector.dart';
 import 'widgets/grafico_contracheque.dart';
 import 'widgets/contracheque_lancamentos.dart';
+import '../../../core/ui/widgets/feature_header.dart';
 
 class ContraChequePage extends ConsumerWidget {
   const ContraChequePage({super.key});
@@ -29,8 +30,13 @@ class ContraChequePage extends ConsumerWidget {
         ),
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: _buildHeader(),
+            const SliverToBoxAdapter(
+              child: FeatureHeader(
+                category: 'ÁREA FINANCEIRA',
+                title: 'Contracheque',
+                description: 'Visualize e baixe seus contracheques.',
+                icon: Icons.receipt_long,
+              ),
             ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -53,101 +59,6 @@ class ContraChequePage extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        border: const Border(
-          bottom: BorderSide(color: Color.fromRGBO(214, 169, 47, 0.24)),
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color.fromRGBO(255, 221, 132, 0.14),
-            offset: Offset(0, -1),
-          ),
-        ],
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF241D19),
-            Color(0xFF3A241D),
-            Color(0xFF8F2A1D),
-          ],
-          stops: [0.0, 0.46, 1.0],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 44),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color.fromRGBO(255, 222, 142, 0.44)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(36, 18, 12, 0.30),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.receipt_long, color: Color(0xFF211713), size: 30),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'ÁREA FINANCEIRA',
-                  style: TextStyle(
-                    color: Color(0xFFE3C474),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.9,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Contracheque',
-                  style: TextStyle(
-                    color: Color(0xFFFFF8EA),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.22),
-                        blurRadius: 12,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 3),
-                const Text(
-                  'Visualize e baixe seus últimos contracheques.',
-                  style: TextStyle(
-                    color: Color(0xFFD8C5AA),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -107,4 +107,4 @@ export XMODIFIERS=
 export QT_IM_MODULE=
 
 # Inicia o flutter injetando a URL local
-flutter run --dart-define=API_URL="$API_URL_LOCAL"
+flutter run "$@" --dart-define=API_URL="$API_URL_LOCAL"

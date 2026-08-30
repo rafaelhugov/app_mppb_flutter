@@ -36,5 +36,41 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  dio.interceptors.add(
+    InterceptorsWrapper(
+      onRequest: (options, handler) {
+        if (options.path.contains('recursos-humanos')) {
+          print('--- [DIO REQ] ---');
+          print('URL: ${options.uri}');
+          print('METHOD: ${options.method}');
+          print('QUERY: ${options.queryParameters}');
+          final h = Map<String, dynamic>.from(options.headers);
+          h.remove('Authorization');
+          print('HEADERS (sem auth): $h');
+        }
+        return handler.next(options);
+      },
+      onResponse: (response, handler) {
+        if (response.requestOptions.path.contains('recursos-humanos')) {
+          print('--- [DIO RES] ---');
+          print('URL: ${response.requestOptions.uri}');
+          print('STATUS CODE: ${response.statusCode}');
+          print('DATA: ${response.data}');
+        }
+        return handler.next(response);
+      },
+      onError: (DioException e, handler) {
+        if (e.requestOptions.path.contains('recursos-humanos')) {
+          print('--- [DIO ERR] ---');
+          print('URL: ${e.requestOptions.uri}');
+          print('STATUS CODE: ${e.response?.statusCode}');
+          print('ERROR: ${e.message}');
+          print('DATA: ${e.response?.data}');
+        }
+        return handler.next(e);
+      },
+    ),
+  );
+
   return dio;
 });

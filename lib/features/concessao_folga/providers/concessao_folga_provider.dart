@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/secure_storage.dart';
@@ -108,10 +109,10 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
           concessoes: dados,
         ),
       );
-    } on DioException catch (e) {
-      _tratarErroConcessoes(e);
-    } catch (_) {
-      _tratarErroConcessoes(null);
+    } on DioException catch (e, stack) {
+      _tratarErroConcessoes(e, stack);
+    } catch (e, stack) {
+      _tratarErroConcessoes(e, stack);
     }
   }
 
@@ -130,8 +131,14 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     }
 
     _limparCacheSeTrocarToken(token);
+    
     final mes = state.mesSelecionado;
-    final cacheKey = '$token-${mes.year}-${mes.month}';
+    final hoje = DateTime.now();
+    final currentMonth = DateTime(hoje.year, hoje.month);
+    final isFuture = !mes.isBefore(currentMonth);
+    
+    final cacheKey = isFuture ? '$token-future' : '$token-${mes.year}-${mes.month}';
+    
     if (!forceRefresh && _ausenciasCache.containsKey(cacheKey)) {
       state = state.copyWith(
         calendario: state.calendario.copyWith(
@@ -153,12 +160,13 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     );
 
     try {
+      debugPrint('[ConcessaoFolga] Solicitando ausencias: mes=${isFuture ? null : mes.month}, ano=${isFuture ? null : mes.year}');
       final dados = await ref
           .read(concessaoFolgaRepositoryProvider)
           .buscarAusenciasCalendario(
             token: token,
-            mes: mes.month,
-            ano: mes.year,
+            mes: isFuture ? null : mes.month,
+            ano: isFuture ? null : mes.year,
           );
       _ausenciasCache[cacheKey] = dados;
       state = state.copyWith(
@@ -169,10 +177,10 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
           ausencias: dados,
         ),
       );
-    } on DioException catch (e) {
-      _tratarErroCalendario(e);
-    } catch (_) {
-      _tratarErroCalendario(null);
+    } on DioException catch (e, stack) {
+      _tratarErroCalendario(e, stack);
+    } catch (e, stack) {
+      _tratarErroCalendario(e, stack);
     }
   }
 
@@ -224,26 +232,50 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     _ultimoToken = token;
   }
 
-  void _tratarErroConcessoes(DioException? e) {
+  void _tratarErroConcessoes(dynamic e, [StackTrace? stack]) {
+    debugPrint('[ConcessaoFolga] Erro ao carregar concessoes: $e');
+    if (stack != null) debugPrint(stack.toString());
+    
     state = state.copyWith(
       concessoes: state.concessoes.copyWith(
         isLoading: false,
         isRefreshing: false,
-        errorMessage:
-            'Não foi possível carregar as concessões de folga.\nTente novamente.',
+        errorMessage: _obterMensagemErro(e),
       ),
     );
   }
 
-  void _tratarErroCalendario(DioException? e) {
+  void _tratarErroCalendario(dynamic e, [StackTrace? stack]) {
+    debugPrint('[ConcessaoFolga] Erro ao carregar afastamentos: $e');
+    if (stack != null) debugPrint(stack.toString());
+    
     state = state.copyWith(
       calendario: state.calendario.copyWith(
         isLoading: false,
         isRefreshing: false,
-        errorMessage:
-            'Não foi possível carregar os afastamentos.\nTente novamente.',
+        errorMessage: _obterMensagemErro(e, isCalendario: true),
       ),
     );
+  }
+
+  String _obterMensagemErro(dynamic e, {bool isCalendario = false}) {
+    if (e is DioException) {
+      if (e.type == DioExceptionType.connectionTimeout || 
+          e.type == DioExceptionType.receiveTimeout || 
+          e.type == DioExceptionType.sendTimeout) {
+        return 'O serviço demorou para responder. Tente novamente.';
+      }
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        return 'Sem conexão com o serviço. Verifique sua internet e tente novamente.';
+      }
+      // Outros erros HTTP (500, etc)
+    }
+    
+    if (isCalendario) {
+      return 'Não foi possível carregar os afastamentos.\nTente novamente.';
+    }
+    return 'Não foi possível carregar as concessões de folga.\nTente novamente.';
   }
 }
 

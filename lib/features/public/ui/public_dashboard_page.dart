@@ -98,16 +98,30 @@ class PublicDashboardPage extends StatelessWidget {
                         builder: (context, constraints) {
                           final isDesktop = constraints.maxWidth > 720;
                           if (isDesktop) {
-                            return Row(
+                            return Column(
                               children: [
-                                Expanded(child: _buildProcessosCard(context)),
-                                const SizedBox(width: 16),
-                                Expanded(child: _buildDiarioCard(context)),
+                                Row(
+                                  children: [
+                                    Expanded(child: _buildProcessosCard(context)),
+                                    const SizedBox(width: 16),
+                                    Expanded(child: _buildDiarioCard(context)),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(child: _buildOuvidoriaCard(context)),
+                                    const SizedBox(width: 16),
+                                    const Spacer(),
+                                  ],
+                                ),
                               ],
                             );
                           }
                           return Column(
                             children: [
+                              _buildOuvidoriaCard(context),
+                              const SizedBox(height: 16),
                               _buildProcessosCard(context),
                               const SizedBox(height: 16),
                               _buildDiarioCard(context),
@@ -176,6 +190,69 @@ class PublicDashboardPage extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOuvidoriaCard(BuildContext context) {
+    return InkWell(
+      onTap: () => context.push('/ouvidoria'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF38312A), Color(0xFF241D19)],
+          ),
+          border: Border.all(color: Colors.white.withAlpha(13)),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(color: Color(0x1E2F2923), blurRadius: 16, offset: Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
+                ),
+                border: Border.all(color: const Color(0x70FFDE8E)),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x4C24120C), blurRadius: 28, offset: Offset(0, 12)),
+                ],
+              ),
+              child: const Icon(Icons.record_voice_over, color: Color(0xFF211713), size: 26),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Ouvidoria',
+              style: TextStyle(
+                color: const Color(0xFFFFF8EA),
+                fontFamily: GoogleFonts.ebGaramond().fontFamily,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Registre sua manifestação, denúncia ou solicitação ao MPPB.',
+              style: TextStyle(
+                color: Color(0xFFC4BBA9),
+                fontSize: 16,
+                height: 1.45,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -306,6 +383,8 @@ class PublicDashboardPage extends StatelessWidget {
       ),
     );
   }
+
+
 
   Widget _buildRestritoCard(BuildContext context) {
     return InkWell(

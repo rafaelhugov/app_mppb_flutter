@@ -21,6 +21,9 @@ class ConcessaoFolgaRepository {
         extra: {'skipAuthLogout': true},
       ),
     );
+    if (response.data is! List) {
+      throw Exception('Formato inesperado (Concessoes): ${response.data}');
+    }
     final data = response.data as List<dynamic>? ?? [];
     return data
         .map((json) => ConcessaoFolga.fromJson(json as Map<String, dynamic>))
@@ -29,17 +32,24 @@ class ConcessaoFolgaRepository {
 
   Future<List<AusenciaCalendario>> buscarAusenciasCalendario({
     required String token,
-    required int mes,
-    required int ano,
+    int? mes,
+    int? ano,
   }) async {
+    final query = <String, dynamic>{'token': token};
+    if (mes != null) query['mes'] = mes;
+    if (ano != null) query['ano'] = ano;
+    
     final response = await dio.get(
       '/api/recursos-humanos/minhas-ausencias',
-      queryParameters: {'token': token, 'mes': mes, 'ano': ano},
+      queryParameters: query,
       options: Options(
         headers: {'Authorization': 'Token $token'},
         extra: {'skipAuthLogout': true},
       ),
     );
+    if (response.data is! List) {
+      throw Exception('Formato inesperado (Ausencias): ${response.data}');
+    }
     final data = response.data as List<dynamic>? ?? [];
     return data
         .map(

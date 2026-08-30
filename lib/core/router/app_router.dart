@@ -14,6 +14,7 @@ import '../../features/processos/ui/processo_detalhes_page.dart';
 import '../../features/public/ui/public_dashboard_page.dart';
 import '../../features/concessao_folga/ui/concessao_folga_page.dart';
 import '../../features/pagamentos/ui/pagamentos_page.dart';
+import '../../features/ouvidoria/ui/ouvidoria_page.dart';
 import '../network/connectivity_provider.dart';
 import '../ui/main_layout.dart';
 
@@ -56,6 +57,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/noticias',
     '/diario_oficial',
     '/processos',
+    '/ouvidoria',
   ];
 
   return GoRouter(
@@ -153,6 +155,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 captchaValue: captchaValue,
               );
             },
+          ),
+          GoRoute(
+            path: '/ouvidoria',
+            builder: (context, state) => const OuvidoriaPage(),
           ),
         ],
       ),

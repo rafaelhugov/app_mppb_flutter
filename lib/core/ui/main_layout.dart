@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,8 +60,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       if (location == '/') return 0;
       if (location == '/processos') return 1;
       if (location == '/diario_oficial') return 3;
-      if (location == '/noticias') return 4;
-      return 0;
+      if (location == '/ouvidoria' || location == '/noticias') return 4;
+      return -1;
     }
   }
 
@@ -102,12 +104,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           context.go('/diario_oficial');
           break;
         case 4:
-          context.go('/noticias');
+          context.go(extraRoute ?? '/ouvidoria');
           break;
       }
     }
   }
-
 
   int _getFlexForLabel(String label) {
     switch (label) {
@@ -117,6 +118,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       case 'Pagamentos':
         return 14;
       case 'Processos':
+      case 'Ouvidoria':
         return 13;
       case 'Carteira':
       case 'Notícias':
@@ -144,7 +146,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     const selectedTextColor = Color(0xFF5E421E);
     const unselectedColor = Color(0xFF8B8177);
 
-    return Expanded(
+    return Flexible(
       flex: _getFlexForLabel(label),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -160,20 +162,21 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 40),
                 decoration: isSelected
                     ? BoxDecoration(
                         color: selectedBgColor,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: const Color(0x55E5B84C)),
                       )
                     : BoxDecoration(
                         color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: Colors.transparent),
                       ),
                 padding: EdgeInsets.symmetric(
-                  vertical: 7,
-                  horizontal: isSelected ? 14 : 6,
+                  vertical: 4,
+                  horizontal: isSelected ? 10 : 4,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -181,20 +184,24 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   children: [
                     Icon(
                       icon,
-                      size: 20,
+                      size: 18,
                       color: isSelected ? selectedIconColor : unselectedColor,
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         label,
                         maxLines: 1,
                         style: TextStyle(
-                          fontSize: 10,
-                          letterSpacing: -0.1,
-                          color: isSelected ? selectedTextColor : unselectedColor,
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                          fontSize: 9.5,
+                          letterSpacing: 0,
+                          color: isSelected
+                              ? selectedTextColor
+                              : unselectedColor,
+                          fontWeight: isSelected
+                              ? FontWeight.w800
+                              : FontWeight.w600,
                           height: 1,
                         ),
                       ),
@@ -213,12 +220,15 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
-      width: isHome ? 0.0 : 62.0,
+      width: isHome ? 0.0 : 54.0,
+      height: isHome ? 0.0 : 50.0,
       alignment: Alignment.center,
       clipBehavior: Clip.none,
       child: OverflowBox(
-        maxWidth: 62.0,
+        maxWidth: 54.0,
+        maxHeight: 50.0,
         minWidth: 0.0,
+        minHeight: 0.0,
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
@@ -230,15 +240,15 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             child: GestureDetector(
               onTap: isHome ? null : onTap,
               child: Container(
-                width: 52,
-                height: 52,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
                   color: const Color(0xFF8F2A1D),
-                  borderRadius: BorderRadius.circular(26),
+                  borderRadius: BorderRadius.circular(25),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x3D8F2A1D),
-                      blurRadius: 16,
+                      blurRadius: 14,
                       offset: Offset(0, 6),
                     ),
                   ],
@@ -246,7 +256,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 child: const Icon(
                   Icons.add_rounded,
                   color: Color(0xFFFFF8EA),
-                  size: 32,
+                  size: 30,
                 ),
               ),
             ),
@@ -283,10 +293,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                     selectedIndex,
                     () => _onItemTapped(1, context, isAuthenticated),
                   ),
-                  _buildMoreButton(
-                    () => _onItemTapped(2, context, isAuthenticated),
-                    isHome,
-                  ),
+                  const SizedBox(width: 54),
                   _buildNavItem(
                     3,
                     Icons.badge_rounded,
@@ -316,10 +323,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                     () => _onItemTapped(0, context, isAuthenticated),
                   ),
                   const Spacer(),
-                  _buildMoreButton(
-                    () => _onItemTapped(2, context, isAuthenticated),
-                    isHome,
-                  ),
+                  const SizedBox(width: 54),
                   const Spacer(),
                   _buildNavItem(
                     3,
@@ -344,7 +348,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               selectedIndex,
               () => _onItemTapped(1, context, isAuthenticated),
             ),
-            _buildMoreButton(() => _onItemTapped(2, context, isAuthenticated), isHome),
+            const SizedBox(width: 54),
             _buildNavItem(
               3,
               Icons.description_rounded,
@@ -354,38 +358,59 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             ),
             _buildNavItem(
               4,
-              Icons.newspaper_rounded,
-              'Notícias',
+              extraIcon,
+              extraLabel,
               selectedIndex,
-              () => _onItemTapped(4, context, isAuthenticated),
+              () => _onItemTapped(
+                4,
+                context,
+                isAuthenticated,
+                extraRoute: extraRoute,
+              ),
             ),
           ];
 
-    return Container(
-      height: 94,
-      padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
-      decoration: const BoxDecoration(color: Color(0x00FFFFFF)),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Container(
-            height: 68,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFBF4).withAlpha(245),
-              borderRadius: BorderRadius.circular(34),
-              border: Border.all(color: const Color(0x66FFFFFF), width: 1.3),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x303A241D),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final dockWidth = math.min(screenWidth - 40, 350.0);
+    final sideInset = math.max(20.0, (screenWidth - dockWidth) / 2);
+
+    return SizedBox(
+      height: 64 + bottomInset,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          Positioned(
+            left: sideInset,
+            right: sideInset,
+            bottom: bottomInset + 6,
+            child: Container(
+              height: 52,
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBF4).withAlpha(245),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: const Color(0x66FFFFFF), width: 1.2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x303A241D),
+                    blurRadius: 24,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(children: children),
             ),
-            child: Row(children: children),
           ),
-        ),
+          Positioned(
+            top: 0,
+            child: _buildMoreButton(
+              () => _onItemTapped(2, context, isAuthenticated),
+              isHome,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -400,6 +425,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
     final isHiddenPage = location == '/login' || location.contains('/detalhes');
     final isHome = location == '/' || location == '/restrito';
+    final isDockHidden = isHiddenPage || isHome;
     final selectedIndex = _calculateSelectedIndex(
       context,
       isAuthenticated,
@@ -435,16 +461,27 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
         icon4 = Icons.description_rounded;
         route4 = '/diario_oficial';
       }
+    } else {
+      if (location == '/ouvidoria') {
+        label4 = 'Ouvidoria';
+        icon4 = Icons.record_voice_over;
+        route4 = '/ouvidoria';
+      } else {
+        label4 = 'Notícias';
+        icon4 = Icons.newspaper_rounded;
+        route4 = '/noticias';
+      }
     }
 
     return Scaffold(
-      extendBody: !isHiddenPage,
+      extendBodyBehindAppBar: !isHiddenPage,
+      extendBody: !isDockHidden,
       appBar: isHiddenPage ? null : const MppbAppBar(),
       body: NotificationListener<ScrollNotification>(
         onNotification: _handleScrollNotification,
         child: widget.child,
       ),
-      bottomNavigationBar: isHiddenPage
+      bottomNavigationBar: isDockHidden
           ? null
           : IgnorePointer(
               ignoring: !_isNavVisible,

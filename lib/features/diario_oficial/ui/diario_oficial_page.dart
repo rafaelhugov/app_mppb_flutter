@@ -1,8 +1,10 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/diario_oficial_provider.dart';
 import '../models/diario_oficial.dart';
 
@@ -74,77 +76,29 @@ class DiarioOficialPage extends ConsumerWidget {
     WidgetRef ref,
     DiarioOficialState state,
   ) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 34),
-      padding: const EdgeInsets.fromLTRB(20, 32, 20, 44),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0x3DD6A92F), width: 1)),
-        gradient: LinearGradient(
-          colors: [Color(0xFF241D19), Color(0xFF3A241D), Color(0xFF8F2A1D)],
-          stops: [0.0, 0.46, 1.0],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return HeroHeaderPublico(
+      label: 'MPPB+',
+      title: 'Diário Oficial',
+      subtitle: 'Acesse as edições do Diário Oficial Eletrônico do MPPB.',
+      icon: Icons.description_rounded,
+      rightWidget: IconButton(
+        constraints: const BoxConstraints.tightFor(width: 38, height: 38),
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        style: IconButton.styleFrom(
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'MPPB+',
-                  style: TextStyle(
-                    color: Color(0xFFE3C474),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.9,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Diário Oficial',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFFFF8EA),
-                    shadows: [
-                      Shadow(
-                        color: Color(0x38000000),
-                        offset: Offset(0, 2),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Acesse as edições do Diário Oficial\nEletrônico do MPPB.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFFD8C5AA),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              state.selectedDate != null
-                  ? Icons.event_available
-                  : Icons.calendar_month,
-              color: state.selectedDate != null
-                  ? const Color(0xFFE3C474)
-                  : const Color(0xFFFFF8EA),
-              size: 28,
-            ),
-            onPressed: () => _selectDate(context, ref, state),
-            tooltip: 'Filtrar por data',
-          ),
-        ],
+        icon: Icon(
+          state.selectedDate != null
+              ? Icons.event_available
+              : Icons.calendar_month,
+          color: state.selectedDate != null
+              ? const Color(0xFFE3C474)
+              : const Color(0xFFFFF8EA),
+          size: 24,
+        ),
+        onPressed: () => _selectDate(context, ref, state),
+        tooltip: 'Filtrar por data',
       ),
     );
   }
@@ -501,7 +455,6 @@ class _DiarioCard extends StatelessWidget {
           Text(
             'Nº ${diario.numeroEdicao}',
             style: TextStyle(
-              fontFamily: GoogleFonts.ebGaramond().fontFamily,
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF5C534C),

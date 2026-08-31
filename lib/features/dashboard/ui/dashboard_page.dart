@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../../core/ui/widgets/services_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:local_auth/local_auth.dart';
 import '../../carteira/providers/carteira_provider.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/storage/secure_storage.dart';
+import '../../../core/ui/main_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
 
@@ -21,7 +23,9 @@ class DashboardPage extends ConsumerStatefulWidget {
 class _DashboardPageState extends ConsumerState<DashboardPage>
     with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController(viewportFraction: 0.92);
+  Timer? _autoPlayTimer;
   int _currentNewsIndex = 0;
+  int _carouselNewsCount = 0;
 
   late final AnimationController _blinkController;
   late final Animation<double> _blinkAnimation;
@@ -132,9 +136,37 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   @override
   void dispose() {
+    _autoPlayTimer?.cancel();
     _blinkController.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _syncAutoPlay(int itemCount) {
+    if (_carouselNewsCount == itemCount && _autoPlayTimer != null) {
+      return;
+    }
+
+    _carouselNewsCount = itemCount;
+    _autoPlayTimer?.cancel();
+    _autoPlayTimer = null;
+
+    if (itemCount < 2) {
+      return;
+    }
+
+    _autoPlayTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || !_pageController.hasClients) {
+        return;
+      }
+
+      final nextPage = (_currentNewsIndex + 1) % itemCount;
+      _pageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   void _openNews(String? url) async {
@@ -146,253 +178,206 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     }
   }
 
+  String _greetingForProfile({
+    required String firstName,
+    required String role,
+    required String type,
+  }) {
+    final profile = '$firstName $role $type'.toLowerCase();
+    final feminineTerms = ['servidora', 'promotora', 'procuradora'];
+    final masculineTerms = ['servidor', 'promotor', 'procurador'];
+
+    if (feminineTerms.any(profile.contains)) {
+      return 'Bem-vinda';
+    }
+
+    if (masculineTerms.any(profile.contains)) {
+      return 'Bem-vindo';
+    }
+
+    if (firstName.toLowerCase().endsWith('a')) {
+      return 'Bem-vinda';
+    }
+
+    if (firstName.toLowerCase().endsWith('o')) {
+      return 'Bem-vindo';
+    }
+
+    return 'Bem-vindo';
+  }
+
+  String _capitalizeName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      return 'Usuário';
+    }
+
+    final lower = trimmed.toLowerCase();
+    return lower[0].toUpperCase() + lower.substring(1);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final isAuthenticated = authState.isAuthenticated;
     final carteiraState = ref.watch(carteiraProvider);
     final hasInternet = ref.watch(connectivityProvider);
     final isOnline = hasInternet;
     final usuario = carteiraState.data;
 
-    final firstName =
-        usuario?.nome
-            ?.split(' ')
-            .firstWhere((e) => e.isNotEmpty, orElse: () => 'Usuário') ??
-        'Usuário';
+    final firstName = _capitalizeName(
+      usuario?.nome
+              ?.split(' ')
+              .firstWhere((e) => e.isNotEmpty, orElse: () => 'Usuário') ??
+          'Usuário',
+    );
     final userRole = usuario?.cargo ?? 'Membro ou Servidor';
+    final greeting = _greetingForProfile(
+      firstName: firstName,
+      role: userRole,
+      type: usuario?.tipoCargo ?? '',
+    );
 
     final noticiaState = ref.watch(noticiaProvider);
     final todasNoticias = noticiaState.noticias;
     final carouselNews = todasNoticias.take(3).toList();
+    _syncAutoPlay(carouselNews.length);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDED4C5),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0x33523829), Color(0x00523829)],
-            stops: [0.0, 0.3],
-          ),
+      backgroundColor: const Color(0xFFF7F8F6),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: MainLayout.authenticatedHorizontalPadding,
+          right: MainLayout.authenticatedHorizontalPadding,
+          top: MainLayout.authenticatedContentTopPadding(context),
+          bottom: MainLayout.contentBottomPadding(context),
         ),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 18,
-            bottom: 100 + MediaQuery.paddingOf(context).bottom,
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // HERO CARD
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0x3DD6A92F)),
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF241D19),
-                          Color(0xFF3A241D),
-                          Color(0xFF8F2A1D),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(2, 4, 2, 2),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: RichText(
+                      textAlign: TextAlign.left,
+                      text: TextSpan(
+                        text: '$greeting,\n',
+                        style: const TextStyle(
+                          color: Color(0xFF697370),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          height: 1.05,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: firstName,
+                            style: const TextStyle(
+                              color: Color(0xFF202322),
+                              fontSize: 36,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
                         ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        stops: [0.0, 0.48, 1.0],
                       ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x332E1E16),
-                          blurRadius: 34,
-                          offset: Offset(0, 18),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'SERVIÇOS AO SERVIDOR MPPB',
-                              style: TextStyle(
-                                color: Color(0xFFE3C474),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.9,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Bem-vindo,\n',
-                                style: const TextStyle(
-                                  color: Color(0xFFFFF8EA),
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.18,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: firstName.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Color(0xFFE5B84C),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Acesse seus serviços funcionais em um só lugar.',
-                              style: TextStyle(
-                                color: Color(0xFFD8C5AA),
-                                fontSize: 13,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-                  // WALLET CARD
-                  InkWell(
-                    onTap: () => context.go('/carteira'),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0x3DD6A92F)),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF2E2722),
-                            Color(0xFF201A16),
-                            Color(0xFF3A241D),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          stops: [0.0, 0.54, 1.0],
+                // WALLET CARD
+                InkWell(
+                  onTap: () => context.go('/carteira'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      color: const Color(0xFF202322),
+                      border: Border.all(color: const Color(0x33FFFFFF)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x24101828),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
                         ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x332E1E16),
-                            blurRadius: 32,
-                            offset: Offset(0, 16),
-                          ),
-                        ],
-                      ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
                       child: Stack(
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'DOCUMENTO DIGITAL',
-                                style: TextStyle(
-                                  color: Color(0xFFCDBDA9),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.9,
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Carteira Funcional',
+                                  style: TextStyle(
+                                    color: Color(0xFFFFFFFF),
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.1,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Carteira Funcional',
-                                style: TextStyle(
-                                  color: Color(0xFFFFF8EA),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1.12,
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 88),
+                                  child: Text(
+                                    userRole,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Color(0xFFDDE4DF),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.2,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                userRole.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Color(0xFFE5B84C),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.3,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  FadeTransition(
-                                    opacity: _blinkAnimation,
-                                    child: Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFE5B84C),
-                                        shape: BoxShape.circle,
+                                const SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    FadeTransition(
+                                      opacity: _blinkAnimation,
+                                      child: Container(
+                                        width: 7,
+                                        height: 7,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF00A86B),
+                                          shape: BoxShape.circle,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Ativa e segura',
-                                    style: TextStyle(
-                                      color: Color(0xFFD8C5AA),
-                                      fontSize: 12,
+                                    const SizedBox(width: 7),
+                                    const Text(
+                                      'Ativa e segura',
+                                      style: TextStyle(
+                                        color: Color(0xFFDDE4DF),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE5B84C),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.badge,
-                                color: Color(0xFF241D19),
-                                size: 24,
-                              ),
-                            ),
-                          ),
-                          const Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Acessar',
-                                  style: TextStyle(
-                                    color: Color(0xFFE5B84C),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                SizedBox(width: 6),
-                                Icon(
-                                  Icons.arrow_forward,
-                                  color: Color(0xFFE5B84C),
-                                  size: 16,
+                                    const Spacer(),
+                                    const Text(
+                                      'Acessar',
+                                      style: TextStyle(
+                                        color: Color(0xFFDDE4DF),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Color(0xFFDDE4DF),
+                                      size: 15,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -401,464 +386,471 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       ),
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 18),
+                const SizedBox(height: 34),
 
-                  if (isOnline) ...[
-                    // SERVIÇOS
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        const Text(
-                          'Serviços',
-                          style: TextStyle(
-                            color: Color(0xFF2F2923),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => ServicesBottomSheet.show(context, isAuthenticated),
-                          child: const Text(
-                            'Ver todos',
-                            style: TextStyle(
-                              color: Color(0xFF8F2A1D),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    GridView(
-                      padding: EdgeInsets.zero,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                        mainAxisExtent: 106,
+                if (isOnline) ...[
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.grid_view_rounded,
+                        color: Color(0xFF2563EB),
+                        size: 20,
                       ),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        _buildServiceCard(
-                          context,
-                          'Pagamentos',
-                          'Área Financeira',
-                          Icons.assignment,
-                          '/pagamentos',
+                      SizedBox(width: 7),
+                      Text(
+                        'Serviços',
+                        style: TextStyle(
+                          color: Color(0xFF202322),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
                         ),
-                        _buildServiceCard(
-                          context,
-                          'Designações',
-                          'Ativas',
-                          Icons.assignment_ind,
-                          '/designacoes',
-                        ),
-                        _buildServiceCard(
-                          context,
-                          'Processos',
-                          'Consulta',
-                          Icons.gavel,
-                          '/processos',
-                        ),
-                        _buildServiceCard(
-                          context,
-                          'Diário Oficial',
-                          'Publicações',
-                          Icons.article,
-                          '/diario_oficial',
-                        ),
-                        _buildServiceCard(
-                          context,
-                          'Ouvidoria',
-                          'Manifestações',
-                          Icons.record_voice_over,
-                          '/ouvidoria',
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
-                    const SizedBox(height: 18),
+                  GridView(
+                    padding: EdgeInsets.zero,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          mainAxisExtent: 92,
+                        ),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildServiceCard(
+                        context,
+                        'Certidão',
+                        'Extrajudicial',
+                        Icons.verified_outlined,
+                        '/certidao-extrajudicial',
+                      ),
+                      _buildServiceCard(
+                        context,
+                        'Contracheque',
+                        'Demonstrativo',
+                        Icons.receipt_long_rounded,
+                        '/contracheque',
+                      ),
+                      _buildServiceCard(
+                        context,
+                        'Designações',
+                        'Ativas',
+                        Icons.assignment_ind,
+                        '/designacoes',
+                      ),
+                      _buildServiceCard(
+                        context,
+                        'Diário Oficial',
+                        'Publicações',
+                        Icons.article,
+                        '/diario_oficial',
+                      ),
+                      _buildServiceCard(
+                        context,
+                        'Folga',
+                        'Concessões',
+                        Icons.event_available_rounded,
+                        '/concessao-folga',
+                      ),
+                      _buildServiceCard(
+                        context,
+                        'Ouvidoria',
+                        'Manifestações',
+                        Icons.record_voice_over,
+                        '/ouvidoria',
+                      ),
+                      _buildServiceCard(
+                        context,
+                        'Pagamentos',
+                        'Área Financeira',
+                        Icons.assignment,
+                        '/pagamentos',
+                      ),
+                      _buildServiceCard(
+                        context,
+                        'Processos',
+                        'Consulta',
+                        Icons.gavel,
+                        '/processos',
+                      ),
+                    ],
+                  ),
 
-                    // NOTÍCIAS
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        const Text(
-                          'Notícias',
-                          style: TextStyle(
-                            color: Color(0xFF2F2923),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
+                  const SizedBox(height: 34),
+
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.newspaper_rounded,
+                        color: Color(0xFFD62828),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 7),
+                      const Text(
+                        'Notícias',
+                        style: TextStyle(
+                          color: Color(0xFF202322),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const Spacer(),
+                      FilledButton(
+                        onPressed: () => context.go('/noticias'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFD62828),
+                          foregroundColor: const Color(0xFFD62828),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
+                          ),
+                          minimumSize: const Size(82, 34),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          elevation: 0,
+                          side: const BorderSide(color: Color(0xFFD62828)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => context.go('/noticias'),
-                          child: const Text(
-                            'Ver todas',
-                            style: TextStyle(
-                              color: Color(0xFF8F2A1D),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
+                        child: const Text(
+                          'Todas as notícias',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (noticiaState.isLoading && carouselNews.isEmpty)
+                    Container(
+                      height: 280,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFD62828),
+                        ),
+                      ),
+                    )
+                  else if (carouselNews.isEmpty)
+                    Container(
+                      constraints: const BoxConstraints(minHeight: 108),
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0x26343A40)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.newspaper,
+                            color: Color(0xFFD62828),
+                            size: 24,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Nenhuma notícia disponível no momento.',
+                              style: TextStyle(color: Color(0xFF697370)),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    SizedBox(
+                      height: 380,
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: carouselNews.length,
+                        padEnds: false,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentNewsIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final noticia = carouselNews[index];
+                          String dateFormatted = noticia.dataPublicacao ?? '';
+                          final parts = dateFormatted.split(' ');
+                          if (parts.length > 1) {
+                            dateFormatted = '${parts[0]}, ${parts[1]}';
+                          }
 
-                    if (noticiaState.isLoading && carouselNews.isEmpty)
-                      Container(
-                        height: 280,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF8F2A1D),
-                          ),
-                        ),
-                      )
-                    else if (carouselNews.isEmpty)
-                      Container(
-                        constraints: const BoxConstraints(minHeight: 108),
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7EFE3),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0x599C7A54)),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.newspaper,
-                              color: Color(0xFF8F2A1D),
-                              size: 24,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Nenhuma notícia disponível no momento.',
-                                style: TextStyle(color: Color(0xFF73543E)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else ...[
-                      SizedBox(
-                        height: 420,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: carouselNews.length,
-                          padEnds: false,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentNewsIndex = index;
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            final noticia = carouselNews[index];
-                            String dateFormatted = noticia.dataPublicacao ?? '';
-                            final parts = dateFormatted.split(' ');
-                            if (parts.length > 1) {
-                              dateFormatted = '${parts[0]}, ${parts[1]}';
-                            }
-
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 12.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF7EFE3),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: const Color(0x599C7A54),
-                                  ),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x24432B1D),
-                                      blurRadius: 30,
-                                      offset: Offset(0, 14),
-                                    ),
-                                  ],
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 12.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0x26343A40),
                                 ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    // IMAGE
-                                    Expanded(
-                                      flex: 9,
-                                      child: GestureDetector(
-                                        onTap: () => _openNews(noticia.link),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                                  topLeft: Radius.circular(15),
-                                                  topRight: Radius.circular(15),
-                                                ),
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                Color(0xFF2E2722),
-                                                Color(0xFF3A241D),
-                                                Color(0xFF8F2A1D),
-                                              ],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ),
-                                            image:
-                                                noticia.imagemUrl != null &&
-                                                    noticia
-                                                        .imagemUrl!
-                                                        .isNotEmpty
-                                                ? DecorationImage(
-                                                    image: NetworkImage(
-                                                      noticia.imagemUrl!,
-                                                    ),
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                : null,
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x14101828),
+                                    blurRadius: 18,
+                                    offset: Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // IMAGE
+                                  Expanded(
+                                    flex: 9,
+                                    child: GestureDetector(
+                                      onTap: () => _openNews(noticia.link),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(15),
+                                            topRight: Radius.circular(15),
                                           ),
-                                          child:
-                                              (noticia.imagemUrl == null ||
-                                                  noticia.imagemUrl!.isEmpty)
-                                              ? const Center(
-                                                  child: Icon(
-                                                    Icons.newspaper,
-                                                    color: Color(0xFFE5B84C),
-                                                    size: 42,
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFF202322),
+                                              Color(0xFF2563EB),
+                                              Color(0xFFD62828),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          image:
+                                              noticia.imagemUrl != null &&
+                                                  noticia.imagemUrl!.isNotEmpty
+                                              ? DecorationImage(
+                                                  image: NetworkImage(
+                                                    noticia.imagemUrl!,
                                                   ),
+                                                  fit: BoxFit.cover,
                                                 )
                                               : null,
                                         ),
+                                        child:
+                                            (noticia.imagemUrl == null ||
+                                                noticia.imagemUrl!.isEmpty)
+                                            ? const Center(
+                                                child: Icon(
+                                                  Icons.newspaper,
+                                                  color: Color(0xFFD62828),
+                                                  size: 42,
+                                                ),
+                                              )
+                                            : null,
                                       ),
                                     ),
-                                    // CONTENT
-                                    Expanded(
-                                      flex: 11,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 18,
-                                          right: 16,
-                                          top: 16,
-                                          bottom: 10,
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 9,
-                                                    vertical: 7,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF2E2722),
-                                                borderRadius:
-                                                    BorderRadius.circular(999),
-                                              ),
-                                              child: Text(
-                                                (noticia.categoria ??
-                                                        'Destaque')
-                                                    .toUpperCase(),
-                                                style: const TextStyle(
-                                                  color: Color(0xFFE5B84C),
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w900,
-                                                  letterSpacing: 0.6,
-                                                  height: 1.0,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              dateFormatted,
-                                              style: const TextStyle(
-                                                color: Color(0xFF806F5E),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              noticia.titulo,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Color(0xFF2F2923),
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w900,
-                                                height: 1.18,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Expanded(
-                                              child: Text(
-                                                noticia.resumo ?? '',
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: Color(0xFF73543E),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  height: 1.4,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    // ACTIONS
-                                    Padding(
+                                  ),
+                                  // CONTENT
+                                  Expanded(
+                                    flex: 11,
+                                    child: Padding(
                                       padding: const EdgeInsets.only(
                                         left: 18,
                                         right: 16,
-                                        bottom: 16,
+                                        top: 16,
+                                        bottom: 10,
                                       ),
-                                      child: Row(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () =>
-                                                  _openNews(noticia.link),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(
-                                                  0xFF8F2A1D,
-                                                ),
-                                                foregroundColor: const Color(
-                                                  0xFFFFF8EA,
-                                                ),
-                                                elevation: 0,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                minimumSize: const Size(0, 40),
-                                                textStyle: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w900,
-                                                ),
-                                              ),
-                                              child: const FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    Text('Ler notícia'),
-                                                    SizedBox(width: 6),
-                                                    Icon(
-                                                      Icons.open_in_new,
-                                                      size: 16,
-                                                    ),
-                                                  ],
-                                                ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 9,
+                                              vertical: 7,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0x1FD62828),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            child: Text(
+                                              (noticia.categoria ?? 'Destaque')
+                                                  .toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Color(0xFFD62828),
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.2,
+                                                height: 1.0,
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          ElevatedButton(
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            dateFormatted,
+                                            style: const TextStyle(
+                                              color: Color(0xFF697370),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            noticia.titulo,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: Color(0xFF202322),
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w900,
+                                              height: 1.18,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Expanded(
+                                            child: Text(
+                                              noticia.resumo ?? '',
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Color(0xFF697370),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // ACTIONS
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 18,
+                                      right: 16,
+                                      bottom: 16,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 136,
+                                          child: ElevatedButton(
                                             onPressed: () =>
-                                                context.go('/noticias'),
+                                                _openNews(noticia.link),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(
-                                                0xFFEAD4A3,
+                                                0xFFD62828,
                                               ),
                                               foregroundColor: const Color(
-                                                0xFF5C3C22,
+                                                0xFFFFFFFF,
                                               ),
                                               elevation: 0,
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                               ),
-                                              minimumSize: const Size(0, 40),
+                                              minimumSize: const Size(0, 32),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
                                               textStyle: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w900,
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                             ),
-                                            child: const Text('Todas'),
+                                            child: const FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text('Ler notícia'),
+                                                  SizedBox(width: 5),
+                                                  Icon(
+                                                    Icons.open_in_new,
+                                                    size: 14,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      // DOTS
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          carouselNews.length,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            height: 7,
-                            width: _currentNewsIndex == index ? 20 : 7,
-                            decoration: BoxDecoration(
-                              color: _currentNewsIndex == index
-                                  ? const Color(0xFF8F2A1D)
-                                  : const Color(0x338F2A1D),
-                              borderRadius: BorderRadius.circular(4),
                             ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // DOTS
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        carouselNews.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          height: 7,
+                          width: _currentNewsIndex == index ? 20 : 7,
+                          decoration: BoxDecoration(
+                            color: _currentNewsIndex == index
+                                ? const Color(0xFFD62828)
+                                : const Color(0x33D62828),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                        ),
-                      ),
-                    ],
-                  ] else ...[
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.wifi_off,
-                              color: Color(0xFF806F5E),
-                              size: 48,
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'Você está offline',
-                              style: TextStyle(
-                                color: Color(0xFF2F2923),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Serviços online indisponíveis.\nAcesse sua Carteira Funcional acima.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Color(0xFF806F5E),
-                                fontSize: 14,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
                   ],
+                ] else ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.wifi_off,
+                            color: Color(0xFF697370),
+                            size: 48,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Você está offline',
+                            style: TextStyle(
+                              color: Color(0xFF202322),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Serviços online indisponíveis.\nAcesse sua Carteira Funcional acima.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFF697370),
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ),
@@ -877,66 +869,61 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       onTap: () => context.go(route),
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7EFE3),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0x599C7A54)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0x26343A40)),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x1E432B1D),
-              blurRadius: 26,
-              offset: Offset(0, 12),
+              color: Color(0x10101828),
+              blurRadius: 14,
+              offset: Offset(0, 5),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAD4A3),
-                borderRadius: BorderRadius.circular(12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -15,
+                bottom: -22,
+                child: Icon(icon, color: const Color(0x24343A40), size: 86),
               ),
-              child: Icon(icon, color: const Color(0xFF8F2A1D), size: 20),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFF2F2923),
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                height: 1.2,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF806F5E),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF202322),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        height: 1.15,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF697370),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                        height: 1.15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFF8F2A1D),
-                  size: 16,
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

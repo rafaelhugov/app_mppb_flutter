@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/ouvidoria_provider.dart';
 import '../../utils/input_formatters.dart';
+import 'ouvidoria_form_style.dart';
 
 class StepIdentificacao extends ConsumerWidget {
   const StepIdentificacao({super.key});
@@ -22,66 +23,133 @@ class StepIdentificacao extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('Manifestação Anônima', style: TextStyle(fontSize: 16)),
+                  Text(
+                    'Manifestação Anônima',
+                    style: TextStyle(
+                      color: OuvidoriaFormStyle.ink,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   SizedBox(height: 4),
-                  Text('O anonimato inviabiliza a identificação, mas denúncias sem informações podem não ser atendidas.', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                  Text(
+                    'O anonimato inviabiliza a identificação, mas denúncias sem informações podem não ser atendidas.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: OuvidoriaFormStyle.muted,
+                      height: 1.3,
+                    ),
+                  ),
                 ],
               ),
             ),
             Switch(
               value: model.anonimo,
-              activeColor: const Color(0xFF8F2A1D),
+              activeThumbColor: OuvidoriaFormStyle.accent,
               onChanged: (val) => notifier.updateField((m) => m.anonimo = val),
             ),
           ],
         ),
         if (!model.anonimo) ...[
-          const Divider(),
-          const Text('Dados do Remetente', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF3A241D))),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () => notifier.updateField((m) => m.tipoRemetente = 'F'),
-                  child: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'F',
-                        groupValue: model.tipoRemetente,
-                        activeColor: const Color(0xFF8F2A1D),
-                        onChanged: (val) => notifier.updateField((m) => m.tipoRemetente = val!),
-                      ),
-                      const Expanded(child: Text('Pessoa Física')),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: InkWell(
-                  onTap: () => notifier.updateField((m) => m.tipoRemetente = 'J'),
-                  child: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'J',
-                        groupValue: model.tipoRemetente,
-                        activeColor: const Color(0xFF8F2A1D),
-                        onChanged: (val) => notifier.updateField((m) => m.tipoRemetente = val!),
-                      ),
-                      const Expanded(child: Text('Pessoa Jurídica')),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(color: OuvidoriaFormStyle.border, height: 1),
           ),
+          const Text(
+            'Dados do Remetente',
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+              color: OuvidoriaFormStyle.ink,
+            ),
+          ),
+          const SizedBox(height: 10),
+          RadioGroup<String>(
+            groupValue: model.tipoRemetente,
+            onChanged: (val) =>
+                notifier.updateField((m) => m.tipoRemetente = val!),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () =>
+                        notifier.updateField((m) => m.tipoRemetente = 'F'),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Radio<String>(
+                            value: 'F',
+                            activeColor: OuvidoriaFormStyle.accent,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        SizedBox(width: 7),
+                        Expanded(
+                          child: Text(
+                            'Pessoa Física',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: OuvidoriaFormStyle.ink,
+                              fontSize: 11.4,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () =>
+                        notifier.updateField((m) => m.tipoRemetente = 'J'),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Radio<String>(
+                            value: 'J',
+                            activeColor: OuvidoriaFormStyle.accent,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        SizedBox(width: 7),
+                        Expanded(
+                          child: Text(
+                            'Pessoa Jurídica',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: OuvidoriaFormStyle.ink,
+                              fontSize: 11.4,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           TextFormField(
             initialValue: model.cpfCnpj,
-            decoration: InputDecoration(
+            decoration: OuvidoriaFormStyle.inputDecoration(
               labelText: model.tipoRemetente == 'F' ? 'CPF' : 'CNPJ',
-              border: const OutlineInputBorder(),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
             keyboardType: TextInputType.number,
             inputFormatters: [CpfCnpjInputFormatter()],
@@ -90,35 +158,23 @@ class StepIdentificacao extends ConsumerWidget {
           const SizedBox(height: 12),
           TextFormField(
             initialValue: model.nome,
-            decoration: const InputDecoration(
-              labelText: 'Nome',
-              border: const OutlineInputBorder(),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            ),
+            decoration: OuvidoriaFormStyle.inputDecoration(labelText: 'Nome'),
             onChanged: (val) => notifier.updateField((m) => m.nome = val),
           ),
           const SizedBox(height: 12),
           TextFormField(
             initialValue: model.nomeSocial,
-            decoration: const InputDecoration(
+            decoration: OuvidoriaFormStyle.inputDecoration(
               labelText: 'Nome Social (Opcional)',
-              border: const OutlineInputBorder(),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
             onChanged: (val) => notifier.updateField((m) => m.nomeSocial = val),
           ),
           const SizedBox(height: 12),
           if (model.tipoRemetente == 'F') ...[
             DropdownButtonFormField<String>(
-              value: model.sexo,
-              decoration: const InputDecoration(
-                labelText: 'Sexo',
-                border: OutlineInputBorder(),
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              ),
+              initialValue: model.sexo,
+              isExpanded: true,
+              decoration: OuvidoriaFormStyle.inputDecoration(labelText: 'Sexo'),
               items: const [
                 DropdownMenuItem(value: 'M', child: Text('Masculino')),
                 DropdownMenuItem(value: 'F', child: Text('Feminino')),
@@ -130,22 +186,16 @@ class StepIdentificacao extends ConsumerWidget {
           ],
           TextFormField(
             initialValue: model.endereco,
-            decoration: const InputDecoration(
+            decoration: OuvidoriaFormStyle.inputDecoration(
               labelText: 'Endereço',
-              border: const OutlineInputBorder(),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
             onChanged: (val) => notifier.updateField((m) => m.endereco = val),
           ),
           const SizedBox(height: 12),
           TextFormField(
             initialValue: model.telefone,
-            decoration: const InputDecoration(
+            decoration: OuvidoriaFormStyle.inputDecoration(
               labelText: 'Telefone / Celular',
-              border: OutlineInputBorder(),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
             keyboardType: TextInputType.phone,
             inputFormatters: [TelefoneInputFormatter()],
@@ -154,12 +204,7 @@ class StepIdentificacao extends ConsumerWidget {
           const SizedBox(height: 12),
           TextFormField(
             initialValue: model.email,
-            decoration: const InputDecoration(
-              labelText: 'E-mail',
-              border: const OutlineInputBorder(),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            ),
+            decoration: OuvidoriaFormStyle.inputDecoration(labelText: 'E-mail'),
             keyboardType: TextInputType.emailAddress,
             onChanged: (val) => notifier.updateField((m) => m.email = val),
           ),

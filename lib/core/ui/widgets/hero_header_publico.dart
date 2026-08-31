@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../mppb_app_bar.dart';
+import 'package:go_router/go_router.dart';
 
 class HeroHeaderPublico extends StatelessWidget {
   final String label;
@@ -19,93 +19,58 @@ class HeroHeaderPublico extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final topPadding =
-        MediaQuery.paddingOf(context).top + MppbAppBar.altura + 8;
-
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(22, topPadding, 22, 14),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0x3DD6A92F), width: 1)),
-        gradient: LinearGradient(
-          colors: [Color(0xFF241D19), Color(0xFF3A241D), Color(0xFF8F2A1D)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          stops: [0.0, 0.46, 1.0],
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      height: 50,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
+          Positioned(
+            left: 0,
+            child: IconButton(
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/');
+                }
+              },
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 17),
+              color: const Color(0xFF5C5146),
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0x0A101828),
+                fixedSize: const Size(32, 32),
+                minimumSize: const Size(32, 32),
+                padding: EdgeInsets.zero,
+                shape: const CircleBorder(),
               ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color.fromRGBO(255, 222, 142, 0.44),
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(36, 18, 12, 0.30),
-                  blurRadius: 18,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: const Color(0xFF211713), size: 25),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, // COMPACT HEIGHT
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xFFE3C474),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.9,
-                    height: 1.05,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 23,
-                    fontWeight: FontWeight.w900,
-                    height: 1.03,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.white.withAlpha(217),
-                    fontSize: 14,
-                    height: 1.18,
-                  ),
-                ),
-              ],
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Voltar',
             ),
           ),
-          if (rightWidget != null) ...[
-            const SizedBox(width: 8),
-            Align(alignment: Alignment.centerRight, child: rightWidget!),
-          ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 56),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF241D19),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                height: 1.0,
+              ),
+            ),
+          ),
+          if (rightWidget != null)
+            Positioned(
+              right: 6,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: rightWidget!,
+              ),
+            ),
         ],
       ),
     );

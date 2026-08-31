@@ -43,7 +43,7 @@ enum TipoConcessao {
       case TipoConcessao.licencaPremio:
         return 'Licença Especial';
       case TipoConcessao.licencaEleitoral:
-        return 'Afastamento Eleiroral';
+        return 'Afastamento Eleitoral';
       case TipoConcessao.plantao:
         return 'Plantão';
       case TipoConcessao.diarias:

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -9,7 +10,48 @@ import '../network/connectivity_provider.dart';
 import 'mppb_app_bar.dart';
 import 'widgets/services_bottom_sheet.dart';
 
+class _DockSlot {
+  const _DockSlot.item({
+    required this.index,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  }) : width = null;
+
+  const _DockSlot.space(this.width)
+    : index = null,
+      icon = null,
+      label = null,
+      onTap = null;
+
+  final int? index;
+  final IconData? icon;
+  final String? label;
+  final VoidCallback? onTap;
+  final double? width;
+}
+
+class _DockIndicatorMetrics {
+  const _DockIndicatorMetrics({required this.left, required this.width});
+
+  final double left;
+  final double width;
+}
+
 class MainLayout extends ConsumerStatefulWidget {
+  static const double dockStructuralHeight = 60;
+  static const double dockContentGap = 16;
+  static const double authenticatedHorizontalPadding = 16;
+  static const double authenticatedSectionGap = 12;
+
+  static double contentBottomPadding(BuildContext context) {
+    return MediaQuery.paddingOf(context).bottom + dockContentGap;
+  }
+
+  static double authenticatedContentTopPadding(BuildContext context) {
+    return authenticatedSectionGap;
+  }
+
   final Widget child;
 
   const MainLayout({super.key, required this.child});
@@ -112,18 +154,14 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   int _getFlexForLabel(String label) {
     switch (label) {
-      case 'Contracheque':
-        return 16;
-      case 'Designações':
-      case 'Pagamentos':
-        return 14;
-      case 'Processos':
-      case 'Ouvidoria':
-        return 13;
-      case 'Carteira':
-      case 'Notícias':
-        return 12;
-      case 'Diário':
+      case 'Contr.':
+      case 'Pagam.':
+      case 'Desig.':
+      case 'Proc.':
+      case 'Ouvid.':
+      case 'Cart.':
+      case 'Notíc.':
+      case 'Diár.':
         return 11;
       case 'Início':
       case 'Folga':
@@ -141,10 +179,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   ) {
     final isSelected = index == selectedIndex;
 
-    const selectedBgColor = Color(0xFFFFF0C2);
-    const selectedIconColor = Color(0xFFA96A1D);
-    const selectedTextColor = Color(0xFF5E421E);
-    const unselectedColor = Color(0xFF8B8177);
+    const selectedIconColor = Color(0xFFF7F8F6);
+    const selectedTextColor = Color(0xFFF7F8F6);
+    const unselectedColor = Color(0xDDF7F8F6);
 
     return Flexible(
       flex: _getFlexForLabel(label),
@@ -157,56 +194,52 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             child: InkWell(
               onTap: onTap,
               borderRadius: BorderRadius.circular(24),
-              splashColor: const Color(0xFF9C7A54).withAlpha(25),
-              highlightColor: const Color(0xFF9C7A54).withAlpha(15),
+              splashColor: const Color(0xFFF7F8F6).withAlpha(18),
+              highlightColor: const Color(0xFFF7F8F6).withAlpha(10),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
-                constraints: const BoxConstraints(minWidth: 44, minHeight: 40),
-                decoration: isSelected
-                    ? BoxDecoration(
-                        color: selectedBgColor,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0x55E5B84C)),
-                      )
-                    : BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.transparent),
-                      ),
-                padding: EdgeInsets.symmetric(
-                  vertical: 4,
-                  horizontal: isSelected ? 10 : 4,
+                constraints: const BoxConstraints(minWidth: 42, minHeight: 37),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: Colors.transparent),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 18,
-                      color: isSelected ? selectedIconColor : unselectedColor,
-                    ),
-                    const SizedBox(height: 2),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          letterSpacing: 0,
-                          color: isSelected
-                              ? selectedTextColor
-                              : unselectedColor,
-                          fontWeight: isSelected
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          height: 1,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 3,
+                    horizontal: isSelected ? 8 : 3,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 17,
+                        color: isSelected ? selectedIconColor : unselectedColor,
+                      ),
+                      const SizedBox(height: 1),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 9,
+                            letterSpacing: 0,
+                            color: isSelected
+                                ? selectedTextColor
+                                : unselectedColor,
+                            fontWeight: isSelected
+                                ? FontWeight.w800
+                                : FontWeight.w600,
+                            height: 1,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -220,13 +253,13 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
-      width: isHome ? 0.0 : 54.0,
-      height: isHome ? 0.0 : 50.0,
+      width: isHome ? 0.0 : 50.0,
+      height: isHome ? 0.0 : 46.0,
       alignment: Alignment.center,
       clipBehavior: Clip.none,
       child: OverflowBox(
-        maxWidth: 54.0,
-        maxHeight: 50.0,
+        maxWidth: 50.0,
+        maxHeight: 46.0,
         minWidth: 0.0,
         minHeight: 0.0,
         child: AnimatedOpacity(
@@ -240,29 +273,158 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             child: GestureDetector(
               onTap: isHome ? null : onTap,
               child: Container(
-                width: 50,
-                height: 50,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8F2A1D),
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x3D8F2A1D),
-                      blurRadius: 14,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
+                  color: const Color(0xFF202322),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0x26FFFFFF)),
                 ),
                 child: const Icon(
                   Icons.add_rounded,
-                  color: Color(0xFFFFF8EA),
-                  size: 30,
+                  color: Color(0xFFF7F8F6),
+                  size: 26,
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  _DockIndicatorMetrics? _calculateDockIndicator(
+    List<_DockSlot> slots,
+    int selectedIndex,
+    double width,
+  ) {
+    final selectedSlot = slots.where((slot) => slot.index == selectedIndex);
+    if (selectedSlot.isEmpty) return null;
+
+    final fixedWidth = slots.fold<double>(
+      0,
+      (sum, slot) => sum + (slot.width ?? 0),
+    );
+    final totalFlex = slots.fold<int>(
+      0,
+      (sum, slot) =>
+          sum + (slot.label == null ? 0 : _getFlexForLabel(slot.label!)),
+    );
+    if (totalFlex == 0) return null;
+
+    final flexWidth = math.max(0.0, width - fixedWidth);
+    var offset = 0.0;
+
+    for (final slot in slots) {
+      final slotWidth =
+          slot.width ?? flexWidth * _getFlexForLabel(slot.label!) / totalFlex;
+      if (slot.index == selectedIndex) {
+        final indicatorWidth = math.min(math.max(slotWidth - 4, 48.0), 64.0);
+        return _DockIndicatorMetrics(
+          left: offset + (slotWidth - indicatorWidth) / 2,
+          width: indicatorWidth,
+        );
+      }
+      offset += slotWidth;
+    }
+
+    return null;
+  }
+
+  Widget _buildDockIndicator(List<_DockSlot> slots, int selectedIndex) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final metrics = _calculateDockIndicator(
+          slots,
+          selectedIndex,
+          constraints.maxWidth,
+        );
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            if (metrics != null)
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 420),
+                curve: Curves.easeInOutCubic,
+                left: metrics.left,
+                top: 5,
+                width: metrics.width,
+                height: 40,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: const Color(0x0FFFFFFF),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: const Color(0x38FFFFFF),
+                              width: 0.55,
+                            ),
+                            gradient: const RadialGradient(
+                              center: Alignment.topCenter,
+                              radius: 1.1,
+                              colors: [
+                                Color(0x30FFFFFF),
+                                Color(0x12FFFFFF),
+                                Color(0x08000000),
+                              ],
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x44000000),
+                                blurRadius: 12,
+                                spreadRadius: -1,
+                              ),
+                              BoxShadow(
+                                color: Color(0x24FFFFFF),
+                                blurRadius: 10,
+                                spreadRadius: -3,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Align(
+                          alignment: const Alignment(0, -0.18),
+                          child: Container(
+                            width: metrics.width * 0.74,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              gradient: const RadialGradient(
+                                colors: [Color(0x24FFFFFF), Color(0x00FFFFFF)],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Row(
+              children: slots.map((slot) {
+                if (slot.width != null) {
+                  return SizedBox(width: slot.width);
+                }
+
+                return _buildNavItem(
+                  slot.index!,
+                  slot.icon!,
+                  slot.label!,
+                  selectedIndex,
+                  slot.onTap!,
+                );
+              }).toList(),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -276,37 +438,33 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     required String extraRoute,
     required bool isHome,
   }) {
-    final children = isAuthenticated
+    final slots = isAuthenticated
         ? isOnline
               ? [
-                  _buildNavItem(
-                    0,
-                    Icons.home_rounded,
-                    'Início',
-                    selectedIndex,
-                    () => _onItemTapped(0, context, isAuthenticated),
+                  _DockSlot.item(
+                    index: 0,
+                    icon: Icons.home_rounded,
+                    label: 'Início',
+                    onTap: () => _onItemTapped(0, context, isAuthenticated),
                   ),
-                  _buildNavItem(
-                    1,
-                    Icons.receipt_long_rounded,
-                    'Contracheque',
-                    selectedIndex,
-                    () => _onItemTapped(1, context, isAuthenticated),
+                  _DockSlot.item(
+                    index: 1,
+                    icon: Icons.receipt_long_rounded,
+                    label: 'Contr.',
+                    onTap: () => _onItemTapped(1, context, isAuthenticated),
                   ),
-                  const SizedBox(width: 54),
-                  _buildNavItem(
-                    3,
-                    Icons.badge_rounded,
-                    'Carteira',
-                    selectedIndex,
-                    () => _onItemTapped(3, context, isAuthenticated),
+                  const _DockSlot.space(52),
+                  _DockSlot.item(
+                    index: 3,
+                    icon: Icons.badge_rounded,
+                    label: 'Cart.',
+                    onTap: () => _onItemTapped(3, context, isAuthenticated),
                   ),
-                  _buildNavItem(
-                    4,
-                    extraIcon,
-                    extraLabel,
-                    selectedIndex,
-                    () => _onItemTapped(
+                  _DockSlot.item(
+                    index: 4,
+                    icon: extraIcon,
+                    label: extraLabel,
+                    onTap: () => _onItemTapped(
                       4,
                       context,
                       isAuthenticated,
@@ -315,53 +473,46 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   ),
                 ]
               : [
-                  _buildNavItem(
-                    0,
-                    Icons.home_rounded,
-                    'Início',
-                    selectedIndex,
-                    () => _onItemTapped(0, context, isAuthenticated),
+                  _DockSlot.item(
+                    index: 0,
+                    icon: Icons.home_rounded,
+                    label: 'Início',
+                    onTap: () => _onItemTapped(0, context, isAuthenticated),
                   ),
-                  const Spacer(),
-                  const SizedBox(width: 54),
-                  const Spacer(),
-                  _buildNavItem(
-                    3,
-                    Icons.badge_rounded,
-                    'Carteira',
-                    selectedIndex,
-                    () => _onItemTapped(3, context, isAuthenticated),
+                  const _DockSlot.space(52),
+                  const _DockSlot.space(52),
+                  _DockSlot.item(
+                    index: 3,
+                    icon: Icons.badge_rounded,
+                    label: 'Cart.',
+                    onTap: () => _onItemTapped(3, context, isAuthenticated),
                   ),
                 ]
         : [
-            _buildNavItem(
-              0,
-              Icons.home_rounded,
-              'Início',
-              selectedIndex,
-              () => _onItemTapped(0, context, isAuthenticated),
+            _DockSlot.item(
+              index: 0,
+              icon: Icons.home_rounded,
+              label: 'Início',
+              onTap: () => _onItemTapped(0, context, isAuthenticated),
             ),
-            _buildNavItem(
-              1,
-              Icons.gavel_rounded,
-              'Processos',
-              selectedIndex,
-              () => _onItemTapped(1, context, isAuthenticated),
+            _DockSlot.item(
+              index: 1,
+              icon: Icons.gavel_rounded,
+              label: 'Proc.',
+              onTap: () => _onItemTapped(1, context, isAuthenticated),
             ),
-            const SizedBox(width: 54),
-            _buildNavItem(
-              3,
-              Icons.description_rounded,
-              'Diário',
-              selectedIndex,
-              () => _onItemTapped(3, context, isAuthenticated),
+            const _DockSlot.space(52),
+            _DockSlot.item(
+              index: 3,
+              icon: Icons.description_rounded,
+              label: 'Diár.',
+              onTap: () => _onItemTapped(3, context, isAuthenticated),
             ),
-            _buildNavItem(
-              4,
-              extraIcon,
-              extraLabel,
-              selectedIndex,
-              () => _onItemTapped(
+            _DockSlot.item(
+              index: 4,
+              icon: extraIcon,
+              label: extraLabel,
+              onTap: () => _onItemTapped(
                 4,
                 context,
                 isAuthenticated,
@@ -372,11 +523,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final dockWidth = math.min(screenWidth - 40, 350.0);
-    final sideInset = math.max(20.0, (screenWidth - dockWidth) / 2);
+    final dockWidth = math.min(screenWidth - 56, 336.0);
+    final sideInset = math.max(28.0, (screenWidth - dockWidth) / 2);
 
     return SizedBox(
-      height: 64 + bottomInset,
+      height: MainLayout.dockStructuralHeight + bottomInset,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,
@@ -384,23 +535,23 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           Positioned(
             left: sideInset,
             right: sideInset,
-            bottom: bottomInset + 6,
+            bottom: bottomInset + 5,
             child: Container(
-              height: 52,
-              padding: const EdgeInsets.symmetric(horizontal: 5),
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFBF4).withAlpha(245),
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(color: const Color(0x66FFFFFF), width: 1.2),
+                color: const Color(0xFF202322).withAlpha(245),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0x26FFFFFF), width: 1),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x303A241D),
-                    blurRadius: 24,
-                    offset: Offset(0, 10),
+                    color: Color(0x33202322),
+                    blurRadius: 14,
+                    offset: Offset(0, 5),
                   ),
                 ],
               ),
-              child: Row(children: children),
+              child: _buildDockIndicator(slots, selectedIndex),
             ),
           ),
           Positioned(
@@ -437,7 +588,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     String route4 = '/concessao-folga';
     if (isAuthenticated) {
       if (location == '/pagamentos') {
-        label4 = 'Pagamentos';
+        label4 = 'Pagam.';
         icon4 = Icons.assignment_rounded;
         route4 = '/pagamentos';
       } else if (location == '/concessao-folga') {
@@ -445,38 +596,45 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
         icon4 = Icons.event_available_rounded;
         route4 = '/concessao-folga';
       } else if (location == '/designacoes') {
-        label4 = 'Designações';
+        label4 = 'Desig.';
         icon4 = Icons.assignment_ind_rounded;
         route4 = '/designacoes';
       } else if (location == '/processos') {
-        label4 = 'Processos';
+        label4 = 'Proc.';
         icon4 = Icons.gavel_rounded;
         route4 = '/processos';
       } else if (location == '/noticias') {
-        label4 = 'Notícias';
+        label4 = 'Notíc.';
         icon4 = Icons.newspaper_rounded;
         route4 = '/noticias';
       } else if (location == '/diario_oficial') {
-        label4 = 'Diário';
+        label4 = 'Diár.';
         icon4 = Icons.description_rounded;
         route4 = '/diario_oficial';
       }
     } else {
       if (location == '/ouvidoria') {
-        label4 = 'Ouvidoria';
+        label4 = 'Ouvid.';
         icon4 = Icons.record_voice_over;
         route4 = '/ouvidoria';
       } else {
-        label4 = 'Notícias';
+        label4 = 'Notíc.';
         icon4 = Icons.newspaper_rounded;
         route4 = '/noticias';
       }
     }
 
     return Scaffold(
-      extendBodyBehindAppBar: !isHiddenPage,
+      extendBodyBehindAppBar: false,
       extendBody: !isDockHidden,
-      appBar: isHiddenPage ? null : const MppbAppBar(),
+      appBar: isHiddenPage
+          ? null
+          : isAuthenticated
+          ? const PreferredSize(
+              preferredSize: Size.fromHeight(MppbAppBar.authenticatedAltura),
+              child: MppbAppBar(),
+            )
+          : const MppbAppBar(),
       body: NotificationListener<ScrollNotification>(
         onNotification: _handleScrollNotification,
         child: widget.child,

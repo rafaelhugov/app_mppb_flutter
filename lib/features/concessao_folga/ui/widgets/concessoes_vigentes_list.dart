@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/ui/main_layout.dart';
 import '../../models/concessao_folga.dart';
 import 'concessao_folga_card.dart';
 import 'concessao_folga_theme.dart';
@@ -33,7 +34,12 @@ class ConcessoesVigentesList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MainLayout.contentBottomPadding(context),
+        ),
         children: [
           if (errorMessage != null)
             _InlineError(message: errorMessage!, onRetry: onRetry),

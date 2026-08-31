@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/carteira/ui/carteira_page.dart';
+import '../../features/certidao_extrajudicial/ui/certidao_extrajudicial_page.dart';
 import '../../features/contra_cheque/ui/contra_cheque_page.dart';
 import '../../features/dashboard/ui/dashboard_page.dart';
 import '../../features/designacoes/ui/designacoes_page.dart';
@@ -56,6 +57,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/designacoes',
     '/noticias',
     '/diario_oficial',
+    '/certidao-extrajudicial',
     '/processos',
     '/ouvidoria',
   ];
@@ -132,6 +134,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/diario_oficial',
             builder: (context, state) => const DiarioOficialPage(),
+          ),
+          GoRoute(
+            path: '/certidao-extrajudicial',
+            builder: (context, state) => const CertidaoExtrajudicialPage(),
           ),
           GoRoute(
             path: '/noticias',

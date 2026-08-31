@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/ui/main_layout.dart';
 import '../providers/contra_cheque_provider.dart';
 import 'widgets/competencia_selector.dart';
 import 'widgets/grafico_contracheque.dart';
@@ -15,50 +16,46 @@ class ContraChequePage extends ConsumerWidget {
     final state = ref.watch(contraChequeProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDED4C5),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromRGBO(82, 56, 41, 0.20),
-              Color.fromRGBO(82, 56, 41, 0),
-            ],
-            stops: [0.0, 0.3], // Aproximando o 240px
+      backgroundColor: const Color(0xFFF7F8F6),
+      body: CustomScrollView(
+        slivers: [
+          const SliverToBoxAdapter(
+            child: FeatureHeader(
+              category: '',
+              title: 'Contracheque',
+              description: '',
+              icon: Icons.receipt_long,
+            ),
           ),
-        ),
-        child: CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(
-              child: FeatureHeader(
-                category: 'ÁREA FINANCEIRA',
-                title: 'Contracheque',
-                description: 'Visualize e baixe seus contracheques.',
-                icon: Icons.receipt_long,
-              ),
+          if (!state.isLoading && state.competenciaSelecionada != null)
+            const SliverPersistentHeader(
+              pinned: true,
+              delegate: _CompetenciaHeaderDelegate(),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              sliver: SliverToBoxAdapter(
-                child: state.isLoading
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(40.0),
-                          child: CircularProgressIndicator(color: Color(0xFF8F2A1D)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: MainLayout.authenticatedHorizontalPadding,
+              vertical: 8,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: state.isLoading
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40.0),
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF00A86B),
                         ),
-                      )
-                    : state.errorMessage != null
-                        ? _buildError(state.errorMessage!, ref)
-                        : _buildContent(state, context),
-              ),
+                      ),
+                    )
+                  : state.errorMessage != null
+                  ? _buildError(state.errorMessage!, ref)
+                  : _buildContent(state, context),
             ),
-            // Padding extra no final para o scroll não ficar colado
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 100),
-            ),
-          ],
-        ),
+          ),
+          SliverToBoxAdapter(
+            child: SizedBox(height: MainLayout.contentBottomPadding(context)),
+          ),
+        ],
       ),
     );
   }
@@ -68,24 +65,26 @@ class ContraChequePage extends ConsumerWidget {
       if (state.competenciaSelecionada != null) {
         return Column(
           children: [
-            const CompetenciaSelector(),
-            const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7EFE3),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color.fromRGBO(156, 122, 84, 0.35)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFE9EDF0)),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.receipt_long, size: 54, color: Color(0xFF8F2A1D)),
+                  const Icon(
+                    Icons.receipt_long,
+                    size: 54,
+                    color: Color(0xFF00A86B),
+                  ),
                   const SizedBox(height: 12),
                   const Text(
                     'Nenhum contracheque encontrado para esta competência.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Color(0xFF73543E),
+                      color: Color(0xFF697370),
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                     ),
@@ -100,35 +99,39 @@ class ContraChequePage extends ConsumerWidget {
     }
 
     final cheque = state.contrachequeAtual!;
-    final proventos = cheque.lancamentos.where((l) => l.tipo == 'V').toList();
+    final vantagens = cheque.lancamentos.where((l) => l.tipo == 'V').toList();
     final descontos = cheque.lancamentos.where((l) => l.tipo == 'D').toList();
 
     return Column(
       children: [
-        const CompetenciaSelector(),
-        const SizedBox(height: 16),
         GraficoContracheque(
           totalVantagens: cheque.valorBruto, // ou calcular da soma
           totalDescontos: cheque.totalDescontos,
           salarioLiquido: cheque.valorLiquido,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         OutlinedButton.icon(
           onPressed: () => _abrirPdf(context, cheque.linkPdf),
           icon: const Icon(Icons.file_download, size: 18),
           label: const Text('BAIXAR PDF'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF8F2A1D),
-            side: const BorderSide(color: Color.fromRGBO(143, 42, 29, 0.55), width: 1.5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+            foregroundColor: const Color(0xFF007A4D),
+            side: const BorderSide(color: Color(0x9900A86B), width: 1.2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
         const SizedBox(height: 22),
         if (cheque.lancamentos.isNotEmpty)
           ContrachequeLancamentos(
-            proventos: proventos,
+            vantagens: vantagens,
             descontos: descontos,
             totalVantagens: cheque.valorBruto, // Usando valor bruto como total
           ),
@@ -140,19 +143,19 @@ class ContraChequePage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7EFE3),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color.fromRGBO(143, 42, 29, 0.20)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE9EDF0)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error, color: Color(0xFF8F2A1D)),
+          const Icon(Icons.error, color: Color(0xFFD62828)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               error,
               style: const TextStyle(
-                color: Color(0xFF8F2A1D),
+                color: Color(0xFFD62828),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -181,4 +184,40 @@ class ContraChequePage extends ConsumerWidget {
       }
     }
   }
+}
+
+class _CompetenciaHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _CompetenciaHeaderDelegate();
+
+  @override
+  double get minExtent => 62;
+
+  @override
+  double get maxExtent => 62;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return ColoredBox(
+      color: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          MainLayout.authenticatedHorizontalPadding,
+          6,
+          MainLayout.authenticatedHorizontalPadding,
+          4,
+        ),
+        child: const Align(
+          alignment: Alignment.center,
+          child: CompetenciaSelector(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _CompetenciaHeaderDelegate oldDelegate) => false;
 }

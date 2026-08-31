@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/ouvidoria_provider.dart';
-import '../../data/models/combo_models.dart';
+import 'ouvidoria_form_style.dart';
 
 class StepClassificacao extends ConsumerWidget {
   const StepClassificacao({super.key});
@@ -22,101 +22,216 @@ class StepClassificacao extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('Sigilo', style: TextStyle(fontSize: 16)),
+                  Text(
+                    'Sigilo',
+                    style: TextStyle(
+                      color: OuvidoriaFormStyle.ink,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   SizedBox(height: 4),
-                  Text('Caso seja declarado sigilo, apenas os fatos relatados estarão protegidos.', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                  Text(
+                    'Caso seja declarado sigilo, apenas os fatos relatados estarão protegidos.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: OuvidoriaFormStyle.muted,
+                      height: 1.3,
+                    ),
+                  ),
                 ],
               ),
             ),
             Switch(
               value: model.sigilo,
-              activeColor: const Color(0xFF8F2A1D),
+              activeThumbColor: OuvidoriaFormStyle.accent,
               onChanged: (val) => notifier.updateField((m) => m.sigilo = val),
             ),
           ],
         ),
         if (model.sigilo) ...[
+          const SizedBox(height: 14),
           TextFormField(
             initialValue: model.justificativaSigilo,
-            decoration: const InputDecoration(
+            decoration: OuvidoriaFormStyle.inputDecoration(
               labelText: 'Justificativa do Sigilo',
-              border: OutlineInputBorder(),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
             maxLines: 2,
-            onChanged: (val) => notifier.updateField((m) => m.justificativaSigilo = val),
+            onChanged: (val) =>
+                notifier.updateField((m) => m.justificativaSigilo = val),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
         ],
-        
+
         if (!model.sigilo) ...[
-          const Text('Origem do Fato', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3A241D))),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          const Text(
+            'Origem do Fato',
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: OuvidoriaFormStyle.ink,
+            ),
+          ),
+          const SizedBox(height: 14),
           DropdownButtonFormField<int>(
-            value: model.origemMunicipio,
-            decoration: const InputDecoration(labelText: 'Município de Origem *', border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
-            isDense: true,
-            items: state.municipios.map((c) => DropdownMenuItem(value: c.id, child: Text(c.descricao))).toList(),
+            initialValue: model.origemMunicipio,
+            isExpanded: true,
+            decoration: OuvidoriaFormStyle.inputDecoration(
+              labelText: 'Município de Origem *',
+            ),
+            items: state.municipios
+                .map(
+                  (c) => DropdownMenuItem(
+                    value: c.id,
+                    child: Text(
+                      c.descricao,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
             onChanged: (val) {
               notifier.updateField((m) => m.origemMunicipio = val);
               notifier.loadBairros(val);
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           DropdownButtonFormField<int>(
-            value: model.origemBairro,
-            decoration: const InputDecoration(labelText: 'Bairro de Origem *', border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
-            isDense: true,
-            disabledHint: const Text('Selecione primeiro o Município'),
-            items: (model.origemMunicipio == null || state.bairros.isEmpty) 
-                ? null 
-                : state.bairros.map((c) => DropdownMenuItem(value: c.id, child: Text(c.descricao))).toList(),
-            onChanged: (val) => notifier.updateField((m) => m.origemBairro = val),
+            initialValue: model.origemBairro,
+            isExpanded: true,
+            decoration: OuvidoriaFormStyle.inputDecoration(
+              labelText: 'Bairro de Origem *',
+            ),
+            disabledHint: const Text(
+              'Selecione primeiro o Município',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            items: (model.origemMunicipio == null || state.bairros.isEmpty)
+                ? null
+                : state.bairros
+                      .map(
+                        (c) => DropdownMenuItem(
+                          value: c.id,
+                          child: Text(
+                            c.descricao,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+            onChanged: (val) =>
+                notifier.updateField((m) => m.origemBairro = val),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
         ],
 
-        const Text('Classificação', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3A241D))),
-        const SizedBox(height: 12),
+        const Text(
+          'Classificação',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            color: OuvidoriaFormStyle.ink,
+          ),
+        ),
+        const SizedBox(height: 14),
         DropdownButtonFormField<int>(
-          value: model.tipo,
-          decoration: const InputDecoration(labelText: 'Tipo de Manifestação', border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
-          isDense: true,
-          items: state.tipos.map((c) => DropdownMenuItem(value: c.id, child: Text(c.descricao))).toList(),
+          initialValue: model.tipo,
+          isExpanded: true,
+          decoration: OuvidoriaFormStyle.inputDecoration(
+            labelText: 'Tipo de Manifestação',
+          ),
+          items: state.tipos
+              .map(
+                (c) => DropdownMenuItem(
+                  value: c.id,
+                  child: Text(
+                    c.descricao,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: (val) => notifier.updateField((m) => m.tipo = val),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         DropdownButtonFormField<int>(
-          value: model.materia,
-          decoration: const InputDecoration(labelText: 'Matéria', border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
-          isDense: true,
-          items: state.materias.map((c) => DropdownMenuItem(value: c.id, child: Text(c.descricao))).toList(),
+          initialValue: model.materia,
+          isExpanded: true,
+          decoration: OuvidoriaFormStyle.inputDecoration(labelText: 'Matéria'),
+          items: state.materias
+              .map(
+                (c) => DropdownMenuItem(
+                  value: c.id,
+                  child: Text(
+                    c.descricao,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: (val) {
             notifier.updateField((m) => m.materia = val);
             notifier.loadAssuntos(val);
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         DropdownButtonFormField<int>(
-          value: model.assunto,
-          decoration: const InputDecoration(labelText: 'Assunto', border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
-          isDense: true,
-          disabledHint: const Text('Selecione primeiro a Matéria'),
+          initialValue: model.assunto,
+          isExpanded: true,
+          decoration: OuvidoriaFormStyle.inputDecoration(labelText: 'Assunto'),
+          disabledHint: const Text(
+            'Selecione primeiro a Matéria',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           items: (model.materia == null || state.assuntos.isEmpty)
               ? null
-              : state.assuntos.map((c) => DropdownMenuItem(value: c.id, child: Text(c.descricao))).toList(),
+              : state.assuntos
+                    .map(
+                      (c) => DropdownMenuItem(
+                        value: c.id,
+                        child: Text(
+                          c.descricao,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
           onChanged: (val) => notifier.updateField((m) => m.assunto = val),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
 
-        const Text('Destinatário', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3A241D))),
-        const SizedBox(height: 12),
+        const Text(
+          'Destinatário',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            color: OuvidoriaFormStyle.ink,
+          ),
+        ),
+        const SizedBox(height: 14),
         DropdownButtonFormField<int>(
-          value: model.municipio,
-          decoration: const InputDecoration(labelText: 'Município (Órgão Relacionado)', border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
-          isDense: true,
-          items: state.municipios.map((c) => DropdownMenuItem(value: c.id, child: Text(c.descricao))).toList(),
+          initialValue: model.municipio,
+          isExpanded: true,
+          decoration: OuvidoriaFormStyle.inputDecoration(
+            labelText: 'Município (Órgão Relacionado)',
+          ),
+          items: state.municipios
+              .map(
+                (c) => DropdownMenuItem(
+                  value: c.id,
+                  child: Text(
+                    c.descricao,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: (val) => notifier.updateField((m) => m.municipio = val),
         ),
       ],

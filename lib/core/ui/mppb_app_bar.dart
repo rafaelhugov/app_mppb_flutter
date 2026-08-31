@@ -4,6 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
 class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
+  static const Color background = Color(0xFFFAFAF7);
+  static const double altura = 36;
+  static const double authenticatedAltura = 46;
+
+  static double heightFor(bool isAuthenticated) {
+    return isAuthenticated ? authenticatedAltura : altura;
+  }
+
   const MppbAppBar({super.key});
 
   @override
@@ -13,59 +21,55 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     if (isAuthenticated) {
       return AppBar(
-        toolbarHeight: 52,
-        backgroundColor: const Color(0xFFFFFBF4),
+        toolbarHeight: MppbAppBar.authenticatedAltura,
+        backgroundColor: MppbAppBar.background,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         elevation: 0,
-        titleSpacing: 16,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color: const Color(0xFF9C7A54).withAlpha(71),
-            height: 1.0,
+        centerTitle: true,
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Image.asset(
+              'assets/images/brasao_mppb_sem_fundo.png',
+              height: 30,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
-        title: Row(
-          children: [
-            Image.asset('assets/images/brasao_mppb_sem_fundo.png', height: 30),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'MPPB+',
-                    style: TextStyle(
-                      color: Color(0xFF241D19),
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0,
-                      height: 1.1,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    'SERVIÇOS AO SERVIDOR',
-                    style: TextStyle(
-                      color: Color(0xFF8F2A1D),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.9,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: const Color(0xFFE8EEE4), height: 1.0),
+        ),
+        title: const Text(
+          'MPPB+',
+          style: TextStyle(
+            color: Color(0xFF4C4741),
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+            height: 1.0,
+          ),
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Color(0xFF8A6A00), size: 24),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(8),
+            icon: const Icon(
+              Icons.notifications,
+              color: Color(0xFF202322),
+              size: 22,
+            ),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFF8F2A1D), size: 24),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(8),
+            icon: const Icon(Icons.logout, color: Color(0xFF202322), size: 22),
             onPressed: () async {
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) {
@@ -79,20 +83,20 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
     }
 
     return AppBar(
-      toolbarHeight: 52,
-      backgroundColor: const Color(0xFFFFFBF4),
+      toolbarHeight: MppbAppBar.altura,
+      backgroundColor: MppbAppBar.background,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       elevation: 0,
       titleSpacing: 16,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
-        child: Container(
-          color: const Color(0xFF9C7A54).withAlpha(71),
-          height: 1.0,
-        ),
+        child: Container(color: const Color(0xFFE8EEE4), height: 1.0),
       ),
       title: Row(
         children: [
-          Image.asset('assets/images/brasao_mppb_sem_fundo.png', height: 30),
+          Image.asset('assets/images/brasao_mppb_sem_fundo.png', height: 28),
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
@@ -100,7 +104,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 22,
-                color: Color(0xFF241D19),
+                color: Color(0xFF202322),
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -115,7 +119,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
             icon: const Icon(Icons.login_rounded, size: 18),
             label: const Text('Entrar'),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF8F2A1D),
+              foregroundColor: const Color(0xFF202322),
               textStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
@@ -132,5 +136,5 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(52);
+  Size get preferredSize => const Size.fromHeight(altura);
 }

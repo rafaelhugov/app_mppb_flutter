@@ -5,20 +5,20 @@ import '../../../../shared/providers/privacy_provider.dart';
 import '../../models/contra_cheque.dart';
 
 class ContrachequeLancamentos extends StatelessWidget {
-  final List<LancamentoContracheque> proventos;
+  final List<LancamentoContracheque> vantagens;
   final List<LancamentoContracheque> descontos;
   final double totalVantagens;
 
   const ContrachequeLancamentos({
     super.key,
-    required this.proventos,
+    required this.vantagens,
     required this.descontos,
     required this.totalVantagens,
   });
 
   @override
   Widget build(BuildContext context) {
-    final int totalLancs = proventos.length + descontos.length;
+    final int totalLancs = vantagens.length + descontos.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +31,7 @@ class ContrachequeLancamentos extends StatelessWidget {
             const Text(
               'Lançamentos',
               style: TextStyle(
-                color: Color(0xFF2F2923),
+                color: Color(0xFF202322),
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
                 height: 1.2,
@@ -40,7 +40,7 @@ class ContrachequeLancamentos extends StatelessWidget {
             Text(
               '$totalLancs itens',
               style: const TextStyle(
-                color: Color(0xFF73543E),
+                color: Color(0xFF697370),
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
               ),
@@ -48,15 +48,15 @@ class ContrachequeLancamentos extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        if (proventos.isNotEmpty)
+        if (vantagens.isNotEmpty)
           _LancamentoGroup(
-            titulo: 'Proventos',
+            titulo: 'Vantagens',
             icon: Icons.trending_up,
-            colorTitle: const Color(0xFF2F7A43),
-            colorBgHeader: const Color(0xFF3F7A4A).withOpacity(0.08),
-            colorBorderHeader: const Color(0xFF3F7A4A).withOpacity(0.20),
-            colorIconBg: const Color(0xFF3F7A4A).withOpacity(0.16),
-            lancamentos: proventos,
+            colorTitle: const Color(0xFF00A86B),
+            colorBgHeader: const Color(0xFF00A86B),
+            colorBorderHeader: const Color(0xFF00A86B),
+            colorIconBg: const Color(0xFFFFFFFF).withValues(alpha: 0.22),
+            lancamentos: vantagens,
             totalVantagens: totalVantagens,
           ),
         if (descontos.isNotEmpty) ...[
@@ -64,10 +64,10 @@ class ContrachequeLancamentos extends StatelessWidget {
           _LancamentoGroup(
             titulo: 'Descontos',
             icon: Icons.trending_down,
-            colorTitle: const Color(0xFFC42E45),
-            colorBgHeader: const Color(0xFFC42E45).withOpacity(0.07),
-            colorBorderHeader: const Color(0xFFC42E45).withOpacity(0.18),
-            colorIconBg: const Color(0xFFC42E45).withOpacity(0.14),
+            colorTitle: const Color(0xFFD62828),
+            colorBgHeader: const Color(0xFFD62828),
+            colorBorderHeader: const Color(0xFFD62828),
+            colorIconBg: const Color(0xFFFFFFFF).withValues(alpha: 0.22),
             lancamentos: descontos,
             totalVantagens: totalVantagens,
           ),
@@ -102,14 +102,14 @@ class _LancamentoGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF7EFE3),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF9C7A54).withOpacity(0.35)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0x26343A40)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF432B1D).withOpacity(0.10),
-            blurRadius: 26,
-            offset: const Offset(0, 12),
+            color: const Color(0xFF101828).withValues(alpha: 0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -120,7 +120,9 @@ class _LancamentoGroup extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: colorBgHeader,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(21),
+              ),
               border: Border(bottom: BorderSide(color: colorBorderHeader)),
             ),
             child: Row(
@@ -132,7 +134,7 @@ class _LancamentoGroup extends StatelessWidget {
                     Text(
                       titulo,
                       style: TextStyle(
-                        color: colorTitle,
+                        color: Colors.white,
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                       ),
@@ -141,7 +143,7 @@ class _LancamentoGroup extends StatelessWidget {
                     Text(
                       '${lancamentos.length} lançamento${lancamentos.length != 1 ? 's' : ''}',
                       style: const TextStyle(
-                        color: Color(0xFF806F5E),
+                        color: Color(0xE6FFFFFF),
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -155,7 +157,7 @@ class _LancamentoGroup extends StatelessWidget {
                     color: colorIconBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: colorTitle, size: 20),
+                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
               ],
             ),
@@ -196,24 +198,31 @@ class _LancamentoItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isPrivacyEnabled = ref.watch(privacyProvider);
     final isVantagem = lancamento.tipo == 'V';
-    final currencyFormatter = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'pt_BR',
+      symbol: 'R\$',
+    );
     final formattedValue = currencyFormatter.format(lancamento.valor);
-    final displayedValue = isPrivacyEnabled ? '••••••' : (isVantagem ? formattedValue : '- $formattedValue');
-    
+    final displayedValue = isPrivacyEnabled
+        ? '••••••'
+        : (isVantagem ? formattedValue : '- $formattedValue');
+
     double percent = 0;
     if (totalVantagens > 0) {
       percent = (lancamento.valor / totalVantagens) * 100;
     }
     final String percentStr = percent.toStringAsFixed(1);
-    
-    final Color colorTrend = isVantagem ? const Color(0xFF1F7A3E) : const Color(0xFFC42E45);
+
+    final Color colorTrend = isVantagem
+        ? const Color(0xFF00A86B)
+        : const Color(0xFFD62828);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         border: showTopBorder
-            ? Border(top: BorderSide(color: const Color(0xFF9C7A54).withOpacity(0.22)))
+            ? Border(top: BorderSide(color: const Color(0x20343A40)))
             : null,
       ),
       child: Row(
@@ -226,7 +235,7 @@ class _LancamentoItem extends ConsumerWidget {
                 Text(
                   lancamento.descricao,
                   style: const TextStyle(
-                    color: Color(0xFF2F2923),
+                    color: Color(0xFF202322),
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                     height: 1.35,
@@ -236,7 +245,7 @@ class _LancamentoItem extends ConsumerWidget {
                 Text(
                   'Código ${lancamento.codigo}',
                   style: const TextStyle(
-                    color: Color(0xFF806F5E),
+                    color: Color(0xFF697370),
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                   ),

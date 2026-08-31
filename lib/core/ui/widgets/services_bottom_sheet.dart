@@ -9,14 +9,14 @@ class ServicesBottomSheet {
       builder: (BuildContext ctx) {
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xFFFDF7EF),
+            color: Color(0xFFF7F8F6),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),
             boxShadow: [
               BoxShadow(
-                color: Color(0x29432B1D),
+                color: Color(0x14101828),
                 blurRadius: 40,
                 offset: Offset(0, -8),
               ),
@@ -39,8 +39,8 @@ class ServicesBottomSheet {
                       const Text(
                         'Serviços',
                         style: TextStyle(
-                          color: Color(0xFF2F2923),
-                          fontSize: 15,
+                          color: Color(0xFF202322),
+                          fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -51,12 +51,12 @@ class ServicesBottomSheet {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF9C7A54).withAlpha(36),
+                            color: const Color(0x1A343A40),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
                             Icons.close,
-                            color: Color(0xFF73543E),
+                            color: Color(0xFF697370),
                             size: 18,
                           ),
                         ),
@@ -71,7 +71,8 @@ class ServicesBottomSheet {
                     children: isAuthenticated
                         ? [
                             SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
                                 Icons.newspaper,
@@ -80,7 +81,8 @@ class ServicesBottomSheet {
                               ),
                             ),
                             SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
                                 Icons.description,
@@ -89,7 +91,18 @@ class ServicesBottomSheet {
                               ),
                             ),
                             SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.verified_outlined,
+                                'Certidão',
+                                '/certidao-extrajudicial',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
                                 Icons.assignment,
@@ -97,17 +110,10 @@ class ServicesBottomSheet {
                                 '/pagamentos',
                               ),
                             ),
+
                             SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.event_available,
-                                'Concessões',
-                                '/concessao-folga',
-                              ),
-                            ),
-                            SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
                                 Icons.assignment_ind,
@@ -116,7 +122,8 @@ class ServicesBottomSheet {
                               ),
                             ),
                             SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
                                 Icons.gavel,
@@ -125,7 +132,8 @@ class ServicesBottomSheet {
                               ),
                             ),
                             SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
                                 Icons.record_voice_over,
@@ -136,7 +144,8 @@ class ServicesBottomSheet {
                           ]
                         : [
                             SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
                                 Icons.record_voice_over,
@@ -145,7 +154,18 @@ class ServicesBottomSheet {
                               ),
                             ),
                             SizedBox(
-                              width: (MediaQuery.of(context).size.width - 70) / 4,
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.verified_outlined,
+                                'Certidão',
+                                '/certidao-extrajudicial',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
                                 Icons.lock,
@@ -178,40 +198,54 @@ class ServicesBottomSheet {
         });
       },
       child: Container(
-        padding: const EdgeInsets.only(top: 16, bottom: 12, left: 8, right: 8),
+        height: 72,
         decoration: BoxDecoration(
-          color: const Color(0xFF9C7A54).withAlpha(20),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.transparent, width: 1.5),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: const Color(0xFF8F2A1D).withAlpha(25),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: const Color(0xFF8F2A1D), size: 22),
-            ),
-            const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                style: const TextStyle(
-                  color: Color(0xFF3A2416),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
-                ),
-              ),
+          border: Border.all(color: const Color(0x26343A40)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x10101828),
+              blurRadius: 8,
+              offset: Offset(0, 3),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -10,
+                bottom: -12,
+                child: Icon(
+                  icon,
+                  color: const Color(0x1A343A40),
+                  size: 52,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 8, top: 10, right: 8),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        color: Color(0xFF202322),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        height: 1.15,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -17,10 +17,14 @@ class ConcessaoFolgaCard extends StatelessWidget {
         ? null
         : concessao.solicitacoes.first;
     final typeColor = concessao.tipo.color;
-    final cardColor = Color.lerp(const Color(0xFFFFF8EA), typeColor, 0.12)!;
-    final cardBorder = Color.lerp(cardColor, typeColor, 0.32)!;
-    final tileColor = Color.lerp(const Color(0xFFFFFBF4), typeColor, 0.06)!;
-    final titleColor = Color.lerp(typeColor, ConcessaoFolgaColors.ink, 0.12)!;
+    final onColor = typeColor.computeLuminance() > 0.45
+        ? const Color(0xFF202322)
+        : Colors.white;
+    final secondaryColor = typeColor.computeLuminance() > 0.45
+        ? const Color(0xD9202322)
+        : const Color(0xE6FFFFFF);
+    final tileColor = Colors.white.withValues(alpha: 0.18);
+    final tileBorder = Colors.white.withValues(alpha: 0.36);
 
     return InkWell(
       onTap: () => showModalBottomSheet(
@@ -34,19 +38,13 @@ class ConcessaoFolgaCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cardBorder),
+          color: typeColor,
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: typeColor.withAlpha(18),
-              blurRadius: 18,
+              color: typeColor.withValues(alpha: 0.28),
+              blurRadius: 16,
               offset: const Offset(0, 8),
-            ),
-            const BoxShadow(
-              color: Color(0x10432B1D),
-              blurRadius: 18,
-              offset: Offset(0, 8),
             ),
           ],
         ),
@@ -59,7 +57,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
                   width: 9,
                   height: 9,
                   decoration: BoxDecoration(
-                    color: typeColor,
+                    color: onColor,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -68,13 +66,13 @@ class ConcessaoFolgaCard extends StatelessWidget {
                   child: Text(
                     concessao.titulo,
                     style: TextStyle(
-                      color: titleColor,
+                      color: onColor,
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
-                _SaldoChip(saldo: concessao.saldoRestante, color: typeColor),
+                _SaldoChip(saldo: concessao.saldoRestante, color: onColor),
               ],
             ),
             const SizedBox(height: 10),
@@ -85,7 +83,9 @@ class ConcessaoFolgaCard extends StatelessWidget {
                     label: 'Dias concedidos',
                     value: '${concessao.diasConcedidos}',
                     background: tileColor,
-                    border: cardBorder,
+                    border: tileBorder,
+                    labelColor: secondaryColor,
+                    valueColor: onColor,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -94,7 +94,9 @@ class ConcessaoFolgaCard extends StatelessWidget {
                     label: 'Saldo disponível',
                     value: '${concessao.saldoRestante} dias',
                     background: tileColor,
-                    border: cardBorder,
+                    border: tileBorder,
+                    labelColor: secondaryColor,
+                    valueColor: onColor,
                   ),
                 ),
               ],
@@ -104,7 +106,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
               const Text(
                 'Nenhum período de gozo programado',
                 style: TextStyle(
-                  color: ConcessaoFolgaColors.muted,
+                  color: Color(0xE6FFFFFF),
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -113,7 +115,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
               Text(
                 'Período: ${dateFormat.format(primeiraSolicitacao.inicio)} a ${dateFormat.format(primeiraSolicitacao.fim)}',
                 style: TextStyle(
-                  color: titleColor,
+                  color: onColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -127,18 +129,16 @@ class ConcessaoFolgaCard extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: Color.lerp(
-                        const Color(0xFFFFFBF4),
-                        typeColor,
-                        0.08,
-                      ),
+                      color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: typeColor.withAlpha(105)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.36),
+                      ),
                     ),
                     child: Text(
                       primeiraSolicitacao.status.label,
                       style: TextStyle(
-                        color: titleColor,
+                        color: onColor,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                       ),
@@ -148,8 +148,8 @@ class ConcessaoFolgaCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       '+${concessao.solicitacoes.length - 1}',
-                      style: const TextStyle(
-                        color: ConcessaoFolgaColors.muted,
+                      style: TextStyle(
+                        color: secondaryColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                       ),
@@ -176,9 +176,9 @@ class _SaldoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: Color.lerp(const Color(0xFFFFF8EA), color, 0.16),
+        color: Colors.white.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withAlpha(90)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.36)),
       ),
       child: Text(
         '$saldo dias',
@@ -197,12 +197,16 @@ class _InfoTile extends StatelessWidget {
   final String value;
   final Color background;
   final Color border;
+  final Color labelColor;
+  final Color valueColor;
 
   const _InfoTile({
     required this.label,
     required this.value,
     required this.background,
     required this.border,
+    required this.labelColor,
+    required this.valueColor,
   });
 
   @override
@@ -212,15 +216,15 @@ class _InfoTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: border.withAlpha(120)),
+        border: Border.all(color: border.withValues(alpha: 0.47)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: ConcessaoFolgaColors.muted,
+            style: TextStyle(
+              color: labelColor,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -228,8 +232,8 @@ class _InfoTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              color: ConcessaoFolgaColors.ink,
+            style: TextStyle(
+              color: valueColor,
               fontSize: 14,
               fontWeight: FontWeight.w900,
             ),

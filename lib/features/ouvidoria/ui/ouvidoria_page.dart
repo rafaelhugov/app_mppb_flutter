@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/ouvidoria_provider.dart';
 import 'widgets/step_identificacao.dart';
 import 'widgets/step_classificacao.dart';
 import 'widgets/step_relato.dart';
 import 'widgets/step_anexos.dart';
 import 'widgets/step_revisao_envio.dart';
+import 'widgets/ouvidoria_form_style.dart';
 import 'ouvidoria_sucesso_page.dart';
 
 class OuvidoriaPage extends ConsumerWidget {
@@ -18,242 +21,172 @@ class OuvidoriaPage extends ConsumerWidget {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFFDED4C5),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromRGBO(82, 56, 41, 0.20),
-              Color.fromRGBO(82, 56, 41, 0),
-            ],
-            stops: [0.0, 0.3],
+      backgroundColor: OuvidoriaFormStyle.background,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildHeader(context)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            sliver: SliverToBoxAdapter(
+              child: _buildStepper(context, state, notifier),
+            ),
           ),
-        ),
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: _buildHeader(context),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-              sliver: SliverToBoxAdapter(
-                child: _buildStepper(context, state, notifier),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(height: 120 + MediaQuery.paddingOf(context).bottom),
-            ),
-          ],
-        ),
+          SliverToBoxAdapter(
+            child: SizedBox(height: MainLayout.contentBottomPadding(context)),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color.fromRGBO(214, 169, 47, 0.24)),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color.fromRGBO(255, 221, 132, 0.14),
-            offset: Offset(0, -1),
-          ),
-        ],
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF241D19),
-            Color(0xFF3A241D),
-            Color(0xFF8F2A1D),
-          ],
-          stops: [0.0, 0.46, 1.0],
-        ),
-      ),
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 24, 20, 44),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    return const HeroHeaderPublico(
+      label: '',
+      title: 'Ouvidoria',
+      subtitle: '',
+      icon: Icons.record_voice_over,
+    );
+  }
+
+  Widget _buildStepper(
+    BuildContext context,
+    OuvidoriaState state,
+    OuvidoriaNotifier notifier,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color.fromRGBO(255, 222, 142, 0.44)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(36, 18, 12, 0.30),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.record_voice_over, color: Color(0xFF211713), size: 30),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'ATENDIMENTO AO CIDADÃO',
-                  style: TextStyle(
-                    color: Color(0xFFE3C474),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.9,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Ouvidoria',
-                  style: TextStyle(
-                    color: Color(0xFFFFF8EA),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.22),
-                        blurRadius: 12,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'Registre sua manifestação de forma segura.',
-                  style: TextStyle(
-                    color: Color(0xFFD8C5AA),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+          _OuvidoriaStepProgress(currentStep: state.currentStep),
+          const SizedBox(height: 14),
+          _SlidingStepContent(
+            currentStep: state.currentStep,
+            child: _OuvidoriaStepCard(
+              key: ValueKey<int>(state.currentStep),
+              child: _buildCurrentStep(state.currentStep),
             ),
           ),
+          _buildStepControls(context, state, notifier),
         ],
       ),
     );
   }
 
-  Widget _buildStepper(BuildContext context, OuvidoriaState state, OuvidoriaNotifier notifier) {
-    return Material(
-      color: const Color(0xFFF7EFE3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color.fromRGBO(156, 122, 84, 0.35)),
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF8F2A1D)),
-        ),
-        child: Stepper(
-          margin: const EdgeInsets.all(0),
-          physics: const NeverScrollableScrollPhysics(),
-          currentStep: state.currentStep,
-          onStepContinue: () {
-            if (state.currentStep == 4) {
-              _submit(context, state, notifier);
-            } else {
-              final error = notifier.nextStep();
-              if (error != null) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-              }
-            }
-          },
-          onStepCancel: () => notifier.previousStep(),
-          controlsBuilder: (context, details) {
-            return Padding(
-              padding: const EdgeInsets.only(top: 24.0),
-              child: Row(
-                children: [
-                  if (state.currentStep < 4)
-                    ElevatedButton(
-                      onPressed: details.onStepContinue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8F2A1D),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Próximo'),
-                    ),
-                  if (state.currentStep == 4)
-                    ElevatedButton(
-                      onPressed: state.isSubmitting ? null : details.onStepContinue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8F2A1D),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: state.isSubmitting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text('Enviar Manifestação'),
-                    ),
-                  if (state.currentStep > 0 && !state.isSubmitting)
-                    TextButton(
-                      onPressed: details.onStepCancel,
-                      child: const Text('Voltar', style: TextStyle(color: Color(0xFF73543E))),
-                    ),
-                ],
+  Widget _buildCurrentStep(int currentStep) {
+    return switch (currentStep) {
+      0 => const StepIdentificacao(),
+      1 => const StepClassificacao(),
+      2 => const StepRelato(),
+      3 => const StepAnexos(),
+      _ => const StepRevisaoEnvio(),
+    };
+  }
+
+  Widget _buildStepControls(
+    BuildContext context,
+    OuvidoriaState state,
+    OuvidoriaNotifier notifier,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (state.currentStep < 4)
+            ElevatedButton(
+              onPressed: () {
+                final error = notifier.nextStep();
+                if (error != null) {
+                  _showValidationWarning(context, error);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: OuvidoriaFormStyle.accent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(106, 42),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-            );
-          },
-          steps: [
-            Step(
-              title: const Text('Identificação', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF73543E))),
-              content: const StepIdentificacao(),
-              isActive: state.currentStep >= 0,
-              state: state.currentStep > 0 ? StepState.complete : StepState.indexed,
+              child: const Text('Próximo'),
             ),
-            Step(
-              title: const Text('Classificação', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF73543E))),
-              content: const StepClassificacao(),
-              isActive: state.currentStep >= 1,
-              state: state.currentStep > 1 ? StepState.complete : StepState.indexed,
+          if (state.currentStep == 4)
+            ElevatedButton(
+              onPressed: state.isSubmitting
+                  ? null
+                  : () => _submit(context, state, notifier),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: OuvidoriaFormStyle.accent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(150, 42),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: state.isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Enviar Manifestação'),
             ),
-            Step(
-              title: const Text('Relato', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF73543E))),
-              content: const StepRelato(),
-              isActive: state.currentStep >= 2,
-              state: state.currentStep > 2 ? StepState.complete : StepState.indexed,
-            ),
-            Step(
-              title: const Text('Anexos', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF73543E))),
-              content: const StepAnexos(),
-              isActive: state.currentStep >= 3,
-              state: state.currentStep > 3 ? StepState.complete : StepState.indexed,
-            ),
-            Step(
-              title: const Text('Revisão e Envio', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF73543E))),
-              content: const StepRevisaoEnvio(),
-              isActive: state.currentStep >= 4,
-              state: state.currentStep == 4 ? StepState.editing : StepState.indexed,
+          if (state.currentStep > 0 && !state.isSubmitting) ...[
+            const SizedBox(width: 10),
+            OutlinedButton.icon(
+              onPressed: notifier.previousStep,
+              icon: const Icon(Icons.arrow_back_rounded, size: 17),
+              label: const Text(
+                'Voltar',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: OuvidoriaFormStyle.ink,
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: Color(0x66343A40)),
+                minimumSize: const Size(102, 42),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  void _submit(BuildContext context, OuvidoriaState state, OuvidoriaNotifier notifier) async {
+  void _submit(
+    BuildContext context,
+    OuvidoriaState state,
+    OuvidoriaNotifier notifier,
+  ) async {
     // Validation
-    if (state.requestModel.captchaId == null || state.requestModel.userEnteredCaptchaCode == null || state.requestModel.userEnteredCaptchaCode!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, informe o código do Captcha.')));
+    if (state.requestModel.captchaId == null ||
+        state.requestModel.userEnteredCaptchaCode == null ||
+        state.requestModel.userEnteredCaptchaCode!.isEmpty) {
+      _showValidationWarning(
+        context,
+        'Por favor, informe o código do Captcha.',
+      );
       return;
     }
 
@@ -268,9 +201,217 @@ class OuvidoriaPage extends ConsumerWidget {
       }
     } else {
       if (context.mounted && state.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+        _showValidationWarning(context, state.errorMessage!);
         notifier.clearError();
       }
     }
+  }
+
+  void _showValidationWarning(BuildContext context, String message) {
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) {
+        final top = MediaQuery.paddingOf(context).top + 64;
+        return Positioned(
+          top: top,
+          right: 14,
+          left: 86,
+          child: IgnorePointer(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: OuvidoriaFormStyle.accent,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x2A101828),
+                      offset: Offset(0, 8),
+                      blurRadius: 18,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.white,
+                      size: 19,
+                    ),
+                    const SizedBox(width: 9),
+                    Flexible(
+                      child: Text(
+                        message,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          height: 1.22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    overlay.insert(entry);
+    Future<void>.delayed(const Duration(seconds: 3), () {
+      if (entry.mounted) {
+        entry.remove();
+      }
+    });
+  }
+}
+
+class _SlidingStepContent extends StatelessWidget {
+  final int currentStep;
+  final Widget child;
+
+  const _SlidingStepContent({required this.currentStep, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.12, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(key: ValueKey<int>(currentStep), child: child),
+    );
+  }
+}
+
+class _OuvidoriaStepProgress extends StatelessWidget {
+  final int currentStep;
+
+  const _OuvidoriaStepProgress({required this.currentStep});
+
+  static const _labels = [
+    'Identif.',
+    'Classif.',
+    'Relato',
+    'Anexos',
+    'Revisão',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: OuvidoriaFormStyle.border),
+      ),
+      child: Row(
+        children: List.generate(_labels.length, (index) {
+          final selected = index == currentStep;
+          final completed = index < currentStep;
+          return Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  width: selected ? 26 : 22,
+                  height: selected ? 26 : 22,
+                  decoration: BoxDecoration(
+                    color: selected || completed
+                        ? OuvidoriaFormStyle.accent
+                        : const Color(0xFFE1E5E3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: completed
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 15,
+                          )
+                        : Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              color: selected
+                                  ? Colors.white
+                                  : OuvidoriaFormStyle.muted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _labels[index],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: selected
+                        ? OuvidoriaFormStyle.ink
+                        : OuvidoriaFormStyle.muted,
+                    fontSize: 8.5,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _OuvidoriaStepCard extends StatelessWidget {
+  final Widget child;
+
+  const _OuvidoriaStepCard({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: OuvidoriaFormStyle.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: OuvidoriaFormStyle.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x10101828),
+            offset: Offset(0, 8),
+            blurRadius: 18,
+          ),
+        ],
+      ),
+      child: child,
+    );
   }
 }

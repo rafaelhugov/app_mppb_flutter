@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/ouvidoria_provider.dart';
+import 'ouvidoria_form_style.dart';
 
 class CaptchaWidget extends ConsumerWidget {
   const CaptchaWidget({super.key});
@@ -13,7 +14,9 @@ class CaptchaWidget extends ConsumerWidget {
     if (state.isLoading) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Center(child: CircularProgressIndicator(color: Color(0xFF8F2A1D))),
+        child: Center(
+          child: CircularProgressIndicator(color: OuvidoriaFormStyle.accent),
+        ),
       );
     }
 
@@ -24,20 +27,27 @@ class CaptchaWidget extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color.fromRGBO(214, 169, 47, 0.4)),
-        borderRadius: BorderRadius.circular(8),
+        color: OuvidoriaFormStyle.surface,
+        border: Border.all(color: OuvidoriaFormStyle.border),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Verificação de Segurança', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Verificação de Segurança',
+            style: TextStyle(
+              color: OuvidoriaFormStyle.ink,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Image.memory(
                   state.captchaData!.imageBytes,
@@ -47,7 +57,10 @@ class CaptchaWidget extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.refresh, color: Color(0xFF8F2A1D)),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: OuvidoriaFormStyle.accent,
+                ),
                 onPressed: () => notifier.loadCaptcha(),
                 tooltip: 'Recarregar Captcha',
               ),
@@ -55,11 +68,11 @@ class CaptchaWidget extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           TextFormField(
-            decoration: const InputDecoration(
+            decoration: OuvidoriaFormStyle.inputDecoration(
               labelText: 'Digite o código da imagem acima',
-              border: OutlineInputBorder(),
             ),
-            onChanged: (val) => notifier.updateField((m) => m.userEnteredCaptchaCode = val),
+            onChanged: (val) =>
+                notifier.updateField((m) => m.userEnteredCaptchaCode = val),
           ),
         ],
       ),

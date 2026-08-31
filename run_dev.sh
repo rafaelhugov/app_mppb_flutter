@@ -60,7 +60,7 @@ BACKEND_PORT="${PORT:-9003}"
 API_URL_LOCAL="http://127.0.0.1:${BACKEND_PORT}"
 
 : > "$BACKEND_LOG"
-mvn spring-boot:run -Dspring-boot.run.profiles=dev > "$BACKEND_LOG" 2>&1 &
+mvn spring-boot:run -Dspring-boot.run.profiles=dev -Dspring-boot.run.arguments="--server.address=0.0.0.0" > "$BACKEND_LOG" 2>&1 &
 BACKEND_PID=$!
 
 echo "Backend local iniciado com PID $BACKEND_PID"
@@ -107,4 +107,27 @@ export XMODIFIERS=
 export QT_IM_MODULE=
 
 # Inicia o flutter injetando a URL local
-flutter run "$@" --dart-define=API_URL="$API_URL_LOCAL"
+API_URL_DART="$API_URL_LOCAL"
+if [[ "$*" == *"emulator"* || "$*" == *"localhost:"* ]]; then
+  echo "Dispositivo/Emulador isolado detectado. Configurando adb reverse para a porta $BACKEND_PORT..."
+  
+  DEVICE_ID=""
+  
+  # Extrai o ID do dispositivo
+  for ((i=1; i<=$#; i++)); do
+    if [[ "${!i}" == "-d" || "${!i}" == "--device-id" ]]; then
+      next=$((i+1))
+      DEVICE_ID="${!next}"
+      break
+    fi
+  done
+
+  if [ -n "$DEVICE_ID" ]; then
+    adb -s "$DEVICE_ID" reverse tcp:${BACKEND_PORT} tcp:${BACKEND_PORT} || echo "Aviso: falha ao configurar adb reverse"
+  else
+    adb reverse tcp:${BACKEND_PORT} tcp:${BACKEND_PORT} || echo "Aviso: falha ao configurar adb reverse"
+  fi
+fi
+
+# Injeta a URL correta para dentro do Dart e roda o Flutter
+flutter run "$@" --dart-define=API_URL="$API_URL_DART"

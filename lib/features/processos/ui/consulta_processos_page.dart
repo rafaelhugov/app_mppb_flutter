@@ -1,10 +1,11 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/processos_provider.dart';
 import '../models/processo.dart';
 
@@ -46,20 +47,27 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
     FocusScope.of(context).unfocus();
     final filtros = <String, dynamic>{};
 
-    if (_numeroProcessoCtrl.text.isNotEmpty)
+    if (_numeroProcessoCtrl.text.isNotEmpty) {
       filtros['numeroProcesso'] = _numeroProcessoCtrl.text;
-    if (_numeroOrigemCtrl.text.isNotEmpty)
+    }
+    if (_numeroOrigemCtrl.text.isNotEmpty) {
       filtros['numeroOrigem'] = _numeroOrigemCtrl.text;
-    if (_numeroCnmpCtrl.text.isNotEmpty)
+    }
+    if (_numeroCnmpCtrl.text.isNotEmpty) {
       filtros['numeroCnmp'] = _numeroCnmpCtrl.text;
-    if (_cpfCtrl.text.isNotEmpty)
+    }
+    if (_cpfCtrl.text.isNotEmpty) {
       filtros['cpf'] = _cpfCtrl.text.replaceAll(RegExp(r'\D'), '');
-    if (_cnpjCtrl.text.isNotEmpty)
+    }
+    if (_cnpjCtrl.text.isNotEmpty) {
       filtros['cnpj'] = _cnpjCtrl.text.replaceAll(RegExp(r'\D'), '');
-    if (_interessadoCtrl.text.isNotEmpty)
+    }
+    if (_interessadoCtrl.text.isNotEmpty) {
       filtros['interessado'] = _interessadoCtrl.text;
-    if (_nomePromotorCtrl.text.isNotEmpty)
+    }
+    if (_nomePromotorCtrl.text.isNotEmpty) {
       filtros['nomePromotor'] = _nomePromotorCtrl.text;
+    }
     if (_statusSelecionado != null) filtros['status'] = _statusSelecionado;
     if (_idComarca != null) filtros['idComarca'] = _idComarca;
     if (_idClasse != null) filtros['idClasse'] = _idClasse;
@@ -79,34 +87,40 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(consultaProcessosProvider);
+    final isAuthenticated = ref.watch(authProvider).isAuthenticated;
+    final horizontalPadding = isAuthenticated
+        ? MainLayout.authenticatedHorizontalPadding
+        : 20.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDED4C5),
+      backgroundColor: const Color(0xFFF7F8F6),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // HERO SECTION
             const HeroHeaderPublico(
-              label: 'MPVIRTUAL',
+              label: '',
               title: 'Consulta Processual',
-              subtitle:
-                  'Pesquise processos administrativos, extrajudiciais e judiciais.',
+              subtitle: '',
               icon: Icons.gavel,
             ),
 
             // FORM CONTAINER
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 8,
+              ),
               child: _buildFormPanel(state.isLoading),
             ),
 
             // RESULTS
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
               child: _buildResults(state),
             ),
-            const SizedBox(height: 96),
+            SizedBox(height: MainLayout.contentBottomPadding(context)),
           ],
         ),
       ),
@@ -114,150 +128,154 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
   }
 
   Widget _buildFormPanel(bool isLoading) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7EFE3),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0x4D9C7A54), width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x21432B1D),
-            offset: Offset(0, 16),
-            blurRadius: 34,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE9EDF0)),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x10101828),
+                offset: Offset(0, 8),
+                blurRadius: 18,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ALERT BANNER
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF8EA),
-              border: Border.all(color: const Color(0x61D6A92F)),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.info, color: Color(0xFF8F2A1D), size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        color: Color(0xFF5D4D40),
-                        fontSize: 13,
-                        height: 1.45,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      children: [
-                        TextSpan(
-                          text:
-                              'Informe pelo menos um campo para consultar. Para processos judiciais, priorize ',
-                        ),
-                        TextSpan(
-                          text:
-                              'Nº do Processo, Nº de Origem (CNJ) ou Nº do CNMP.',
-                          style: TextStyle(fontWeight: FontWeight.w900),
-                        ),
-                      ],
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info, color: Color(0xFFD62828), size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      color: Color(0xFF697370),
+                      fontSize: 13,
+                      height: 1.45,
+                      fontWeight: FontWeight.w400,
                     ),
+                    children: [
+                      TextSpan(
+                        text:
+                            'Informe pelo menos um campo para consultar. Para processos judiciais, priorize ',
+                      ),
+                      TextSpan(
+                        text:
+                            'Nº do Processo, Nº de Origem (CNJ) ou Nº do CNMP.',
+                        style: TextStyle(
+                          color: Color(0xFF202322),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // DADOS DO PROCESSO (form-section)
-          _buildFormSection(
-            title: 'Dados do processo',
-            subtitle: 'Campos principais',
-            children: [
-              _buildTextField('Nº do Processo', _numeroProcessoCtrl),
-              const SizedBox(height: 10),
-              _buildTextField('Nº de Origem (CNJ)', _numeroOrigemCtrl),
-              const SizedBox(height: 10),
-              _buildTextField('Nº do CNMP', _numeroCnmpCtrl),
-              const SizedBox(height: 10),
-              _buildTextField('CPF', _cpfCtrl, isNumber: true),
-              const SizedBox(height: 10),
-              _buildTextField('CNPJ', _cnpjCtrl, isNumber: true),
-              const SizedBox(height: 10),
-              _buildTextField('Interessado', _interessadoCtrl),
+              ),
             ],
           ),
-          const SizedBox(height: 14),
+        ),
+        const SizedBox(height: 14),
 
-          // FILTROS ADICIONAIS (form-section)
-          _buildFormSection(
-            title: 'Filtros adicionais',
-            subtitle: 'Refine a busca',
-            children: [
-              _buildDropdown(
-                'Comarca',
-                ['--Todas--'],
-                _idComarca,
-                (v) => setState(() => _idComarca = v),
-              ),
-              const SizedBox(height: 10),
-              _buildDropdown(
-                'Classe',
-                ['--Todas--'],
-                _idClasse,
-                (v) => setState(() => _idClasse = v),
-              ),
-              const SizedBox(height: 10),
-              _buildTextField(
-                'Nome do promotor',
-                _nomePromotorCtrl,
-                showDualIcon: true,
-              ),
-              const SizedBox(height: 10),
-              _buildDropdown(
-                'Tipo de Atividade',
-                ['--Todas--'],
-                _idTipoAtividade,
-                (v) => setState(() => _idTipoAtividade = v),
-              ),
-              const SizedBox(height: 10),
-              _buildStatusRadio(),
-            ],
-          ),
-          const SizedBox(height: 14),
+        _buildFormSection(
+          title: 'Dados do processo',
+          subtitle: 'Campos principais',
+          children: [
+            _buildTextField('Nº do Processo', _numeroProcessoCtrl),
+            const SizedBox(height: 10),
+            _buildTextField('Nº de Origem (CNJ)', _numeroOrigemCtrl),
+            const SizedBox(height: 10),
+            _buildTextField('Nº do CNMP', _numeroCnmpCtrl),
+            const SizedBox(height: 10),
+            _buildTextField('CPF', _cpfCtrl, isNumber: true),
+            const SizedBox(height: 10),
+            _buildTextField('CNPJ', _cnpjCtrl, isNumber: true),
+            const SizedBox(height: 10),
+            _buildTextField('Interessado', _interessadoCtrl),
+          ],
+        ),
+        const SizedBox(height: 14),
 
-          ElevatedButton.icon(
-            onPressed: isLoading ? null : _buscar,
-            icon: isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.search, size: 20),
-            label: const Text(
-              'PESQUISAR PROCESSO',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+        _buildFormSection(
+          title: 'Filtros adicionais',
+          subtitle: 'Refine a busca',
+          children: [
+            _buildDropdown(
+              'Comarca',
+              ['--Todas--'],
+              _idComarca,
+              (v) => setState(() => _idComarca = v),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8F2A1D),
-              foregroundColor: const Color(0xFFFFF8EA),
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+            const SizedBox(height: 10),
+            _buildDropdown(
+              'Classe',
+              ['--Todas--'],
+              _idClasse,
+              (v) => setState(() => _idClasse = v),
+            ),
+            const SizedBox(height: 10),
+            _buildTextField(
+              'Nome do promotor',
+              _nomePromotorCtrl,
+              showDualIcon: true,
+            ),
+            const SizedBox(height: 10),
+            _buildDropdown(
+              'Tipo de Atividade',
+              ['--Todas--'],
+              _idTipoAtividade,
+              (v) => setState(() => _idTipoAtividade = v),
+            ),
+            const SizedBox(height: 10),
+            _buildStatusRadio(),
+          ],
+        ),
+        const SizedBox(height: 14),
+
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 210),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: isLoading ? null : _buscar,
+                icon: isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.search, size: 18),
+                label: const Text(
+                  'Pesquisar processo',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD62828),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size(0, 38),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 9,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  shadowColor: Colors.transparent,
+                ),
               ),
-              shadowColor: Colors.transparent,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -269,9 +287,16 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFAF2).withOpacity(0.70),
-        border: Border.all(color: const Color(0xFF9C7A54).withOpacity(0.20)),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE9EDF0)),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x10101828),
+            offset: Offset(0, 8),
+            blurRadius: 18,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -285,9 +310,9 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF2F2923),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF202322),
                   ),
                 ),
               ),
@@ -296,8 +321,8 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
                 subtitle,
                 style: const TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF806F5E),
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF697370),
                 ),
               ),
             ],
@@ -320,37 +345,37 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       style: const TextStyle(
         fontSize: 13,
-        color: Color(0xFF5D4D40),
-        fontWeight: FontWeight.w600,
+        color: Color(0xFF202322),
+        fontWeight: FontWeight.w400,
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(
-          color: Color(0xFF5D4D40),
+          color: Color(0xFF697370),
           fontSize: 13,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w400,
         ),
         isDense: true,
         filled: true,
-        fillColor: const Color(0xFFFFFAF2),
+        fillColor: const Color(0xFFF7F8F6),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0x4D9C7A54)),
+          borderSide: const BorderSide(color: Color(0xFFE9EDF0)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0x4D9C7A54)),
+          borderSide: const BorderSide(color: Color(0xFFE9EDF0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF8F2A1D)),
+          borderSide: const BorderSide(color: Color(0xFFD62828)),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 14,
         ),
         suffixIcon: showDualIcon
-            ? const Icon(Icons.search, color: Color(0xFF806F5E), size: 24)
+            ? const Icon(Icons.search, color: Color(0xFF697370), size: 22)
             : null,
       ),
     );
@@ -363,41 +388,44 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
     ValueChanged<String?> onChanged,
   ) {
     return DropdownButtonFormField<String>(
-      value: value ?? options.first,
+      initialValue: value ?? options.first,
       style: const TextStyle(
         fontSize: 13,
-        color: Color(0xFF5D4D40),
-        fontWeight: FontWeight.w600,
+        color: Color(0xFF202322),
+        fontWeight: FontWeight.w400,
       ),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(
-          color: Color(0xFF5D4D40),
+          color: Color(0xFF697370),
           fontSize: 13,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w400,
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         isDense: true,
         filled: true,
-        fillColor: const Color(0xFFFFFAF2),
+        fillColor: const Color(0xFFF7F8F6),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0x4D9C7A54)),
+          borderSide: const BorderSide(color: Color(0xFFE9EDF0)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0x4D9C7A54)),
+          borderSide: const BorderSide(color: Color(0xFFE9EDF0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF8F2A1D)),
+          borderSide: const BorderSide(color: Color(0xFFD62828)),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 10,
         ),
       ),
-      icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF806F5E)),
+      icon: const Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: Color(0xFF697370),
+      ),
       items: options.map((e) {
         return DropdownMenuItem(
           value: e,
@@ -405,8 +433,8 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
             e,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF5D4D40),
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF202322),
             ),
           ),
         );
@@ -419,8 +447,8 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFAF2),
-        border: Border.all(color: const Color(0x409C7A54)),
+        color: const Color(0xFFF7F8F6),
+        border: Border.all(color: const Color(0xFFE9EDF0)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -430,18 +458,22 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
             'Status',
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF5D4D40),
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF202322),
             ),
           ),
           const SizedBox(height: 6),
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              _buildRadioOption('Ativo', 'A'),
-              _buildRadioOption('Inativo', 'I'),
-            ],
+          RadioGroup<String>(
+            groupValue: _statusSelecionado,
+            onChanged: (v) => setState(() => _statusSelecionado = v),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                _buildRadioOption('Ativo', 'A'),
+                _buildRadioOption('Inativo', 'I'),
+              ],
+            ),
           ),
         ],
       ),
@@ -457,20 +489,19 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
           height: 20,
           child: Radio<String>(
             value: value,
-            groupValue: _statusSelecionado,
-            onChanged: (v) => setState(() => _statusSelecionado = v),
-            activeColor: const Color(0xFF5A5348),
-            fillColor: MaterialStateProperty.resolveWith<Color>((states) {
-              if (states.contains(MaterialState.selected))
-                return const Color(0xFF5A5348);
-              return const Color(0xFF8B847A);
+            activeColor: const Color(0xFFD62828),
+            fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const Color(0xFFD62828);
+              }
+              return const Color(0xFF697370);
             }),
           ),
         ),
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(fontSize: 15, color: Color(0xFF2F2B26)),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF202322)),
         ),
       ],
     );

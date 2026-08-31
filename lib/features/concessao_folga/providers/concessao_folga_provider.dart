@@ -131,14 +131,16 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     }
 
     _limparCacheSeTrocarToken(token);
-    
+
     final mes = state.mesSelecionado;
     final hoje = DateTime.now();
     final currentMonth = DateTime(hoje.year, hoje.month);
     final isFuture = !mes.isBefore(currentMonth);
-    
-    final cacheKey = isFuture ? '$token-future' : '$token-${mes.year}-${mes.month}';
-    
+
+    final cacheKey = isFuture
+        ? '$token-future'
+        : '$token-${mes.year}-${mes.month}';
+
     if (!forceRefresh && _ausenciasCache.containsKey(cacheKey)) {
       state = state.copyWith(
         calendario: state.calendario.copyWith(
@@ -160,7 +162,9 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     );
 
     try {
-      debugPrint('[ConcessaoFolga] Solicitando ausencias: mes=${isFuture ? null : mes.month}, ano=${isFuture ? null : mes.year}');
+      debugPrint(
+        '[ConcessaoFolga] Solicitando ausencias: mes=${isFuture ? null : mes.month}, ano=${isFuture ? null : mes.year}',
+      );
       final dados = await ref
           .read(concessaoFolgaRepositoryProvider)
           .buscarAusenciasCalendario(
@@ -204,6 +208,30 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     ]);
   }
 
+  Future<void> solicitarMarcacaoFerias({
+    required ConcessaoFolga concessao,
+    required DateTime dataInicial,
+    required int numeroDias,
+  }) async {
+    final token = await _tokenAtual();
+    if (token == null) {
+      throw Exception('Sessão expirada. Faça login novamente.');
+    }
+
+    await ref
+        .read(concessaoFolgaRepositoryProvider)
+        .solicitarMarcacaoFerias(
+          token: token,
+          concessaoId: concessao.id,
+          dataInicial: dataInicial,
+          numeroDias: numeroDias,
+        );
+
+    _concessoesCache.clear();
+    _ausenciasCache.clear();
+    await carregarInicial();
+  }
+
   Future<String?> _tokenAtual() async {
     for (var attempt = 0; attempt < 6; attempt++) {
       final stateToken = ref.read(authProvider).token;
@@ -235,7 +263,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
   void _tratarErroConcessoes(dynamic e, [StackTrace? stack]) {
     debugPrint('[ConcessaoFolga] Erro ao carregar concessoes: $e');
     if (stack != null) debugPrint(stack.toString());
-    
+
     state = state.copyWith(
       concessoes: state.concessoes.copyWith(
         isLoading: false,
@@ -248,7 +276,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
   void _tratarErroCalendario(dynamic e, [StackTrace? stack]) {
     debugPrint('[ConcessaoFolga] Erro ao carregar afastamentos: $e');
     if (stack != null) debugPrint(stack.toString());
-    
+
     state = state.copyWith(
       calendario: state.calendario.copyWith(
         isLoading: false,
@@ -260,8 +288,8 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
 
   String _obterMensagemErro(dynamic e, {bool isCalendario = false}) {
     if (e is DioException) {
-      if (e.type == DioExceptionType.connectionTimeout || 
-          e.type == DioExceptionType.receiveTimeout || 
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
         return 'O serviço demorou para responder. Tente novamente.';
       }
@@ -271,7 +299,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
       }
       // Outros erros HTTP (500, etc)
     }
-    
+
     if (isCalendario) {
       return 'Não foi possível carregar os afastamentos.\nTente novamente.';
     }

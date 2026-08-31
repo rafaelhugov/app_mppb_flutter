@@ -11,6 +11,12 @@ class ConcessoesVigentesList extends StatelessWidget {
   final String? errorMessage;
   final VoidCallback onRetry;
   final Future<void> Function() onRefresh;
+  final Future<void> Function(
+    ConcessaoFolga concessao,
+    DateTime dataInicial,
+    int numeroDias,
+  )?
+  onSolicitar;
 
   const ConcessoesVigentesList({
     super.key,
@@ -19,6 +25,7 @@ class ConcessoesVigentesList extends StatelessWidget {
     this.errorMessage,
     required this.onRetry,
     required this.onRefresh,
+    this.onSolicitar,
   });
 
   @override
@@ -47,7 +54,10 @@ class ConcessoesVigentesList extends StatelessWidget {
             const _EmptyState()
           else
             ...concessoes.map(
-              (concessao) => ConcessaoFolgaCard(concessao: concessao),
+              (concessao) => ConcessaoFolgaCard(
+                concessao: concessao,
+                onSolicitar: onSolicitar,
+              ),
             ),
         ],
       ),

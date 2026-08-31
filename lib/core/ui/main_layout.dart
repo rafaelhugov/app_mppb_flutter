@@ -624,46 +624,56 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       }
     }
 
-    return Scaffold(
-      extendBodyBehindAppBar: false,
-      extendBody: !isDockHidden,
-      appBar: isHiddenPage
-          ? null
-          : isAuthenticated
-          ? const PreferredSize(
-              preferredSize: Size.fromHeight(MppbAppBar.authenticatedAltura),
-              child: MppbAppBar(),
-            )
-          : const MppbAppBar(),
-      body: NotificationListener<ScrollNotification>(
-        onNotification: _handleScrollNotification,
-        child: widget.child,
-      ),
-      bottomNavigationBar: isDockHidden
-          ? null
-          : IgnorePointer(
-              ignoring: !_isNavVisible,
-              child: AnimatedSlide(
-                duration: const Duration(milliseconds: 380),
-                curve: Curves.easeInOutCubic,
-                offset: _isNavVisible ? Offset.zero : const Offset(0, 1.18),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 280),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final homeRoute = isAuthenticated ? '/restrito' : '/';
+        if (location != homeRoute) {
+          context.go(homeRoute);
+        }
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: false,
+        extendBody: !isDockHidden,
+        appBar: isHiddenPage
+            ? null
+            : isAuthenticated
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(MppbAppBar.authenticatedAltura),
+                child: MppbAppBar(),
+              )
+            : const MppbAppBar(),
+        body: NotificationListener<ScrollNotification>(
+          onNotification: _handleScrollNotification,
+          child: widget.child,
+        ),
+        bottomNavigationBar: isDockHidden
+            ? null
+            : IgnorePointer(
+                ignoring: !_isNavVisible,
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 380),
                   curve: Curves.easeInOutCubic,
-                  opacity: _isNavVisible ? 1 : 0,
-                  child: _buildBottomNavBar(
-                    context: context,
-                    isAuthenticated: isAuthenticated,
-                    isOnline: isOnline,
-                    selectedIndex: selectedIndex,
-                    extraIcon: icon4,
-                    extraLabel: label4,
-                    extraRoute: route4,
-                    isHome: isHome,
+                  offset: _isNavVisible ? Offset.zero : const Offset(0, 1.18),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeInOutCubic,
+                    opacity: _isNavVisible ? 1 : 0,
+                    child: _buildBottomNavBar(
+                      context: context,
+                      isAuthenticated: isAuthenticated,
+                      isOnline: isOnline,
+                      selectedIndex: selectedIndex,
+                      extraIcon: icon4,
+                      extraLabel: label4,
+                      extraRoute: route4,
+                      isHome: isHome,
+                    ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

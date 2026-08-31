@@ -192,6 +192,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (context) {
         return Container(
           decoration: const BoxDecoration(

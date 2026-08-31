@@ -243,10 +243,13 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
                   isPrivacyEnabled
                       ? '••••••'
                       : formatter.format(widget.totalVantagens),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Color(0xFF202322),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

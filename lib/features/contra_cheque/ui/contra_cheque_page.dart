@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:printing/printing.dart';
 import '../../../core/ui/main_layout.dart';
 import '../providers/contra_cheque_provider.dart';
 import 'widgets/competencia_selector.dart';
@@ -111,7 +114,11 @@ class ContraChequePage extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         OutlinedButton.icon(
-          onPressed: () => _abrirPdf(context, cheque.linkPdf),
+          onPressed: () => _abrirPdf(
+            context,
+            cheque.linkPdf,
+            'contracheque-${cheque.mes}-${cheque.ano}.pdf',
+          ),
           icon: const Icon(Icons.file_download, size: 18),
           label: const Text('BAIXAR PDF'),
           style: OutlinedButton.styleFrom(
@@ -165,7 +172,11 @@ class ContraChequePage extends ConsumerWidget {
     );
   }
 
-  Future<void> _abrirPdf(BuildContext context, String? linkPdf) async {
+  Future<void> _abrirPdf(
+    BuildContext context,
+    String? linkPdf,
+    String fileName,
+  ) async {
     if (linkPdf == null || linkPdf.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Link do PDF indisponível.')),
@@ -174,15 +185,158 @@ class ContraChequePage extends ConsumerWidget {
     }
 
     final url = Uri.parse(linkPdf);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível abrir o PDF.')),
+    final pdfFuture = Dio()
+        .getUri<List<int>>(
+          url,
+          options: Options(responseType: ResponseType.bytes),
+        )
+        .then((response) => Uint8List.fromList(response.data ?? const []));
+
+    if (!context.mounted) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+        return FractionallySizedBox(
+          heightFactor: 0.94,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7F8F6),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 10, 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0x33202322),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Text(
+                          'Contracheque',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Color(0xFF202322),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFF202322),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: FutureBuilder<Uint8List>(
+                    future: pdfFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF00A86B),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError ||
+                          snapshot.data == null ||
+                          snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text(
+                              'Não foi possível carregar o PDF.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF697370),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final pdfBytes = snapshot.data!;
+                      return Stack(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(bottom: bottomInset + 72),
+                            child: PdfPreview(
+                              build: (_) async => pdfBytes,
+                              canChangeOrientation: false,
+                              canChangePageFormat: false,
+                              canDebug: false,
+                              allowPrinting: false,
+                              allowSharing: false,
+                              pdfFileName: fileName,
+                              loadingWidget: const Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF00A86B),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: 16,
+                            right: 16,
+                            bottom: bottomInset + 12,
+                            child: SizedBox(
+                              height: 42,
+                              child: FilledButton(
+                                onPressed: () => Printing.sharePdf(
+                                  bytes: pdfBytes,
+                                  filename: fileName,
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF00A86B),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                child: const Text('Salvar PDF'),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
-      }
-    }
+      },
+    );
   }
 }
 

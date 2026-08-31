@@ -118,14 +118,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
       if (authenticated) {
         await ref.read(authProvider.notifier).enableBiometricLogin();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Biometria habilitada com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
       } else {
         await ref.read(authProvider.notifier).dismissBiometricPrompt();
       }

@@ -44,8 +44,9 @@ class ConcessaoFolgaCard extends StatelessWidget {
     return InkWell(
       onTap: () => showModalBottomSheet(
         context: context,
-        showDragHandle: true,
+        useRootNavigator: true,
         isScrollControlled: true,
+        backgroundColor: Colors.transparent,
         builder: (_) => ConcessaoFolgaDetailsSheet(concessao: concessao),
       ),
       borderRadius: BorderRadius.circular(8),

@@ -8,6 +8,7 @@ import '../models/ausencia_calendario.dart';
 import '../models/concessao_folga.dart';
 import '../models/operacao_solicitacao_concessao.dart';
 import '../models/solicitacao_concessao.dart';
+import '../models/sugestao_data_final.dart';
 import '../repositories/concessao_folga_repository.dart';
 import 'ausencias_calendario_state.dart';
 import 'concessoes_vigentes_state.dart';
@@ -210,7 +211,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     ]);
   }
 
-  Future<void> solicitarMarcacaoFerias({
+  Future<void> solicitarGozo({
     required ConcessaoFolga concessao,
     required DateTime dataInicial,
     required int numeroDias,
@@ -222,7 +223,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
 
     await ref
         .read(concessaoFolgaRepositoryProvider)
-        .solicitarMarcacaoFerias(
+        .solicitarGozo(
           token: token,
           concessaoId: concessao.id,
           dataInicial: dataInicial,
@@ -234,7 +235,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     await carregarInicial();
   }
 
-  Future<List<String>> buscarSugestoesDatasFinais({
+  Future<List<SugestaoDataFinal>> buscarSugestoesDatasFinais({
     required ConcessaoFolga concessao,
     required DateTime dataInicial,
   }) async {

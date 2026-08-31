@@ -3,6 +3,7 @@ import 'package:app_mppb_flutter/features/concessao_folga/models/ausencia_calend
 import 'package:app_mppb_flutter/features/concessao_folga/models/concessao_folga.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/solicitacao_concessao.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/status_solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_folga/models/sugestao_data_final.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_ausencia.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_concessao.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_solicitacao_concessao.dart';
@@ -92,6 +93,28 @@ void main() {
       );
       expect(solicitacao.diasCalculados, 2);
       expect(solicitacao.possuiDivergenciaDias, isTrue);
+    });
+
+    test('parseia sugestao com numeroDias retornado pelo backend', () {
+      final sugestao = SugestaoDataFinal.fromJson({
+        'dataFinal': '19/01/2027',
+        'numeroDias': 7,
+        'descricao': 'Opção curta',
+      }, dataInicial: DateTime(2027, 1, 10));
+
+      expect(sugestao.dataFinal, DateTime(2027, 1, 19));
+      expect(sugestao.numeroDias, 7);
+      expect(sugestao.descricao, 'Opção curta');
+    });
+
+    test('parseia sugestao string e calcula dias inclusivos como fallback', () {
+      final sugestao = SugestaoDataFinal.fromJson(
+        '19/01/2027',
+        dataInicial: DateTime(2027, 1, 10),
+      );
+
+      expect(sugestao.dataFinal, DateTime(2027, 1, 19));
+      expect(sugestao.numeroDias, 10);
     });
   });
 

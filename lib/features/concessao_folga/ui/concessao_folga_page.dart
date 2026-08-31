@@ -51,7 +51,7 @@ class ConcessaoFolgaPage extends ConsumerWidget {
                 onRefresh: () =>
                     notifier.carregarConcessoes(forceRefresh: true),
                 onSolicitar: (concessao, dataInicial, numeroDias) =>
-                    notifier.solicitarMarcacaoFerias(
+                    notifier.solicitarGozo(
                       concessao: concessao,
                       dataInicial: dataInicial,
                       numeroDias: numeroDias,

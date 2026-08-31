@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../models/ausencia_calendario.dart';
 import '../models/concessao_folga.dart';
 import '../models/operacao_solicitacao_concessao.dart';
+import '../models/sugestao_data_final.dart';
 
 class ConcessaoFolgaRepository {
   final Dio dio;
@@ -60,7 +61,7 @@ class ConcessaoFolgaRepository {
         .toList();
   }
 
-  Future<void> solicitarMarcacaoFerias({
+  Future<void> solicitarGozo({
     required String token,
     required int concessaoId,
     required DateTime dataInicial,
@@ -81,7 +82,7 @@ class ConcessaoFolgaRepository {
     );
   }
 
-  Future<List<String>> buscarSugestoesDatasFinais({
+  Future<List<SugestaoDataFinal>> buscarSugestoesDatasFinais({
     required String token,
     required int concessaoId,
     required DateTime dataInicial,
@@ -98,12 +99,21 @@ class ConcessaoFolgaRepository {
         extra: {'skipAuthLogout': true},
       ),
     );
-    return _parseSugestoes(response.data);
+    return _parseSugestoes(response.data, dataInicial: dataInicial);
   }
 
-  List<String> _parseSugestoes(dynamic data) {
+  List<SugestaoDataFinal> _parseSugestoes(
+    dynamic data, {
+    required DateTime dataInicial,
+  }) {
+    if (data == null) return const [];
     if (data is List) {
-      return data.map(_sugestaoText).whereType<String>().toList();
+      return data
+          .map(
+            (item) =>
+                SugestaoDataFinal.fromJson(item, dataInicial: dataInicial),
+          )
+          .toList();
     }
     if (data is Map<String, dynamic>) {
       for (final key in [
@@ -115,14 +125,17 @@ class ConcessaoFolgaRepository {
       ]) {
         final value = data[key];
         if (value is List) {
-          return value.map(_sugestaoText).whereType<String>().toList();
+          return value
+              .map(
+                (item) =>
+                    SugestaoDataFinal.fromJson(item, dataInicial: dataInicial),
+              )
+              .toList();
         }
       }
-      final single = _sugestaoText(data);
-      return single == null ? [] : [single];
+      return [SugestaoDataFinal.fromJson(data, dataInicial: dataInicial)];
     }
-    final text = _sugestaoText(data);
-    return text == null ? [] : [text];
+    return [SugestaoDataFinal.fromJson(data, dataInicial: dataInicial)];
   }
 
   Future<List<OperacaoSolicitacaoConcessao>> buscarOperacoesSolicitacao({
@@ -207,24 +220,6 @@ class ConcessaoFolgaRepository {
       if (operacoes is List) return operacoes;
     }
     return const [];
-  }
-
-  String? _sugestaoText(dynamic value) {
-    if (value == null) return null;
-    if (value is String) return value;
-    if (value is num || value is bool) return value.toString();
-    if (value is Map<String, dynamic>) {
-      final inicio =
-          value['dataInicial'] ?? value['inicio'] ?? value['dataInicio'];
-      final fim = value['dataFinal'] ?? value['fim'] ?? value['dataFim'];
-      final dias = value['numeroDias'] ?? value['dias'];
-      if (inicio != null && fim != null) {
-        return dias == null ? '$inicio a $fim' : '$inicio a $fim ($dias dias)';
-      }
-      if (fim != null) return 'Até $fim';
-      return value.values.map((item) => item.toString()).join(' - ');
-    }
-    return value.toString();
   }
 }
 

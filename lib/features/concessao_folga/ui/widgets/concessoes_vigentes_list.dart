@@ -4,6 +4,7 @@ import '../../../../../core/ui/main_layout.dart';
 import '../../models/concessao_folga.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
+import '../../models/sugestao_data_final.dart';
 import 'concessao_folga_card.dart';
 import 'concessao_folga_theme.dart';
 
@@ -19,7 +20,7 @@ class ConcessoesVigentesList extends StatelessWidget {
     int numeroDias,
   )?
   onSolicitar;
-  final Future<List<String>> Function(
+  final Future<List<SugestaoDataFinal>> Function(
     ConcessaoFolga concessao,
     DateTime dataInicial,
   )?

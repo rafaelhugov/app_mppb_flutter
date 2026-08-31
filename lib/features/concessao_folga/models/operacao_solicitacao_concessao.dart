@@ -61,10 +61,12 @@ OperacaoSolicitacaoConcessao? operacaoSolicitacaoFromJson(dynamic value) {
   if (normalized.contains('interromp') || normalized.contains('interrup')) {
     return OperacaoSolicitacaoConcessao.interromper;
   }
-  if (normalized.contains('parcial')) {
+  if (normalized.contains('parcial') || normalized.contains('parcia')) {
     return OperacaoSolicitacaoConcessao.suspenderParcialmente;
   }
-  if (normalized.contains('integral') || normalized.contains('total')) {
+  if (normalized.contains('integral') ||
+      normalized.contains('integra') ||
+      normalized.contains('total')) {
     return OperacaoSolicitacaoConcessao.suspenderIntegralmente;
   }
   return null;

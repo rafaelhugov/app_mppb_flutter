@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/network/api_client.dart';
 import '../models/ausencia_calendario.dart';
 import '../models/concessao_folga.dart';
+import '../models/operacao_solicitacao_concessao.dart';
 
 class ConcessaoFolgaRepository {
   final Dio dio;
@@ -122,6 +123,90 @@ class ConcessaoFolgaRepository {
     }
     final text = _sugestaoText(data);
     return text == null ? [] : [text];
+  }
+
+  Future<List<OperacaoSolicitacaoConcessao>> buscarOperacoesSolicitacao({
+    required String token,
+    required int solicitacaoId,
+  }) async {
+    final response = await dio.get(
+      '/api/recursos-humanos/solicitacoes/$solicitacaoId/operacoes',
+      queryParameters: {'token': token},
+      options: Options(
+        headers: {'Authorization': 'Token $token'},
+        extra: {'skipAuthLogout': true},
+      ),
+    );
+
+    final operacoes = _extractOperacoes(response.data)
+        .map(operacaoSolicitacaoFromJson)
+        .whereType<OperacaoSolicitacaoConcessao>()
+        .toSet()
+        .toList();
+    operacoes.sort((a, b) => a.index.compareTo(b.index));
+    return operacoes;
+  }
+
+  Future<void> executarOperacaoSolicitacao({
+    required String token,
+    required int solicitacaoId,
+    required OperacaoSolicitacaoConcessao operacao,
+    DateTime? data,
+    DateTime? dataFim,
+  }) async {
+    final dateFormat = DateFormat('dd/MM/yyyy');
+    final dataFormatada = data == null ? null : dateFormat.format(data);
+    final dataFinalFormatada = dataFim == null
+        ? null
+        : dateFormat.format(dataFim);
+    final endpoint = switch (operacao) {
+      OperacaoSolicitacaoConcessao.cancelar => 'cancelamentos',
+      OperacaoSolicitacaoConcessao.adiar => 'adiamentos',
+      OperacaoSolicitacaoConcessao.antecipar => 'antecipacoes',
+      OperacaoSolicitacaoConcessao.interromper => 'interrupcoes',
+      OperacaoSolicitacaoConcessao.suspenderParcialmente =>
+        'suspensoes-parciais',
+      OperacaoSolicitacaoConcessao.suspenderIntegralmente =>
+        'suspensoes-integrais',
+    };
+    final body = switch (operacao) {
+      OperacaoSolicitacaoConcessao.cancelar ||
+      OperacaoSolicitacaoConcessao.suspenderIntegralmente => null,
+      OperacaoSolicitacaoConcessao.adiar => {'dataAdiamento': dataFormatada},
+      OperacaoSolicitacaoConcessao.antecipar => {
+        'dataAntecipacao': dataFormatada,
+      },
+      OperacaoSolicitacaoConcessao.interromper => {
+        'dataInterrupcao': dataFormatada,
+      },
+      OperacaoSolicitacaoConcessao.suspenderParcialmente => {
+        'datasSuspensoes': [
+          {
+            'dataSuspensaoInicial': dataFormatada,
+            'dataSuspensaoFinal': dataFinalFormatada ?? dataFormatada,
+          },
+        ],
+      },
+    };
+
+    await dio.post(
+      '/api/recursos-humanos/solicitacoes/$solicitacaoId/$endpoint',
+      queryParameters: {'token': token},
+      data: body,
+      options: Options(
+        headers: {'Authorization': 'Token $token'},
+        extra: {'skipAuthLogout': true},
+      ),
+    );
+  }
+
+  List<dynamic> _extractOperacoes(dynamic data) {
+    if (data is List) return data;
+    if (data is Map<String, dynamic>) {
+      final operacoes = data['operacoes'];
+      if (operacoes is List) return operacoes;
+    }
+    return const [];
   }
 
   String? _sugestaoText(dynamic value) {

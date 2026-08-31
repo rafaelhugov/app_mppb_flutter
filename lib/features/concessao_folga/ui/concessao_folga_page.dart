@@ -61,6 +61,15 @@ class ConcessaoFolgaPage extends ConsumerWidget {
                       concessao: concessao,
                       dataInicial: dataInicial,
                     ),
+                onBuscarOperacoes: (solicitacao) => notifier
+                    .buscarOperacoesSolicitacao(solicitacao: solicitacao),
+                onExecutarOperacao: (solicitacao, operacao, {data, dataFim}) =>
+                    notifier.executarOperacaoSolicitacao(
+                      solicitacao: solicitacao,
+                      operacao: operacao,
+                      data: data,
+                      dataFim: dataFim,
+                    ),
               ),
             ],
           ),

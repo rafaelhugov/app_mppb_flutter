@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/concessao_folga.dart';
+import '../../models/operacao_solicitacao_concessao.dart';
+import '../../models/solicitacao_concessao.dart';
 import 'concessao_folga_details_sheet.dart';
 import 'concessao_folga_theme.dart';
 
@@ -18,12 +20,25 @@ class ConcessaoFolgaCard extends StatelessWidget {
     DateTime dataInicial,
   )?
   onBuscarSugestoes;
+  final Future<List<OperacaoSolicitacaoConcessao>> Function(
+    SolicitacaoConcessao solicitacao,
+  )?
+  onBuscarOperacoes;
+  final Future<void> Function(
+    SolicitacaoConcessao solicitacao,
+    OperacaoSolicitacaoConcessao operacao, {
+    DateTime? data,
+    DateTime? dataFim,
+  })?
+  onExecutarOperacao;
 
   const ConcessaoFolgaCard({
     super.key,
     required this.concessao,
     this.onSolicitar,
     this.onBuscarSugestoes,
+    this.onBuscarOperacoes,
+    this.onExecutarOperacao,
   });
 
   @override
@@ -49,7 +64,11 @@ class ConcessaoFolgaCard extends StatelessWidget {
         useRootNavigator: true,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => ConcessaoFolgaDetailsSheet(concessao: concessao),
+        builder: (_) => ConcessaoFolgaDetailsSheet(
+          concessao: concessao,
+          onBuscarOperacoes: onBuscarOperacoes,
+          onExecutarOperacao: onExecutarOperacao,
+        ),
       ),
       borderRadius: BorderRadius.circular(8),
       child: Container(

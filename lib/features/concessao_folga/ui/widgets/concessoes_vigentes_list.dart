@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/ui/main_layout.dart';
 import '../../models/concessao_folga.dart';
+import '../../models/operacao_solicitacao_concessao.dart';
+import '../../models/solicitacao_concessao.dart';
 import 'concessao_folga_card.dart';
 import 'concessao_folga_theme.dart';
 
@@ -22,6 +24,17 @@ class ConcessoesVigentesList extends StatelessWidget {
     DateTime dataInicial,
   )?
   onBuscarSugestoes;
+  final Future<List<OperacaoSolicitacaoConcessao>> Function(
+    SolicitacaoConcessao solicitacao,
+  )?
+  onBuscarOperacoes;
+  final Future<void> Function(
+    SolicitacaoConcessao solicitacao,
+    OperacaoSolicitacaoConcessao operacao, {
+    DateTime? data,
+    DateTime? dataFim,
+  })?
+  onExecutarOperacao;
 
   const ConcessoesVigentesList({
     super.key,
@@ -32,6 +45,8 @@ class ConcessoesVigentesList extends StatelessWidget {
     required this.onRefresh,
     this.onSolicitar,
     this.onBuscarSugestoes,
+    this.onBuscarOperacoes,
+    this.onExecutarOperacao,
   });
 
   @override
@@ -64,6 +79,8 @@ class ConcessoesVigentesList extends StatelessWidget {
                 concessao: concessao,
                 onSolicitar: onSolicitar,
                 onBuscarSugestoes: onBuscarSugestoes,
+                onBuscarOperacoes: onBuscarOperacoes,
+                onExecutarOperacao: onExecutarOperacao,
               ),
             ),
         ],

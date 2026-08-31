@@ -6,6 +6,8 @@ import '../../../core/storage/secure_storage.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/ausencia_calendario.dart';
 import '../models/concessao_folga.dart';
+import '../models/operacao_solicitacao_concessao.dart';
+import '../models/solicitacao_concessao.dart';
 import '../repositories/concessao_folga_repository.dart';
 import 'ausencias_calendario_state.dart';
 import 'concessoes_vigentes_state.dart';
@@ -248,6 +250,48 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
           concessaoId: concessao.id,
           dataInicial: dataInicial,
         );
+  }
+
+  Future<List<OperacaoSolicitacaoConcessao>> buscarOperacoesSolicitacao({
+    required SolicitacaoConcessao solicitacao,
+  }) async {
+    final token = await _tokenAtual();
+    if (token == null) {
+      throw Exception('Sessão expirada. Faça login novamente.');
+    }
+
+    return ref
+        .read(concessaoFolgaRepositoryProvider)
+        .buscarOperacoesSolicitacao(
+          token: token,
+          solicitacaoId: solicitacao.id,
+        );
+  }
+
+  Future<void> executarOperacaoSolicitacao({
+    required SolicitacaoConcessao solicitacao,
+    required OperacaoSolicitacaoConcessao operacao,
+    DateTime? data,
+    DateTime? dataFim,
+  }) async {
+    final token = await _tokenAtual();
+    if (token == null) {
+      throw Exception('Sessão expirada. Faça login novamente.');
+    }
+
+    await ref
+        .read(concessaoFolgaRepositoryProvider)
+        .executarOperacaoSolicitacao(
+          token: token,
+          solicitacaoId: solicitacao.id,
+          operacao: operacao,
+          data: data,
+          dataFim: dataFim,
+        );
+
+    _concessoesCache.clear();
+    _ausenciasCache.clear();
+    await carregarInicial();
   }
 
   Future<String?> _tokenAtual() async {

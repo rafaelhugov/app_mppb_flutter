@@ -232,6 +232,24 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     await carregarInicial();
   }
 
+  Future<List<String>> buscarSugestoesDatasFinais({
+    required ConcessaoFolga concessao,
+    required DateTime dataInicial,
+  }) async {
+    final token = await _tokenAtual();
+    if (token == null) {
+      throw Exception('Sessão expirada. Faça login novamente.');
+    }
+
+    return ref
+        .read(concessaoFolgaRepositoryProvider)
+        .buscarSugestoesDatasFinais(
+          token: token,
+          concessaoId: concessao.id,
+          dataInicial: dataInicial,
+        );
+  }
+
   Future<String?> _tokenAtual() async {
     for (var attempt = 0; attempt < 6; attempt++) {
       final stateToken = ref.read(authProvider).token;

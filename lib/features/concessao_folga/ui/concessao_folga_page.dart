@@ -56,6 +56,11 @@ class ConcessaoFolgaPage extends ConsumerWidget {
                       dataInicial: dataInicial,
                       numeroDias: numeroDias,
                     ),
+                onBuscarSugestoes: (concessao, dataInicial) =>
+                    notifier.buscarSugestoesDatasFinais(
+                      concessao: concessao,
+                      dataInicial: dataInicial,
+                    ),
               ),
             ],
           ),

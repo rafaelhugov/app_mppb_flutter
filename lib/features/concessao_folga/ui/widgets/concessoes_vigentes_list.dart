@@ -17,6 +17,11 @@ class ConcessoesVigentesList extends StatelessWidget {
     int numeroDias,
   )?
   onSolicitar;
+  final Future<List<String>> Function(
+    ConcessaoFolga concessao,
+    DateTime dataInicial,
+  )?
+  onBuscarSugestoes;
 
   const ConcessoesVigentesList({
     super.key,
@@ -26,6 +31,7 @@ class ConcessoesVigentesList extends StatelessWidget {
     required this.onRetry,
     required this.onRefresh,
     this.onSolicitar,
+    this.onBuscarSugestoes,
   });
 
   @override
@@ -57,6 +63,7 @@ class ConcessoesVigentesList extends StatelessWidget {
               (concessao) => ConcessaoFolgaCard(
                 concessao: concessao,
                 onSolicitar: onSolicitar,
+                onBuscarSugestoes: onBuscarSugestoes,
               ),
             ),
         ],

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/concessao_folga.dart';
-import '../../models/tipo_concessao.dart';
 import 'concessao_folga_details_sheet.dart';
 import 'concessao_folga_theme.dart';
 
@@ -14,11 +13,17 @@ class ConcessaoFolgaCard extends StatelessWidget {
     int numeroDias,
   )?
   onSolicitar;
+  final Future<List<String>> Function(
+    ConcessaoFolga concessao,
+    DateTime dataInicial,
+  )?
+  onBuscarSugestoes;
 
   const ConcessaoFolgaCard({
     super.key,
     required this.concessao,
     this.onSolicitar,
+    this.onBuscarSugestoes,
   });
 
   @override
@@ -36,10 +41,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
         : const Color(0xE6FFFFFF);
     final tileColor = Colors.white.withValues(alpha: 0.18);
     final tileBorder = Colors.white.withValues(alpha: 0.36);
-    final canSolicitar =
-        concessao.tipo == TipoConcessao.ferias &&
-        concessao.saldoRestante > 0 &&
-        onSolicitar != null;
+    final canSolicitar = concessao.diasConcedidos > 0 && onSolicitar != null;
 
     return InkWell(
       onTap: () => showModalBottomSheet(
@@ -196,8 +198,11 @@ class ConcessaoFolgaCard extends StatelessWidget {
       useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _MarcacaoFeriasSheet(concessao: concessao, onSubmit: onSolicitar!),
+      builder: (_) => _MarcacaoGozoSheet(
+        concessao: concessao,
+        onSubmit: onSolicitar!,
+        onBuscarSugestoes: onBuscarSugestoes,
+      ),
     );
   }
 }
@@ -228,7 +233,7 @@ class _MarcacaoButton extends StatelessWidget {
               Icon(Icons.event_available_rounded, color: color, size: 15),
               const SizedBox(width: 6),
               Text(
-                'Marcar férias',
+                'Marcar gozo',
                 style: TextStyle(
                   color: color,
                   fontSize: 12,
@@ -243,7 +248,7 @@ class _MarcacaoButton extends StatelessWidget {
   }
 }
 
-class _MarcacaoFeriasSheet extends StatefulWidget {
+class _MarcacaoGozoSheet extends StatefulWidget {
   final ConcessaoFolga concessao;
   final Future<void> Function(
     ConcessaoFolga concessao,
@@ -251,29 +256,47 @@ class _MarcacaoFeriasSheet extends StatefulWidget {
     int numeroDias,
   )
   onSubmit;
+  final Future<List<String>> Function(
+    ConcessaoFolga concessao,
+    DateTime dataInicial,
+  )?
+  onBuscarSugestoes;
 
-  const _MarcacaoFeriasSheet({required this.concessao, required this.onSubmit});
+  const _MarcacaoGozoSheet({
+    required this.concessao,
+    required this.onSubmit,
+    this.onBuscarSugestoes,
+  });
 
   @override
-  State<_MarcacaoFeriasSheet> createState() => _MarcacaoFeriasSheetState();
+  State<_MarcacaoGozoSheet> createState() => _MarcacaoGozoSheetState();
 }
 
-class _MarcacaoFeriasSheetState extends State<_MarcacaoFeriasSheet> {
+class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
   final _dateFormat = DateFormat('dd/MM/yyyy');
   DateTime? _dataInicial;
   late int _numeroDias;
   bool _isSubmitting = false;
+  bool _isLoadingSugestoes = false;
+  List<String> _sugestoes = const [];
+  String? _sugestoesError;
 
   @override
   void initState() {
     super.initState();
-    _numeroDias = widget.concessao.saldoRestante.clamp(1, 30).toInt();
+    _numeroDias = _maxDias.clamp(1, 30).toInt();
+  }
+
+  int get _maxDias {
+    final saldo = widget.concessao.saldoRestante;
+    if (saldo > 0) return saldo;
+    return widget.concessao.diasConcedidos;
   }
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    final saldo = widget.concessao.saldoRestante;
+    final saldo = _maxDias;
     final fimPrevisto = _dataInicial?.add(Duration(days: _numeroDias - 1));
 
     return Padding(
@@ -305,7 +328,7 @@ class _MarcacaoFeriasSheetState extends State<_MarcacaoFeriasSheet> {
                 children: [
                   const Expanded(
                     child: Text(
-                      'Marcar férias',
+                      'Marcar gozo',
                       style: TextStyle(
                         color: Color(0xFF202322),
                         fontSize: 20,
@@ -389,11 +412,31 @@ class _MarcacaoFeriasSheetState extends State<_MarcacaoFeriasSheet> {
               if (fimPrevisto != null) ...[
                 const SizedBox(height: 12),
                 Text(
-                  'Fim previsto: ${_dateFormat.format(fimPrevisto)}',
+                  'Fim previsto local: ${_dateFormat.format(fimPrevisto)}',
                   style: const TextStyle(
                     color: Color(0xFF697370),
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+              if (_isLoadingSugestoes) ...[
+                const SizedBox(height: 12),
+                const LinearProgressIndicator(
+                  minHeight: 2,
+                  color: Color(0xFFE5252A),
+                  backgroundColor: Color(0xFFE9EDF0),
+                ),
+              ] else if (_sugestoes.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _SugestoesBox(sugestoes: _sugestoes),
+              ] else if (_sugestoesError != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _sugestoesError!,
+                  style: const TextStyle(
+                    color: Color(0xFF697370),
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -448,6 +491,36 @@ class _MarcacaoFeriasSheetState extends State<_MarcacaoFeriasSheet> {
     );
     if (selected != null) {
       setState(() => _dataInicial = selected);
+      await _buscarSugestoes(selected);
+    }
+  }
+
+  Future<void> _buscarSugestoes(DateTime dataInicial) async {
+    final fetch = widget.onBuscarSugestoes;
+    if (fetch == null) return;
+
+    setState(() {
+      _isLoadingSugestoes = true;
+      _sugestoes = const [];
+      _sugestoesError = null;
+    });
+
+    try {
+      final sugestoes = await fetch(widget.concessao, dataInicial);
+      if (!mounted) return;
+      setState(() {
+        _isLoadingSugestoes = false;
+        _sugestoes = sugestoes;
+        _sugestoesError = sugestoes.isEmpty
+            ? 'Nenhum intervalo sugerido para a data selecionada.'
+            : null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingSugestoes = false;
+        _sugestoesError = 'Não foi possível carregar os intervalos sugeridos.';
+      });
     }
   }
 
@@ -462,15 +535,81 @@ class _MarcacaoFeriasSheetState extends State<_MarcacaoFeriasSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Solicitação de férias enviada.')),
+        const SnackBar(content: Text('Solicitação de gozo enviada.')),
       );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível marcar férias: $e')),
+        SnackBar(content: Text('Não foi possível marcar o gozo: $e')),
       );
     }
+  }
+}
+
+class _SugestoesBox extends StatelessWidget {
+  final List<String> sugestoes;
+
+  const _SugestoesBox({required this.sugestoes});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE9EDF0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Intervalos possíveis',
+            style: TextStyle(
+              color: Color(0xFF202322),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...sugestoes
+              .take(4)
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 6),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Color(0xFF00A86B),
+                            shape: BoxShape.circle,
+                          ),
+                          child: SizedBox(width: 5, height: 5),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: const TextStyle(
+                            color: Color(0xFF697370),
+                            fontSize: 12,
+                            height: 1.25,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+        ],
+      ),
+    );
   }
 }
 

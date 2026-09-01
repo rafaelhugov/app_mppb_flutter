@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:app_mppb_flutter/features/concessao_folga/models/operacao_solicitacao_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/repositories/concessao_folga_repository.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/operacao_solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/repositories/concessao_afastamento_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late Dio dio;
   late _FakeAdapter adapter;
-  late ConcessaoFolgaRepository repository;
+  late ConcessaoAfastamentoRepository repository;
 
   setUp(() {
     adapter = _FakeAdapter();
     dio = Dio(BaseOptions(baseUrl: 'http://mobile.local'));
     dio.httpClientAdapter = adapter;
-    repository = ConcessaoFolgaRepository(dio);
+    repository = ConcessaoAfastamentoRepository(dio);
   });
 
   test('consulta sugestoes ao selecionar data inicial', () async {

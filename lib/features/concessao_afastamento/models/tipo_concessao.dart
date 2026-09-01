@@ -30,6 +30,7 @@ enum TipoConcessao {
       case 'diaria':
       case 'diarias':
       case 'afastamento por diarias':
+      case 'folga por diarias':
         return TipoConcessao.diarias;
       default:
         return TipoConcessao.desconhecido;

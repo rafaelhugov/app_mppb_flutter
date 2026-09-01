@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../models/concessao_folga.dart';
+import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
 import '../../models/sugestao_data_final.dart';
-import 'concessao_folga_details_sheet.dart';
-import 'concessao_folga_theme.dart';
+import 'concessao_afastamento_details_sheet.dart';
+import 'concessao_afastamento_theme.dart';
 
-class ConcessaoFolgaCard extends StatelessWidget {
-  final ConcessaoFolga concessao;
+class ConcessaoAfastamentoCard extends StatelessWidget {
+  final ConcessaoAfastamento concessao;
   final Future<void> Function(
-    ConcessaoFolga concessao,
+    ConcessaoAfastamento concessao,
     DateTime dataInicial,
     int numeroDias,
   )?
   onSolicitar;
   final Future<List<SugestaoDataFinal>> Function(
-    ConcessaoFolga concessao,
+    ConcessaoAfastamento concessao,
     DateTime dataInicial,
   )?
   onBuscarSugestoes;
@@ -33,7 +33,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
   })?
   onExecutarOperacao;
 
-  const ConcessaoFolgaCard({
+  const ConcessaoAfastamentoCard({
     super.key,
     required this.concessao,
     this.onSolicitar,
@@ -58,7 +58,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
         useRootNavigator: true,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => ConcessaoFolgaDetailsSheet(
+        builder: (_) => ConcessaoAfastamentoDetailsSheet(
           concessao: concessao,
           onBuscarOperacoes: onBuscarOperacoes,
           onExecutarOperacao: onExecutarOperacao,
@@ -98,7 +98,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: ConcessaoFolgaColors.ink,
+                            color: ConcessaoAfastamentoColors.ink,
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
                             height: 1.2,
@@ -121,8 +121,8 @@ class ConcessaoFolgaCard extends StatelessWidget {
                     value: '${concessao.diasConcedidos}',
                     background: _softColor(typeColor),
                     border: typeColor.withValues(alpha: 0.24),
-                    labelColor: ConcessaoFolgaColors.muted,
-                    valueColor: ConcessaoFolgaColors.ink,
+                    labelColor: ConcessaoAfastamentoColors.muted,
+                    valueColor: ConcessaoAfastamentoColors.ink,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -132,8 +132,8 @@ class ConcessaoFolgaCard extends StatelessWidget {
                     value: '${concessao.saldoRestante} dias',
                     background: _softColor(typeColor),
                     border: typeColor.withValues(alpha: 0.24),
-                    labelColor: ConcessaoFolgaColors.muted,
-                    valueColor: ConcessaoFolgaColors.ink,
+                    labelColor: ConcessaoAfastamentoColors.muted,
+                    valueColor: ConcessaoAfastamentoColors.ink,
                   ),
                 ),
               ],
@@ -143,7 +143,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
               const Text(
                 'Nenhum período de gozo programado',
                 style: TextStyle(
-                  color: ConcessaoFolgaColors.muted,
+                  color: ConcessaoAfastamentoColors.muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -152,7 +152,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
               Text(
                 'Período: ${dateFormat.format(primeiraSolicitacao.inicio)} a ${dateFormat.format(primeiraSolicitacao.fim)}',
                 style: const TextStyle(
-                  color: ConcessaoFolgaColors.ink,
+                  color: ConcessaoAfastamentoColors.ink,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -169,7 +169,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
                     Text(
                       '+${concessao.solicitacoes.length - 1}',
                       style: const TextStyle(
-                        color: ConcessaoFolgaColors.muted,
+                        color: ConcessaoAfastamentoColors.muted,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                       ),
@@ -232,14 +232,14 @@ class _MarcacaoButton extends StatelessWidget {
             children: [
               const Icon(
                 Icons.event_available_rounded,
-                color: ConcessaoFolgaColors.ink,
+                color: ConcessaoAfastamentoColors.ink,
                 size: 16,
               ),
               const SizedBox(width: 6),
               const Text(
                 'Marcar gozo',
                 style: TextStyle(
-                  color: ConcessaoFolgaColors.ink,
+                  color: ConcessaoAfastamentoColors.ink,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
@@ -252,7 +252,7 @@ class _MarcacaoButton extends StatelessWidget {
   }
 }
 
-String _cardTitleDetail(ConcessaoFolga concessao) {
+String _cardTitleDetail(ConcessaoAfastamento concessao) {
   final title = concessao.titulo.trim();
   final label = concessao.tipo.label;
   final prefixed = '$label - ';
@@ -274,7 +274,7 @@ class _TypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = color.computeLuminance() > 0.45
-        ? ConcessaoFolgaColors.ink
+        ? ConcessaoAfastamentoColors.ink
         : Colors.white;
 
     return Container(
@@ -324,15 +324,15 @@ class _StatusChip extends StatelessWidget {
 }
 
 class _MarcacaoGozoSheet extends StatefulWidget {
-  final ConcessaoFolga concessao;
+  final ConcessaoAfastamento concessao;
   final Future<void> Function(
-    ConcessaoFolga concessao,
+    ConcessaoAfastamento concessao,
     DateTime dataInicial,
     int numeroDias,
   )
   onSubmit;
   final Future<List<SugestaoDataFinal>> Function(
-    ConcessaoFolga concessao,
+    ConcessaoAfastamento concessao,
     DateTime dataInicial,
   )?
   onBuscarSugestoes;
@@ -882,7 +882,7 @@ class _SaldoChip extends StatelessWidget {
       child: Text(
         '$saldo dias',
         style: const TextStyle(
-          color: ConcessaoFolgaColors.ink,
+          color: ConcessaoAfastamentoColors.ink,
           fontSize: 11,
           fontWeight: FontWeight.w900,
         ),

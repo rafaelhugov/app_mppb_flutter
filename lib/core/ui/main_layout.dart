@@ -128,7 +128,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           context.go('/carteira');
           break;
         case 4:
-          context.go(extraRoute ?? '/concessao-folga');
+          context.go(extraRoute ?? '/concessao-afastamento');
           break;
       }
     } else {
@@ -164,7 +164,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       case 'Diár.':
         return 11;
       case 'Início':
-      case 'Folga':
+      case 'Afast.':
       default:
         return 10;
     }
@@ -585,18 +585,18 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       isOnline,
     );
 
-    String label4 = 'Folga';
+    String label4 = 'Afast.';
     IconData icon4 = Icons.event_available_rounded;
-    String route4 = '/concessao-folga';
+    String route4 = '/concessao-afastamento';
     if (isAuthenticated) {
       if (location == '/pagamentos') {
         label4 = 'Pagam.';
         icon4 = Icons.assignment_rounded;
         route4 = '/pagamentos';
-      } else if (location == '/concessao-folga') {
-        label4 = 'Folga';
+      } else if (location == '/concessao-afastamento') {
+        label4 = 'Afast.';
         icon4 = Icons.event_available_rounded;
-        route4 = '/concessao-folga';
+        route4 = '/concessao-afastamento';
       } else if (location == '/designacoes') {
         label4 = 'Desig.';
         icon4 = Icons.assignment_ind_rounded;

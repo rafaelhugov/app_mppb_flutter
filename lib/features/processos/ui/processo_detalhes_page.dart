@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/processos_provider.dart';
 import '../models/processo.dart';
+import '../utils/processo_date_formatter.dart';
 
 const _processBlue = Color(0xFF2563EB);
 const _cardBorder = Color(0xFFDDE4DF);
@@ -28,17 +29,6 @@ class ProcessoDetalhesPage extends ConsumerStatefulWidget {
 
 class _ProcessoDetalhesPageState extends ConsumerState<ProcessoDetalhesPage> {
   int _currentTabIndex = 0;
-
-  String _formatDate(String? dataString) {
-    if (dataString == null || dataString.isEmpty) return '';
-    final parts = dataString.split('T');
-    final dateParts = parts[0].split('-');
-    if (dateParts.length == 3) {
-      final timePart = parts.length > 1 ? ' ${parts[1].substring(0, 5)}' : '';
-      return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}$timePart';
-    }
-    return dataString;
-  }
 
   String _formatDoc(String? doc) {
     if (doc == null || doc.isEmpty) return 'Documento não informado';
@@ -380,7 +370,7 @@ class _ProcessoDetalhesPageState extends ConsumerState<ProcessoDetalhesPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _formatDate(mov.data),
+                    ProcessoDateFormatter.dateTime(mov.data, fallback: ''),
                     style: const TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                   if (mov.complemento != null &&
@@ -550,7 +540,7 @@ class _ProcessoDetalhesPageState extends ConsumerState<ProcessoDetalhesPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                _formatDate(processo.dataRegistro),
+                ProcessoDateFormatter.date(processo.dataRegistro),
                 style: const TextStyle(fontSize: 15),
               ),
 

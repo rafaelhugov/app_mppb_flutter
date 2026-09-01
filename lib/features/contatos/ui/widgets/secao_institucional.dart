@@ -45,7 +45,7 @@ class SecaoInstitucional extends StatelessWidget {
             ),
             SizedBox(width: 8),
             Text(
-              'Atendimento e canais oficiais',
+              'Ouvidoria e canais oficiais',
               style: TextStyle(
                 color: Color(0xFF202322),
                 fontSize: 16,
@@ -55,57 +55,61 @@ class SecaoInstitucional extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          children: [
-            _buildCompactChip(
-              context,
-              icone: const FaIcon(
-                FontAwesomeIcons.whatsapp,
-                color: Color(0xFF25D366),
-                size: 14,
-              ),
-              label: 'WhatsApp',
-              onTap: () => _handleLink(
+        SizedBox(
+          width: double.infinity,
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              _buildCompactChip(
                 context,
-                () => ServicoLinksExternos.abrirWhatsApp(
-                  DadosInstitucionais.whatsappOuvidoria,
-                  mensagem: DadosInstitucionais.mensagemPadraoWhatsApp,
+                icone: const FaIcon(
+                  FontAwesomeIcons.whatsapp,
+                  color: Color(0xFF25D366),
+                  size: 14,
+                ),
+                label: 'WhatsApp',
+                onTap: () => _handleLink(
+                  context,
+                  () => ServicoLinksExternos.abrirWhatsApp(
+                    DadosInstitucionais.whatsappOuvidoria,
+                    mensagem: DadosInstitucionais.mensagemPadraoWhatsApp,
+                  ),
                 ),
               ),
-            ),
-            _buildCompactChip(
-              context,
-              icone: const Icon(
-                Icons.email_outlined,
-                color: Color(0xFFD92D20),
-                size: 14,
-              ),
-              label: 'E-mail',
-              onTap: () => _handleLink(
+              _buildCompactChip(
                 context,
-                () => ServicoLinksExternos.abrirEmail(
-                  DadosInstitucionais.emailOuvidoria,
+                icone: const Icon(
+                  Icons.email_outlined,
+                  color: Color(0xFFD92D20),
+                  size: 14,
+                ),
+                label: 'E-mail',
+                onTap: () => _handleLink(
+                  context,
+                  () => ServicoLinksExternos.abrirEmail(
+                    DadosInstitucionais.emailOuvidoria,
+                  ),
                 ),
               ),
-            ),
-            _buildCompactChip(
-              context,
-              icone: const Icon(
-                Icons.location_on_outlined,
-                color: Color(0xFF2563EB),
-                size: 14,
-              ),
-              label: 'Localização',
-              onTap: () => _handleLink(
+              _buildCompactChip(
                 context,
-                () => ServicoLinksExternos.abrirMapa(
-                  DadosInstitucionais.queryMapa,
+                icone: const Icon(
+                  Icons.location_on_outlined,
+                  color: Color(0xFF2563EB),
+                  size: 14,
+                ),
+                label: 'Localização',
+                onTap: () => _handleLink(
+                  context,
+                  () => ServicoLinksExternos.abrirMapa(
+                    DadosInstitucionais.queryMapa,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         SizedBox(

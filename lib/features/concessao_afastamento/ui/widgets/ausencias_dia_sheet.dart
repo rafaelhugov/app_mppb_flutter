@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/ausencia_calendario.dart';
-import 'concessao_folga_theme.dart';
+import 'concessao_afastamento_theme.dart';
 
 class AusenciasDiaSheet extends StatelessWidget {
   final DateTime dia;
@@ -31,7 +31,7 @@ class AusenciasDiaSheet extends StatelessWidget {
               child: Text(
                 dateFormat.format(dia),
                 style: const TextStyle(
-                  color: ConcessaoFolgaColors.ink,
+                  color: ConcessaoAfastamentoColors.ink,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
@@ -42,14 +42,14 @@ class AusenciasDiaSheet extends StatelessWidget {
                 shrinkWrap: true,
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
                 itemCount: ausencias.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final ausencia = ausencias[index];
                   return Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: ConcessaoFolgaColors.surface,
+                      color: ConcessaoAfastamentoColors.surface,
                       borderRadius: BorderRadius.circular(8),
                       border: Border(
                         left: BorderSide(color: ausencia.tipo.color, width: 4),
@@ -61,7 +61,7 @@ class AusenciasDiaSheet extends StatelessWidget {
                         Text(
                           ausencia.descricao,
                           style: const TextStyle(
-                            color: ConcessaoFolgaColors.ink,
+                            color: ConcessaoAfastamentoColors.ink,
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
                           ),
@@ -70,7 +70,7 @@ class AusenciasDiaSheet extends StatelessWidget {
                         Text(
                           '${dateFormat.format(ausencia.dataInicio)} a ${dateFormat.format(ausencia.dataFim)}',
                           style: const TextStyle(
-                            color: ConcessaoFolgaColors.muted,
+                            color: ConcessaoAfastamentoColors.muted,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -80,7 +80,7 @@ class AusenciasDiaSheet extends StatelessWidget {
                           Text(
                             ausencia.status!,
                             style: const TextStyle(
-                              color: ConcessaoFolgaColors.muted,
+                              color: ConcessaoAfastamentoColors.muted,
                               fontSize: 12,
                             ),
                           ),

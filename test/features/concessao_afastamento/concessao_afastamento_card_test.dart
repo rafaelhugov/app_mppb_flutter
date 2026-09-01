@@ -1,24 +1,24 @@
-import 'package:app_mppb_flutter/features/concessao_folga/models/concessao_folga.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/solicitacao_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/status_solicitacao_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/sugestao_data_final.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_solicitacao_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/ui/widgets/concessao_folga_card.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/concessao_afastamento.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/status_solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/sugestao_data_final.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/tipo_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/tipo_solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/ui/widgets/concessao_afastamento_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 
 void main() {
-  group('ConcessaoFolgaCard', () {
+  group('ConcessaoAfastamentoCard', () {
     testWidgets(
       'exibe Marcar gozo quando diasConcedidos 30 e saldoRestante 30',
       (tester) async {
         await tester.pumpWidget(
           _wrap(
             _card(
-              const ConcessaoFolga(
+              const ConcessaoAfastamento(
                 id: 1,
                 tipo: TipoConcessao.ferias,
                 diasConcedidos: 30,
@@ -39,7 +39,7 @@ void main() {
         await tester.pumpWidget(
           _wrap(
             _card(
-              const ConcessaoFolga(
+              const ConcessaoAfastamento(
                 id: 2,
                 tipo: TipoConcessao.ferias,
                 diasConcedidos: 30,
@@ -60,7 +60,7 @@ void main() {
         await tester.pumpWidget(
           _wrap(
             _card(
-              ConcessaoFolga(
+              ConcessaoAfastamento(
                 id: 3,
                 tipo: TipoConcessao.ferias,
                 diasConcedidos: 30,
@@ -93,7 +93,7 @@ void main() {
         await tester.pumpWidget(
           _wrap(
             _card(
-              const ConcessaoFolga(
+              const ConcessaoAfastamento(
                 id: 4,
                 tipo: TipoConcessao.licencaPremio,
                 diasConcedidos: 90,
@@ -120,8 +120,8 @@ void main() {
 
         await tester.pumpWidget(
           _wrap(
-            ConcessaoFolgaCard(
-              concessao: const ConcessaoFolga(
+            ConcessaoAfastamentoCard(
+              concessao: const ConcessaoAfastamento(
                 id: 5,
                 tipo: TipoConcessao.ferias,
                 diasConcedidos: 30,
@@ -183,8 +183,8 @@ Widget _wrap(Widget child) {
   );
 }
 
-Widget _card(ConcessaoFolga concessao) {
-  return ConcessaoFolgaCard(
+Widget _card(ConcessaoAfastamento concessao) {
+  return ConcessaoAfastamentoCard(
     concessao: concessao,
     onSolicitar: (concessao, dataInicial, numeroDias) async {},
   );

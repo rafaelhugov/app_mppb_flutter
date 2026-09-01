@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 
-import '../providers/concessao_folga_provider.dart';
-import 'widgets/concessao_folga_calendar.dart';
-import 'widgets/concessao_folga_theme.dart';
+import '../providers/concessao_afastamento_provider.dart';
+import 'widgets/concessao_afastamento_calendar.dart';
+import 'widgets/concessao_afastamento_theme.dart';
 import 'widgets/concessoes_vigentes_list.dart';
 
-class ConcessaoFolgaPage extends ConsumerWidget {
-  const ConcessaoFolgaPage({super.key});
+class ConcessaoAfastamentoPage extends ConsumerWidget {
+  const ConcessaoAfastamentoPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(concessaoFolgaProvider);
-    final notifier = ref.read(concessaoFolgaProvider.notifier);
+    final state = ref.watch(concessaoAfastamentoProvider);
+    final notifier = ref.read(concessaoAfastamentoProvider.notifier);
 
     return DefaultTabController(
       length: 2,
@@ -29,7 +29,7 @@ class ConcessaoFolgaPage extends ConsumerWidget {
           ],
           body: TabBarView(
             children: [
-              ConcessaoFolgaCalendar(
+              ConcessaoAfastamentoCalendar(
                 mes: state.mesSelecionado,
                 ausencias: state.calendario.ausencias,
                 isLoading: state.calendario.isLoading,
@@ -80,7 +80,7 @@ class ConcessaoFolgaPage extends ConsumerWidget {
 
   Future<void> _selecionarMesAno(
     BuildContext context,
-    ConcessaoFolgaNotifier notifier,
+    ConcessaoAfastamentoNotifier notifier,
     DateTime selecionado,
   ) async {
     final result = await showDialog<DateTime>(
@@ -154,7 +154,7 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
             const Text(
               'Selecionar mês',
               style: TextStyle(
-                color: ConcessaoFolgaColors.ink,
+                color: ConcessaoAfastamentoColors.ink,
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
               ),
@@ -172,7 +172,7 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
                     child: Text(
                       '$_selectedYear',
                       style: const TextStyle(
-                        color: ConcessaoFolgaColors.brand,
+                        color: ConcessaoAfastamentoColors.brand,
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                       ),
@@ -225,7 +225,7 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
                         style: TextStyle(
                           color: selected
                               ? Colors.white
-                              : ConcessaoFolgaColors.muted,
+                              : ConcessaoAfastamentoColors.muted,
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
                         ),
@@ -280,7 +280,11 @@ class _YearButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(13),
               border: Border.all(color: const Color(0xFFE9EDF0)),
             ),
-            child: Icon(icon, color: ConcessaoFolgaColors.brand, size: 24),
+            child: Icon(
+              icon,
+              color: ConcessaoAfastamentoColors.brand,
+              size: 24,
+            ),
           ),
         ),
       ),
@@ -295,7 +299,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return const HeroHeaderPublico(
       label: '',
-      title: 'Concessão de Folga',
+      title: 'Concessão de Afastamento',
       subtitle: '',
       icon: Icons.event_available,
     );

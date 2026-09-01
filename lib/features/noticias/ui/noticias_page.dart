@@ -7,6 +7,9 @@ import '../providers/noticia_provider.dart';
 import '../models/noticia.dart';
 
 class NoticiasPage extends ConsumerStatefulWidget {
+  static const fallbackImageUrl =
+      'https://commons.wikimedia.org/wiki/Special:Redirect/file/Minist%C3%A9rio_P%C3%BAblico_da_Para%C3%ADba%2C_Jo%C3%A3o_Pessoa_%28PB%29.jpg?width=900';
+
   const NoticiasPage({super.key});
 
   @override
@@ -14,9 +17,6 @@ class NoticiasPage extends ConsumerStatefulWidget {
 }
 
 class _NoticiasPageState extends ConsumerState<NoticiasPage> {
-  static const fallbackImageUrl =
-      'https://commons.wikimedia.org/wiki/Special:Redirect/file/Minist%C3%A9rio_P%C3%BAblico_da_Para%C3%ADba%2C_Jo%C3%A3o_Pessoa_%28PB%29.jpg?width=900';
-
   Future<void> _abrirNoticia(String? link) async {
     if (link == null || link.isEmpty) return;
     final url = Uri.parse(link);
@@ -31,9 +31,9 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
       isScrollControlled: true,
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _NewsDetailSheet(
+      builder: (context) => NewsDetailSheet(
         noticia: noticia,
-        fallbackImageUrl: fallbackImageUrl,
+        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
         date: _dateFor(noticia),
         readingTime: _readingTime(noticia),
         onOpenLink: () => _abrirNoticia(noticia.link),
@@ -241,10 +241,12 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
               height: 90,
               width: double.infinity,
               child: Image.network(
-                noticia.imagemUrl ?? fallbackImageUrl,
+                noticia.imagemUrl ?? NoticiasPage.fallbackImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    Image.network(fallbackImageUrl, fit: BoxFit.cover),
+                errorBuilder: (_, _, _) => Image.network(
+                  NoticiasPage.fallbackImageUrl,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             Expanded(
@@ -469,8 +471,9 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   }
 }
 
-class _NewsDetailSheet extends StatelessWidget {
-  const _NewsDetailSheet({
+class NewsDetailSheet extends StatelessWidget {
+  const NewsDetailSheet({
+    super.key,
     required this.noticia,
     required this.fallbackImageUrl,
     required this.date,

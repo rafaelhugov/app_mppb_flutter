@@ -15,29 +15,46 @@ class ServicoLinksExternos {
     if (mensagem != null && mensagem.isNotEmpty) {
       queryParameters['text'] = mensagem;
     }
-    
+
     return Uri.https('api.whatsapp.com', '/send', {
       'phone': numero.replaceAll('+', ''),
-      ...queryParameters
+      ...queryParameters,
     });
   }
 
   /// Abre o WhatsApp com uma mensagem opcional
   static Future<void> abrirWhatsApp(String numero, {String? mensagem}) async {
-    await _lancar(uriWhatsApp(numero, mensagem: mensagem), mode: LaunchMode.externalApplication);
+    await _lancar(
+      uriWhatsApp(numero, mensagem: mensagem),
+      mode: LaunchMode.externalApplication,
+    );
   }
 
   /// Retorna a URI para e-mail
-  static Uri uriEmail(String email) => Uri.parse('mailto:$email');
+  static Uri uriEmail(String email) {
+    return Uri(
+      scheme: 'mailto',
+      path: email,
+      queryParameters: const {'subject': 'Contato com a Ouvidoria do MPPB'},
+    );
+  }
 
   /// Abre o aplicativo de email
   static Future<void> abrirEmail(String email) async {
-    await _lancar(uriEmail(email));
+    final uri = uriEmail(email);
+    if (await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      return;
+    }
+
+    await _lancar(uri);
   }
 
   /// Retorna a URI para Google Maps
   static Uri uriMapa(String query) {
-    return Uri.https('www.google.com', '/maps/search/', {'api': '1', 'query': query});
+    return Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': query,
+    });
   }
 
   /// Abre o Google Maps com a query informada
@@ -53,7 +70,10 @@ class ServicoLinksExternos {
     }
   }
 
-  static Future<void> _lancar(Uri uri, {LaunchMode mode = LaunchMode.platformDefault}) async {
+  static Future<void> _lancar(
+    Uri uri, {
+    LaunchMode mode = LaunchMode.platformDefault,
+  }) async {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: mode);
     } else {

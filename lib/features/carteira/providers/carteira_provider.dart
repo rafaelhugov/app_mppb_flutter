@@ -36,6 +36,10 @@ class CarteiraState {
 class CarteiraNotifier extends Notifier<CarteiraState> {
   static const _cacheKey = 'carteira_cache_data';
   static const _cacheUsernameKey = 'carteira_cache_username';
+  static const _assinaturaPgjBlackUrl =
+      'https://mobile-api.mppb.mp.br/assinatura/assinaturapgj_black.png';
+  static const _assinaturaPgjWhiteUrl =
+      'https://mobile-api.mppb.mp.br/assinatura/assinaturapgj_white.png';
 
   @override
   CarteiraState build() {
@@ -69,6 +73,8 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
         // Injetar URL da foto assim como no Vue
         responseData['foto'] =
             '${dio.options.baseUrl}/carteiras-funcionais/foto?token=$token';
+        responseData['assinaturaPgjBlackUrl'] = _assinaturaPgjBlackUrl;
+        responseData['assinaturaPgjWhiteUrl'] = _assinaturaPgjWhiteUrl;
 
         final carteira = UsuarioCarteira.fromJson(responseData);
 

@@ -13,7 +13,7 @@ import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/processos/ui/consulta_processos_page.dart';
 import '../../features/processos/ui/processo_detalhes_page.dart';
 import '../../features/public/ui/public_dashboard_page.dart';
-import '../../features/concessao_folga/ui/concessao_folga_page.dart';
+import '../../features/concessao_afastamento/ui/concessao_afastamento_page.dart';
 import '../../features/pagamentos/ui/pagamentos_page.dart';
 import '../../features/ouvidoria/ui/ouvidoria_page.dart';
 import '../../features/contatos/ui/contatos_page.dart';
@@ -48,13 +48,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/carteira',
     '/contracheque',
     '/pagamentos',
-    '/concessao-folga',
+    '/concessao-afastamento',
     '/designacoes',
   ];
   final onlineOnlyRoutes = [
     '/contracheque',
     '/pagamentos',
-    '/concessao-folga',
+    '/concessao-afastamento',
     '/designacoes',
     '/noticias',
     '/diario_oficial',
@@ -121,8 +121,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ContraChequePage(),
           ),
           GoRoute(
-            path: '/concessao-folga',
-            builder: (context, state) => const ConcessaoFolgaPage(),
+            path: '/concessao-afastamento',
+            builder: (context, state) => const ConcessaoAfastamentoPage(),
           ),
           GoRoute(
             path: '/designacoes',

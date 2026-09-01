@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../models/concessao_folga.dart';
+import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
-import 'concessao_folga_theme.dart';
+import 'concessao_afastamento_theme.dart';
 
-class ConcessaoFolgaDetailsSheet extends StatelessWidget {
-  final ConcessaoFolga concessao;
+class ConcessaoAfastamentoDetailsSheet extends StatelessWidget {
+  final ConcessaoAfastamento concessao;
   final Future<List<OperacaoSolicitacaoConcessao>> Function(
     SolicitacaoConcessao solicitacao,
   )?
@@ -20,7 +20,7 @@ class ConcessaoFolgaDetailsSheet extends StatelessWidget {
   })?
   onExecutarOperacao;
 
-  const ConcessaoFolgaDetailsSheet({
+  const ConcessaoAfastamentoDetailsSheet({
     super.key,
     required this.concessao,
     this.onBuscarOperacoes,
@@ -58,7 +58,7 @@ class ConcessaoFolgaDetailsSheet extends StatelessWidget {
               Text(
                 concessao.titulo,
                 style: const TextStyle(
-                  color: ConcessaoFolgaColors.ink,
+                  color: ConcessaoAfastamentoColors.ink,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
@@ -95,7 +95,7 @@ class ConcessaoFolgaDetailsSheet extends StatelessWidget {
               const Text(
                 'Solicitações vinculadas',
                 style: TextStyle(
-                  color: ConcessaoFolgaColors.ink,
+                  color: ConcessaoAfastamentoColors.ink,
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
@@ -112,7 +112,7 @@ class ConcessaoFolgaDetailsSheet extends StatelessWidget {
                   ),
                   child: const Text(
                     'Nenhum período de gozo programado',
-                    style: TextStyle(color: ConcessaoFolgaColors.muted),
+                    style: TextStyle(color: ConcessaoAfastamentoColors.muted),
                   ),
                 )
               else
@@ -145,7 +145,7 @@ class ConcessaoFolgaDetailsSheet extends StatelessWidget {
                               Text(
                                 solicitacao.tipo.label,
                                 style: const TextStyle(
-                                  color: ConcessaoFolgaColors.ink,
+                                  color: ConcessaoAfastamentoColors.ink,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -154,7 +154,7 @@ class ConcessaoFolgaDetailsSheet extends StatelessWidget {
                               Text(
                                 '${dateFormat.format(solicitacao.inicio)} a ${dateFormat.format(solicitacao.fim)}',
                                 style: const TextStyle(
-                                  color: ConcessaoFolgaColors.muted,
+                                  color: ConcessaoAfastamentoColors.muted,
                                   fontSize: 13,
                                 ),
                               ),
@@ -171,7 +171,7 @@ class ConcessaoFolgaDetailsSheet extends StatelessWidget {
                                   Text(
                                     '${solicitacao.diasCalculados} dia(s)',
                                     style: const TextStyle(
-                                      color: ConcessaoFolgaColors.ink,
+                                      color: ConcessaoAfastamentoColors.ink,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -261,7 +261,10 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
             padding: EdgeInsets.only(top: 10),
             child: Text(
               'Não foi possível carregar ações.',
-              style: TextStyle(color: ConcessaoFolgaColors.muted, fontSize: 12),
+              style: TextStyle(
+                color: ConcessaoAfastamentoColors.muted,
+                fontSize: 12,
+              ),
             ),
           );
         }
@@ -272,7 +275,10 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
             padding: EdgeInsets.only(top: 10),
             child: Text(
               'Nenhuma ação disponível.',
-              style: TextStyle(color: ConcessaoFolgaColors.muted, fontSize: 12),
+              style: TextStyle(
+                color: ConcessaoAfastamentoColors.muted,
+                fontSize: 12,
+              ),
             ),
           );
         }
@@ -416,7 +422,7 @@ class _OperationChip extends StatelessWidget {
         operacao == OperacaoSolicitacaoConcessao.suspenderIntegralmente;
     final foreground = destructive
         ? const Color(0xFFE5252A)
-        : ConcessaoFolgaColors.ink;
+        : ConcessaoAfastamentoColors.ink;
     final background = destructive
         ? const Color(0xFFFFF1F2)
         : const Color(0xFFF1F3F5);
@@ -443,7 +449,7 @@ class _OperationChip extends StatelessWidget {
           child: Text(
             operacao.label,
             style: TextStyle(
-              color: enabled ? foreground : ConcessaoFolgaColors.muted,
+              color: enabled ? foreground : ConcessaoAfastamentoColors.muted,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
@@ -698,7 +704,7 @@ class _OperationSheetFrame extends StatelessWidget {
                   child: Text(
                     title,
                     style: const TextStyle(
-                      color: ConcessaoFolgaColors.ink,
+                      color: ConcessaoAfastamentoColors.ink,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
@@ -707,7 +713,7 @@ class _OperationSheetFrame extends StatelessWidget {
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
-                  color: ConcessaoFolgaColors.muted,
+                  color: ConcessaoAfastamentoColors.muted,
                   tooltip: 'Fechar',
                 ),
               ],
@@ -762,7 +768,7 @@ class _DatePickerTile extends StatelessWidget {
                     Text(
                       label,
                       style: const TextStyle(
-                        color: ConcessaoFolgaColors.muted,
+                        color: ConcessaoAfastamentoColors.muted,
                         fontSize: 12,
                       ),
                     ),
@@ -770,7 +776,7 @@ class _DatePickerTile extends StatelessWidget {
                     Text(
                       value,
                       style: const TextStyle(
-                        color: ConcessaoFolgaColors.ink,
+                        color: ConcessaoAfastamentoColors.ink,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -801,13 +807,13 @@ class _DetailLine extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(color: ConcessaoFolgaColors.muted),
+              style: const TextStyle(color: ConcessaoAfastamentoColors.muted),
             ),
           ),
           Text(
             value,
             style: const TextStyle(
-              color: ConcessaoFolgaColors.ink,
+              color: ConcessaoAfastamentoColors.ink,
               fontWeight: FontWeight.w800,
             ),
           ),

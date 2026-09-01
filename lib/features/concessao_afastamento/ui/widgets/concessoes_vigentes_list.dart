@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/ui/main_layout.dart';
-import '../../models/concessao_folga.dart';
+import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
 import '../../models/sugestao_data_final.dart';
-import 'concessao_folga_card.dart';
-import 'concessao_folga_theme.dart';
+import 'concessao_afastamento_card.dart';
+import 'concessao_afastamento_theme.dart';
 
 class ConcessoesVigentesList extends StatelessWidget {
-  final List<ConcessaoFolga> concessoes;
+  final List<ConcessaoAfastamento> concessoes;
   final bool isLoading;
   final String? errorMessage;
   final VoidCallback onRetry;
   final Future<void> Function() onRefresh;
   final Future<void> Function(
-    ConcessaoFolga concessao,
+    ConcessaoAfastamento concessao,
     DateTime dataInicial,
     int numeroDias,
   )?
   onSolicitar;
   final Future<List<SugestaoDataFinal>> Function(
-    ConcessaoFolga concessao,
+    ConcessaoAfastamento concessao,
     DateTime dataInicial,
   )?
   onBuscarSugestoes;
@@ -63,6 +63,7 @@ class ConcessoesVigentesList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
+        primary: false,
         padding: EdgeInsets.fromLTRB(
           16,
           16,
@@ -76,7 +77,7 @@ class ConcessoesVigentesList extends StatelessWidget {
             const _EmptyState()
           else
             ...concessoes.map(
-              (concessao) => ConcessaoFolgaCard(
+              (concessao) => ConcessaoAfastamentoCard(
                 concessao: concessao,
                 onSolicitar: onSolicitar,
                 onBuscarSugestoes: onBuscarSugestoes,
@@ -107,7 +108,7 @@ class _ErrorState extends StatelessWidget {
             const Icon(
               Icons.wifi_off,
               size: 42,
-              color: ConcessaoFolgaColors.brand,
+              color: ConcessaoAfastamentoColors.brand,
             ),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
@@ -155,13 +156,13 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.inventory_2_outlined,
             size: 42,
-            color: ConcessaoFolgaColors.muted,
+            color: ConcessaoAfastamentoColors.muted,
           ),
           SizedBox(height: 10),
           Text(
             'Nenhuma concessão vigente encontrada.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: ConcessaoFolgaColors.muted),
+            style: TextStyle(color: ConcessaoAfastamentoColors.muted),
           ),
         ],
       ),

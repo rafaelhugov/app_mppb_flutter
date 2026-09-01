@@ -1,7 +1,7 @@
 import '../models/ausencia_calendario.dart';
 import '../models/solicitacao_concessao.dart';
 
-class ConcessaoFolgaService {
+class ConcessaoAfastamentoService {
   static Map<DateTime, List<AusenciaCalendario>> agruparAusenciasPorDia(
     List<AusenciaCalendario> ausencias,
     DateTime mes,

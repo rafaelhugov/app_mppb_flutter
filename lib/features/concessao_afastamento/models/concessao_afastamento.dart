@@ -2,7 +2,7 @@ import 'solicitacao_concessao.dart';
 import 'tipo_concessao.dart';
 import 'turno_eleitoral.dart';
 
-class ConcessaoFolga {
+class ConcessaoAfastamento {
   final int id;
   final TipoConcessao tipo;
   final String? descricaoOriginal;
@@ -14,7 +14,7 @@ class ConcessaoFolga {
   final DateTime? finalPeriodoAquisitivo;
   final List<SolicitacaoConcessao> solicitacoes;
 
-  const ConcessaoFolga({
+  const ConcessaoAfastamento({
     required this.id,
     required this.tipo,
     this.descricaoOriginal,
@@ -27,9 +27,9 @@ class ConcessaoFolga {
     this.solicitacoes = const [],
   });
 
-  factory ConcessaoFolga.fromJson(Map<String, dynamic> json) {
+  factory ConcessaoAfastamento.fromJson(Map<String, dynamic> json) {
     final solicitacoesJson = json['solicitacoes'] as List<dynamic>? ?? [];
-    return ConcessaoFolga(
+    return ConcessaoAfastamento(
       id: (json['id'] as num).toInt(),
       tipo: TipoConcessao.fromJson(json['tipo'] as String?),
       descricaoOriginal: json['descricaoOriginal'] as String?,

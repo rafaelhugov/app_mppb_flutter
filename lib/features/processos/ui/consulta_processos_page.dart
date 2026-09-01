@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/processos_provider.dart';
 import '../models/processo.dart';
+import '../utils/processo_date_formatter.dart';
 
 const _processBlue = Color(0xFF2563EB);
 const _statusGreen = Color(0xFF00A86B);
@@ -918,7 +918,7 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
                           const Icon(Icons.event, size: 14, color: Colors.grey),
                           const SizedBox(width: 4),
                           Text(
-                            'Registrado em: ${proc.dataRegistro != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(proc.dataRegistro!)) : 'N/D'}',
+                            'Registrado em: ${ProcessoDateFormatter.date(proc.dataRegistro)}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.grey,

@@ -5,6 +5,8 @@ import 'package:app_mppb_flutter/features/concessao_afastamento/models/sugestao_
 import 'package:app_mppb_flutter/features/concessao_afastamento/models/tipo_concessao.dart';
 import 'package:app_mppb_flutter/features/concessao_afastamento/models/tipo_solicitacao_concessao.dart';
 import 'package:app_mppb_flutter/features/concessao_afastamento/ui/widgets/concessao_afastamento_card.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/ui/widgets/concessao_afastamento_details_sheet.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/operacao_solicitacao_concessao.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -166,6 +168,83 @@ void main() {
         expect(numeroDiasEnviado, 15);
       },
     );
+
+    testWidgets('unifica adiar e antecipar em alterar data', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          ConcessaoAfastamentoDetailsSheet(
+            concessao: ConcessaoAfastamento(
+              id: 6,
+              tipo: TipoConcessao.ferias,
+              diasConcedidos: 30,
+              saldoRestante: 0,
+              solicitacoes: [
+                SolicitacaoConcessao(
+                  id: 20,
+                  tipo: TipoSolicitacaoConcessao.gozo,
+                  inicio: DateTime(2026, 11, 2),
+                  fim: DateTime(2026, 12, 1),
+                  status: StatusSolicitacaoConcessao.deferido,
+                ),
+              ],
+            ),
+            onBuscarOperacoes: (_) async => [
+              OperacaoSolicitacaoConcessao.adiar,
+              OperacaoSolicitacaoConcessao.antecipar,
+            ],
+            onExecutarOperacao:
+                (_, __, {DateTime? data, DateTime? dataFim}) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Alterar data'), findsOneWidget);
+      expect(find.text('Adiar'), findsNothing);
+      expect(find.text('Antecipar'), findsNothing);
+    });
+
+    testWidgets('desabilita confirmacao para data inicial em final de semana', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          ConcessaoAfastamentoDetailsSheet(
+            concessao: ConcessaoAfastamento(
+              id: 7,
+              tipo: TipoConcessao.ferias,
+              diasConcedidos: 30,
+              saldoRestante: 0,
+              solicitacoes: [
+                SolicitacaoConcessao(
+                  id: 21,
+                  tipo: TipoSolicitacaoConcessao.gozo,
+                  inicio: DateTime(2026, 11, 1),
+                  fim: DateTime(2026, 11, 30),
+                  status: StatusSolicitacaoConcessao.deferido,
+                ),
+              ],
+            ),
+            onBuscarOperacoes: (_) async => [
+              OperacaoSolicitacaoConcessao.adiar,
+              OperacaoSolicitacaoConcessao.antecipar,
+            ],
+            onExecutarOperacao:
+                (_, __, {DateTime? data, DateTime? dataFim}) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Alterar data'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Selecionar data'), findsOneWidget);
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Confirmar'),
+      );
+      expect(button.onPressed, isNull);
+    });
   });
 }
 

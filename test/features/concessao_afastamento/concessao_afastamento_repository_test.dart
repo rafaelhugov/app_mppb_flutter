@@ -180,6 +180,42 @@ void main() {
     ]);
   });
 
+  test('adiamento envia data no contrato da api', () async {
+    adapter.enqueueJson({'ok': true});
+
+    await repository.executarOperacaoSolicitacao(
+      token: 'token',
+      solicitacaoId: 506,
+      operacao: OperacaoSolicitacaoConcessao.adiar,
+      data: DateTime(2027, 8, 3),
+    );
+
+    expect(
+      adapter.last.uri.path,
+      '/api/recursos-humanos/solicitacoes/506/adiamentos',
+    );
+    expect(adapter.last.method, 'POST');
+    expect(adapter.last.body, {'dataAdiamento': '03/08/2027'});
+  });
+
+  test('antecipacao envia data no contrato da api', () async {
+    adapter.enqueueJson({'ok': true});
+
+    await repository.executarOperacaoSolicitacao(
+      token: 'token',
+      solicitacaoId: 506,
+      operacao: OperacaoSolicitacaoConcessao.antecipar,
+      data: DateTime(2027, 8, 3),
+    );
+
+    expect(
+      adapter.last.uri.path,
+      '/api/recursos-humanos/solicitacoes/506/antecipacoes',
+    );
+    expect(adapter.last.method, 'POST');
+    expect(adapter.last.body, {'dataAntecipacao': '03/08/2027'});
+  });
+
   test('suspensao parcial envia intervalo no contrato da api', () async {
     adapter.enqueueJson({'ok': true});
 

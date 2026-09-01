@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -186,15 +187,35 @@ class ConcessaoAfastamentoRepository {
       },
     };
 
-    await dio.post(
-      '/api/recursos-humanos/solicitacoes/$solicitacaoId/$endpoint',
-      queryParameters: {'token': token},
-      data: body,
-      options: Options(
-        headers: {'Authorization': 'Token $token'},
-        extra: {'skipAuthLogout': true},
-      ),
+    debugPrint(
+      '[ConcessaoAfastamento] Executando operacao: '
+      'solicitacao=$solicitacaoId operacao=${operacao.name} body=$body',
     );
+
+    try {
+      final response = await dio.post(
+        '/api/recursos-humanos/solicitacoes/$solicitacaoId/$endpoint',
+        queryParameters: {'token': token},
+        data: body,
+        options: Options(
+          headers: {'Authorization': 'Token $token'},
+          extra: {'skipAuthLogout': true},
+        ),
+      );
+
+      debugPrint(
+        '[ConcessaoAfastamento] Operacao concluida: '
+        'solicitacao=$solicitacaoId operacao=${operacao.name} '
+        'status=${response.statusCode} response=${response.data}',
+      );
+    } on DioException catch (e) {
+      debugPrint(
+        '[ConcessaoAfastamento] Operacao falhou: '
+        'solicitacao=$solicitacaoId operacao=${operacao.name} '
+        'status=${e.response?.statusCode} response=${e.response?.data}',
+      );
+      rethrow;
+    }
   }
 
   List<dynamic> _extractOperacoes(dynamic data) {

@@ -82,15 +82,26 @@ export POOL_MIN="${POOL_MIN:-1}"
 case "$RH_AMBIENTE" in
   producao)
     export MPVIRTUAL_RECURSOS_HUMANOS_BASE_URL="http://10.94.0.253:8080/api"
+    export PG_URL="${RH_PROD_PG_URL:-postgresql://10.94.0.11:5432/MPE}"
+    if [ -n "${RH_PROD_PG_USERNAME:-}" ]; then
+      export PG_USERNAME="$RH_PROD_PG_USERNAME"
+    fi
+    if [ -n "${RH_PROD_PG_PASSWORD:-}" ]; then
+      export PG_PASSWORD="$RH_PROD_PG_PASSWORD"
+    fi
     echo "========================================="
     echo "ATENÇÃO: API RH DE PRODUÇÃO"
     echo "RH: $MPVIRTUAL_RECURSOS_HUMANOS_BASE_URL"
+    echo "Banco RH: $PG_URL"
+    echo "Usuário banco RH: ${PG_USERNAME:-<não informado>}"
     echo "========================================="
     ;;
   homologacao)
     export MPVIRTUAL_RECURSOS_HUMANOS_BASE_URL="http://10.128.4.50:8080/api"
     echo "API RH: HOMOLOGAÇÃO"
     echo "RH: $MPVIRTUAL_RECURSOS_HUMANOS_BASE_URL"
+    echo "Banco RH: ${PG_URL:-<não informado>}"
+    echo "Usuário banco RH: ${PG_USERNAME:-<não informado>}"
     ;;
   *)
     echo "Ambiente RH inválido: $RH_AMBIENTE"

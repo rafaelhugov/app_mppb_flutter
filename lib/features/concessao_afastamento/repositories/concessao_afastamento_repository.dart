@@ -34,11 +34,21 @@ class ConcessaoAfastamentoRepository {
       throw Exception('Formato inesperado (Concessoes): ${response.data}');
     }
     final data = response.data as List<dynamic>? ?? [];
-    return data
+    final concessoes = data
         .map(
           (json) => ConcessaoAfastamento.fromJson(json as Map<String, dynamic>),
         )
         .toList();
+    final totalSolicitacoes = concessoes.fold<int>(
+      0,
+      (total, concessao) => total + concessao.solicitacoes.length,
+    );
+    debugPrint(
+      '[ConcessaoAfastamento] Concessoes carregadas: '
+      '${concessoes.length} concessao(oes), '
+      '$totalSolicitacoes solicitacao(oes) vinculada(s)',
+    );
+    return concessoes;
   }
 
   Future<List<AusenciaCalendario>> buscarAusenciasCalendario({

@@ -611,7 +611,7 @@ class _DesignacaoCategoryStyle {
     const lotacaoYellow = Color(0xFFFFC400);
     const funcaoBlue = Color(0xFF1769FF);
     const neutralGray = Color(0xFF343A40);
-    const activeGreen = Color(0xFF00C853);
+    const activeGreen = Color(0xFF00A86B);
 
     final isLotacao = normalized.contains('lota');
     final isFuncao =

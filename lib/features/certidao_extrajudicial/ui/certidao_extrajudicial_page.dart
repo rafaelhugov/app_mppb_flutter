@@ -86,49 +86,68 @@ class _CertidaoExtrajudicialPageState
 
   Widget _buildTabs() {
     return Center(
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: const Color(0xFF202322),
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x20101828),
-              blurRadius: 14,
-              offset: Offset(0, 6),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 230),
+        child: Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: const Color(0xFF202322),
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(color: const Color(0x66FFFFFF)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x2A101828),
+                blurRadius: 14,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: DefaultTabController(
+            length: 2,
+            initialIndex: _tabIndex,
+            child: TabBar(
+              onTap: (index) => setState(() => _tabIndex = index),
+              dividerColor: Colors.transparent,
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelColor: const Color(0xFF202322),
+              unselectedLabelColor: const Color(0xFFDDE4DF),
+              labelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              indicator: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              tabs: const [
+                Tab(
+                  height: 34,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.picture_as_pdf_rounded, size: 17),
+                      SizedBox(width: 4),
+                      Flexible(child: Text('Emitir')),
+                    ],
+                  ),
+                ),
+                Tab(
+                  height: 34,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.verified_rounded, size: 17),
+                      SizedBox(width: 4),
+                      Flexible(child: Text('Validar')),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildTabButton('Emitir', 0),
-            _buildTabButton('Validar', 1),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabButton(String label, int index) {
-    final selected = _tabIndex == index;
-
-    return InkWell(
-      onTap: () => setState(() => _tabIndex = index),
-      borderRadius: BorderRadius.circular(999),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? const Color(0xFF202322) : const Color(0xFFE9EDF0),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -274,71 +293,46 @@ class _CertidaoExtrajudicialPageState
         : const Color(0xFF2563EB);
 
     return Center(
-      child: Container(
-        height: 42,
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0xFFE9EDF0)),
-        ),
-        child: SizedBox(
-          width: 164,
-          height: 34,
-          child: Stack(
-            children: [
-              AnimatedAlign(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                alignment: _tipoDocumento == 'F'
-                    ? Alignment.centerLeft
-                    : Alignment.centerRight,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  width: 82,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: activeColor,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  _buildRadioOption('CPF', 'F'),
-                  _buildRadioOption('CNPJ', 'J'),
-                ],
-              ),
-            ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 172),
+        child: Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFE9EDF0)),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRadioOption(String label, String value) {
-    final selected = _tipoDocumento == value;
-
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _tipoDocumento = value;
-            _documentoController.clear();
-          });
-        },
-        borderRadius: BorderRadius.circular(999),
-        child: SizedBox(
-          height: 34,
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : const Color(0xFF202322),
+          child: DefaultTabController(
+            length: 2,
+            initialIndex: _tipoDocumento == 'F' ? 0 : 1,
+            child: TabBar(
+              onTap: (index) {
+                final value = index == 0 ? 'F' : 'J';
+                setState(() {
+                  _tipoDocumento = value;
+                  _documentoController.clear();
+                });
+              },
+              dividerColor: Colors.transparent,
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelColor: Colors.white,
+              unselectedLabelColor: const Color(0xFF202322),
+              labelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
+              indicator: BoxDecoration(
+                color: activeColor,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              tabs: const [
+                Tab(height: 34, child: Text('CPF')),
+                Tab(height: 34, child: Text('CNPJ')),
+              ],
             ),
           ),
         ),

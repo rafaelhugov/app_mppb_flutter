@@ -86,12 +86,12 @@ class AuthNotifier extends Notifier<AuthState> {
         options: Options(
           headers: {'Content-Type': 'application/json'},
           validateStatus: (status) =>
-              status! <
-              500, // Permite ler o status 401 sem lançar DioException de imediato
+              status != null &&
+              status < 600, // Permite tratar a resposta de autenticação.
         ),
       );
 
-      if (response.statusCode == 401) {
+      if (_isErroCredencial(response.statusCode)) {
         state = state.copyWith(
           isLoading: false,
           errorMessage: 'Usuário ou senha inválidos.',
@@ -132,6 +132,12 @@ class AuthNotifier extends Notifier<AuthState> {
         tempPassword: offerBiometrics ? password : null,
       );
       return true;
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: _mensagemErroLogin(e),
+      );
+      return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -139,6 +145,26 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       return false;
     }
+  }
+
+  bool _isErroCredencial(int? statusCode) {
+    return statusCode == 400 ||
+        statusCode == 401 ||
+        statusCode == 403 ||
+        statusCode == 500;
+  }
+
+  String _mensagemErroLogin(DioException erro) {
+    final statusCode = erro.response?.statusCode;
+    if (_isErroCredencial(statusCode)) {
+      return 'Usuário ou senha inválidos.';
+    }
+
+    if (statusCode != null && statusCode >= 500) {
+      return 'Serviço de autenticação indisponível no momento.';
+    }
+
+    return 'Falha na conexão com o servidor.';
   }
 
   Future<void> enableBiometricLogin() async {

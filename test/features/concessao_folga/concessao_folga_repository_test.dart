@@ -20,8 +20,16 @@ void main() {
 
   test('consulta sugestoes ao selecionar data inicial', () async {
     adapter.enqueueJson([
-      {'dataFinal': '19/01/2027', 'numeroDias': 10},
-      {'dataFinal': '24/01/2027', 'numeroDias': 15},
+      {
+        'numeroDias': 10,
+        'dataInicial': '10/01/2027',
+        'dataFinal': '19/01/2027',
+      },
+      {
+        'numeroDias': 15,
+        'dataInicial': '10/01/2027',
+        'dataFinal': '24/01/2027',
+      },
     ]);
 
     final sugestoes = await repository.buscarSugestoesDatasFinais(
@@ -36,8 +44,80 @@ void main() {
     );
     expect(adapter.last.uri.queryParameters['dataInicial'], '10/01/2027');
     expect(sugestoes, hasLength(2));
+    expect(sugestoes.first.dataInicialFormatada, '10/01/2027');
     expect(sugestoes.first.dataFinalFormatada, '19/01/2027');
     expect(sugestoes.first.numeroDias, 10);
+  });
+
+  test(
+    'descarta sugestoes de uma dataInicial diferente da selecionada',
+    () async {
+      adapter.enqueueJson([
+        {
+          'numeroDias': 10,
+          'dataInicial': '09/01/2027',
+          'dataFinal': '18/01/2027',
+        },
+        {
+          'numeroDias': 15,
+          'dataInicial': '10/01/2027',
+          'dataFinal': '24/01/2027',
+        },
+      ]);
+
+      final sugestoes = await repository.buscarSugestoesDatasFinais(
+        token: 'token',
+        concessaoId: 123,
+        dataInicial: DateTime(2027, 1, 10),
+      );
+
+      expect(sugestoes, hasLength(1));
+      expect(sugestoes.single.numeroDias, 15);
+      expect(sugestoes.single.dataInicialFormatada, '10/01/2027');
+    },
+  );
+
+  test('sugestao sem numeroDias falha no contrato estrito', () async {
+    adapter.enqueueJson([
+      {'dataInicial': '10/01/2027', 'dataFinal': '19/01/2027'},
+    ]);
+
+    expect(
+      () => repository.buscarSugestoesDatasFinais(
+        token: 'token',
+        concessaoId: 123,
+        dataInicial: DateTime(2027, 1, 10),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('sugestao sem dataFinal falha no contrato estrito', () async {
+    adapter.enqueueJson([
+      {'numeroDias': 10, 'dataInicial': '10/01/2027'},
+    ]);
+
+    expect(
+      () => repository.buscarSugestoesDatasFinais(
+        token: 'token',
+        concessaoId: 123,
+        dataInicial: DateTime(2027, 1, 10),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('resposta string nao e sugestao valida', () async {
+    adapter.enqueueJson('19/01/2027');
+
+    expect(
+      () => repository.buscarSugestoesDatasFinais(
+        token: 'token',
+        concessaoId: 123,
+        dataInicial: DateTime(2027, 1, 10),
+      ),
+      throwsFormatException,
+    );
   });
 
   test(

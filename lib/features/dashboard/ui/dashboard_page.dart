@@ -12,6 +12,7 @@ import '../../../core/storage/secure_storage.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
+import '../../contatos/ui/widgets/secao_institucional.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -21,14 +22,16 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final PageController _pageController = PageController(viewportFraction: 0.92);
   Timer? _autoPlayTimer;
   int _currentNewsIndex = 0;
   int _carouselNewsCount = 0;
+  bool _isNewsAutoPlayPaused = false;
 
   late final AnimationController _blinkController;
   late final Animation<double> _blinkAnimation;
+  late final AnimationController _newsAutoPlayProgressController;
 
   @override
   void initState() {
@@ -41,6 +44,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
     _blinkAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _blinkController, curve: Curves.easeInOut),
+    );
+
+    _newsAutoPlayProgressController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
     );
 
     Future.microtask(() {
@@ -130,24 +138,35 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
   void dispose() {
     _autoPlayTimer?.cancel();
     _blinkController.dispose();
+    _newsAutoPlayProgressController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
+  void _restartNewsAutoPlayProgress() {
+    _newsAutoPlayProgressController
+      ..stop()
+      ..forward(from: 0);
+  }
+
   void _syncAutoPlay(int itemCount) {
-    if (_carouselNewsCount == itemCount && _autoPlayTimer != null) {
+    if (_carouselNewsCount == itemCount &&
+        _autoPlayTimer != null &&
+        !_isNewsAutoPlayPaused) {
       return;
     }
 
     _carouselNewsCount = itemCount;
     _autoPlayTimer?.cancel();
     _autoPlayTimer = null;
+    _newsAutoPlayProgressController.stop();
 
-    if (itemCount < 2) {
+    if (_isNewsAutoPlayPaused || itemCount < 2) {
       return;
     }
 
-    _autoPlayTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _restartNewsAutoPlayProgress();
+    _autoPlayTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (!mounted || !_pageController.hasClients) {
         return;
       }
@@ -158,7 +177,97 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         duration: const Duration(milliseconds: 420),
         curve: Curves.easeOutCubic,
       );
+      _restartNewsAutoPlayProgress();
     });
+  }
+
+  void _toggleNewsAutoPlay() {
+    setState(() {
+      _isNewsAutoPlayPaused = !_isNewsAutoPlayPaused;
+    });
+    _syncAutoPlay(_carouselNewsCount);
+  }
+
+  Widget _buildNewsAutoPlayControl(int itemCount) {
+    if (itemCount < 2) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        Tooltip(
+          message: _isNewsAutoPlayPaused
+              ? 'Retomar notícias'
+              : 'Pausar notícias',
+          child: InkWell(
+            onTap: _toggleNewsAutoPlay,
+            borderRadius: BorderRadius.circular(999),
+            child: SizedBox(
+              width: 38,
+              height: 38,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedBuilder(
+                    animation: _newsAutoPlayProgressController,
+                    builder: (context, _) {
+                      return CircularProgressIndicator(
+                        value: 1 - _newsAutoPlayProgressController.value,
+                        strokeWidth: 2.6,
+                        backgroundColor: const Color(0xFFE9EDF0),
+                        color: const Color(0xFFD62828),
+                      );
+                    },
+                  ),
+                  Container(
+                    width: 31,
+                    height: 31,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: const Color(0xFFE2E4E8)),
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x10101828),
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      _isNewsAutoPlayPaused
+                          ? Icons.play_arrow_rounded
+                          : Icons.pause_rounded,
+                      color: const Color(0xFF697370),
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 7),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            itemCount,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              height: 7,
+              width: _currentNewsIndex == index ? 20 : 7,
+              decoration: BoxDecoration(
+                color: _currentNewsIndex == index
+                    ? const Color(0xFFD62828)
+                    : const Color(0x33D62828),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void _openNews(String? url) async {
@@ -573,6 +682,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                           setState(() {
                             _currentNewsIndex = index;
                           });
+                          if (!_isNewsAutoPlayPaused &&
+                              carouselNews.length > 1) {
+                            _autoPlayTimer?.cancel();
+                            _autoPlayTimer = null;
+                            _syncAutoPlay(carouselNews.length);
+                          }
                         },
                         itemBuilder: (context, index) {
                           final noticia = carouselNews[index];
@@ -787,25 +902,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       ),
                     ),
                     const SizedBox(height: 10),
-                    // DOTS
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        carouselNews.length,
-                        (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          height: 7,
-                          width: _currentNewsIndex == index ? 20 : 7,
-                          decoration: BoxDecoration(
-                            color: _currentNewsIndex == index
-                                ? const Color(0xFFD62828)
-                                : const Color(0x33D62828),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildNewsAutoPlayControl(carouselNews.length),
                   ],
                 ] else ...[
                   const Padding(
@@ -841,6 +938,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       ),
                     ),
                   ),
+                ],
+                if (isOnline) ...[
+                  const SizedBox(height: 48),
+                  const SecaoInstitucional(compacta: true),
                 ],
               ],
             ),

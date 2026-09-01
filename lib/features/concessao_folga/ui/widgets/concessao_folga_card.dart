@@ -49,15 +49,8 @@ class ConcessaoFolgaCard extends StatelessWidget {
         ? null
         : concessao.solicitacoes.first;
     final typeColor = concessao.tipo.color;
-    final onColor = typeColor.computeLuminance() > 0.45
-        ? const Color(0xFF202322)
-        : Colors.white;
-    final secondaryColor = typeColor.computeLuminance() > 0.45
-        ? const Color(0xD9202322)
-        : const Color(0xE6FFFFFF);
-    final tileColor = Colors.white.withValues(alpha: 0.18);
-    final tileBorder = Colors.white.withValues(alpha: 0.36);
-    final canSolicitar = concessao.diasConcedidos > 0 && onSolicitar != null;
+    final titleDetail = _cardTitleDetail(concessao);
+    final canSolicitar = concessao.saldoRestante > 0 && onSolicitar != null;
 
     return InkWell(
       onTap: () => showModalBottomSheet(
@@ -76,13 +69,14 @@ class ConcessaoFolgaCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: typeColor,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
+          border: Border.all(color: const Color(0xFFE9EDF0)),
+          boxShadow: const [
             BoxShadow(
-              color: typeColor.withValues(alpha: 0.28),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
+              color: Color(0x10101828),
+              blurRadius: 18,
+              offset: Offset(0, 8),
             ),
           ],
         ),
@@ -90,27 +84,32 @@ class ConcessaoFolgaCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 9,
-                  height: 9,
-                  decoration: BoxDecoration(
-                    color: onColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    concessao.titulo,
-                    style: TextStyle(
-                      color: onColor,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _TypeChip(label: concessao.tipo.label, color: typeColor),
+                      if (titleDetail.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          titleDetail,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: ConcessaoFolgaColors.ink,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                _SaldoChip(saldo: concessao.saldoRestante, color: onColor),
+                const SizedBox(width: 10),
+                _SaldoChip(saldo: concessao.saldoRestante),
               ],
             ),
             const SizedBox(height: 10),
@@ -120,10 +119,10 @@ class ConcessaoFolgaCard extends StatelessWidget {
                   child: _InfoTile(
                     label: 'Dias concedidos',
                     value: '${concessao.diasConcedidos}',
-                    background: tileColor,
-                    border: tileBorder,
-                    labelColor: secondaryColor,
-                    valueColor: onColor,
+                    background: _softColor(typeColor),
+                    border: typeColor.withValues(alpha: 0.24),
+                    labelColor: ConcessaoFolgaColors.muted,
+                    valueColor: ConcessaoFolgaColors.ink,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -131,10 +130,10 @@ class ConcessaoFolgaCard extends StatelessWidget {
                   child: _InfoTile(
                     label: 'Saldo disponível',
                     value: '${concessao.saldoRestante} dias',
-                    background: tileColor,
-                    border: tileBorder,
-                    labelColor: secondaryColor,
-                    valueColor: onColor,
+                    background: _softColor(typeColor),
+                    border: typeColor.withValues(alpha: 0.24),
+                    labelColor: ConcessaoFolgaColors.muted,
+                    valueColor: ConcessaoFolgaColors.ink,
                   ),
                 ),
               ],
@@ -144,7 +143,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
               const Text(
                 'Nenhum período de gozo programado',
                 style: TextStyle(
-                  color: Color(0xE6FFFFFF),
+                  color: ConcessaoFolgaColors.muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -152,8 +151,8 @@ class ConcessaoFolgaCard extends StatelessWidget {
             else ...[
               Text(
                 'Período: ${dateFormat.format(primeiraSolicitacao.inicio)} a ${dateFormat.format(primeiraSolicitacao.fim)}',
-                style: TextStyle(
-                  color: onColor,
+                style: const TextStyle(
+                  color: ConcessaoFolgaColors.ink,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -161,33 +160,16 @@ class ConcessaoFolgaCard extends StatelessWidget {
               const SizedBox(height: 5),
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.36),
-                      ),
-                    ),
-                    child: Text(
-                      primeiraSolicitacao.status.label,
-                      style: TextStyle(
-                        color: onColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
+                  _StatusChip(
+                    label: primeiraSolicitacao.status.label,
+                    color: primeiraSolicitacao.status.color,
                   ),
                   if (concessao.solicitacoes.length > 1) ...[
                     const SizedBox(width: 8),
                     Text(
                       '+${concessao.solicitacoes.length - 1}',
-                      style: TextStyle(
-                        color: secondaryColor,
+                      style: const TextStyle(
+                        color: ConcessaoFolgaColors.muted,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                       ),
@@ -200,10 +182,7 @@ class ConcessaoFolgaCard extends StatelessWidget {
               const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerLeft,
-                child: _MarcacaoButton(
-                  color: onColor,
-                  onTap: () => _abrirMarcacao(context),
-                ),
+                child: _MarcacaoButton(onTap: () => _abrirMarcacao(context)),
               ),
             ],
           ],
@@ -228,40 +207,116 @@ class ConcessaoFolgaCard extends StatelessWidget {
 }
 
 class _MarcacaoButton extends StatelessWidget {
-  final Color color;
   final VoidCallback onTap;
 
-  const _MarcacaoButton({required this.color, required this.onTap});
+  const _MarcacaoButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.18),
-      borderRadius: BorderRadius.circular(999),
+      color: const Color(0xFFF1F3F5),
+      borderRadius: BorderRadius.circular(12),
+      elevation: 1,
+      shadowColor: const Color(0x26101828),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFD7DEDA)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.event_available_rounded, color: color, size: 15),
+              const Icon(
+                Icons.event_available_rounded,
+                color: ConcessaoFolgaColors.ink,
+                size: 16,
+              ),
               const SizedBox(width: 6),
-              Text(
+              const Text(
                 'Marcar gozo',
                 style: TextStyle(
-                  color: color,
+                  color: ConcessaoFolgaColors.ink,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+String _cardTitleDetail(ConcessaoFolga concessao) {
+  final title = concessao.titulo.trim();
+  final label = concessao.tipo.label;
+  final prefixed = '$label - ';
+  if (title.startsWith(prefixed)) {
+    return title.substring(prefixed.length).trim();
+  }
+  if (title == label) return '';
+  return title;
+}
+
+Color _softColor(Color color) => color.withValues(alpha: 0.08);
+
+class _TypeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _TypeChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = color.computeLuminance() > 0.45
+        ? ConcessaoFolgaColors.ink
+        : Colors.white;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          height: 1,
         ),
       ),
     );
@@ -305,144 +360,150 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
     final sugestao = _sugestaoSelecionada;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
-        decoration: const BoxDecoration(
-          color: Color(0xFFF7F8F6),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD7DEDA),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF7F8F6),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Marcar gozo',
-                      style: TextStyle(
-                        color: Color(0xFF202322),
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD7DEDA),
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: _isSubmitting
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                    color: const Color(0xFF697370),
-                    tooltip: 'Fechar',
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Marcar gozo',
+                          style: TextStyle(
+                            color: Color(0xFF202322),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                        color: const Color(0xFF697370),
+                        tooltip: 'Fechar',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    widget.concessao.titulo,
+                    style: const TextStyle(
+                      color: Color(0xFF697370),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _SheetTile(
+                    label: 'Data inicial',
+                    value: _dataInicial == null
+                        ? 'Selecione uma data'
+                        : _dateFormat.format(_dataInicial!),
+                    icon: Icons.calendar_today_rounded,
+                    onTap: _isSubmitting ? null : _selecionarData,
+                  ),
+                  if (_isLoadingSugestoes) ...[
+                    const SizedBox(height: 12),
+                    const LinearProgressIndicator(
+                      minHeight: 2,
+                      color: Color(0xFFE5252A),
+                      backgroundColor: Color(0xFFE9EDF0),
+                    ),
+                  ] else if (_sugestoes.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _SugestoesBox(
+                      sugestoes: _sugestoes,
+                      selected: _sugestaoSelecionada,
+                      onSelect: _isSubmitting
+                          ? null
+                          : (sugestao) =>
+                                setState(() => _sugestaoSelecionada = sugestao),
+                    ),
+                  ] else if (_sugestoesError != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _sugestoesError!,
+                      style: const TextStyle(
+                        color: Color(0xFF697370),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                  if (sugestao != null && _dataInicial != null) ...[
+                    const SizedBox(height: 12),
+                    _ResumoMarcacao(
+                      tipo: widget.concessao.tipo.label,
+                      dataInicial: _dateFormat.format(_dataInicial!),
+                      dataFinal: sugestao.dataFinalFormatada,
+                      numeroDias: sugestao.numeroDias,
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: FilledButton(
+                      onPressed:
+                          _isSubmitting ||
+                              _isLoadingSugestoes ||
+                              _dataInicial == null ||
+                              _sugestaoSelecionada == null
+                          ? null
+                          : _enviar,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFE5252A),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Solicitar marcação',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                widget.concessao.titulo,
-                style: const TextStyle(
-                  color: Color(0xFF697370),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 18),
-              _SheetTile(
-                label: 'Data inicial',
-                value: _dataInicial == null
-                    ? 'Selecione uma data'
-                    : _dateFormat.format(_dataInicial!),
-                icon: Icons.calendar_today_rounded,
-                onTap: _isSubmitting ? null : _selecionarData,
-              ),
-              if (_isLoadingSugestoes) ...[
-                const SizedBox(height: 12),
-                const LinearProgressIndicator(
-                  minHeight: 2,
-                  color: Color(0xFFE5252A),
-                  backgroundColor: Color(0xFFE9EDF0),
-                ),
-              ] else if (_sugestoes.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _SugestoesBox(
-                  sugestoes: _sugestoes,
-                  selected: _sugestaoSelecionada,
-                  onSelect: _isSubmitting
-                      ? null
-                      : (sugestao) =>
-                            setState(() => _sugestaoSelecionada = sugestao),
-                ),
-              ] else if (_sugestoesError != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _sugestoesError!,
-                  style: const TextStyle(
-                    color: Color(0xFF697370),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-              if (sugestao != null && _dataInicial != null) ...[
-                const SizedBox(height: 12),
-                _ResumoMarcacao(
-                  tipo: widget.concessao.tipo.label,
-                  dataInicial: _dateFormat.format(_dataInicial!),
-                  dataFinal: sugestao.dataFinalFormatada,
-                  numeroDias: sugestao.numeroDias,
-                ),
-              ],
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton(
-                  onPressed:
-                      _isSubmitting ||
-                          _isLoadingSugestoes ||
-                          _dataInicial == null ||
-                          _sugestaoSelecionada == null
-                      ? null
-                      : _enviar,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5252A),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Solicitar marcação',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -457,9 +518,12 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
       initialDate: initialDate,
       firstDate: DateTime(today.year, today.month, today.day),
       lastDate: DateTime(today.year + 3),
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      locale: const Locale('pt', 'BR'),
       helpText: 'Data inicial',
-      cancelText: 'Cancelar',
-      confirmText: 'Selecionar',
+      cancelText: 'CANCELAR',
+      confirmText: 'OK',
+      builder: _concessaoDatePickerTheme,
     );
     if (selected != null) {
       setState(() {
@@ -525,6 +589,19 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
       );
     }
   }
+}
+
+Widget _concessaoDatePickerTheme(BuildContext context, Widget? child) {
+  return Theme(
+    data: Theme.of(context).copyWith(
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFFD62828),
+        onPrimary: Colors.white,
+        onSurface: Color(0xFF202322),
+      ),
+    ),
+    child: child!,
+  );
 }
 
 class _SugestoesBox extends StatelessWidget {
@@ -639,18 +716,6 @@ class _SugestaoOption extends StatelessWidget {
                         height: 1.25,
                       ),
                     ),
-                    if (sugestao.descricao != null &&
-                        sugestao.descricao!.trim().isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        sugestao.descricao!,
-                        style: const TextStyle(
-                          color: Color(0xFF697370),
-                          fontSize: 12,
-                          height: 1.25,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -802,23 +867,22 @@ class _SheetTile extends StatelessWidget {
 
 class _SaldoChip extends StatelessWidget {
   final int saldo;
-  final Color color;
 
-  const _SaldoChip({required this.saldo, required this.color});
+  const _SaldoChip({required this.saldo});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
+        color: const Color(0xFFF1F3F5),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.36)),
+        border: Border.all(color: const Color(0xFFD7DEDA)),
       ),
       child: Text(
         '$saldo dias',
-        style: TextStyle(
-          color: color,
+        style: const TextStyle(
+          color: ConcessaoFolgaColors.ink,
           fontSize: 11,
           fontWeight: FontWeight.w900,
         ),

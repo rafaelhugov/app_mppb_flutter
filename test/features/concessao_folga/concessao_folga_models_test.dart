@@ -95,26 +95,68 @@ void main() {
       expect(solicitacao.possuiDivergenciaDias, isTrue);
     });
 
-    test('parseia sugestao com numeroDias retornado pelo backend', () {
+    test('parseia sugestao no contrato real da API RH', () {
       final sugestao = SugestaoDataFinal.fromJson({
-        'dataFinal': '19/01/2027',
-        'numeroDias': 7,
-        'descricao': 'Opção curta',
-      }, dataInicial: DateTime(2027, 1, 10));
+        'numeroDias': 10,
+        'dataInicial': '08/09/2026',
+        'dataFinal': '17/09/2026',
+      });
 
-      expect(sugestao.dataFinal, DateTime(2027, 1, 19));
-      expect(sugestao.numeroDias, 7);
-      expect(sugestao.descricao, 'Opção curta');
+      expect(sugestao.numeroDias, 10);
+      expect(sugestao.dataInicial, DateTime(2026, 9, 8));
+      expect(sugestao.dataFinal, DateTime(2026, 9, 17));
+      expect(sugestao.dataInicialFormatada, '08/09/2026');
+      expect(sugestao.dataFinalFormatada, '17/09/2026');
     });
 
-    test('parseia sugestao string e calcula dias inclusivos como fallback', () {
-      final sugestao = SugestaoDataFinal.fromJson(
-        '19/01/2027',
-        dataInicial: DateTime(2027, 1, 10),
-      );
+    test('numeroDias e dataFinal sao obtidos diretamente da resposta', () {
+      final sugestao = SugestaoDataFinal.fromJson({
+        'numeroDias': 15,
+        'dataInicial': '08/09/2026',
+        'dataFinal': '22/09/2026',
+      });
 
-      expect(sugestao.dataFinal, DateTime(2027, 1, 19));
-      expect(sugestao.numeroDias, 10);
+      expect(sugestao.numeroDias, 15);
+      expect(sugestao.dataFinal, DateTime(2026, 9, 22));
+      expect(sugestao.resumo, '22/09/2026 - 15 dia(s)');
+    });
+
+    test('sugestao sem numeroDias e invalida', () {
+      expect(
+        () => SugestaoDataFinal.fromJson({
+          'dataInicial': '08/09/2026',
+          'dataFinal': '17/09/2026',
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('sugestao sem dataFinal e invalida', () {
+      expect(
+        () => SugestaoDataFinal.fromJson({
+          'numeroDias': 10,
+          'dataInicial': '08/09/2026',
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('aliases antigos nao sao aceitos como contrato valido', () {
+      expect(
+        () => SugestaoDataFinal.fromJson({
+          'dias': 10,
+          'data': '17/09/2026',
+          'dataFim': '17/09/2026',
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('string simples nao e sugestao valida', () {
+      expect(
+        () => SugestaoDataFinal.fromJson('17/09/2026' as dynamic),
+        throwsA(isA<TypeError>()),
+      );
     });
   });
 

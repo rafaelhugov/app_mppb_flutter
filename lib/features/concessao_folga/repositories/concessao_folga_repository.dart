@@ -110,32 +110,14 @@ class ConcessaoFolgaRepository {
     if (data is List) {
       return data
           .map(
-            (item) =>
-                SugestaoDataFinal.fromJson(item, dataInicial: dataInicial),
+            (item) => SugestaoDataFinal.fromJson(item as Map<String, dynamic>),
           )
+          .where((sugestao) => sugestao.pertenceADataInicial(dataInicial))
           .toList();
     }
-    if (data is Map<String, dynamic>) {
-      for (final key in [
-        'intervalos',
-        'sugestoes',
-        'datasFinais',
-        'datas',
-        'resultados',
-      ]) {
-        final value = data[key];
-        if (value is List) {
-          return value
-              .map(
-                (item) =>
-                    SugestaoDataFinal.fromJson(item, dataInicial: dataInicial),
-              )
-              .toList();
-        }
-      }
-      return [SugestaoDataFinal.fromJson(data, dataInicial: dataInicial)];
-    }
-    return [SugestaoDataFinal.fromJson(data, dataInicial: dataInicial)];
+    throw const FormatException(
+      'Formato inesperado para sugestões de datas finais.',
+    );
   }
 
   Future<List<OperacaoSolicitacaoConcessao>> buscarOperacoesSolicitacao({

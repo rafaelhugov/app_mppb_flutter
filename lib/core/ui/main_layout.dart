@@ -39,7 +39,7 @@ class _DockIndicatorMetrics {
 }
 
 class MainLayout extends ConsumerStatefulWidget {
-  static const double dockStructuralHeight = 60;
+  static const double dockStructuralHeight = 68;
   static const double dockContentGap = 16;
   static const double authenticatedHorizontalPadding = 16;
   static const double authenticatedSectionGap = 12;
@@ -199,6 +199,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
+                height: 40,
+                alignment: Alignment.center,
                 constraints: const BoxConstraints(minWidth: 42, minHeight: 37),
                 decoration: BoxDecoration(
                   color: Colors.transparent,
@@ -207,7 +209,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 ),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                    vertical: 3,
+                    vertical: 2,
                     horizontal: isSelected ? 8 : 3,
                   ),
                   child: Column(
@@ -348,7 +350,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 duration: const Duration(milliseconds: 420),
                 curve: Curves.easeInOutCubic,
                 left: metrics.left,
-                top: 5,
+                top: 4,
                 width: metrics.width,
                 height: 40,
                 child: ClipRRect(
@@ -535,7 +537,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           Positioned(
             left: sideInset,
             right: sideInset,
-            bottom: bottomInset + 5,
+            bottom: bottomInset + 12,
             child: Container(
               height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 4),

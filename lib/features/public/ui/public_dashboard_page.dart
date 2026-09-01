@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../noticias/ui/widgets/news_carousel.dart';
+import '../../contatos/ui/widgets/secao_institucional.dart';
 
 class PublicDashboardPage extends StatelessWidget {
   const PublicDashboardPage({super.key});
@@ -129,6 +130,14 @@ class PublicDashboardPage extends StatelessWidget {
                             '/processos',
                             backgroundIcon: true,
                           ),
+                          _buildSmallCard(
+                            context,
+                            'Contatos',
+                            'Atendimento',
+                            Icons.contact_support_outlined,
+                            '/contatos',
+                            backgroundIcon: true,
+                          ),
                         ],
                       ),
 
@@ -181,6 +190,8 @@ class PublicDashboardPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       const NewsCarousel(),
+                      const SizedBox(height: 48),
+                      const SecaoInstitucional(),
                     ],
                   ),
                 ),

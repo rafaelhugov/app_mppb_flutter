@@ -62,7 +62,7 @@ extension StatusSolicitacaoColor on StatusSolicitacaoConcessao {
       case StatusSolicitacaoConcessao.homologado:
       case StatusSolicitacaoConcessao.confirmado:
       case StatusSolicitacaoConcessao.migrado:
-        return const Color(0xFF15803D);
+        return const Color(0xFF00A86B);
       case StatusSolicitacaoConcessao.pendente:
         return const Color(0xFFF97316);
       case StatusSolicitacaoConcessao.cancelado:

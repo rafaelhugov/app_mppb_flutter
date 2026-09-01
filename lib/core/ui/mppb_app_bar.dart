@@ -95,10 +95,26 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: Container(color: const Color(0xFFE8EEE4), height: 1.0),
       ),
       title: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset('assets/images/brasao_mppb_sem_fundo.png', height: 28),
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: Image.asset(
+              'assets/images/brasao_mppb_sem_fundo.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stack) => const Text(
+                'M',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  color: Color(0xFF202322),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(width: 8),
-          const Expanded(
+          const Flexible(
             child: Text(
               'MPPB+',
               style: TextStyle(

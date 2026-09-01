@@ -302,7 +302,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 196),
+        constraints: const BoxConstraints(maxWidth: 260),
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF202322),
@@ -327,7 +327,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(4, 3, 4, 4),
+                padding: const EdgeInsets.fromLTRB(5, 3, 5, 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -338,8 +338,9 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                           .read(pagamentosProvider.notifier)
                           .mudarExercicio(-1),
                     ),
+                    const SizedBox(width: 10),
                     SizedBox(
-                      width: 132,
+                      width: 180,
                       child: InkWell(
                         onTap: hasAnos
                             ? () => _mostrarModalExercicio(
@@ -360,14 +361,14 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                                   color: Color(0xFFF4F7F4),
                                   size: 10,
                                 ),
-                                SizedBox(width: 4),
+                                SizedBox(width: 6),
                                 Text(
                                   'EXERCÍCIO',
                                   style: TextStyle(
                                     color: Color(0xFFDDE4DF),
                                     fontSize: 7,
                                     fontWeight: FontWeight.w500,
-                                    letterSpacing: 0.35,
+                                    letterSpacing: 0,
                                     height: 1,
                                   ),
                                 ),
@@ -387,6 +388,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
                     _buildSelectorButton(
                       icon: Icons.chevron_right_rounded,
                       enabled: canGoForward,
@@ -415,17 +417,22 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(13),
         child: Container(
-          width: 26,
-          height: 26,
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: const Color(0x0FFFFFFF),
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: const Color(0x26FFFFFF)),
+            color: enabled ? const Color(0xFFF1F3F5) : const Color(0x33F1F3F5),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: enabled
+                  ? const Color(0xFFD7DEDA)
+                  : const Color(0x44D7DEDA),
+            ),
           ),
           child: Icon(
             icon,
-            size: 17,
-            color: enabled ? const Color(0xFFF7F8F6) : const Color(0x55F7F8F6),
+            size: 16,
+            color: enabled ? const Color(0xFF202322) : const Color(0x77FFFFFF),
           ),
         ),
       ),
@@ -462,7 +469,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                       color: Color(0xFF697370),
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.45,
+                      letterSpacing: 0,
                     ),
                   ),
                   const SizedBox(height: 6),

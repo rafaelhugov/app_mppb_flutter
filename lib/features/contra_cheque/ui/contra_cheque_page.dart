@@ -122,8 +122,8 @@ class ContraChequePage extends ConsumerWidget {
           icon: const Icon(Icons.file_download, size: 18),
           label: const Text('BAIXAR PDF'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF007A4D),
-            side: const BorderSide(color: Color(0x9900A86B), width: 1.2),
+            foregroundColor: const Color(0xFF2563EB),
+            side: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),

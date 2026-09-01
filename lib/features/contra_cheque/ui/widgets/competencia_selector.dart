@@ -25,7 +25,7 @@ class CompetenciaSelector extends ConsumerWidget {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 196),
+        constraints: const BoxConstraints(maxWidth: 280),
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF202322),
@@ -50,7 +50,7 @@ class CompetenciaSelector extends ConsumerWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(4, 3, 4, 4),
+                padding: const EdgeInsets.fromLTRB(5, 3, 5, 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -63,8 +63,9 @@ class CompetenciaSelector extends ConsumerWidget {
                             .selecionarMesAnterior();
                       },
                     ),
+                    const SizedBox(width: 10),
                     SizedBox(
-                      width: 132,
+                      width: 200,
                       child: InkWell(
                         onTap: () => _showCompetenciaModal(context, ref, state),
                         borderRadius: BorderRadius.circular(12),
@@ -79,14 +80,14 @@ class CompetenciaSelector extends ConsumerWidget {
                                   size: 10,
                                   color: Color(0xFFF4F7F4),
                                 ),
-                                SizedBox(width: 4),
+                                SizedBox(width: 6),
                                 Text(
                                   'MÊS DE REFERÊNCIA',
                                   style: TextStyle(
                                     color: Color(0xFFDDE4DF),
                                     fontSize: 7,
                                     fontWeight: FontWeight.w500,
-                                    letterSpacing: 0.35,
+                                    letterSpacing: 0,
                                     height: 1,
                                   ),
                                 ),
@@ -106,6 +107,7 @@ class CompetenciaSelector extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
                     _buildNavButton(
                       icon: Icons.chevron_right_rounded,
                       enabled: hasNewer,
@@ -136,21 +138,21 @@ class CompetenciaSelector extends ConsumerWidget {
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(13),
         child: Container(
-          width: 26,
-          height: 26,
+          width: 28,
+          height: 28,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.transparent,
+            color: enabled ? const Color(0xFFF1F3F5) : const Color(0x33F1F3F5),
             shape: BoxShape.circle,
             border: Border.all(
               color: enabled
-                  ? const Color(0xBFFFFFFF)
-                  : const Color(0x44FFFFFF),
+                  ? const Color(0xFFD7DEDA)
+                  : const Color(0x44D7DEDA),
             ),
           ),
           child: Icon(
             icon,
-            color: enabled ? const Color(0xFFFFFFFF) : const Color(0x55FFFFFF),
+            color: enabled ? const Color(0xFF202322) : const Color(0x77FFFFFF),
             size: 16,
           ),
         ),
@@ -201,16 +203,27 @@ class _CompetenciaModalState extends State<_CompetenciaModal> {
       byYear[c.ano]!.add(c);
     }
     sortedYears = byYear.keys.toList()..sort((a, b) => b.compareTo(a));
-    
-    selectedYear = widget.state.competenciaSelecionada?.ano ?? 
+
+    selectedYear =
+        widget.state.competenciaSelecionada?.ano ??
         (sortedYears.isNotEmpty ? sortedYears.first : DateTime.now().year);
   }
 
   @override
   Widget build(BuildContext context) {
     final mesesNomes = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
     ];
 
     return Container(
@@ -257,7 +270,7 @@ class _CompetenciaModalState extends State<_CompetenciaModal> {
             ],
           ),
           const SizedBox(height: 20),
-          
+
           if (sortedYears.isNotEmpty)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -269,7 +282,10 @@ class _CompetenciaModalState extends State<_CompetenciaModal> {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
                   value: selectedYear,
-                  icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF202322)),
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFF202322),
+                  ),
                   isExpanded: true,
                   dropdownColor: Colors.white,
                   style: const TextStyle(
@@ -293,9 +309,9 @@ class _CompetenciaModalState extends State<_CompetenciaModal> {
                 ),
               ),
             ),
-            
+
           const SizedBox(height: 20),
-          
+
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -310,7 +326,8 @@ class _CompetenciaModalState extends State<_CompetenciaModal> {
               final mes = idx + 1;
               final String mesLabel = mesesNomes[idx];
 
-              final isAvailable = byYear[selectedYear]?.any((c) => c.mes == mes) ?? false;
+              final isAvailable =
+                  byYear[selectedYear]?.any((c) => c.mes == mes) ?? false;
               final isSelected =
                   widget.state.competenciaSelecionada?.ano == selectedYear &&
                   widget.state.competenciaSelecionada?.mes == mes;

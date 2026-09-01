@@ -12,15 +12,23 @@ class NewsCarousel extends ConsumerStatefulWidget {
   ConsumerState<NewsCarousel> createState() => _NewsCarouselState();
 }
 
-class _NewsCarouselState extends ConsumerState<NewsCarousel> {
+class _NewsCarouselState extends ConsumerState<NewsCarousel>
+    with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController(viewportFraction: 0.92);
   Timer? _autoPlayTimer;
   int _currentNewsIndex = 0;
   int _carouselNewsCount = 0;
+  bool _isAutoPlayPaused = false;
+  late final AnimationController _autoPlayProgressController;
 
   @override
   void initState() {
     super.initState();
+    _autoPlayProgressController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    );
+
     Future.microtask(() {
       ref.read(noticiaProvider.notifier).fetchNoticias();
     });
@@ -29,24 +37,35 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel> {
   @override
   void dispose() {
     _autoPlayTimer?.cancel();
+    _autoPlayProgressController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
+  void _restartAutoPlayProgress() {
+    _autoPlayProgressController
+      ..stop()
+      ..forward(from: 0);
+  }
+
   void _syncAutoPlay(int itemCount) {
-    if (_carouselNewsCount == itemCount && _autoPlayTimer != null) {
+    if (_carouselNewsCount == itemCount &&
+        _autoPlayTimer != null &&
+        !_isAutoPlayPaused) {
       return;
     }
 
     _carouselNewsCount = itemCount;
     _autoPlayTimer?.cancel();
     _autoPlayTimer = null;
+    _autoPlayProgressController.stop();
 
-    if (itemCount < 2) {
+    if (_isAutoPlayPaused || itemCount < 2) {
       return;
     }
 
-    _autoPlayTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _restartAutoPlayProgress();
+    _autoPlayTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (!mounted || !_pageController.hasClients) {
         return;
       }
@@ -57,7 +76,95 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel> {
         duration: const Duration(milliseconds: 420),
         curve: Curves.easeOutCubic,
       );
+      _restartAutoPlayProgress();
     });
+  }
+
+  void _toggleAutoPlay() {
+    setState(() {
+      _isAutoPlayPaused = !_isAutoPlayPaused;
+    });
+    _syncAutoPlay(_carouselNewsCount);
+  }
+
+  Widget _buildAutoPlayControl(int itemCount) {
+    if (itemCount < 2) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        Tooltip(
+          message: _isAutoPlayPaused ? 'Retomar notícias' : 'Pausar notícias',
+          child: InkWell(
+            onTap: _toggleAutoPlay,
+            borderRadius: BorderRadius.circular(999),
+            child: SizedBox(
+              width: 38,
+              height: 38,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedBuilder(
+                    animation: _autoPlayProgressController,
+                    builder: (context, _) {
+                      return CircularProgressIndicator(
+                        value: 1 - _autoPlayProgressController.value,
+                        strokeWidth: 2.6,
+                        backgroundColor: const Color(0xFFE9EDF0),
+                        color: const Color(0xFFD62828),
+                      );
+                    },
+                  ),
+                  Container(
+                    width: 31,
+                    height: 31,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: const Color(0xFFE2E4E8)),
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x10101828),
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      _isAutoPlayPaused
+                          ? Icons.play_arrow_rounded
+                          : Icons.pause_rounded,
+                      color: const Color(0xFF697370),
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 7),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            itemCount,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              height: 7,
+              width: _currentNewsIndex == index ? 20 : 7,
+              decoration: BoxDecoration(
+                color: _currentNewsIndex == index
+                    ? const Color(0xFFD62828)
+                    : const Color(0x33D62828),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void _openNews(String? url) async {
@@ -122,6 +229,11 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel> {
                 setState(() {
                   _currentNewsIndex = index;
                 });
+                if (!_isAutoPlayPaused && carouselNews.length > 1) {
+                  _autoPlayTimer?.cancel();
+                  _autoPlayTimer = null;
+                  _syncAutoPlay(carouselNews.length);
+                }
               },
               itemBuilder: (context, index) {
                 final noticia = carouselNews[index];
@@ -320,25 +432,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel> {
             ),
           ),
           const SizedBox(height: 10),
-          // DOTS
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              carouselNews.length,
-              (index) => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                height: 7,
-                width: _currentNewsIndex == index ? 20 : 7,
-                decoration: BoxDecoration(
-                  color: _currentNewsIndex == index
-                      ? const Color(0xFFD62828)
-                      : const Color(0x33D62828),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-          ),
+          _buildAutoPlayControl(carouselNews.length),
         ],
       ],
     );

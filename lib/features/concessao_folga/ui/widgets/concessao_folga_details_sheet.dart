@@ -159,13 +159,24 @@ class ConcessaoFolgaDetailsSheet extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 5),
-                              Text(
-                                '${solicitacao.status.label} - ${solicitacao.diasCalculados} dia(s)',
-                                style: TextStyle(
-                                  color: solicitacao.status.color,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  _StatusPill(
+                                    label: solicitacao.status.label,
+                                    color: solicitacao.status.color,
+                                  ),
+                                  Text(
+                                    '${solicitacao.diasCalculados} dia(s)',
+                                    style: const TextStyle(
+                                      color: ConcessaoFolgaColors.ink,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
                               ),
                               _SolicitacaoActions(
                                 solicitacao: solicitacao,
@@ -403,30 +414,67 @@ class _OperationChip extends StatelessWidget {
     final destructive =
         operacao == OperacaoSolicitacaoConcessao.cancelar ||
         operacao == OperacaoSolicitacaoConcessao.suspenderIntegralmente;
-    final color = destructive
+    final foreground = destructive
         ? const Color(0xFFE5252A)
-        : const Color(0xFF202322);
+        : ConcessaoFolgaColors.ink;
+    final background = destructive
+        ? const Color(0xFFFFF1F2)
+        : const Color(0xFFF1F3F5);
+    final border = destructive
+        ? const Color(0xFFFFB3B8)
+        : const Color(0xFFD7DEDA);
 
     return Material(
-      color: color.withValues(alpha: enabled ? 0.08 : 0.04),
-      borderRadius: BorderRadius.circular(999),
+      color: enabled ? background : const Color(0xFFF7F8F6),
+      borderRadius: BorderRadius.circular(12),
+      elevation: enabled ? 1 : 0,
+      shadowColor: const Color(0x26101828),
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: color.withValues(alpha: 0.22)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: enabled ? border : const Color(0xFFE9EDF0),
+            ),
           ),
           child: Text(
             operacao.label,
             style: TextStyle(
-              color: enabled ? color : ConcessaoFolgaColors.muted,
+              color: enabled ? foreground : ConcessaoFolgaColors.muted,
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          height: 1,
         ),
       ),
     );
@@ -490,8 +538,11 @@ class _DateOperationSheetState extends State<_DateOperationSheet> {
       initialDate: _selected ?? today,
       firstDate: DateTime(today.year - 1),
       lastDate: DateTime(today.year + 5),
-      cancelText: 'Cancelar',
-      confirmText: 'Selecionar',
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      locale: const Locale('pt', 'BR'),
+      cancelText: 'CANCELAR',
+      confirmText: 'OK',
+      builder: _concessaoDatePickerTheme,
     );
     if (selected != null) {
       setState(() => _selected = selected);
@@ -576,8 +627,11 @@ class _PeriodOperationSheetState extends State<_PeriodOperationSheet> {
       initialDate: (isStart ? _inicio : _fim) ?? today,
       firstDate: DateTime(today.year - 1),
       lastDate: DateTime(today.year + 5),
-      cancelText: 'Cancelar',
-      confirmText: 'Selecionar',
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      locale: const Locale('pt', 'BR'),
+      cancelText: 'CANCELAR',
+      confirmText: 'OK',
+      builder: _concessaoDatePickerTheme,
     );
     if (selected != null) {
       setState(() {
@@ -592,6 +646,19 @@ class _PeriodOperationSheetState extends State<_PeriodOperationSheet> {
       });
     }
   }
+}
+
+Widget _concessaoDatePickerTheme(BuildContext context, Widget? child) {
+  return Theme(
+    data: Theme.of(context).copyWith(
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFFD62828),
+        onPrimary: Colors.white,
+        onSurface: Color(0xFF202322),
+      ),
+    ),
+    child: child!,
+  );
 }
 
 class _OperationSheetFrame extends StatelessWidget {

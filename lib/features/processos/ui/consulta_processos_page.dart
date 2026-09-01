@@ -9,6 +9,9 @@ import '../../auth/providers/auth_provider.dart';
 import '../providers/processos_provider.dart';
 import '../models/processo.dart';
 
+const _processBlue = Color(0xFF2563EB);
+const _statusGreen = Color(0xFF00A86B);
+
 class ConsultaProcessosPage extends ConsumerStatefulWidget {
   const ConsultaProcessosPage({super.key});
 
@@ -30,6 +33,14 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
   String? _idComarca;
   String? _idClasse;
   String? _idTipoAtividade;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(consultaProcessosProvider.notifier).carregarFiltros(),
+    );
+  }
 
   @override
   void dispose() {
@@ -69,11 +80,32 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
       filtros['nomePromotor'] = _nomePromotorCtrl.text;
     }
     if (_statusSelecionado != null) filtros['status'] = _statusSelecionado;
-    if (_idComarca != null) filtros['idComarca'] = _idComarca;
-    if (_idClasse != null) filtros['idClasse'] = _idClasse;
+    if (_idComarca != null) filtros['idComarca'] = int.parse(_idComarca!);
+    if (_idClasse != null) filtros['idClasse'] = int.parse(_idClasse!);
     if (_idTipoAtividade != null) filtros['idTipoAtividade'] = _idTipoAtividade;
 
     ref.read(consultaProcessosProvider.notifier).buscarProcessos(filtros);
+  }
+
+  void _limparBusca() {
+    FocusScope.of(context).unfocus();
+    _numeroProcessoCtrl.clear();
+    _numeroOrigemCtrl.clear();
+    _numeroCnmpCtrl.clear();
+    _cpfCtrl.clear();
+    _cnpjCtrl.clear();
+    _interessadoCtrl.clear();
+    _nomePromotorCtrl.clear();
+    setState(() {
+      _statusSelecionado = null;
+      _idComarca = null;
+      _idClasse = null;
+      _idTipoAtividade = null;
+    });
+    ref.read(consultaProcessosProvider.notifier).limpar();
+    Future.microtask(
+      () => ref.read(consultaProcessosProvider.notifier).carregarFiltros(),
+    );
   }
 
   void _abrirProcesso(ProcessoResumo processo) {
@@ -81,6 +113,131 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _CaptchaDialog(processo: processo),
+    );
+  }
+
+  List<String> _formatInteressados(String? interessado) {
+    final raw = interessado?.trim();
+    if (raw == null || raw.isEmpty) return const ['N/D'];
+
+    final nomes = raw
+        .split(RegExp(r'\s*,\s*'))
+        .map(_capitalizeName)
+        .where((nome) => nome.isNotEmpty)
+        .toList(growable: false);
+
+    return nomes.isEmpty ? const ['N/D'] : nomes;
+  }
+
+  String _capitalizeName(String value) {
+    const lowercaseWords = {
+      'a',
+      'as',
+      'ao',
+      'aos',
+      'da',
+      'das',
+      'de',
+      'do',
+      'dos',
+      'e',
+      'em',
+      'na',
+      'nas',
+      'no',
+      'nos',
+    };
+
+    final words = value.trim().toLowerCase().split(RegExp(r'\s+'));
+    return words
+        .asMap()
+        .entries
+        .map((entry) {
+          final word = entry.value;
+          if (word.isEmpty) return word;
+          if (entry.key > 0 && lowercaseWords.contains(word)) return word;
+
+          return word
+              .split('-')
+              .map((part) {
+                if (part.isEmpty) return part;
+                return '${part[0].toUpperCase()}${part.substring(1)}';
+              })
+              .join('-');
+        })
+        .join(' ');
+  }
+
+  String _sentenceCaseText(String value) {
+    final lower = value.trim().toLowerCase();
+    final buffer = StringBuffer();
+    var capitalizeNext = true;
+
+    for (final rune in lower.runes) {
+      final char = String.fromCharCode(rune);
+      if (RegExp(r'[a-záéíóúâêôãõç]').hasMatch(char)) {
+        buffer.write(capitalizeNext ? char.toUpperCase() : char);
+        capitalizeNext = false;
+      } else {
+        buffer.write(char);
+        if (RegExp(r'[.!?:;\n]').hasMatch(char)) {
+          capitalizeNext = true;
+        }
+      }
+    }
+
+    return buffer
+        .toString()
+        .replaceAll(RegExp(r'\bmppb\b', caseSensitive: false), 'MPPB')
+        .replaceAll(RegExp(r'\bmp\b', caseSensitive: false), 'MP')
+        .replaceAll(RegExp(r'\bcnmp\b', caseSensitive: false), 'CNMP')
+        .replaceAll(RegExp(r'\bcpf\b', caseSensitive: false), 'CPF')
+        .replaceAll(RegExp(r'\bcnpj\b', caseSensitive: false), 'CNPJ');
+  }
+
+  Widget _buildInteressadoInfo(String? interessado) {
+    final nomes = _formatInteressados(interessado);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.person, color: _processBlue, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Interessado:',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF616161),
+                ),
+              ),
+              const SizedBox(height: 3),
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: nomes.map((nome) {
+                    return Text(
+                      nome,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF424242),
+                        height: 1.25,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -112,7 +269,7 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
                 horizontal: horizontalPadding,
                 vertical: 8,
               ),
-              child: _buildFormPanel(state.isLoading),
+              child: _buildFormPanel(state),
             ),
 
             // RESULTS
@@ -127,7 +284,10 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
     );
   }
 
-  Widget _buildFormPanel(bool isLoading) {
+  Widget _buildFormPanel(ConsultaProcessosState state) {
+    final isLoading = state.isLoading;
+    final filtros = state.filtrosOrEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -202,20 +362,36 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
 
         _buildFormSection(
           title: 'Filtros adicionais',
-          subtitle: 'Refine a busca',
+          trailing: TextButton.icon(
+            onPressed: isLoading ? null : _limparBusca,
+            icon: const Icon(Icons.refresh_rounded, size: 15),
+            label: const Text('Redefinir busca'),
+            style: TextButton.styleFrom(
+              foregroundColor: _processBlue,
+              disabledForegroundColor: const Color(0xFF9AA3A0),
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              textStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
           children: [
             _buildDropdown(
               'Comarca',
-              ['--Todas--'],
+              filtros.comarcas,
               _idComarca,
               (v) => setState(() => _idComarca = v),
+              isLoading: state.isLoadingFiltros,
             ),
             const SizedBox(height: 10),
             _buildDropdown(
               'Classe',
-              ['--Todas--'],
+              filtros.classes,
               _idClasse,
               (v) => setState(() => _idClasse = v),
+              isLoading: state.isLoadingFiltros,
             ),
             const SizedBox(height: 10),
             _buildTextField(
@@ -226,51 +402,82 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
             const SizedBox(height: 10),
             _buildDropdown(
               'Tipo de Atividade',
-              ['--Todas--'],
+              filtros.tiposAtividade,
               _idTipoAtividade,
               (v) => setState(() => _idTipoAtividade = v),
+              isLoading: state.isLoadingFiltros,
             ),
             const SizedBox(height: 10),
             _buildStatusRadio(),
+            if (state.filtrosErrorMessage != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                state.filtrosErrorMessage!,
+                style: const TextStyle(
+                  color: Color(0xFFD62828),
+                  fontSize: 12,
+                  height: 1.3,
+                ),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 14),
 
         Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 210),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: isLoading ? null : _buscar,
-                icon: isLoading
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            width: isLoading ? 48 : 220,
+            height: 42,
+            child: ElevatedButton(
+              onPressed: isLoading ? null : _buscar,
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(
+                  const Color(0xFFD62828),
+                ),
+                foregroundColor: WidgetStateProperty.all(Colors.white),
+                overlayColor: WidgetStateProperty.all(
+                  Colors.white.withValues(alpha: 0.08),
+                ),
+                elevation: WidgetStateProperty.all(0),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(isLoading ? 21 : 14),
+                  ),
+                ),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: isLoading
                     ? const SizedBox(
-                        width: 16,
-                        height: 16,
+                        key: ValueKey('loading'),
+                        width: 18,
+                        height: 18,
                         child: CircularProgressIndicator(
                           color: Colors.white,
-                          strokeWidth: 2,
+                          strokeWidth: 2.2,
                         ),
                       )
-                    : const Icon(Icons.search, size: 18),
-                label: const Text(
-                  'Pesquisar processo',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD62828),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  minimumSize: const Size(0, 38),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 9,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  shadowColor: Colors.transparent,
-                ),
+                    : const Row(
+                        key: ValueKey('label'),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search, size: 18),
+                          SizedBox(width: 9),
+                          Text(
+                            'Pesquisar processo',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -281,7 +488,8 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
 
   Widget _buildFormSection({
     required String title,
-    required String subtitle,
+    String? subtitle,
+    Widget? trailing,
     required List<Widget> children,
   }) {
     return Container(
@@ -317,14 +525,17 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF697370),
+              if (trailing != null)
+                trailing
+              else if (subtitle != null)
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF697370),
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -357,7 +568,7 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
         ),
         isDense: true,
         filled: true,
-        fillColor: const Color(0xFFF7F8F6),
+        fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFE9EDF0)),
@@ -383,12 +594,20 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
 
   Widget _buildDropdown(
     String label,
-    List<String> options,
+    List<ProcessoFiltroOption> options,
     String? value,
-    ValueChanged<String?> onChanged,
-  ) {
+    ValueChanged<String?> onChanged, {
+    bool isLoading = false,
+  }) {
+    const allOption = ProcessoFiltroOption(id: '', label: 'Todas');
+    final items = [allOption, ...options];
+
     return DropdownButtonFormField<String>(
-      initialValue: value ?? options.first,
+      initialValue: value ?? allOption.id,
+      isExpanded: true,
+      menuMaxHeight: 320,
+      borderRadius: BorderRadius.circular(14),
+      dropdownColor: Colors.white,
       style: const TextStyle(
         fontSize: 13,
         color: Color(0xFF202322),
@@ -398,13 +617,13 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
         labelText: label,
         labelStyle: const TextStyle(
           color: Color(0xFF697370),
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         isDense: true,
         filled: true,
-        fillColor: const Color(0xFFF7F8F6),
+        fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFE9EDF0)),
@@ -418,28 +637,47 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
           borderSide: const BorderSide(color: Color(0xFFD62828)),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
+          horizontal: 14,
+          vertical: 13,
         ),
       ),
-      icon: const Icon(
-        Icons.keyboard_arrow_down_rounded,
-        color: Color(0xFF697370),
-      ),
-      items: options.map((e) {
+      icon: isLoading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                color: _processBlue,
+                strokeWidth: 2,
+              ),
+            )
+          : const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF697370),
+            ),
+      items: items.map((option) {
+        final label = option.id.isEmpty
+            ? option.label
+            : _sentenceCaseText(option.label);
         return DropdownMenuItem(
-          value: e,
+          value: option.id,
           child: Text(
-            e,
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w400,
               color: Color(0xFF202322),
+              height: 1.25,
             ),
           ),
         );
       }).toList(),
-      onChanged: onChanged,
+      onChanged: isLoading
+          ? null
+          : (selected) {
+              onChanged(selected == null || selected.isEmpty ? null : selected);
+            },
     );
   }
 
@@ -447,7 +685,7 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8F6),
+        color: Colors.white,
         border: Border.all(color: const Color(0xFFE9EDF0)),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -508,215 +746,285 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
   }
 
   Widget _buildResults(ConsultaProcessosState state) {
-    if (state.errorMessage != null) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.red.shade50,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.error, color: Colors.red),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                state.errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     if (!state.searched) return const SizedBox.shrink();
 
-    if (state.resultados.isEmpty && !state.isLoading) {
-      return Container(
-        padding: const EdgeInsets.all(48),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: const Color(0xFFCCCCCC),
-            style: BorderStyle.solid,
-          ),
-        ),
+    final hasResults = state.resultados.isNotEmpty;
+
+    Widget buildShell({required Widget child, String? countLabel}) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 22),
         child: Column(
-          children: const [
-            Icon(Icons.search_off, size: 64, color: Color(0xFFBDBDBD)),
-            SizedBox(height: 16),
-            Text(
-              'Nenhum processo encontrado',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _processBlue.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.manage_search_rounded,
+                    color: _processBlue,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Resultados',
+                    style: TextStyle(
+                      color: Color(0xFF202322),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                if (countLabel != null)
+                  Text(
+                    countLabel,
+                    style: const TextStyle(
+                      color: Color(0xFF697370),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
             ),
-            Text(
-              'Tente ajustar os filtros da pesquisa e tente novamente.',
-              style: TextStyle(color: Colors.grey),
-            ),
+            const SizedBox(height: 12),
+            child,
           ],
         ),
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth < 600
-            ? 1
-            : (constraints.maxWidth < 900 ? 2 : 3);
+    if (state.isLoading) {
+      return buildShell(
+        child: _buildFeedbackCard(
+          icon: Icons.search_rounded,
+          iconColor: _processBlue,
+          title: 'Consultando processos',
+          message: 'Aguarde enquanto buscamos os resultados.',
+          showSpinner: true,
+        ),
+      );
+    }
 
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            mainAxisExtent: 220,
-          ),
-          itemCount: state.resultados.length,
-          itemBuilder: (context, index) {
-            final proc = state.resultados[index];
-            final isAtivo = proc.status == 'Ativo';
+    if (state.errorMessage != null) {
+      return buildShell(
+        child: _buildFeedbackCard(
+          icon: Icons.error_outline_rounded,
+          iconColor: const Color(0xFFD62828),
+          title: 'Não foi possível concluir a consulta',
+          message: state.errorMessage!,
+        ),
+      );
+    }
 
-            return InkWell(
-              onTap: () => _abrirProcesso(proc),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE2E4E8)),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            proc.classe ?? '',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF616161),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isAtivo ? Colors.green : Colors.grey,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            proc.status ?? '',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      proc.numeroProcesso ?? '',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1976D2),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.event, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Registrado em: ${proc.dataRegistro != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(proc.dataRegistro!)) : 'N/D'}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(color: Color(0xFFEEEEEE), height: 1),
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.person,
-                          color: Color(0xFF1976D2),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: RichText(
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            text: TextSpan(
+    if (!hasResults) {
+      return buildShell(
+        child: _buildFeedbackCard(
+          icon: Icons.search_off_rounded,
+          iconColor: const Color(0xFF697370),
+          title: 'Nenhum processo encontrado',
+          message: 'Revise os campos informados e tente novamente.',
+        ),
+      );
+    }
+
+    return buildShell(
+      countLabel: '${state.resultados.length} item(ns)',
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final crossAxisCount = constraints.maxWidth < 600
+              ? 1
+              : (constraints.maxWidth < 900 ? 2 : 3);
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              mainAxisExtent: 260,
+            ),
+            itemCount: state.resultados.length,
+            itemBuilder: (context, index) {
+              final proc = state.resultados[index];
+              final isAtivo = proc.status == 'Ativo';
+
+              return InkWell(
+                onTap: () => _abrirProcesso(proc),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFFE2E4E8)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              proc.classe ?? '',
                               style: const TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF616161),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isAtivo ? _statusGreen : Colors.grey,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              proc.status ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        proc.numeroProcesso ?? '',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: _processBlue,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.event, size: 14, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Registrado em: ${proc.dataRegistro != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(proc.dataRegistro!)) : 'N/D'}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(color: Color(0xFFEEEEEE), height: 1),
+                      const SizedBox(height: 12),
+                      _buildInteressadoInfo(proc.interessado),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.account_balance,
+                            color: _processBlue,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _sentenceCaseText(proc.promotoria ?? 'N/D'),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
                                 color: Color(0xFF424242),
                               ),
-                              children: [
-                                const TextSpan(
-                                  text: 'Interessado: ',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF616161),
-                                  ),
-                                ),
-                                TextSpan(text: proc.interessado ?? 'N/D'),
-                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.account_balance,
-                          color: Color(0xFF1976D2),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            proc.promotoria ?? 'N/D',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF424242),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-      },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFeedbackCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String message,
+    bool showSpinner = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE2E4E8)),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: showSpinner
+                ? Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: CircularProgressIndicator(
+                      color: iconColor,
+                      strokeWidth: 2.2,
+                    ),
+                  )
+                : Icon(icon, color: iconColor, size: 21),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF202322),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    color: Color(0xFF697370),
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -733,40 +1041,79 @@ class _CaptchaDialog extends ConsumerStatefulWidget {
 class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
   final _ctrl = TextEditingController();
 
+  String _capitalizeText(String value) {
+    const lowercaseWords = {
+      'a',
+      'as',
+      'ao',
+      'aos',
+      'da',
+      'das',
+      'de',
+      'do',
+      'dos',
+      'e',
+      'em',
+      'na',
+      'nas',
+      'no',
+      'nos',
+    };
+
+    final words = value.trim().toLowerCase().split(RegExp(r'\s+'));
+    return words
+        .asMap()
+        .entries
+        .map((entry) {
+          final word = entry.value;
+          if (word.isEmpty) return word;
+          if (entry.key > 0 && lowercaseWords.contains(word)) return word;
+
+          return word
+              .split('-')
+              .map((part) {
+                if (part.isEmpty) return part;
+                return '${part[0].toUpperCase()}${part.substring(1)}';
+              })
+              .join('-');
+        })
+        .join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final captchaAsync = ref.watch(captchaProvider);
 
     return Dialog(
+      backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         width: 500,
         constraints: const BoxConstraints(maxWidth: 500),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F8F6),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1976D2),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     'Informe o código',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF424242),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(Icons.close, color: Color(0xFF697370)),
                     onPressed: () => Navigator.of(context).pop(),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -784,8 +1131,8 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
-                          border: Border.all(color: const Color(0xFFE0E0E0)),
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFDDE4DF)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -801,11 +1148,11 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                             ),
                             _buildProcessDetailRow(
                               'Descrição:',
-                              widget.processo.classe ?? '',
+                              _capitalizeText(widget.processo.classe ?? ''),
                             ),
                             _buildProcessDetailRow(
                               'Órgão Atual:',
-                              widget.processo.promotoria ?? '',
+                              _capitalizeText(widget.processo.promotoria ?? ''),
                             ),
                           ],
                         ),
@@ -844,9 +1191,9 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                                 height: 80,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEEEEEE),
+                                  color: Colors.white,
                                   border: Border.all(
-                                    color: const Color(0xFFBDBDBD),
+                                    color: const Color(0xFFD7DEDA),
                                     style: BorderStyle.solid,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
@@ -864,7 +1211,7 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                                       child: IconButton(
                                         icon: const Icon(
                                           Icons.refresh,
-                                          color: Color(0xFF1976D2),
+                                          color: _processBlue,
                                         ),
                                         onPressed: () =>
                                             ref.refresh(captchaProvider),
@@ -878,9 +1225,24 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                                 controller: _ctrl,
                                 decoration: InputDecoration(
                                   hintText: 'Digite o código acima',
+                                  filled: true,
+                                  fillColor: Colors.white,
                                   isDense: true,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFD7DEDA),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: _processBlue,
+                                      width: 1.4,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -890,7 +1252,7 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                                 height: 48,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF1976D2),
+                                    backgroundColor: _processBlue,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -942,30 +1304,31 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
     bool isHighlight = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 86,
             child: Text(
               label,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: Color(0xFF424242),
+                fontSize: 11,
+                height: 1.25,
+                color: Color(0xFF4B5350),
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: isHighlight ? 11.5 : 11,
+                height: 1.28,
                 fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
-                color: isHighlight
-                    ? const Color(0xFF1976D2)
-                    : const Color(0xFF424242),
+                color: isHighlight ? _processBlue : const Color(0xFF424242),
               ),
             ),
           ),

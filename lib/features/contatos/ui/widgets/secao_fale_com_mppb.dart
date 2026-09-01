@@ -19,10 +19,10 @@ class SecaoFaleComMppb extends StatelessWidget {
               size: 21,
             ),
             const SizedBox(width: 8),
-            Text(
-              'Canais de atendimento',
+            const Text(
+              'Ouvidoria',
               style: TextStyle(
-                color: const Color(0xFF202322),
+                color: Color(0xFF202322),
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),

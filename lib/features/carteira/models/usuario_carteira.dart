@@ -11,6 +11,8 @@ class UsuarioCarteira {
   final String? nomePai;
   final String? nomeMae;
   final String? nomePgj;
+  final String? assinaturaPgjBlackUrl;
+  final String? assinaturaPgjWhiteUrl;
   final String? md5;
   final String? tipoCargo;
 
@@ -27,6 +29,8 @@ class UsuarioCarteira {
     this.nomePai,
     this.nomeMae,
     this.nomePgj,
+    this.assinaturaPgjBlackUrl,
+    this.assinaturaPgjWhiteUrl,
     this.md5,
     this.tipoCargo,
   });
@@ -45,6 +49,8 @@ class UsuarioCarteira {
       nomePai: json['nomePai'] as String?,
       nomeMae: json['nomeMae'] as String?,
       nomePgj: json['nomePgj'] as String?,
+      assinaturaPgjBlackUrl: json['assinaturaPgjBlackUrl'] as String?,
+      assinaturaPgjWhiteUrl: json['assinaturaPgjWhiteUrl'] as String?,
       md5: json['md5'] as String?,
       tipoCargo: json['tipoCargo'] as String?,
     );
@@ -64,6 +70,8 @@ class UsuarioCarteira {
       'nomePai': nomePai,
       'nomeMae': nomeMae,
       'nomePgj': nomePgj,
+      'assinaturaPgjBlackUrl': assinaturaPgjBlackUrl,
+      'assinaturaPgjWhiteUrl': assinaturaPgjWhiteUrl,
       'md5': md5,
       'tipoCargo': tipoCargo,
     };

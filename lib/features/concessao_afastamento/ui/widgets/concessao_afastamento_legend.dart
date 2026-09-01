@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../models/tipo_ausencia.dart';
-import 'concessao_folga_theme.dart';
+import 'concessao_afastamento_theme.dart';
 
-class ConcessaoFolgaLegend extends StatelessWidget {
-  const ConcessaoFolgaLegend({super.key});
+class ConcessaoAfastamentoLegend extends StatelessWidget {
+  const ConcessaoAfastamentoLegend({super.key});
 
   @override
   Widget build(BuildContext context) {

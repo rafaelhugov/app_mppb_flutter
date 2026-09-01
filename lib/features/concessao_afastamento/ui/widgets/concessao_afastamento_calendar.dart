@@ -1,22 +1,26 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../core/ui/main_layout.dart';
 import '../../models/ausencia_calendario.dart';
 import '../../models/solicitacao_concessao.dart';
-import '../../services/concessao_folga_service.dart';
-import 'concessao_folga_theme.dart';
+import '../../services/concessao_afastamento_service.dart';
+import 'concessao_afastamento_theme.dart';
 
 class RangeInfo {
   final bool inRange;
   final bool isStart;
   final bool isEnd;
+  final bool outlined;
   final Color color;
 
   const RangeInfo({
     required this.inRange,
     this.isStart = false,
     this.isEnd = false,
+    this.outlined = false,
     this.color = Colors.transparent,
   });
 }
@@ -25,7 +29,7 @@ class RangeInfo {
 // Public widget
 // ---------------------------------------------------------------------------
 
-class ConcessaoFolgaCalendar extends StatefulWidget {
+class ConcessaoAfastamentoCalendar extends StatefulWidget {
   final DateTime mes;
   final List<AusenciaCalendario> ausencias;
   final bool isLoading;
@@ -37,7 +41,7 @@ class ConcessaoFolgaCalendar extends StatefulWidget {
   final VoidCallback onSelectMonth;
   final void Function(DateTime)? onNavigateToMonth;
 
-  const ConcessaoFolgaCalendar({
+  const ConcessaoAfastamentoCalendar({
     super.key,
     required this.mes,
     required this.ausencias,
@@ -52,10 +56,12 @@ class ConcessaoFolgaCalendar extends StatefulWidget {
   });
 
   @override
-  State<ConcessaoFolgaCalendar> createState() => _ConcessaoFolgaCalendarState();
+  State<ConcessaoAfastamentoCalendar> createState() =>
+      _ConcessaoAfastamentoCalendarState();
 }
 
-class _ConcessaoFolgaCalendarState extends State<ConcessaoFolgaCalendar> {
+class _ConcessaoAfastamentoCalendarState
+    extends State<ConcessaoAfastamentoCalendar> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading && widget.ausencias.isEmpty) {
@@ -72,6 +78,7 @@ class _ConcessaoFolgaCalendarState extends State<ConcessaoFolgaCalendar> {
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView(
+        primary: false,
         padding: EdgeInsets.fromLTRB(
           16,
           16,
@@ -159,20 +166,52 @@ class _CalendarGrid extends StatelessWidget {
     if (ausencias.isEmpty) return const RangeInfo(inRange: false);
 
     final atual = normalizarData(dia);
+    final today = normalizarData(DateTime.now());
     for (final ausencia in ausencias) {
       final inicio = ausencia.inicioNormalizado;
       final fim = ausencia.fimNormalizado;
 
       if (!atual.isBefore(inicio) && !atual.isAfter(fim)) {
+        final outlined = !atual.isAfter(today);
+        final previousDay = atual.subtract(const Duration(days: 1));
+        final nextDay = atual.add(const Duration(days: 1));
+        final previousInSameStyle = _dayHasSameRangeStyle(
+          previousDay,
+          inicio: inicio,
+          fim: fim,
+          today: today,
+          outlined: outlined,
+        );
+        final nextInSameStyle = _dayHasSameRangeStyle(
+          nextDay,
+          inicio: inicio,
+          fim: fim,
+          today: today,
+          outlined: outlined,
+        );
+
         return RangeInfo(
           inRange: true,
-          isStart: atual.isAtSameMomentAs(inicio) || dia.weekday == 7,
-          isEnd: atual.isAtSameMomentAs(fim) || dia.weekday == 6,
+          isStart: !previousInSameStyle || dia.weekday == 7,
+          isEnd: !nextInSameStyle || dia.weekday == 6,
+          outlined: outlined,
           color: ausencia.tipo.color,
         );
       }
     }
     return const RangeInfo(inRange: false);
+  }
+
+  bool _dayHasSameRangeStyle(
+    DateTime dia, {
+    required DateTime inicio,
+    required DateTime fim,
+    required DateTime today,
+    required bool outlined,
+  }) {
+    final isInRange = !dia.isBefore(inicio) && !dia.isAfter(fim);
+    if (!isInRange) return false;
+    return !dia.isAfter(today) == outlined;
   }
 
   @override
@@ -212,7 +251,7 @@ class _CalendarGrid extends StatelessWidget {
                   onTap: onSelectMonth,
                   child: Center(
                     child: Text(
-                      ConcessaoFolgaService.nomeMesAno(
+                      ConcessaoAfastamentoService.nomeMesAno(
                         mes,
                       ).replaceFirst(' de ', ' '),
                       style: const TextStyle(
@@ -301,6 +340,7 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isInRange = rangeInfo.inRange;
+    final isOutlined = isInRange && rangeInfo.outlined;
     final highlightRadius = BorderRadius.horizontal(
       left: rangeInfo.isStart ? const Radius.circular(999) : Radius.zero,
       right: rangeInfo.isEnd ? const Radius.circular(999) : Radius.zero,
@@ -315,20 +355,38 @@ class _DayCell extends StatelessWidget {
             right: rangeInfo.isEnd ? 4 : -1,
             top: 2,
             bottom: 4,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: rangeInfo.color,
-                borderRadius: highlightRadius,
-              ),
+            child: isOutlined
+                ? CustomPaint(
+                    painter: _OutlinedRangePainter(
+                      color: rangeInfo.color,
+                      isStart: rangeInfo.isStart,
+                      isEnd: rangeInfo.isEnd,
+                    ),
+                  )
+                : DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: rangeInfo.color,
+                      borderRadius: highlightRadius,
+                    ),
+                  ),
+          ),
+        if (_isToday && !isOutlined)
+          Container(
+            width: 30,
+            height: 30,
+            decoration: const BoxDecoration(
+              color: Color(0xFFD62828),
+              shape: BoxShape.circle,
             ),
           ),
-        if (_isToday)
+        if (_isToday && isOutlined)
           Container(
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: const Color(0xFFD62828),
+              color: Colors.white,
               shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFD62828), width: 2),
             ),
           ),
         Column(
@@ -338,9 +396,13 @@ class _DayCell extends StatelessWidget {
               '${dia.day}',
               style: TextStyle(
                 color: _isToday
-                    ? Colors.white
+                    ? isOutlined
+                          ? const Color(0xFFD62828)
+                          : Colors.white
                     : isInRange
-                    ? rangeInfo.color.computeLuminance() > 0.45
+                    ? isOutlined
+                          ? rangeInfo.color
+                          : rangeInfo.color.computeLuminance() > 0.45
                           ? const Color(0xFF202322)
                           : Colors.white
                     : currentMonth
@@ -357,6 +419,82 @@ class _DayCell extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _OutlinedRangePainter extends CustomPainter {
+  final Color color;
+  final bool isStart;
+  final bool isEnd;
+
+  const _OutlinedRangePainter({
+    required this.color,
+    required this.isStart,
+    required this.isEnd,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2;
+
+    final left = 1.1;
+    final top = 1.1;
+    final right = size.width - 1.1;
+    final bottom = size.height - 1.1;
+    final radius = (bottom - top) / 2;
+
+    if (isStart && isEnd) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(left, top, right, bottom),
+          Radius.circular(radius),
+        ),
+        paint,
+      );
+      return;
+    }
+
+    final topStart = isStart ? left + radius : left;
+    final topEnd = isEnd ? right - radius : right;
+    final bottomStart = isStart ? left + radius : left;
+    final bottomEnd = isEnd ? right - radius : right;
+
+    canvas.drawLine(Offset(topStart, top), Offset(topEnd, top), paint);
+    canvas.drawLine(
+      Offset(bottomStart, bottom),
+      Offset(bottomEnd, bottom),
+      paint,
+    );
+
+    if (isStart) {
+      canvas.drawArc(
+        Rect.fromLTWH(left, top, radius * 2, radius * 2),
+        pi / 2,
+        pi,
+        false,
+        paint,
+      );
+    }
+
+    if (isEnd) {
+      canvas.drawArc(
+        Rect.fromLTWH(right - radius * 2, top, radius * 2, radius * 2),
+        -pi / 2,
+        pi,
+        false,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _OutlinedRangePainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.isStart != isStart ||
+        oldDelegate.isEnd != isEnd;
   }
 }
 
@@ -412,7 +550,7 @@ class _SummaryPanel extends StatelessWidget {
         icon: Icons.event_available_rounded,
         events: activeMonthEvents,
         emptyMessage:
-            'Nenhum evento em ${ConcessaoFolgaService.nomeMesAno(mes)}.',
+            'Nenhum evento em ${ConcessaoAfastamentoService.nomeMesAno(mes)}.',
         onSelectMonth: null,
       ),
       _EventSectionCard(
@@ -490,7 +628,7 @@ class _EventSectionCard extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 16,
-                    color: ConcessaoFolgaColors.brand,
+                    color: ConcessaoAfastamentoColors.brand,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -498,7 +636,7 @@ class _EventSectionCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: const TextStyle(
-                      color: ConcessaoFolgaColors.ink,
+                      color: ConcessaoAfastamentoColors.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                     ),
@@ -518,7 +656,7 @@ class _EventSectionCard extends StatelessWidget {
                     child: Text(
                       '${events.length}',
                       style: const TextStyle(
-                        color: ConcessaoFolgaColors.brand,
+                        color: ConcessaoAfastamentoColors.brand,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                       ),
@@ -536,14 +674,14 @@ class _EventSectionCard extends StatelessWidget {
                   const Icon(
                     Icons.event_busy_rounded,
                     size: 18,
-                    color: ConcessaoFolgaColors.muted,
+                    color: ConcessaoAfastamentoColors.muted,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       emptyMessage,
                       style: const TextStyle(
-                        color: ConcessaoFolgaColors.muted,
+                        color: ConcessaoAfastamentoColors.muted,
                         fontSize: 13,
                       ),
                     ),
@@ -600,7 +738,7 @@ class _EventSectionCard extends StatelessWidget {
       final parts = key.split('-');
       final year = int.parse(parts[0]);
       final month = int.parse(parts[1]);
-      final monthName = ConcessaoFolgaService.nomeMesAno(
+      final monthName = ConcessaoAfastamentoService.nomeMesAno(
         DateTime(year, month),
       ).toUpperCase();
 
@@ -615,7 +753,7 @@ class _EventSectionCard extends StatelessWidget {
           child: Text(
             monthName,
             style: const TextStyle(
-              color: ConcessaoFolgaColors.muted,
+              color: ConcessaoAfastamentoColors.muted,
               fontSize: 11,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.5,
@@ -784,44 +922,6 @@ class _SummaryItem extends StatelessWidget {
                 ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Error states
-// ---------------------------------------------------------------------------
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ErrorState({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.wifi_off,
-              size: 42,
-              color: ConcessaoFolgaColors.brand,
-            ),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Tentar novamente'),
-            ),
-          ],
         ),
       ),
     );

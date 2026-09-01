@@ -4,16 +4,16 @@ import 'package:intl/intl.dart';
 
 import '../../../core/network/api_client.dart';
 import '../models/ausencia_calendario.dart';
-import '../models/concessao_folga.dart';
+import '../models/concessao_afastamento.dart';
 import '../models/operacao_solicitacao_concessao.dart';
 import '../models/sugestao_data_final.dart';
 
-class ConcessaoFolgaRepository {
+class ConcessaoAfastamentoRepository {
   final Dio dio;
 
-  const ConcessaoFolgaRepository(this.dio);
+  const ConcessaoAfastamentoRepository(this.dio);
 
-  Future<List<ConcessaoFolga>> buscarConcessoesVigentes({
+  Future<List<ConcessaoAfastamento>> buscarConcessoesVigentes({
     required String token,
   }) async {
     final response = await dio.get(
@@ -29,7 +29,9 @@ class ConcessaoFolgaRepository {
     }
     final data = response.data as List<dynamic>? ?? [];
     return data
-        .map((json) => ConcessaoFolga.fromJson(json as Map<String, dynamic>))
+        .map(
+          (json) => ConcessaoAfastamento.fromJson(json as Map<String, dynamic>),
+        )
         .toList();
   }
 
@@ -205,8 +207,7 @@ class ConcessaoFolgaRepository {
   }
 }
 
-final concessaoFolgaRepositoryProvider = Provider<ConcessaoFolgaRepository>((
-  ref,
-) {
-  return ConcessaoFolgaRepository(ref.read(dioProvider));
-});
+final concessaoAfastamentoRepositoryProvider =
+    Provider<ConcessaoAfastamentoRepository>((ref) {
+      return ConcessaoAfastamentoRepository(ref.read(dioProvider));
+    });

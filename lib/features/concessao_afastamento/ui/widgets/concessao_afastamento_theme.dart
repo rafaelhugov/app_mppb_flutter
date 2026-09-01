@@ -4,7 +4,7 @@ import '../../models/status_solicitacao_concessao.dart';
 import '../../models/tipo_ausencia.dart';
 import '../../models/tipo_concessao.dart';
 
-class ConcessaoFolgaColors {
+class ConcessaoAfastamentoColors {
   static const ferias = Color(0xFF2563EB);
   static const licenca = Color(0xFF9333EA);
   static const licencaEleitoral = Color(0xFFF97316);
@@ -21,17 +21,17 @@ extension TipoConcessaoColor on TipoConcessao {
   Color get color {
     switch (this) {
       case TipoConcessao.ferias:
-        return ConcessaoFolgaColors.ferias;
+        return ConcessaoAfastamentoColors.ferias;
       case TipoConcessao.licencaPremio:
-        return ConcessaoFolgaColors.licenca;
+        return ConcessaoAfastamentoColors.licenca;
       case TipoConcessao.licencaEleitoral:
-        return ConcessaoFolgaColors.licencaEleitoral;
+        return ConcessaoAfastamentoColors.licencaEleitoral;
       case TipoConcessao.plantao:
-        return ConcessaoFolgaColors.plantao;
+        return ConcessaoAfastamentoColors.plantao;
       case TipoConcessao.diarias:
-        return ConcessaoFolgaColors.diarias;
+        return ConcessaoAfastamentoColors.diarias;
       case TipoConcessao.desconhecido:
-        return ConcessaoFolgaColors.outros;
+        return ConcessaoAfastamentoColors.outros;
     }
   }
 }
@@ -40,17 +40,17 @@ extension TipoAusenciaColor on TipoAusencia {
   Color get color {
     switch (this) {
       case TipoAusencia.ferias:
-        return ConcessaoFolgaColors.ferias;
+        return ConcessaoAfastamentoColors.ferias;
       case TipoAusencia.licenca:
-        return ConcessaoFolgaColors.licenca;
+        return ConcessaoAfastamentoColors.licenca;
       case TipoAusencia.licencaEleitoral:
-        return ConcessaoFolgaColors.licencaEleitoral;
+        return ConcessaoAfastamentoColors.licencaEleitoral;
       case TipoAusencia.plantao:
-        return ConcessaoFolgaColors.plantao;
+        return ConcessaoAfastamentoColors.plantao;
       case TipoAusencia.diarias:
-        return ConcessaoFolgaColors.diarias;
+        return ConcessaoAfastamentoColors.diarias;
       case TipoAusencia.outros:
-        return ConcessaoFolgaColors.outros;
+        return ConcessaoAfastamentoColors.outros;
     }
   }
 }
@@ -70,7 +70,7 @@ extension StatusSolicitacaoColor on StatusSolicitacaoConcessao {
       case StatusSolicitacaoConcessao.indeferido:
         return const Color(0xFFD62828);
       case StatusSolicitacaoConcessao.desconhecido:
-        return ConcessaoFolgaColors.outros;
+        return ConcessaoAfastamentoColors.outros;
     }
   }
 }

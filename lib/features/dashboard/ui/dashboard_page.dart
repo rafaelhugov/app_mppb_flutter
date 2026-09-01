@@ -12,6 +12,8 @@ import '../../../core/storage/secure_storage.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
+import '../../noticias/models/noticia.dart';
+import '../../noticias/ui/noticias_page.dart';
 import '../../contatos/ui/widgets/secao_institucional.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -90,22 +92,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Habilitar Biometria'),
-        content: const Text(
-          'Deseja habilitar o login por biometria ou FaceID para não precisar digitar sua senha nos próximos acessos?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Agora não'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Habilitar'),
-          ),
-        ],
-      ),
+      builder: (ctx) => const _BiometricPromptDialog(),
     );
 
     if (result == true) {
@@ -277,6 +264,36 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     }
+  }
+
+  void _showNewsModal(Noticia noticia) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => NewsDetailSheet(
+        noticia: noticia,
+        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
+        date: _dateForNews(noticia),
+        readingTime: _readingTime(noticia),
+        onOpenLink: () => _openNews(noticia.link),
+      ),
+    );
+  }
+
+  int _readingTime(Noticia noticia) {
+    final words = (noticia.resumo ?? '')
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .length;
+    final minutes = (words / 180).ceil();
+    return minutes > 0 ? minutes : 1;
+  }
+
+  String _dateForNews(Noticia noticia) {
+    final date = noticia.dataPublicacao ?? '';
+    return date.split(' ').isNotEmpty ? date.split(' ')[0] : '';
   }
 
   String _greetingForProfile({
@@ -554,10 +571,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       ),
                       _buildServiceCard(
                         context,
-                        'Folga',
+                        'Afastamento',
                         'Concessões',
                         Icons.event_available_rounded,
-                        '/concessao-folga',
+                        '/concessao-afastamento',
                       ),
                       _buildServiceCard(
                         context,
@@ -721,7 +738,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                   Expanded(
                                     flex: 9,
                                     child: GestureDetector(
-                                      onTap: () => _openNews(noticia.link),
+                                      onTap: () => _showNewsModal(noticia),
                                       child: Container(
                                         decoration: BoxDecoration(
                                           borderRadius: const BorderRadius.only(
@@ -850,7 +867,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                           width: 136,
                                           child: ElevatedButton(
                                             onPressed: () =>
-                                                _openNews(noticia.link),
+                                                _showNewsModal(noticia),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(
                                                 0xFFD62828,
@@ -1017,6 +1034,128 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BiometricPromptDialog extends StatelessWidget {
+  const _BiometricPromptDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 360),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F8F6),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFE9EDF0)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x24101828),
+              blurRadius: 22,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0x14D62828),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0x33D62828)),
+                  ),
+                  child: const Icon(
+                    Icons.fingerprint_rounded,
+                    color: Color(0xFFD62828),
+                    size: 25,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Habilitar biometria',
+                        style: TextStyle(
+                          color: Color(0xFF202322),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          height: 1.15,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        'Use biometria ou Face ID para acessar o app sem digitar sua senha nos próximos acessos.',
+                        style: TextStyle(
+                          color: Color(0xFF697370),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF202322),
+                      side: const BorderSide(color: Color(0x33202322)),
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    child: const Text('Agora não'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFD62828),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    child: const Text('Habilitar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

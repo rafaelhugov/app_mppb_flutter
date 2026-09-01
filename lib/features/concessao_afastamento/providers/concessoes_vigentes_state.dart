@@ -1,10 +1,10 @@
-import '../models/concessao_folga.dart';
+import '../models/concessao_afastamento.dart';
 
 class ConcessoesVigentesState {
   final bool isLoading;
   final bool isRefreshing;
   final String? errorMessage;
-  final List<ConcessaoFolga> concessoes;
+  final List<ConcessaoAfastamento> concessoes;
 
   const ConcessoesVigentesState({
     this.isLoading = false,
@@ -17,7 +17,7 @@ class ConcessoesVigentesState {
     bool? isLoading,
     bool? isRefreshing,
     Object? errorMessage = _sentinel,
-    List<ConcessaoFolga>? concessoes,
+    List<ConcessaoAfastamento>? concessoes,
   }) {
     return ConcessoesVigentesState(
       isLoading: isLoading ?? this.isLoading,

@@ -5,31 +5,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/ausencia_calendario.dart';
-import '../models/concessao_folga.dart';
+import '../models/concessao_afastamento.dart';
 import '../models/operacao_solicitacao_concessao.dart';
 import '../models/solicitacao_concessao.dart';
 import '../models/sugestao_data_final.dart';
-import '../repositories/concessao_folga_repository.dart';
+import '../repositories/concessao_afastamento_repository.dart';
 import 'ausencias_calendario_state.dart';
 import 'concessoes_vigentes_state.dart';
 
-class ConcessaoFolgaState {
+class ConcessaoAfastamentoState {
   final DateTime mesSelecionado;
   final ConcessoesVigentesState concessoes;
   final AusenciasCalendarioState calendario;
 
-  const ConcessaoFolgaState({
+  const ConcessaoAfastamentoState({
     required this.mesSelecionado,
     this.concessoes = const ConcessoesVigentesState(),
     this.calendario = const AusenciasCalendarioState(),
   });
 
-  ConcessaoFolgaState copyWith({
+  ConcessaoAfastamentoState copyWith({
     DateTime? mesSelecionado,
     ConcessoesVigentesState? concessoes,
     AusenciasCalendarioState? calendario,
   }) {
-    return ConcessaoFolgaState(
+    return ConcessaoAfastamentoState(
       mesSelecionado: mesSelecionado ?? this.mesSelecionado,
       concessoes: concessoes ?? this.concessoes,
       calendario: calendario ?? this.calendario,
@@ -37,13 +37,13 @@ class ConcessaoFolgaState {
   }
 }
 
-class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
-  final Map<String, List<ConcessaoFolga>> _concessoesCache = {};
+class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
+  final Map<String, List<ConcessaoAfastamento>> _concessoesCache = {};
   final Map<String, List<AusenciaCalendario>> _ausenciasCache = {};
   String? _ultimoToken;
 
   @override
-  ConcessaoFolgaState build() {
+  ConcessaoAfastamentoState build() {
     final hoje = DateTime.now();
     ref.listen(authProvider, (previous, next) {
       if (previous?.token != next.token) {
@@ -56,7 +56,9 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
       }
     });
     Future.microtask(carregarInicial);
-    return ConcessaoFolgaState(mesSelecionado: DateTime(hoje.year, hoje.month));
+    return ConcessaoAfastamentoState(
+      mesSelecionado: DateTime(hoje.year, hoje.month),
+    );
   }
 
   Future<void> carregarInicial() async {
@@ -71,7 +73,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
           isLoading: false,
           isRefreshing: false,
           errorMessage:
-              'Não foi possível carregar as concessões de folga.\nTente novamente.',
+              'Não foi possível carregar as concessões de afastamento.\nTente novamente.',
         ),
       );
       return;
@@ -101,7 +103,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
 
     try {
       final dados = await ref
-          .read(concessaoFolgaRepositoryProvider)
+          .read(concessaoAfastamentoRepositoryProvider)
           .buscarConcessoesVigentes(token: token);
       _concessoesCache[cacheKey] = dados;
       state = state.copyWith(
@@ -166,10 +168,10 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
 
     try {
       debugPrint(
-        '[ConcessaoFolga] Solicitando ausencias: mes=${isFuture ? null : mes.month}, ano=${isFuture ? null : mes.year}',
+        '[ConcessaoAfastamento] Solicitando ausencias: mes=${isFuture ? null : mes.month}, ano=${isFuture ? null : mes.year}',
       );
       final dados = await ref
-          .read(concessaoFolgaRepositoryProvider)
+          .read(concessaoAfastamentoRepositoryProvider)
           .buscarAusenciasCalendario(
             token: token,
             mes: isFuture ? null : mes.month,
@@ -212,7 +214,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
   }
 
   Future<void> solicitarGozo({
-    required ConcessaoFolga concessao,
+    required ConcessaoAfastamento concessao,
     required DateTime dataInicial,
     required int numeroDias,
   }) async {
@@ -222,7 +224,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     }
 
     await ref
-        .read(concessaoFolgaRepositoryProvider)
+        .read(concessaoAfastamentoRepositoryProvider)
         .solicitarGozo(
           token: token,
           concessaoId: concessao.id,
@@ -236,7 +238,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
   }
 
   Future<List<SugestaoDataFinal>> buscarSugestoesDatasFinais({
-    required ConcessaoFolga concessao,
+    required ConcessaoAfastamento concessao,
     required DateTime dataInicial,
   }) async {
     final token = await _tokenAtual();
@@ -245,7 +247,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     }
 
     return ref
-        .read(concessaoFolgaRepositoryProvider)
+        .read(concessaoAfastamentoRepositoryProvider)
         .buscarSugestoesDatasFinais(
           token: token,
           concessaoId: concessao.id,
@@ -262,7 +264,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     }
 
     return ref
-        .read(concessaoFolgaRepositoryProvider)
+        .read(concessaoAfastamentoRepositoryProvider)
         .buscarOperacoesSolicitacao(
           token: token,
           solicitacaoId: solicitacao.id,
@@ -281,7 +283,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     }
 
     await ref
-        .read(concessaoFolgaRepositoryProvider)
+        .read(concessaoAfastamentoRepositoryProvider)
         .executarOperacaoSolicitacao(
           token: token,
           solicitacaoId: solicitacao.id,
@@ -324,7 +326,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
   }
 
   void _tratarErroConcessoes(dynamic e, [StackTrace? stack]) {
-    debugPrint('[ConcessaoFolga] Erro ao carregar concessoes: $e');
+    debugPrint('[ConcessaoAfastamento] Erro ao carregar concessoes: $e');
     if (stack != null) debugPrint(stack.toString());
 
     state = state.copyWith(
@@ -337,7 +339,7 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
   }
 
   void _tratarErroCalendario(dynamic e, [StackTrace? stack]) {
-    debugPrint('[ConcessaoFolga] Erro ao carregar afastamentos: $e');
+    debugPrint('[ConcessaoAfastamento] Erro ao carregar afastamentos: $e');
     if (stack != null) debugPrint(stack.toString());
 
     state = state.copyWith(
@@ -366,11 +368,13 @@ class ConcessaoFolgaNotifier extends Notifier<ConcessaoFolgaState> {
     if (isCalendario) {
       return 'Não foi possível carregar os afastamentos.\nTente novamente.';
     }
-    return 'Não foi possível carregar as concessões de folga.\nTente novamente.';
+    return 'Não foi possível carregar as concessões de afastamento.\nTente novamente.';
   }
 }
 
-final concessaoFolgaProvider =
-    NotifierProvider<ConcessaoFolgaNotifier, ConcessaoFolgaState>(() {
-      return ConcessaoFolgaNotifier();
-    });
+final concessaoAfastamentoProvider =
+    NotifierProvider<ConcessaoAfastamentoNotifier, ConcessaoAfastamentoState>(
+      () {
+        return ConcessaoAfastamentoNotifier();
+      },
+    );

@@ -52,7 +52,6 @@ class CompetenciaSelector extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(5, 3, 5, 4),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildNavButton(
                       icon: Icons.chevron_left_rounded,
@@ -64,8 +63,7 @@ class CompetenciaSelector extends ConsumerWidget {
                       },
                     ),
                     const SizedBox(width: 10),
-                    SizedBox(
-                      width: 200,
+                    Expanded(
                       child: InkWell(
                         onTap: () => _showCompetenciaModal(context, ref, state),
                         borderRadius: BorderRadius.circular(12),

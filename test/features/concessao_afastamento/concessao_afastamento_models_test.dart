@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/ausencia_calendario.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/concessao_folga.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/solicitacao_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/status_solicitacao_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/sugestao_data_final.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_ausencia.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_solicitacao_concessao.dart';
-import 'package:app_mppb_flutter/features/concessao_folga/services/concessao_folga_service.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/ausencia_calendario.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/concessao_afastamento.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/status_solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/sugestao_data_final.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/tipo_ausencia.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/tipo_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/models/tipo_solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_afastamento/services/concessao_afastamento_service.dart';
 
 void main() {
   group('parsing', () {
@@ -182,7 +182,7 @@ void main() {
           ),
         ];
 
-        final porDia = ConcessaoFolgaService.agruparAusenciasPorDia(
+        final porDia = ConcessaoAfastamentoService.agruparAusenciasPorDia(
           ausencias,
           mes,
         );
@@ -195,7 +195,7 @@ void main() {
 
   group('concessoes', () {
     test('parseia concessao sem solicitacao e periodo aquisitivo separado', () {
-      final concessao = ConcessaoFolga.fromJson({
+      final concessao = ConcessaoAfastamento.fromJson({
         'id': 10,
         'tipo': 'F',
         'diasConcedidos': 30,
@@ -213,7 +213,7 @@ void main() {
     });
 
     test('parseia concessao com varias solicitacoes', () {
-      final concessao = ConcessaoFolga.fromJson({
+      final concessao = ConcessaoAfastamento.fromJson({
         'id': 11,
         'tipo': 'L',
         'diasConcedidos': 30,

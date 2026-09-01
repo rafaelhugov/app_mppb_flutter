@@ -105,10 +105,10 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
         });
       }
     } on PlatformException catch (e) {
-      debugPrint('Erro na biometria: \$e');
+      debugPrint('Erro na biometria: $e');
     } on MissingPluginException catch (e) {
       debugPrint(
-        'Biometria não suportada nesta plataforma (mockando como sucesso): \$e',
+        'Biometria não suportada nesta plataforma (mockando como sucesso): $e',
       );
       if (mounted) {
         setState(() {
@@ -750,11 +750,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
                   Center(
                     child: Column(
                       children: [
-                        Image.asset(
-                          'assets/images/carteirafuncional/assinatura/assinaturapgj_black.png',
-                          height: 30,
-                          color: isMembro ? Colors.white : Colors.black,
-                        ),
+                        _buildAssinaturaPgj(usuario, isMembro),
                         Container(
                           width: 140,
                           height: 1,
@@ -793,6 +789,33 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAssinaturaPgj(UsuarioCarteira usuario, bool isMembro) {
+    final assinaturaUrl = isMembro
+        ? usuario.assinaturaPgjWhiteUrl
+        : usuario.assinaturaPgjBlackUrl;
+    final assinaturaAsset = isMembro
+        ? 'assets/images/carteirafuncional/assinatura/assinaturapgj_white.png'
+        : 'assets/images/carteirafuncional/assinatura/assinaturapgj_black.png';
+
+    final fallback = Image.asset(
+      assinaturaAsset,
+      height: 30,
+      fit: BoxFit.contain,
+    );
+
+    if (assinaturaUrl == null || assinaturaUrl.trim().isEmpty) {
+      return fallback;
+    }
+
+    return CachedNetworkImage(
+      imageUrl: assinaturaUrl,
+      height: 30,
+      fit: BoxFit.contain,
+      placeholder: (context, url) => fallback,
+      errorWidget: (context, url, error) => fallback,
     );
   }
 

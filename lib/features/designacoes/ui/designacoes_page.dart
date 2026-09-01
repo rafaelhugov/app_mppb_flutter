@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 
-import '../../concessao_folga/ui/widgets/concessao_folga_theme.dart';
+import '../../concessao_afastamento/ui/widgets/concessao_afastamento_theme.dart';
 import '../models/designacao_ativa.dart';
 import '../providers/designacoes_provider.dart';
 
@@ -704,7 +704,7 @@ class _ErrorState extends StatelessWidget {
             const Icon(
               Icons.wifi_off,
               size: 42,
-              color: ConcessaoFolgaColors.brand,
+              color: ConcessaoAfastamentoColors.brand,
             ),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
@@ -752,13 +752,13 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.inventory_2_outlined,
             size: 42,
-            color: ConcessaoFolgaColors.muted,
+            color: ConcessaoAfastamentoColors.muted,
           ),
           SizedBox(height: 10),
           Text(
             'Nenhuma designação ativa encontrada.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: ConcessaoFolgaColors.muted),
+            style: TextStyle(color: ConcessaoAfastamentoColors.muted),
           ),
         ],
       ),

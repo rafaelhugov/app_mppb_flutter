@@ -329,7 +329,6 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(5, 3, 5, 4),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildSelectorButton(
                       icon: Icons.chevron_left_rounded,
@@ -339,8 +338,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                           .mudarExercicio(-1),
                     ),
                     const SizedBox(width: 10),
-                    SizedBox(
-                      width: 180,
+                    Expanded(
                       child: InkWell(
                         onTap: hasAnos
                             ? () => _mostrarModalExercicio(

@@ -11,16 +11,28 @@ void main() {
     });
 
     test('garantir URIs e links oficiais das redes sociais', () {
-      expect(DadosInstitucionais.urlInstagram, 'https://www.instagram.com/mppboficial/');
-      expect(DadosInstitucionais.urlYoutube, 'https://www.youtube.com/channel/UCuJdx9nS7yyth_Cu0Kd8lMw');
+      expect(
+        DadosInstitucionais.urlInstagram,
+        'https://www.instagram.com/mppboficial/',
+      );
+      expect(
+        DadosInstitucionais.urlYoutube,
+        'https://www.youtube.com/channel/UCuJdx9nS7yyth_Cu0Kd8lMw',
+      );
       expect(DadosInstitucionais.urlX, 'https://x.com/mppboficial');
-      expect(DadosInstitucionais.urlFacebook, 'https://www.facebook.com/mppboficial');
+      expect(
+        DadosInstitucionais.urlFacebook,
+        'https://www.facebook.com/mppboficial',
+      );
     });
   });
 
   group('ServicoLinksExternos', () {
     test('garantir geração correta da URI do WhatsApp', () {
-      final uri = ServicoLinksExternos.uriWhatsApp('83991817355', mensagem: 'Olá MPPB');
+      final uri = ServicoLinksExternos.uriWhatsApp(
+        '83991817355',
+        mensagem: 'Olá MPPB',
+      );
       expect(uri.scheme, 'https');
       expect(uri.host, 'api.whatsapp.com');
       expect(uri.path, '/send');
@@ -38,6 +50,7 @@ void main() {
       final uri = ServicoLinksExternos.uriEmail('ouvidoria@mppb.mp.br');
       expect(uri.scheme, 'mailto');
       expect(uri.path, 'ouvidoria@mppb.mp.br');
+      expect(uri.queryParameters['subject'], 'Contato com a Ouvidoria do MPPB');
     });
 
     test('garantir geração correta da URI do Google Maps', () {

@@ -34,7 +34,7 @@ class ConcessaoAfastamentoDetailsSheet extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFFF7F8F6),
+        color: ConcessaoAfastamentoColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       ),
       child: SafeArea(
@@ -435,6 +435,8 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
       context: context,
       useRootNavigator: true,
       builder: (context) => AlertDialog(
+        backgroundColor: ConcessaoAfastamentoColors.background,
+        surfaceTintColor: Colors.transparent,
         title: Text(operacao.label),
         content: Text(
           'Deseja realmente ${operacao.label.toLowerCase()} esta solicitação?',

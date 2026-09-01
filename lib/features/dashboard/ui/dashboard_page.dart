@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../carteira/models/usuario_carteira.dart';
 import '../../carteira/providers/carteira_provider.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/storage/secure_storage.dart';
@@ -14,6 +17,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
 import '../../noticias/models/noticia.dart';
 import '../../noticias/ui/noticias_page.dart';
+import '../../noticias/utils/noticia_share.dart';
 import '../../contatos/ui/widgets/secao_institucional.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -278,6 +282,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         date: _dateForNews(noticia),
         readingTime: _readingTime(noticia),
         onOpenLink: () => _openNews(noticia.link),
+        onShare: () => compartilharNoticia(noticia),
       ),
     );
   }
@@ -427,24 +432,32 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       borderRadius: BorderRadius.circular(14),
                       child: Stack(
                         children: [
+                          Positioned(
+                            right: 18,
+                            top: 12,
+                            child: _WalletMiniature(usuario: usuario),
+                          ),
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
+                            padding: const EdgeInsets.fromLTRB(16, 22, 16, 20),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text(
-                                  'Carteira Funcional',
-                                  style: TextStyle(
-                                    color: Color(0xFFFFFFFF),
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1.1,
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 72),
+                                  child: Text(
+                                    'Carteira Funcional',
+                                    style: TextStyle(
+                                      color: Color(0xFFFFFFFF),
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.1,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Padding(
-                                  padding: const EdgeInsets.only(right: 88),
+                                  padding: const EdgeInsets.only(right: 72),
                                   child: Text(
                                     userRole,
                                     maxLines: 1,
@@ -457,7 +470,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 42),
                                 Row(
                                   children: [
                                     FadeTransition(
@@ -509,93 +522,70 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                 const SizedBox(height: 34),
 
                 if (isOnline) ...[
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.grid_view_rounded,
-                        color: Color(0xFF2563EB),
-                        size: 20,
+                  _buildServicesSection(
+                    context,
+                    title: 'Serviços ao cidadão',
+                    icon: Icons.public_rounded,
+                    iconColor: const Color(0xFFD62828),
+                    services: const [
+                      _DashboardService(
+                        title: 'Certidão',
+                        subtitle: 'Extrajudicial',
+                        icon: Icons.verified_outlined,
+                        route: '/certidao-extrajudicial',
                       ),
-                      SizedBox(width: 7),
-                      Text(
-                        'Serviços',
-                        style: TextStyle(
-                          color: Color(0xFF202322),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      _DashboardService(
+                        title: 'Diário Oficial',
+                        subtitle: 'Publicações',
+                        icon: Icons.article,
+                        route: '/diario_oficial',
+                      ),
+                      _DashboardService(
+                        title: 'Ouvidoria',
+                        subtitle: 'Manifestações',
+                        icon: Icons.record_voice_over,
+                        route: '/ouvidoria',
+                      ),
+                      _DashboardService(
+                        title: 'Processos',
+                        subtitle: 'Consulta',
+                        icon: Icons.gavel,
+                        route: '/processos',
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
 
-                  GridView(
-                    padding: EdgeInsets.zero,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          mainAxisExtent: 92,
-                        ),
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildServiceCard(
-                        context,
-                        'Certidão',
-                        'Extrajudicial',
-                        Icons.verified_outlined,
-                        '/certidao-extrajudicial',
+                  const SizedBox(height: 26),
+
+                  _buildServicesSection(
+                    context,
+                    title: 'Serviços internos',
+                    icon: Icons.grid_view_rounded,
+                    iconColor: const Color(0xFF2563EB),
+                    services: const [
+                      _DashboardService(
+                        title: 'Contracheque',
+                        subtitle: 'Demonstrativo',
+                        icon: Icons.receipt_long_rounded,
+                        route: '/contracheque',
                       ),
-                      _buildServiceCard(
-                        context,
-                        'Contracheque',
-                        'Demonstrativo',
-                        Icons.receipt_long_rounded,
-                        '/contracheque',
+                      _DashboardService(
+                        title: 'Designações',
+                        subtitle: 'Ativas',
+                        icon: Icons.assignment_ind,
+                        route: '/designacoes',
                       ),
-                      _buildServiceCard(
-                        context,
-                        'Designações',
-                        'Ativas',
-                        Icons.assignment_ind,
-                        '/designacoes',
+                      _DashboardService(
+                        title: 'Afastamento',
+                        subtitle: 'Concessões',
+                        icon: Icons.event_available_rounded,
+                        route: '/concessao-afastamento',
                       ),
-                      _buildServiceCard(
-                        context,
-                        'Diário Oficial',
-                        'Publicações',
-                        Icons.article,
-                        '/diario_oficial',
-                      ),
-                      _buildServiceCard(
-                        context,
-                        'Afastamento',
-                        'Concessões',
-                        Icons.event_available_rounded,
-                        '/concessao-afastamento',
-                      ),
-                      _buildServiceCard(
-                        context,
-                        'Ouvidoria',
-                        'Manifestações',
-                        Icons.record_voice_over,
-                        '/ouvidoria',
-                      ),
-                      _buildServiceCard(
-                        context,
-                        'Pagamentos',
-                        'Área Financeira',
-                        Icons.assignment,
-                        '/pagamentos',
-                      ),
-                      _buildServiceCard(
-                        context,
-                        'Processos',
-                        'Consulta',
-                        Icons.gavel,
-                        '/processos',
+                      _DashboardService(
+                        title: 'Pagamentos',
+                        subtitle: 'Área Financeira',
+                        icon: Icons.assignment,
+                        route: '/pagamentos',
                       ),
                     ],
                   ),
@@ -864,7 +854,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                     child: Row(
                                       children: [
                                         SizedBox(
-                                          width: 136,
+                                          width: 132,
                                           child: ElevatedButton(
                                             onPressed: () =>
                                                 _showNewsModal(noticia),
@@ -906,6 +896,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                                 ],
                                               ),
                                             ),
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        SizedBox(
+                                          width: 38,
+                                          height: 34,
+                                          child: _DashboardNewsShareButton(
+                                            onPressed: () =>
+                                                compartilharNoticia(noticia),
                                           ),
                                         ),
                                       ],
@@ -1036,6 +1035,369 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildServicesSection(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required List<_DashboardService> services,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(title: title, icon: icon, iconColor: iconColor),
+        const SizedBox(height: 16),
+        GridView.builder(
+          padding: EdgeInsets.zero,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            mainAxisExtent: 92,
+          ),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: services.length,
+          itemBuilder: (context, index) {
+            final service = services[index];
+            return _buildServiceCard(
+              context,
+              service.title,
+              service.subtitle,
+              service.icon,
+              service.route,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: iconColor, size: 20),
+        const SizedBox(width: 7),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF202322),
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DashboardService {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String route;
+
+  const _DashboardService({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.route,
+  });
+}
+
+class _DashboardNewsShareButton extends StatelessWidget {
+  const _DashboardNewsShareButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0x0FD62828),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x2ED62828)),
+          ),
+          child: const Icon(
+            Icons.ios_share_rounded,
+            color: Color(0xFFD62828),
+            size: 17,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WalletMiniature extends StatefulWidget {
+  const _WalletMiniature({required this.usuario});
+
+  final UsuarioCarteira? usuario;
+
+  @override
+  State<_WalletMiniature> createState() => _WalletMiniatureState();
+}
+
+class _WalletMiniatureState extends State<_WalletMiniature>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 6200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: -0.025,
+      child: SizedBox(
+        width: 56,
+        height: 72,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final angle = _flipAngle(_controller.value);
+            final normalizedAngle = angle % (math.pi * 2);
+            final showBack =
+                normalizedAngle > math.pi / 2 &&
+                normalizedAngle < math.pi * 1.5;
+
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.0018)
+                ..rotateY(angle),
+              child: showBack
+                  ? Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.rotationY(math.pi),
+                      child: _buildBack(),
+                    )
+                  : _buildFront(),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  double _flipAngle(double value) {
+    const frontHoldEnd = 0.34;
+    const toBackEnd = 0.48;
+    const backHoldEnd = 0.82;
+    const toFrontEnd = 0.96;
+
+    if (value < frontHoldEnd) return 0;
+    if (value < toBackEnd) {
+      final t = (value - frontHoldEnd) / (toBackEnd - frontHoldEnd);
+      return Curves.easeInOut.transform(t) * math.pi;
+    }
+    if (value < backHoldEnd) return math.pi;
+    if (value < toFrontEnd) {
+      final t = (value - backHoldEnd) / (toFrontEnd - backHoldEnd);
+      return math.pi + Curves.easeInOut.transform(t) * math.pi;
+    }
+    return math.pi * 2;
+  }
+
+  Widget _buildFront() {
+    return _MiniCardShell(
+      child: Stack(
+        children: [
+          Positioned(
+            left: 6,
+            top: 6,
+            child: Image.asset(
+              'assets/images/brasao_mppb_sem_fundo.png',
+              width: 12,
+              height: 12,
+              fit: BoxFit.contain,
+            ),
+          ),
+          Positioned(
+            left: 9,
+            right: 9,
+            top: 24,
+            child: Center(child: _WalletMiniPhoto(url: widget.usuario?.foto)),
+          ),
+          Positioned(
+            left: 10,
+            right: 10,
+            bottom: 8,
+            child: Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0x1A8F2A1D),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBack() {
+    return _MiniCardShell(
+      child: Stack(
+        children: [
+          Positioned(
+            top: 10,
+            left: 0,
+            right: 0,
+            child: Icon(
+              Icons.qr_code_2_rounded,
+              color: const Color(0xFF8F2A1D).withValues(alpha: 0.72),
+              size: 28,
+            ),
+          ),
+          Positioned(
+            left: 10,
+            right: 10,
+            bottom: 19,
+            child: Container(
+              height: 2,
+              decoration: BoxDecoration(
+                color: const Color(0x338F2A1D),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 14,
+            right: 14,
+            bottom: 12,
+            child: Container(
+              height: 2,
+              decoration: BoxDecoration(
+                color: const Color(0x228F2A1D),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniCardShell extends StatelessWidget {
+  const _MiniCardShell({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 72,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF6EC),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.55)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x2E101828),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFFFBF5), Color(0xFFEED6C0)],
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.05,
+              child: Image.asset(
+                'assets/images/brasao_mppb_sem_fundo.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _WalletMiniPhoto extends StatelessWidget {
+  const _WalletMiniPhoto({required this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    final photoUrl = url?.trim();
+    final fallback = Container(
+      color: const Color(0xFFE9EDF0),
+      child: const Icon(
+        Icons.person_rounded,
+        color: Color(0xFF697370),
+        size: 18,
+      ),
+    );
+
+    return Container(
+      width: 26,
+      height: 32,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x24101828),
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: photoUrl == null || photoUrl.isEmpty
+          ? fallback
+          : CachedNetworkImage(
+              imageUrl: photoUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => fallback,
+              errorWidget: (context, url, error) => fallback,
+            ),
     );
   }
 }

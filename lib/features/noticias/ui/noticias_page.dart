@@ -5,6 +5,7 @@ import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/noticia_provider.dart';
 import '../models/noticia.dart';
+import '../utils/noticia_share.dart';
 
 class NoticiasPage extends ConsumerStatefulWidget {
   static const fallbackImageUrl =
@@ -37,6 +38,7 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
         date: _dateFor(noticia),
         readingTime: _readingTime(noticia),
         onOpenLink: () => _abrirNoticia(noticia.link),
+        onShare: () => compartilharNoticia(noticia),
       ),
     );
   }
@@ -331,21 +333,31 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
                     ),
                     const Spacer(),
                     Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text(
-                          'Abrir',
-                          style: TextStyle(
-                            color: Color(0xFFD62828),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Text(
+                                'Abrir',
+                                style: TextStyle(
+                                  color: Color(0xFFD62828),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Color(0xFFD62828),
+                                size: 14,
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward,
-                          color: Color(0xFFD62828),
-                          size: 14,
+                        _NewsShareButton(
+                          onPressed: () => compartilharNoticia(noticia),
+                          compact: true,
                         ),
                       ],
                     ),
@@ -479,6 +491,7 @@ class NewsDetailSheet extends StatelessWidget {
     required this.date,
     required this.readingTime,
     required this.onOpenLink,
+    required this.onShare,
   });
 
   final Noticia noticia;
@@ -486,6 +499,7 @@ class NewsDetailSheet extends StatelessWidget {
   final String date;
   final int readingTime;
   final VoidCallback onOpenLink;
+  final VoidCallback onShare;
 
   List<_NewsTextBlock> _textBlocksFor(String? text) {
     final raw = text?.trim();
@@ -711,22 +725,34 @@ class NewsDetailSheet extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 22),
-                  FilledButton.icon(
-                    onPressed: onOpenLink,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFD62828),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: onOpenLink,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFD62828),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                          label: const Text('Abrir no site'),
+                        ),
                       ),
-                      textStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 52,
+                        height: 48,
+                        child: _NewsShareButton(onPressed: onShare),
                       ),
-                    ),
-                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                    label: const Text('Abrir no site'),
+                    ],
                   ),
                 ],
               ),
@@ -780,6 +806,39 @@ class _NewsMetaPill extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NewsShareButton extends StatelessWidget {
+  const _NewsShareButton({required this.onPressed, this.compact = false});
+
+  final VoidCallback onPressed;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: compact ? const Color(0x0FD62828) : Colors.white,
+      borderRadius: BorderRadius.circular(compact ? 12 : 16),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(compact ? 12 : 16),
+        child: Container(
+          width: compact ? 34 : double.infinity,
+          height: compact ? 34 : double.infinity,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(compact ? 12 : 16),
+            border: Border.all(color: const Color(0x2ED62828)),
+          ),
+          child: const Icon(
+            Icons.ios_share_rounded,
+            color: Color(0xFFD62828),
+            size: 17,
+          ),
+        ),
       ),
     );
   }

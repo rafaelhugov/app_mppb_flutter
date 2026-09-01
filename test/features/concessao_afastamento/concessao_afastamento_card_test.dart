@@ -7,6 +7,7 @@ import 'package:app_mppb_flutter/features/concessao_afastamento/models/tipo_soli
 import 'package:app_mppb_flutter/features/concessao_afastamento/ui/widgets/concessao_afastamento_card.dart';
 import 'package:app_mppb_flutter/features/concessao_afastamento/ui/widgets/concessao_afastamento_details_sheet.dart';
 import 'package:app_mppb_flutter/features/concessao_afastamento/models/operacao_solicitacao_concessao.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -169,6 +170,132 @@ void main() {
       },
     );
 
+    testWidgets(
+      'afastamento eleitoral informa numero de dias sem buscar intervalos',
+      (tester) async {
+        final dataInicial = DateTime.now().add(const Duration(days: 1));
+        int? numeroDiasEnviado;
+
+        await tester.pumpWidget(
+          _wrap(
+            ConcessaoAfastamentoCard(
+              concessao: const ConcessaoAfastamento(
+                id: 8,
+                tipo: TipoConcessao.licencaEleitoral,
+                diasConcedidos: 5,
+                saldoRestante: 5,
+                periodo: 3,
+                anoReferencia: 2024,
+              ),
+              onBuscarSugestoes: (concessao, dataInicial) async {
+                fail('Afastamento eleitoral nao deve buscar intervalos.');
+              },
+              onSolicitar: (concessao, dataInicial, numeroDias) async {
+                numeroDiasEnviado = numeroDias;
+              },
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Marcar gozo'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Número de dias'), findsOneWidget);
+        expect(find.text('Datas finais permitidas'), findsNothing);
+
+        await _selecionarDataInicial(tester, dataInicial);
+        await tester.enterText(find.byType(TextField), '3');
+        await tester.pumpAndSettle();
+
+        expect(find.text('Data final'), findsNothing);
+        await tester.tap(find.text('Solicitar marcação'));
+        await tester.pumpAndSettle();
+
+        expect(numeroDiasEnviado, 3);
+      },
+    );
+
+    testWidgets('afastamento eleitoral bloqueia periodo com final de semana', (
+      tester,
+    ) async {
+      final sexta = _proximaDataComDiaSemana(DateTime.friday);
+      int? numeroDiasEnviado;
+
+      await tester.pumpWidget(
+        _wrap(
+          ConcessaoAfastamentoCard(
+            concessao: const ConcessaoAfastamento(
+              id: 9,
+              tipo: TipoConcessao.licencaEleitoral,
+              diasConcedidos: 5,
+              saldoRestante: 5,
+              periodo: 3,
+              anoReferencia: 2024,
+            ),
+            onSolicitar: (concessao, dataInicial, numeroDias) async {
+              numeroDiasEnviado = numeroDias;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Marcar gozo'));
+      await tester.pumpAndSettle();
+      await _selecionarDataInicial(tester, sexta);
+      await tester.enterText(find.byType(TextField), '2');
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('inclui sábado'), findsOneWidget);
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Solicitar marcação'),
+      );
+      expect(button.onPressed, isNull);
+      expect(numeroDiasEnviado, isNull);
+    });
+
+    testWidgets('erro da api ao marcar gozo aparece dentro do modal', (
+      tester,
+    ) async {
+      final dataInicial = _proximaDataComDiaSemana(DateTime.tuesday);
+
+      await tester.pumpWidget(
+        _wrap(
+          ConcessaoAfastamentoCard(
+            concessao: const ConcessaoAfastamento(
+              id: 10,
+              tipo: TipoConcessao.licencaEleitoral,
+              diasConcedidos: 5,
+              saldoRestante: 5,
+              periodo: 3,
+              anoReferencia: 2024,
+            ),
+            onSolicitar: (concessao, dataInicial, numeroDias) async {
+              throw DioException(
+                requestOptions: RequestOptions(path: '/solicitacoes'),
+                response: Response(
+                  requestOptions: RequestOptions(path: '/solicitacoes'),
+                  statusCode: 422,
+                  data:
+                      'As datas de licença eleitoral não podem incluir fins de semana ou feriados',
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Marcar gozo'));
+      await tester.pumpAndSettle();
+      await _selecionarDataInicial(tester, dataInicial);
+      await tester.enterText(find.byType(TextField), '1');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Solicitar marcação'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Não foi possível solicitar'), findsOneWidget);
+      expect(find.textContaining('Afastamento eleitoral'), findsOneWidget);
+    });
+
     testWidgets('unifica adiar e antecipar em alterar data', (tester) async {
       await tester.pumpWidget(
         _wrap(
@@ -275,4 +402,12 @@ Future<void> _selecionarDataInicial(WidgetTester tester, DateTime data) async {
   await tester.tap(find.text('${data.day}').last);
   await tester.tap(find.text('OK'));
   await tester.pumpAndSettle();
+}
+
+DateTime _proximaDataComDiaSemana(int weekday) {
+  var date = DateTime.now().add(const Duration(days: 1));
+  while (date.weekday != weekday) {
+    date = date.add(const Duration(days: 1));
+  }
+  return date;
 }

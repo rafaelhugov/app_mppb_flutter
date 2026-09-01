@@ -407,38 +407,47 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
               child: Column(
                 children: [
                   // Header
-                  Column(
-                    children: [
-                      Image.asset(
-                        isMembro
-                            ? 'assets/images/Coat_of_arms_of_Brazil.svg.png'
-                            : 'assets/images/brasao_mppb_sem_fundo.png',
-                        height: 56,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'MINISTÉRIO PÚBLICO DA PARAÍBA',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.manrope().fontFamily,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: titleColor,
-                          letterSpacing: 0.5,
+                  SizedBox(
+                    width: double.infinity,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Conteúdo centralizado
+                        Column(
+                          children: [
+                            Image.asset(
+                              isMembro
+                                  ? 'assets/images/Coat_of_arms_of_Brazil.svg.png'
+                                  : 'assets/images/brasao_mppb_sem_fundo.png',
+                              height: 56,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'MINISTÉRIO PÚBLICO DA PARAÍBA',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: GoogleFonts.manrope().fontFamily,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: titleColor,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Text(
+                              'CARTEIRA DE IDENTIDADE FUNCIONAL',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: GoogleFonts.manrope().fontFamily,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: subTitleColor,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      Text(
-                        'CARTEIRA DE IDENTIDADE FUNCIONAL',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.manrope().fontFamily,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: subTitleColor,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -690,6 +699,19 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
                 ),
               ),
             ),
+            if (isMembro)
+              Positioned(
+                top: 24,
+                right: 20,
+                child: Opacity(
+                  opacity: 0.85,
+                  child: Image.asset(
+                    'assets/images/brasao_mppb_sem_fundo.png',
+                    height: 44,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(

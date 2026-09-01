@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,9 @@ import '../../../core/network/api_client.dart';
 import '../models/ausencia_calendario.dart';
 import '../models/concessao_afastamento.dart';
 import '../models/operacao_solicitacao_concessao.dart';
+import '../models/solicitacao_concessao.dart';
+import '../models/status_solicitacao_concessao.dart';
+import '../models/tipo_solicitacao_concessao.dart';
 import '../models/sugestao_data_final.dart';
 
 class ConcessaoAfastamentoRepository {
@@ -64,7 +69,7 @@ class ConcessaoAfastamentoRepository {
         .toList();
   }
 
-  Future<void> solicitarGozo({
+  Future<SolicitacaoConcessao?> solicitarGozo({
     required String token,
     required int concessaoId,
     required DateTime dataInicial,
@@ -98,6 +103,11 @@ class ConcessaoAfastamentoRepository {
         'concessao=$concessaoId status=${response.statusCode} '
         'response=${response.data}',
       );
+      return _parseSolicitacaoCriada(
+        response.data,
+        dataInicial: dataInicial,
+        numeroDias: numeroDias,
+      );
     } on DioException catch (e) {
       debugPrint(
         '[ConcessaoAfastamento] Solicitacao de gozo falhou: '
@@ -105,6 +115,64 @@ class ConcessaoAfastamentoRepository {
         'response=${e.response?.data}',
       );
       rethrow;
+    }
+  }
+
+  SolicitacaoConcessao? _parseSolicitacaoCriada(
+    dynamic data, {
+    required DateTime dataInicial,
+    required int numeroDias,
+  }) {
+    final json = _decodeMap(data);
+    if (json == null) return null;
+
+    final id = _intValue(json['id']);
+    final inicio = _dateValue(json['dataInicio']) ?? dataInicial;
+    final fim =
+        _dateValue(json['dataFim']) ??
+        inicio.add(Duration(days: numeroDias - 1));
+    if (id == null) return null;
+
+    return SolicitacaoConcessao(
+      id: id,
+      tipo: TipoSolicitacaoConcessao.gozo,
+      tipoOriginal: 'Gozo',
+      inicio: inicio,
+      fim: fim,
+      status: StatusSolicitacaoConcessao.fromJson(json['status']?.toString()),
+      statusOriginal: json['status']?.toString(),
+      diasInformados: _intValue(json['numeroDias']) ?? numeroDias,
+    );
+  }
+
+  Map<String, dynamic>? _decodeMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is! String) return null;
+
+    final text = data.trim();
+    if (text.isEmpty || !text.startsWith('{')) return null;
+    final decoded = jsonDecode(text);
+    if (decoded is Map<String, dynamic>) return decoded;
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    return null;
+  }
+
+  int? _intValue(dynamic value) {
+    if (value is num) return value.toInt();
+    if (value == null) return null;
+    return int.tryParse(value.toString());
+  }
+
+  DateTime? _dateValue(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    final parsedIso = DateTime.tryParse(text);
+    if (parsedIso != null) return parsedIso;
+    try {
+      return DateFormat('dd/MM/yyyy').parseStrict(text);
+    } on FormatException {
+      return null;
     }
   }
 

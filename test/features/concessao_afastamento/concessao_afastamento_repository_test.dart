@@ -160,6 +160,35 @@ void main() {
     },
   );
 
+  test(
+    'post de marcacao retorna solicitacao criada quando mpvirtual responde json',
+    () async {
+      adapter.enqueueJson({
+        'id': 514825,
+        'numeroDocumento': '514825',
+        'dataInicio': '14/09/2026',
+        'dataFim': '28/09/2026',
+        'status': 'P',
+        'numeroDias': null,
+      });
+
+      final solicitacao = await repository.solicitarGozo(
+        token: 'token',
+        concessaoId: 422364,
+        dataInicial: DateTime(2026, 9, 14),
+        numeroDias: 15,
+      );
+
+      expect(solicitacao, isNotNull);
+      expect(solicitacao!.id, 514825);
+      expect(solicitacao.inicio, DateTime(2026, 9, 14));
+      expect(solicitacao.fim, DateTime(2026, 9, 28));
+      expect(solicitacao.status.name, 'pendente');
+      expect(solicitacao.diasInformados, 15);
+      expect(adapter.last.responseType, ResponseType.plain);
+    },
+  );
+
   test('operacoes exibidas seguem retorno de operacoes', () async {
     adapter.enqueueJson({
       'operacoes': ['cancelamentos', 'adiamentos', 'suspensoes-parciais'],

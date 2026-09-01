@@ -1229,8 +1229,9 @@ class _WalletMiniatureState extends State<_WalletMiniature>
       child: Stack(
         children: [
           Positioned(
-            left: 6,
             top: 6,
+            left: 0,
+            right: 0,
             child: Image.asset(
               'assets/images/brasao_mppb_sem_fundo.png',
               width: 12,

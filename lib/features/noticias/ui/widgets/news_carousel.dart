@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/noticia_provider.dart';
+import '../../utils/noticia_share.dart';
 
 class NewsCarousel extends ConsumerStatefulWidget {
   const NewsCarousel({super.key});
@@ -387,7 +388,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                           child: Row(
                             children: [
                               SizedBox(
-                                width: 136,
+                                width: 132,
                                 child: ElevatedButton(
                                   onPressed: () => _openNews(noticia.link),
                                   style: ElevatedButton.styleFrom(
@@ -421,6 +422,14 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                                   ),
                                 ),
                               ),
+                              const Spacer(),
+                              SizedBox(
+                                width: 38,
+                                height: 34,
+                                child: _CarouselNewsShareButton(
+                                  onPressed: () => compartilharNoticia(noticia),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -435,6 +444,36 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
           _buildAutoPlayControl(carouselNews.length),
         ],
       ],
+    );
+  }
+}
+
+class _CarouselNewsShareButton extends StatelessWidget {
+  const _CarouselNewsShareButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0x0FD62828),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x2ED62828)),
+          ),
+          child: const Icon(
+            Icons.ios_share_rounded,
+            color: Color(0xFFD62828),
+            size: 17,
+          ),
+        ),
+      ),
     );
   }
 }

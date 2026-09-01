@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/concessao_afastamento.dart';
@@ -33,7 +34,7 @@ class ConcessaoAfastamentoDetailsSheet extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFFF7F8F6),
+        color: ConcessaoAfastamentoColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       ),
       child: SafeArea(
@@ -285,22 +286,122 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
 
         return Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: operacoes
-                .map(
-                  (operacao) => _OperationChip(
-                    operacao: operacao,
-                    enabled: !_isExecuting,
-                    onTap: () => _handleOperation(operacao),
-                  ),
-                )
-                .toList(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _buildOperationChips(operacoes),
+              ),
+              if (_isExecuting) ...[
+                const SizedBox(height: 10),
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Processando alteração...',
+                      style: TextStyle(
+                        color: ConcessaoAfastamentoColors.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
         );
       },
     );
+  }
+
+  List<Widget> _buildOperationChips(
+    List<OperacaoSolicitacaoConcessao> operacoes,
+  ) {
+    final hasAdiar = operacoes.contains(OperacaoSolicitacaoConcessao.adiar);
+    final hasAntecipar = operacoes.contains(
+      OperacaoSolicitacaoConcessao.antecipar,
+    );
+    final chips = <Widget>[];
+    var addedAlterarData = false;
+
+    for (final operacao in operacoes) {
+      if (operacao == OperacaoSolicitacaoConcessao.adiar ||
+          operacao == OperacaoSolicitacaoConcessao.antecipar) {
+        if (!addedAlterarData && (hasAdiar || hasAntecipar)) {
+          chips.add(
+            _OperationChip(
+              label: 'Alterar data',
+              enabled: !_isExecuting,
+              onTap: () => _handleAlterarData(hasAdiar, hasAntecipar),
+            ),
+          );
+          addedAlterarData = true;
+        }
+        continue;
+      }
+
+      chips.add(
+        _OperationChip(
+          label: operacao.label,
+          destructive:
+              operacao == OperacaoSolicitacaoConcessao.cancelar ||
+              operacao == OperacaoSolicitacaoConcessao.suspenderIntegralmente,
+          enabled: !_isExecuting,
+          onTap: () => _handleOperation(operacao),
+        ),
+      );
+    }
+    return chips;
+  }
+
+  Future<void> _handleAlterarData(bool podeAdiar, bool podeAntecipar) async {
+    final data = await _showDateOperationSheet(
+      title: 'Alterar data',
+      dateLabel: 'Nova data inicial',
+      initialDate: widget.solicitacao.inicio,
+      rejectWeekendStart: true,
+    );
+    if (data == null) return;
+
+    final novaData = normalizarData(data);
+    final dataAtual = normalizarData(widget.solicitacao.inicio);
+    if (novaData.isAtSameMomentAs(dataAtual)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Informe uma data diferente da atual.')),
+      );
+      return;
+    }
+
+    final operacao = novaData.isBefore(dataAtual)
+        ? OperacaoSolicitacaoConcessao.antecipar
+        : OperacaoSolicitacaoConcessao.adiar;
+    final operacaoDisponivel =
+        (operacao == OperacaoSolicitacaoConcessao.adiar && podeAdiar) ||
+        (operacao == OperacaoSolicitacaoConcessao.antecipar && podeAntecipar);
+
+    if (!operacaoDisponivel) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${operacao.label} não está disponível para este gozo.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _run(operacao, data: novaData);
   }
 
   Future<void> _handleOperation(OperacaoSolicitacaoConcessao operacao) async {
@@ -311,7 +412,13 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
       case OperacaoSolicitacaoConcessao.adiar:
       case OperacaoSolicitacaoConcessao.antecipar:
       case OperacaoSolicitacaoConcessao.interromper:
-        final data = await _showDateOperationSheet(operacao);
+        final data = await _showDateOperationSheet(
+          title: operacao.label,
+          dateLabel: _dateLabel(operacao),
+          rejectWeekendStart:
+              operacao == OperacaoSolicitacaoConcessao.adiar ||
+              operacao == OperacaoSolicitacaoConcessao.antecipar,
+        );
         if (data != null) {
           await _run(operacao, data: data);
         }
@@ -328,6 +435,8 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
       context: context,
       useRootNavigator: true,
       builder: (context) => AlertDialog(
+        backgroundColor: ConcessaoAfastamentoColors.background,
+        surfaceTintColor: Colors.transparent,
         title: Text(operacao.label),
         content: Text(
           'Deseja realmente ${operacao.label.toLowerCase()} esta solicitação?',
@@ -353,15 +462,23 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
     }
   }
 
-  Future<DateTime?> _showDateOperationSheet(
-    OperacaoSolicitacaoConcessao operacao,
-  ) {
+  Future<DateTime?> _showDateOperationSheet({
+    required String title,
+    required String dateLabel,
+    DateTime? initialDate,
+    bool rejectWeekendStart = false,
+  }) {
     return showModalBottomSheet<DateTime>(
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _DateOperationSheet(operacao: operacao),
+      builder: (_) => _DateOperationSheet(
+        title: title,
+        dateLabel: dateLabel,
+        initialDate: initialDate,
+        rejectWeekendStart: rejectWeekendStart,
+      ),
     );
   }
 
@@ -385,41 +502,117 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
 
     setState(() => _isExecuting = true);
     final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Processando alteração...')),
+    );
     try {
       await execute(widget.solicitacao, operacao, data: data, dataFim: dataFim);
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(operacao.successMessage)));
       Navigator.of(context, rootNavigator: true).pop();
-      setState(() {
-        _isExecuting = false;
-        _future = _load();
-      });
+      messenger.showSnackBar(SnackBar(content: Text(operacao.successMessage)));
     } catch (e) {
       if (!mounted) return;
       setState(() => _isExecuting = false);
       messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível executar a operação: $e')),
+        SnackBar(content: Text(_operationErrorMessage(e))),
       );
     }
+  }
+
+  String _operationErrorMessage(Object error) {
+    if (error is DioException) {
+      final responseMessage = _extractResponseMessage(error.response?.data);
+      if (responseMessage != null) {
+        return 'Não foi possível executar a operação: $responseMessage';
+      }
+
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        return 'Não foi possível executar a operação: sessão expirada ou usuário sem permissão.';
+      }
+      if (statusCode != null) {
+        return 'Não foi possível executar a operação. Código HTTP $statusCode.';
+      }
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout) {
+        return 'O serviço demorou para responder. Tente novamente.';
+      }
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.unknown) {
+        return 'Sem conexão com o serviço. Verifique sua internet e tente novamente.';
+      }
+    }
+
+    return 'Não foi possível executar a operação: $error';
+  }
+
+  String _dateLabel(OperacaoSolicitacaoConcessao operacao) {
+    switch (operacao) {
+      case OperacaoSolicitacaoConcessao.adiar:
+        return 'Data de adiamento';
+      case OperacaoSolicitacaoConcessao.antecipar:
+        return 'Data de antecipação';
+      case OperacaoSolicitacaoConcessao.interromper:
+        return 'Data de interrupção';
+      case OperacaoSolicitacaoConcessao.cancelar:
+      case OperacaoSolicitacaoConcessao.suspenderParcialmente:
+      case OperacaoSolicitacaoConcessao.suspenderIntegralmente:
+        return 'Data';
+    }
+  }
+
+  String? _extractResponseMessage(dynamic data) {
+    if (data == null) return null;
+    if (data is String) {
+      final message = data.trim();
+      return message.isEmpty ? null : message;
+    }
+    if (data is Map) {
+      for (final key in const [
+        'message',
+        'mensagem',
+        'detail',
+        'detalhe',
+        'error',
+        'erro',
+      ]) {
+        final value = data[key];
+        if (value is String && value.trim().isNotEmpty) {
+          return value.trim();
+        }
+      }
+      final errors = data['errors'] ?? data['erros'];
+      if (errors is List) {
+        final messages = errors
+            .whereType<Object>()
+            .map((item) => item.toString().trim())
+            .where((item) => item.isNotEmpty)
+            .toList();
+        if (messages.isNotEmpty) {
+          return messages.join('\n');
+        }
+      }
+    }
+    return null;
   }
 }
 
 class _OperationChip extends StatelessWidget {
-  final OperacaoSolicitacaoConcessao operacao;
+  final String label;
+  final bool destructive;
   final bool enabled;
   final VoidCallback onTap;
 
   const _OperationChip({
-    required this.operacao,
+    required this.label,
+    this.destructive = false,
     required this.enabled,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final destructive =
-        operacao == OperacaoSolicitacaoConcessao.cancelar ||
-        operacao == OperacaoSolicitacaoConcessao.suspenderIntegralmente;
     final foreground = destructive
         ? const Color(0xFFE5252A)
         : ConcessaoAfastamentoColors.ink;
@@ -447,7 +640,7 @@ class _OperationChip extends StatelessWidget {
             ),
           ),
           child: Text(
-            operacao.label,
+            label,
             style: TextStyle(
               color: enabled ? foreground : ConcessaoAfastamentoColors.muted,
               fontSize: 12,
@@ -488,9 +681,17 @@ class _StatusPill extends StatelessWidget {
 }
 
 class _DateOperationSheet extends StatefulWidget {
-  final OperacaoSolicitacaoConcessao operacao;
+  final String title;
+  final String dateLabel;
+  final DateTime? initialDate;
+  final bool rejectWeekendStart;
 
-  const _DateOperationSheet({required this.operacao});
+  const _DateOperationSheet({
+    required this.title,
+    required this.dateLabel,
+    this.initialDate,
+    this.rejectWeekendStart = false,
+  });
 
   @override
   State<_DateOperationSheet> createState() => _DateOperationSheetState();
@@ -501,25 +702,54 @@ class _DateOperationSheetState extends State<_DateOperationSheet> {
   DateTime? _selected;
 
   @override
+  void initState() {
+    super.initState();
+    final initialDate = widget.initialDate;
+    _selected =
+        initialDate != null &&
+            !(widget.rejectWeekendStart && _isWeekend(initialDate))
+        ? initialDate
+        : null;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final weekendSelected = _selected != null && _isWeekend(_selected!);
+
     return _OperationSheetFrame(
-      title: widget.operacao.label,
+      title: widget.title,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _DatePickerTile(
-            label: _dateLabel(widget.operacao),
+            label: widget.dateLabel,
             value: _selected == null
                 ? 'Selecionar data'
                 : _dateFormat.format(_selected!),
             onTap: _selectDate,
           ),
+          if (widget.rejectWeekendStart && weekendSelected) ...[
+            const SizedBox(height: 8),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'A data inicial não pode cair em final de semana.',
+                style: TextStyle(
+                  color: Color(0xFFE5252A),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
             height: 44,
             child: FilledButton(
-              onPressed: _selected == null
+              onPressed:
+                  _selected == null ||
+                      (widget.rejectWeekendStart && weekendSelected)
                   ? null
                   : () => Navigator.of(context).pop(_selected),
               style: FilledButton.styleFrom(
@@ -539,11 +769,21 @@ class _DateOperationSheetState extends State<_DateOperationSheet> {
 
   Future<void> _selectDate() async {
     final today = DateTime.now();
+    final firstDate = DateTime(today.year - 1);
+    final lastDate = DateTime(today.year + 5);
+    final initialDate = _selectableInitialDate(
+      _selected ?? widget.initialDate ?? today,
+      firstDate,
+      lastDate,
+    );
     final selected = await showDatePicker(
       context: context,
-      initialDate: _selected ?? today,
-      firstDate: DateTime(today.year - 1),
-      lastDate: DateTime(today.year + 5),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      selectableDayPredicate: widget.rejectWeekendStart
+          ? (date) => !_isWeekend(date)
+          : null,
       initialEntryMode: DatePickerEntryMode.calendarOnly,
       locale: const Locale('pt', 'BR'),
       cancelText: 'CANCELAR',
@@ -555,20 +795,40 @@ class _DateOperationSheetState extends State<_DateOperationSheet> {
     }
   }
 
-  String _dateLabel(OperacaoSolicitacaoConcessao operacao) {
-    switch (operacao) {
-      case OperacaoSolicitacaoConcessao.adiar:
-        return 'Data de adiamento';
-      case OperacaoSolicitacaoConcessao.antecipar:
-        return 'Data de antecipação';
-      case OperacaoSolicitacaoConcessao.interromper:
-        return 'Data de interrupção';
-      case OperacaoSolicitacaoConcessao.cancelar:
-      case OperacaoSolicitacaoConcessao.suspenderParcialmente:
-      case OperacaoSolicitacaoConcessao.suspenderIntegralmente:
-        return 'Data';
-    }
+  DateTime _dateWithinRange(
+    DateTime date,
+    DateTime firstDate,
+    DateTime lastDate,
+  ) {
+    if (date.isBefore(firstDate)) return firstDate;
+    if (date.isAfter(lastDate)) return lastDate;
+    return date;
   }
+
+  DateTime _selectableInitialDate(
+    DateTime date,
+    DateTime firstDate,
+    DateTime lastDate,
+  ) {
+    var candidate = _dateWithinRange(date, firstDate, lastDate);
+    if (!widget.rejectWeekendStart || !_isWeekend(candidate)) {
+      return candidate;
+    }
+
+    while (candidate.isBefore(lastDate) && _isWeekend(candidate)) {
+      candidate = candidate.add(const Duration(days: 1));
+    }
+    if (!_isWeekend(candidate)) return candidate;
+
+    candidate = _dateWithinRange(date, firstDate, lastDate);
+    while (candidate.isAfter(firstDate) && _isWeekend(candidate)) {
+      candidate = candidate.subtract(const Duration(days: 1));
+    }
+    return candidate;
+  }
+
+  bool _isWeekend(DateTime date) =>
+      date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 }
 
 class _PeriodOperationSheet extends StatefulWidget {

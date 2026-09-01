@@ -11,6 +11,7 @@ class ConcessaoAfastamentoColors {
   static const plantao = Color(0xFFD62828);
   static const diarias = Color(0xFF00A86B);
   static const outros = Color(0xFF64748B);
+  static const background = Color(0xFFF7F8F6);
   static const surface = Color(0xFFFFFFFF);
   static const ink = Color(0xFF202322);
   static const muted = Color(0xFF697370);

@@ -156,6 +156,36 @@ void main() {
         'dataInicial': '10/01/2027',
         'numeroDias': 15,
       });
+      expect(adapter.last.responseType, ResponseType.plain);
+    },
+  );
+
+  test(
+    'post de marcacao retorna solicitacao criada quando mpvirtual responde json',
+    () async {
+      adapter.enqueueJson({
+        'id': 514825,
+        'numeroDocumento': '514825',
+        'dataInicio': '14/09/2026',
+        'dataFim': '28/09/2026',
+        'status': 'P',
+        'numeroDias': null,
+      });
+
+      final solicitacao = await repository.solicitarGozo(
+        token: 'token',
+        concessaoId: 422364,
+        dataInicial: DateTime(2026, 9, 14),
+        numeroDias: 15,
+      );
+
+      expect(solicitacao, isNotNull);
+      expect(solicitacao!.id, 514825);
+      expect(solicitacao.inicio, DateTime(2026, 9, 14));
+      expect(solicitacao.fim, DateTime(2026, 9, 28));
+      expect(solicitacao.status.name, 'pendente');
+      expect(solicitacao.diasInformados, 15);
+      expect(adapter.last.responseType, ResponseType.plain);
     },
   );
 
@@ -178,6 +208,44 @@ void main() {
       OperacaoSolicitacaoConcessao.adiar,
       OperacaoSolicitacaoConcessao.suspenderParcialmente,
     ]);
+  });
+
+  test('adiamento envia data no contrato da api', () async {
+    adapter.enqueueJson({'ok': true});
+
+    await repository.executarOperacaoSolicitacao(
+      token: 'token',
+      solicitacaoId: 506,
+      operacao: OperacaoSolicitacaoConcessao.adiar,
+      data: DateTime(2027, 8, 3),
+    );
+
+    expect(
+      adapter.last.uri.path,
+      '/api/recursos-humanos/solicitacoes/506/adiamentos',
+    );
+    expect(adapter.last.method, 'POST');
+    expect(adapter.last.body, {'dataAdiamento': '03/08/2027'});
+    expect(adapter.last.responseType, ResponseType.plain);
+  });
+
+  test('antecipacao envia data no contrato da api', () async {
+    adapter.enqueueJson({'ok': true});
+
+    await repository.executarOperacaoSolicitacao(
+      token: 'token',
+      solicitacaoId: 506,
+      operacao: OperacaoSolicitacaoConcessao.antecipar,
+      data: DateTime(2027, 8, 3),
+    );
+
+    expect(
+      adapter.last.uri.path,
+      '/api/recursos-humanos/solicitacoes/506/antecipacoes',
+    );
+    expect(adapter.last.method, 'POST');
+    expect(adapter.last.body, {'dataAntecipacao': '03/08/2027'});
+    expect(adapter.last.responseType, ResponseType.plain);
   });
 
   test('suspensao parcial envia intervalo no contrato da api', () async {
@@ -210,11 +278,13 @@ class _CapturedRequest {
   final Uri uri;
   final String method;
   final dynamic body;
+  final ResponseType? responseType;
 
   const _CapturedRequest({
     required this.uri,
     required this.method,
     required this.body,
+    required this.responseType,
   });
 }
 
@@ -236,6 +306,7 @@ class _FakeAdapter implements HttpClientAdapter {
       uri: options.uri,
       method: options.method,
       body: options.data,
+      responseType: options.responseType,
     );
     final data = _responses.isEmpty ? null : _responses.removeAt(0);
     return ResponseBody.fromString(

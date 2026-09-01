@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
 import '../../models/sugestao_data_final.dart';
+import '../../models/text_normalizer.dart';
+import '../../models/tipo_concessao.dart';
 import 'concessao_afastamento_details_sheet.dart';
 import 'concessao_afastamento_theme.dart';
 
@@ -349,19 +353,88 @@ class _MarcacaoGozoSheet extends StatefulWidget {
 
 class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
   final _dateFormat = DateFormat('dd/MM/yyyy');
+  final _numeroDiasController = TextEditingController();
   DateTime? _dataInicial;
+  int? _numeroDias;
   SugestaoDataFinal? _sugestaoSelecionada;
   bool _isSubmitting = false;
   bool _isLoadingSugestoes = false;
   int _sugestoesRequestId = 0;
   List<SugestaoDataFinal> _sugestoes = const [];
   String? _sugestoesError;
+  String? _submitError;
+
+  bool get _isAfastamentoEleitoral =>
+      widget.concessao.tipo == TipoConcessao.licencaEleitoral;
+
+  bool get _numeroDiasValido {
+    final numeroDias = _numeroDias;
+    return numeroDias != null &&
+        numeroDias > 0 &&
+        numeroDias <= widget.concessao.saldoRestante;
+  }
+
+  String? get _eleitoralValidationMessage {
+    if (!_isAfastamentoEleitoral) return null;
+
+    final dataInicial = _dataInicial;
+    if (dataInicial != null) {
+      final blockedStart = _blockedElectionLeaveDay(dataInicial);
+      if (blockedStart != null) {
+        return 'A data inicial não pode cair em ${blockedStart.toLowerCase()}.';
+      }
+    }
+
+    final numeroDias = _numeroDias;
+    if (numeroDias == null || numeroDias <= 0) return null;
+    if (numeroDias > widget.concessao.saldoRestante) {
+      return 'Informe no máximo ${widget.concessao.saldoRestante} dia(s).';
+    }
+    if (dataInicial == null) return null;
+
+    for (var offset = 0; offset < numeroDias; offset++) {
+      final date = dataInicial.add(Duration(days: offset));
+      final blockedDay = _blockedElectionLeaveDay(date);
+      if (blockedDay != null) {
+        return 'O período informado inclui ${blockedDay.toLowerCase()} em ${_dateFormat.format(date)}.';
+      }
+    }
+    return null;
+  }
+
+  bool get _canSubmit {
+    if (_isSubmitting || _isLoadingSugestoes || _dataInicial == null) {
+      return false;
+    }
+    if (_isAfastamentoEleitoral) {
+      return _numeroDiasValido && _eleitoralValidationMessage == null;
+    }
+    return _sugestaoSelecionada != null;
+  }
+
+  @override
+  void dispose() {
+    _numeroDiasController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
     final sugestao = _sugestaoSelecionada;
+    final numeroDias = _numeroDias;
+    final numeroDiasResumoEleitoral = numeroDias != null && numeroDias > 0
+        ? numeroDias
+        : null;
+    final showResumoEleitoral =
+        _isAfastamentoEleitoral &&
+        _dataInicial != null &&
+        numeroDiasResumoEleitoral != null &&
+        _eleitoralValidationMessage == null;
+    final formError = _submitError ?? _eleitoralValidationMessage;
+    final showElectionLeaveNotice =
+        _isAfastamentoEleitoral && formError == null && _dataInicial == null;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -423,6 +496,16 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
                     ),
                   ),
                   const SizedBox(height: 18),
+                  if (showElectionLeaveNotice) ...[
+                    const _SheetNotice(
+                      title: 'Atenção aos dias úteis',
+                      message:
+                          'Afastamento eleitoral não pode incluir fins de semana ou feriados.',
+                      icon: Icons.info_outline_rounded,
+                      tone: _SheetNoticeTone.info,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   _SheetTile(
                     label: 'Data inicial',
                     value: _dataInicial == null
@@ -431,7 +514,15 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
                     icon: Icons.calendar_today_rounded,
                     onTap: _isSubmitting ? null : _selecionarData,
                   ),
-                  if (_isLoadingSugestoes) ...[
+                  if (_isAfastamentoEleitoral) ...[
+                    const SizedBox(height: 12),
+                    _NumeroDiasField(
+                      controller: _numeroDiasController,
+                      enabled: !_isSubmitting,
+                      saldoRestante: widget.concessao.saldoRestante,
+                      onChanged: _atualizarNumeroDias,
+                    ),
+                  ] else if (_isLoadingSugestoes) ...[
                     const SizedBox(height: 12),
                     const LinearProgressIndicator(
                       minHeight: 2,
@@ -458,6 +549,14 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
                       ),
                     ),
                   ],
+                  if (showResumoEleitoral) ...[
+                    const SizedBox(height: 12),
+                    _ResumoMarcacao(
+                      tipo: widget.concessao.tipo.label,
+                      dataInicial: _dateFormat.format(_dataInicial!),
+                      numeroDias: numeroDiasResumoEleitoral,
+                    ),
+                  ],
                   if (sugestao != null && _dataInicial != null) ...[
                     const SizedBox(height: 12),
                     _ResumoMarcacao(
@@ -467,18 +566,27 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
                       numeroDias: sugestao.numeroDias,
                     ),
                   ],
+                  if (formError != null) ...[
+                    const SizedBox(height: 12),
+                    _SheetNotice(
+                      title: _submitError == null
+                          ? 'Revise a marcação'
+                          : 'Não foi possível solicitar',
+                      message: formError,
+                      icon: _submitError == null
+                          ? Icons.warning_amber_rounded
+                          : Icons.error_outline_rounded,
+                      tone: _submitError == null
+                          ? _SheetNoticeTone.warning
+                          : _SheetNoticeTone.error,
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: FilledButton(
-                      onPressed:
-                          _isSubmitting ||
-                              _isLoadingSugestoes ||
-                              _dataInicial == null ||
-                              _sugestaoSelecionada == null
-                          ? null
-                          : _enviar,
+                      onPressed: _canSubmit ? _enviar : null,
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFFE5252A),
                         foregroundColor: Colors.white,
@@ -523,6 +631,9 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
       helpText: 'Data inicial',
       cancelText: 'CANCELAR',
       confirmText: 'OK',
+      selectableDayPredicate: _isAfastamentoEleitoral
+          ? (date) => _blockedElectionLeaveDay(date) == null
+          : null,
       builder: _concessaoDatePickerTheme,
     );
     if (selected != null) {
@@ -531,9 +642,20 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
         _sugestaoSelecionada = null;
         _sugestoes = const [];
         _sugestoesError = null;
+        _submitError = null;
       });
-      await _buscarSugestoes(selected);
+      if (!_isAfastamentoEleitoral) {
+        await _buscarSugestoes(selected);
+      }
     }
+  }
+
+  void _atualizarNumeroDias(String value) {
+    final parsed = int.tryParse(value.trim());
+    setState(() {
+      _numeroDias = parsed;
+      _submitError = null;
+    });
   }
 
   Future<void> _buscarSugestoes(DateTime dataInicial) async {
@@ -569,13 +691,15 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
 
   Future<void> _enviar() async {
     final dataInicial = _dataInicial;
-    final sugestao = _sugestaoSelecionada;
-    if (dataInicial == null || sugestao == null) return;
+    final numeroDias = _isAfastamentoEleitoral
+        ? _numeroDias
+        : _sugestaoSelecionada?.numeroDias;
+    if (dataInicial == null || numeroDias == null || numeroDias <= 0) return;
 
     setState(() => _isSubmitting = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await widget.onSubmit(widget.concessao, dataInicial, sugestao.numeroDias);
+      await widget.onSubmit(widget.concessao, dataInicial, numeroDias);
       if (!mounted) return;
       Navigator.of(context).pop();
       messenger.showSnackBar(
@@ -583,11 +707,73 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isSubmitting = false);
-      messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível marcar o gozo: $e')),
-      );
+      setState(() {
+        _isSubmitting = false;
+        _submitError = _solicitacaoErrorMessage(e);
+      });
     }
+  }
+
+  String _solicitacaoErrorMessage(Object error) {
+    if (error is DioException) {
+      final responseMessage = _extractResponseMessage(error.response?.data);
+      if (responseMessage != null) {
+        return _friendlyResponseMessage(responseMessage);
+      }
+
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        return 'Sessão expirada ou usuário sem permissão.';
+      }
+      if (statusCode != null) {
+        return 'O serviço recusou a solicitação. Código HTTP $statusCode.';
+      }
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout) {
+        return 'O serviço demorou para responder. Tente novamente.';
+      }
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.unknown) {
+        return 'Sem conexão com o serviço. Verifique sua internet e tente novamente.';
+      }
+    }
+
+    return error.toString();
+  }
+
+  String _friendlyResponseMessage(String message) {
+    final normalized = normalizarTexto(message).replaceAll('�', '');
+    if (normalized.contains('eleitoral') &&
+        normalized.contains('fins de semana') &&
+        normalized.contains('feriados')) {
+      return 'Afastamento eleitoral não pode incluir fins de semana ou feriados.';
+    }
+    return message;
+  }
+
+  String? _extractResponseMessage(dynamic data) {
+    if (data == null) return null;
+    if (data is String) {
+      final message = data.trim();
+      return message.isEmpty ? null : message;
+    }
+    if (data is Map) {
+      for (final key in const [
+        'message',
+        'mensagem',
+        'detail',
+        'detalhe',
+        'error',
+        'erro',
+      ]) {
+        final value = data[key];
+        if (value is String && value.trim().isNotEmpty) {
+          return value.trim();
+        }
+      }
+    }
+    return null;
   }
 }
 
@@ -727,16 +913,220 @@ class _SugestaoOption extends StatelessWidget {
   }
 }
 
+class _NumeroDiasField extends StatelessWidget {
+  final TextEditingController controller;
+  final bool enabled;
+  final int saldoRestante;
+  final ValueChanged<String> onChanged;
+
+  const _NumeroDiasField({
+    required this.controller,
+    required this.enabled,
+    required this.saldoRestante,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final value = int.tryParse(controller.text.trim());
+    final hasValue = controller.text.trim().isNotEmpty;
+    final hasError =
+        hasValue && (value == null || value <= 0 || value > saldoRestante);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: hasError ? const Color(0xFFE5252A) : const Color(0xFFE9EDF0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0x12E5252A),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.format_list_numbered_rounded,
+              color: Color(0xFFE5252A),
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              enabled: enabled,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: onChanged,
+              style: const TextStyle(
+                color: Color(0xFF202322),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                labelText: 'Número de dias',
+                labelStyle: const TextStyle(
+                  color: Color(0xFF697370),
+                  fontSize: 12,
+                ),
+                hintText: 'Informe a quantidade',
+                hintStyle: const TextStyle(
+                  color: Color(0xFF697370),
+                  fontWeight: FontWeight.w500,
+                ),
+                errorText: hasError
+                    ? 'Informe de 1 a $saldoRestante dia(s)'
+                    : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _SheetNoticeTone { info, warning, error }
+
+class _SheetNotice extends StatelessWidget {
+  final String title;
+  final String message;
+  final IconData icon;
+  final _SheetNoticeTone tone;
+
+  const _SheetNotice({
+    required this.title,
+    required this.message,
+    required this.icon,
+    required this.tone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _SheetNoticeColors.fromTone(tone);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: colors.iconBackground,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: colors.icon, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: colors.title,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: colors.message,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    height: 1.32,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SheetNoticeColors {
+  final Color background;
+  final Color border;
+  final Color iconBackground;
+  final Color icon;
+  final Color title;
+  final Color message;
+
+  const _SheetNoticeColors({
+    required this.background,
+    required this.border,
+    required this.iconBackground,
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  factory _SheetNoticeColors.fromTone(_SheetNoticeTone tone) {
+    switch (tone) {
+      case _SheetNoticeTone.info:
+        return const _SheetNoticeColors(
+          background: Color(0xFFF0F7FA),
+          border: Color(0xFFD7EAF0),
+          iconBackground: Color(0xFFE0F2FE),
+          icon: Color(0xFF0369A1),
+          title: Color(0xFF164E63),
+          message: Color(0xFF3F626D),
+        );
+      case _SheetNoticeTone.warning:
+        return const _SheetNoticeColors(
+          background: Color(0xFFFFF8E8),
+          border: Color(0xFFF4E1B5),
+          iconBackground: Color(0xFFFFE9B3),
+          icon: Color(0xFFB45309),
+          title: Color(0xFF7C3E08),
+          message: Color(0xFF72551F),
+        );
+      case _SheetNoticeTone.error:
+        return const _SheetNoticeColors(
+          background: Color(0xFFFFF1F1),
+          border: Color(0xFFFFD2D2),
+          iconBackground: Color(0xFFFFE0E0),
+          icon: Color(0xFFE5252A),
+          title: Color(0xFF8F1D1D),
+          message: Color(0xFF7A3030),
+        );
+    }
+  }
+}
+
 class _ResumoMarcacao extends StatelessWidget {
   final String tipo;
   final String dataInicial;
-  final String dataFinal;
+  final String? dataFinal;
   final int numeroDias;
 
   const _ResumoMarcacao({
     required this.tipo,
     required this.dataInicial,
-    required this.dataFinal,
+    this.dataFinal,
     required this.numeroDias,
   });
 
@@ -754,7 +1144,8 @@ class _ResumoMarcacao extends StatelessWidget {
         children: [
           _ResumoLine(label: 'Tipo', value: tipo),
           _ResumoLine(label: 'Data inicial', value: dataInicial),
-          _ResumoLine(label: 'Data final', value: dataFinal),
+          if (dataFinal != null)
+            _ResumoLine(label: 'Data final', value: dataFinal!),
           _ResumoLine(label: 'Quantidade', value: '$numeroDias dia(s)'),
         ],
       ),
@@ -864,6 +1255,61 @@ class _SheetTile extends StatelessWidget {
     );
   }
 }
+
+String? _blockedElectionLeaveDay(DateTime date) {
+  if (date.weekday == DateTime.saturday) return 'sábado';
+  if (date.weekday == DateTime.sunday) return 'domingo';
+  return _brazilianHolidayName(date);
+}
+
+String? _brazilianHolidayName(DateTime date) {
+  final month = date.month;
+  final day = date.day;
+  final fixedHolidays = <String, String>{
+    '1-1': 'feriado de Confraternização Universal',
+    '4-21': 'feriado de Tiradentes',
+    '5-1': 'feriado do Dia do Trabalho',
+    '9-7': 'feriado da Independência do Brasil',
+    '10-12': 'feriado de Nossa Senhora Aparecida',
+    '11-2': 'feriado de Finados',
+    '11-15': 'feriado da Proclamação da República',
+    '11-20': 'feriado do Dia da Consciência Negra',
+    '12-25': 'feriado de Natal',
+  };
+  final fixed = fixedHolidays['$month-$day'];
+  if (fixed != null) return fixed;
+
+  final easter = _easterSunday(date.year);
+  final movableHolidays = <DateTime, String>{
+    _dateOnly(easter.subtract(const Duration(days: 48))): 'feriado de Carnaval',
+    _dateOnly(easter.subtract(const Duration(days: 47))): 'feriado de Carnaval',
+    _dateOnly(easter.subtract(const Duration(days: 2))):
+        'feriado da Sexta-feira Santa',
+    _dateOnly(easter.add(const Duration(days: 60))):
+        'feriado de Corpus Christi',
+  };
+  return movableHolidays[_dateOnly(date)];
+}
+
+DateTime _easterSunday(int year) {
+  final a = year % 19;
+  final b = year ~/ 100;
+  final c = year % 100;
+  final d = b ~/ 4;
+  final e = b % 4;
+  final f = (b + 8) ~/ 25;
+  final g = (b - f + 1) ~/ 3;
+  final h = (19 * a + b - d - g + 15) % 30;
+  final i = c ~/ 4;
+  final k = c % 4;
+  final l = (32 + 2 * e + 2 * i - h - k) % 7;
+  final m = (a + 11 * h + 22 * l) ~/ 451;
+  final month = (h + l - 7 * m + 114) ~/ 31;
+  final day = ((h + l - 7 * m + 114) % 31) + 1;
+  return DateTime(year, month, day);
+}
+
+DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
 class _SaldoChip extends StatelessWidget {
   final int saldo;

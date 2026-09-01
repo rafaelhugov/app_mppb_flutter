@@ -20,7 +20,7 @@ final dioProvider = Provider<Dio>((ref) {
       onRequest: (options, handler) async {
         final secureStorage = ref.read(secureStorageProvider);
         final token = await secureStorage.read(key: 'auth_token');
-        if (token != null) {
+        if (token != null && !options.headers.containsKey('Authorization')) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         return handler.next(options);

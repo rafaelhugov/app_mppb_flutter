@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +42,8 @@ class ConcessaoAfastamentoState {
 class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
   final Map<String, List<ConcessaoAfastamento>> _concessoesCache = {};
   final Map<String, List<AusenciaCalendario>> _ausenciasCache = {};
+  final Map<int, List<SolicitacaoConcessao>> _solicitacoesCriadasLocalmente =
+      {};
   String? _ultimoToken;
 
   @override
@@ -52,6 +56,8 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
         _ultimoToken = next.token;
         if (next.token != null && next.token!.trim().isNotEmpty) {
           Future.microtask(carregarInicial);
+        } else {
+          _solicitacoesCriadasLocalmente.clear();
         }
       }
     });
@@ -105,13 +111,14 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
       final dados = await ref
           .read(concessaoAfastamentoRepositoryProvider)
           .buscarConcessoesVigentes(token: token);
-      _concessoesCache[cacheKey] = dados;
+      final dadosComSolicitacoesLocais = _mesclarSolicitacoesCriadas(dados);
+      _concessoesCache[cacheKey] = dadosComSolicitacoesLocais;
       state = state.copyWith(
         concessoes: state.concessoes.copyWith(
           isLoading: false,
           isRefreshing: false,
           errorMessage: null,
-          concessoes: dados,
+          concessoes: dadosComSolicitacoesLocais,
         ),
       );
     } on DioException catch (e, stack) {
@@ -223,7 +230,7 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
       throw Exception('Sessão expirada. Faça login novamente.');
     }
 
-    await ref
+    final solicitacaoCriada = await ref
         .read(concessaoAfastamentoRepositoryProvider)
         .solicitarGozo(
           token: token,
@@ -232,9 +239,13 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
           numeroDias: numeroDias,
         );
 
+    if (solicitacaoCriada != null) {
+      _guardarSolicitacaoCriada(concessao.id, solicitacaoCriada);
+      _inserirSolicitacaoCriada(concessao.id, solicitacaoCriada);
+    }
     _concessoesCache.clear();
     _ausenciasCache.clear();
-    await carregarInicial();
+    unawaited(carregarInicial());
   }
 
   Future<List<SugestaoDataFinal>> buscarSugestoesDatasFinais({
@@ -292,9 +303,12 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
           dataFim: dataFim,
         );
 
+    if (operacao == OperacaoSolicitacaoConcessao.cancelar) {
+      _removerSolicitacaoCriadaLocalmente(solicitacao.id);
+    }
     _concessoesCache.clear();
     _ausenciasCache.clear();
-    await carregarInicial();
+    unawaited(carregarInicial());
   }
 
   Future<String?> _tokenAtual() async {
@@ -321,8 +335,122 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
     if (_ultimoToken != null && _ultimoToken != token) {
       _concessoesCache.clear();
       _ausenciasCache.clear();
+      _solicitacoesCriadasLocalmente.clear();
     }
     _ultimoToken = token;
+  }
+
+  void _guardarSolicitacaoCriada(
+    int concessaoId,
+    SolicitacaoConcessao solicitacao,
+  ) {
+    final solicitacoes = [
+      ...?_solicitacoesCriadasLocalmente[concessaoId],
+    ].where((item) => item.id != solicitacao.id).toList();
+    solicitacoes.add(solicitacao);
+    solicitacoes.sort((a, b) => a.inicio.compareTo(b.inicio));
+    _solicitacoesCriadasLocalmente[concessaoId] = solicitacoes;
+  }
+
+  List<ConcessaoAfastamento> _mesclarSolicitacoesCriadas(
+    List<ConcessaoAfastamento> concessoes,
+  ) {
+    if (_solicitacoesCriadasLocalmente.isEmpty) return concessoes;
+
+    return concessoes.map((concessao) {
+      final locais = _solicitacoesCriadasLocalmente[concessao.id];
+      if (locais == null || locais.isEmpty) return concessao;
+
+      final idsRemotos = concessao.solicitacoes.map((item) => item.id).toSet();
+      final pendentes = locais
+          .where((item) => !idsRemotos.contains(item.id))
+          .toList();
+      if (pendentes.isEmpty) return concessao;
+
+      final solicitacoes = [...concessao.solicitacoes, ...pendentes]
+        ..sort((a, b) => a.inicio.compareTo(b.inicio));
+
+      return _copyConcessao(concessao, solicitacoes: solicitacoes);
+    }).toList();
+  }
+
+  void _removerSolicitacaoCriadaLocalmente(int solicitacaoId) {
+    final concessoesAfetadas = <int>[];
+    final entradas = _solicitacoesCriadasLocalmente.entries.toList();
+
+    for (final entry in entradas) {
+      final solicitacoes = entry.value
+          .where((item) => item.id != solicitacaoId)
+          .toList();
+      if (solicitacoes.length != entry.value.length) {
+        concessoesAfetadas.add(entry.key);
+        if (solicitacoes.isEmpty) {
+          _solicitacoesCriadasLocalmente.remove(entry.key);
+        } else {
+          _solicitacoesCriadasLocalmente[entry.key] = solicitacoes;
+        }
+      }
+    }
+
+    if (concessoesAfetadas.isEmpty) return;
+    final idsAfetados = concessoesAfetadas.toSet();
+    final concessoes = state.concessoes.concessoes.map((concessao) {
+      if (!idsAfetados.contains(concessao.id)) return concessao;
+      return _copyConcessao(
+        concessao,
+        solicitacoes: concessao.solicitacoes
+            .where((item) => item.id != solicitacaoId)
+            .toList(),
+      );
+    }).toList();
+
+    state = state.copyWith(
+      concessoes: state.concessoes.copyWith(concessoes: concessoes),
+    );
+  }
+
+  void _inserirSolicitacaoCriada(
+    int concessaoId,
+    SolicitacaoConcessao solicitacao,
+  ) {
+    final concessoes = state.concessoes.concessoes;
+    if (concessoes.isEmpty) return;
+
+    final atualizadas = concessoes.map((concessao) {
+      if (concessao.id != concessaoId) return concessao;
+
+      final solicitacoes = [
+        ...concessao.solicitacoes.where((item) => item.id != solicitacao.id),
+        solicitacao,
+      ]..sort((a, b) => a.inicio.compareTo(b.inicio));
+
+      return _copyConcessao(concessao, solicitacoes: solicitacoes);
+    }).toList();
+
+    state = state.copyWith(
+      concessoes: state.concessoes.copyWith(
+        errorMessage: null,
+        concessoes: atualizadas,
+      ),
+    );
+  }
+
+  ConcessaoAfastamento _copyConcessao(
+    ConcessaoAfastamento concessao, {
+    required List<SolicitacaoConcessao> solicitacoes,
+  }) {
+    return ConcessaoAfastamento(
+      id: concessao.id,
+      tipo: concessao.tipo,
+      descricaoOriginal: concessao.descricaoOriginal,
+      diasConcedidos: concessao.diasConcedidos,
+      saldoRestante: concessao.saldoRestante,
+      periodo: concessao.periodo,
+      anoReferencia: concessao.anoReferencia,
+      inicioPeriodoAquisitivo: concessao.inicioPeriodoAquisitivo,
+      finalPeriodoAquisitivo: concessao.finalPeriodoAquisitivo,
+      solicitacoes: solicitacoes,
+    );
   }
 
   void _tratarErroConcessoes(dynamic e, [StackTrace? stack]) {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/ui/widgets/hero_header_publico.dart';
 
 import '../providers/concessao_folga_provider.dart';
-import '../services/concessao_folga_service.dart';
 import 'widgets/concessao_folga_calendar.dart';
 import 'widgets/concessao_folga_theme.dart';
 import 'widgets/concessoes_vigentes_list.dart';
@@ -18,10 +18,10 @@ class ConcessaoFolgaPage extends ConsumerWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFDED4C5),
+        backgroundColor: const Color(0xFFF7F8F6),
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverToBoxAdapter(child: _Header(state: state)),
+            const SliverToBoxAdapter(child: _Header()),
             const SliverPersistentHeader(
               pinned: true,
               delegate: _TabsHeaderDelegate(),
@@ -40,6 +40,8 @@ class ConcessaoFolgaPage extends ConsumerWidget {
                 onNextMonth: () => notifier.mudarMes(1),
                 onSelectMonth: () =>
                     _selecionarMesAno(context, notifier, state.mesSelecionado),
+                onNavigateToMonth: (d) =>
+                    notifier.selecionarMesAno(d.month, d.year),
               ),
               ConcessoesVigentesList(
                 concessoes: state.concessoes.concessoes,
@@ -48,6 +50,26 @@ class ConcessaoFolgaPage extends ConsumerWidget {
                 onRetry: () => notifier.carregarConcessoes(forceRefresh: true),
                 onRefresh: () =>
                     notifier.carregarConcessoes(forceRefresh: true),
+                onSolicitar: (concessao, dataInicial, numeroDias) =>
+                    notifier.solicitarGozo(
+                      concessao: concessao,
+                      dataInicial: dataInicial,
+                      numeroDias: numeroDias,
+                    ),
+                onBuscarSugestoes: (concessao, dataInicial) =>
+                    notifier.buscarSugestoesDatasFinais(
+                      concessao: concessao,
+                      dataInicial: dataInicial,
+                    ),
+                onBuscarOperacoes: (solicitacao) => notifier
+                    .buscarOperacoesSolicitacao(solicitacao: solicitacao),
+                onExecutarOperacao: (solicitacao, operacao, {data, dataFim}) =>
+                    notifier.executarOperacaoSolicitacao(
+                      solicitacao: solicitacao,
+                      operacao: operacao,
+                      data: data,
+                      dataFim: dataFim,
+                    ),
               ),
             ],
           ),
@@ -114,14 +136,14 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F0E5),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0x33936F52)),
+          border: Border.all(color: const Color(0xFFE9EDF0)),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x33432B1D),
-              blurRadius: 24,
-              offset: Offset(0, 12),
+              color: Color(0x14101828),
+              blurRadius: 18,
+              offset: Offset(0, 8),
             ),
           ],
         ),
@@ -189,20 +211,20 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: selected
-                            ? ConcessaoFolgaColors.brand
-                            : const Color(0xFFEDE1D1),
+                            ? const Color(0xFF202322)
+                            : const Color(0xFFF7F8F6),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: selected
-                              ? const Color(0x668F2A1D)
-                              : const Color(0x26936F52),
+                              ? const Color(0xFF202322)
+                              : const Color(0xFFE9EDF0),
                         ),
                       ),
                       child: Text(
                         _months[index],
                         style: TextStyle(
                           color: selected
-                              ? const Color(0xFFFFF8EA)
+                              ? Colors.white
                               : ConcessaoFolgaColors.muted,
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
@@ -254,9 +276,9 @@ class _YearButton extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFFEDE1D1),
+              color: const Color(0xFFF7F8F6),
               borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: const Color(0x26936F52)),
+              border: Border.all(color: const Color(0xFFE9EDF0)),
             ),
             child: Icon(icon, color: ConcessaoFolgaColors.brand, size: 24),
           ),
@@ -267,104 +289,15 @@ class _YearButton extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  final ConcessaoFolgaState state;
-
-  const _Header({required this.state});
+  const _Header();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 44),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0x3DD6A92F), width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: Color.fromRGBO(255, 221, 132, 0.14),
-            offset: Offset(0, -1),
-          ),
-        ],
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF241D19), Color(0xFF3A241D), Color(0xFF8F2A1D)],
-          stops: [0.0, 0.46, 1.0],
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color.fromRGBO(255, 222, 142, 0.44),
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(36, 18, 12, 0.30),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.event_available,
-              color: Color(0xFF211713),
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'MINISTÉRIO PÚBLICO DA PARAÍBA',
-                  style: TextStyle(
-                    color: Color(0xFFE3C474),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.9,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Concessão de Folga',
-                  style: TextStyle(
-                    color: Color(0xFFFFF8EA),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.22),
-                        blurRadius: 12,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  ConcessaoFolgaService.nomeMesAno(state.mesSelecionado),
-                  style: const TextStyle(
-                    color: Color(0xFFD8C5AA),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return const HeroHeaderPublico(
+      label: '',
+      title: 'Concessão de Folga',
+      subtitle: '',
+      icon: Icons.event_available,
     );
   }
 }
@@ -373,10 +306,10 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   const _TabsHeaderDelegate();
 
   @override
-  double get minExtent => 82;
+  double get minExtent => 58;
 
   @override
-  double get maxExtent => 82;
+  double get maxExtent => 58;
 
   @override
   Widget build(
@@ -386,82 +319,62 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   ) {
     return Container(
       color: Colors.transparent,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
+          constraints: const BoxConstraints(maxWidth: 260),
           child: Container(
-            padding: const EdgeInsets.all(5),
+            padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFBF4).withAlpha(242),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0x66FFFFFF), width: 1.2),
+              color: const Color(0xFF202322),
+              borderRadius: BorderRadius.circular(17),
+              border: Border.all(color: const Color(0x66FFFFFF)),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x263A241D),
-                  blurRadius: 22,
-                  offset: Offset(0, 10),
-                ),
-                BoxShadow(
-                  color: Color(0x99FFFFFF),
-                  blurRadius: 10,
-                  offset: Offset(0, -3),
+                  color: Color(0x2A101828),
+                  blurRadius: 14,
+                  offset: Offset(0, 5),
                 ),
               ],
             ),
             child: TabBar(
               dividerColor: Colors.transparent,
               indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: const Color(0xFFFFF8EA),
-              unselectedLabelColor: ConcessaoFolgaColors.muted,
+              labelColor: const Color(0xFF202322),
+              unselectedLabelColor: const Color(0xFFDDE4DF),
               labelStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
               ),
               unselectedLabelStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
               ),
               indicator: BoxDecoration(
-                color: ConcessaoFolgaColors.brand,
-                borderRadius: BorderRadius.circular(17),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x2E8F2A1D),
-                    blurRadius: 14,
-                    offset: Offset(0, 5),
-                  ),
-                ],
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
               ),
               tabs: const [
                 Tab(
-                  height: 46,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.calendar_month, size: 18),
-                        SizedBox(width: 8),
-                        Text('Calendário'),
-                      ],
-                    ),
+                  height: 34,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_month, size: 17),
+                      SizedBox(width: 5),
+                      Flexible(child: Text('Calendário')),
+                    ],
                   ),
                 ),
                 Tab(
-                  height: 46,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.inventory_2_outlined, size: 18),
-                        SizedBox(width: 8),
-                        Text('Concessões'),
-                      ],
-                    ),
+                  height: 34,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.inventory_2_outlined, size: 17),
+                      SizedBox(width: 5),
+                      Flexible(child: Text('Concessões')),
+                    ],
                   ),
                 ),
               ],

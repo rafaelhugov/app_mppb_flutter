@@ -63,7 +63,11 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> login(String username, String password) async {
+  Future<bool> login(
+    String username,
+    String password, {
+    bool offerBiometrics = true,
+  }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
@@ -82,12 +86,12 @@ class AuthNotifier extends Notifier<AuthState> {
         options: Options(
           headers: {'Content-Type': 'application/json'},
           validateStatus: (status) =>
-              status! <
-              500, // Permite ler o status 401 sem lançar DioException de imediato
+              status != null &&
+              status < 600, // Permite tratar a resposta de autenticação.
         ),
       );
 
-      if (response.statusCode == 401) {
+      if (_isErroCredencial(response.statusCode)) {
         state = state.copyWith(
           isLoading: false,
           errorMessage: 'Usuário ou senha inválidos.',
@@ -123,11 +127,17 @@ class AuthNotifier extends Notifier<AuthState> {
         isLoading: false,
         isAuthenticated: true,
         token: token,
-        justLoggedIn: true,
-        tempUsername: username,
-        tempPassword: password,
+        justLoggedIn: offerBiometrics,
+        tempUsername: offerBiometrics ? username : null,
+        tempPassword: offerBiometrics ? password : null,
       );
       return true;
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: _mensagemErroLogin(e),
+      );
+      return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -135,6 +145,26 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       return false;
     }
+  }
+
+  bool _isErroCredencial(int? statusCode) {
+    return statusCode == 400 ||
+        statusCode == 401 ||
+        statusCode == 403 ||
+        statusCode == 500;
+  }
+
+  String _mensagemErroLogin(DioException erro) {
+    final statusCode = erro.response?.statusCode;
+    if (_isErroCredencial(statusCode)) {
+      return 'Usuário ou senha inválidos.';
+    }
+
+    if (statusCode != null && statusCode >= 500) {
+      return 'Serviço de autenticação indisponível no momento.';
+    }
+
+    return 'Falha na conexão com o servidor.';
   }
 
   Future<void> enableBiometricLogin() async {
@@ -196,7 +226,7 @@ class AuthNotifier extends Notifier<AuthState> {
     final savedPassword = await secureStorage.read(key: 'saved_password');
 
     if (savedUsername != null && savedPassword != null) {
-      return login(savedUsername, savedPassword);
+      return login(savedUsername, savedPassword, offerBiometrics: false);
     }
     return false;
   }
@@ -206,10 +236,6 @@ class AuthNotifier extends Notifier<AuthState> {
     await secureStorage.delete(key: 'auth_token');
     await secureStorage.delete(key: 'auth_username');
     await secureStorage.delete(key: 'carteira_cache_data');
-    await secureStorage.delete(key: 'saved_username');
-    await secureStorage.delete(key: 'saved_password');
-    await secureStorage.delete(key: 'biometrics_enabled');
-    await secureStorage.delete(key: 'biometrics_asked');
 
     state = AuthState(); // Reset state
   }

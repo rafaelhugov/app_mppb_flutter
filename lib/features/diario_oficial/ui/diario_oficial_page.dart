@@ -1,8 +1,13 @@
-import 'package:google_fonts/google_fonts.dart';
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/diario_oficial_provider.dart';
 import '../models/diario_oficial.dart';
 
@@ -14,13 +19,15 @@ class DiarioOficialPage extends ConsumerWidget {
     final state = ref.watch(diarioOficialProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDED4C5),
+      backgroundColor: const Color(0xFFF7F8F6),
       body: RefreshIndicator(
         onRefresh: () async {
           await Future.delayed(const Duration(seconds: 1));
         },
         child: ListView(
-          padding: const EdgeInsets.only(bottom: 132.0),
+          padding: EdgeInsets.only(
+            bottom: MainLayout.contentBottomPadding(context),
+          ),
           children: [
             _buildHeader(context, ref, state),
             if (state.selectedDate != null)
@@ -31,8 +38,8 @@ class DiarioOficialPage extends ConsumerWidget {
                     Text(
                       'Filtro: ${DateFormat('dd/MM/yyyy').format(state.selectedDate!)}',
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF5C534C),
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF697370),
                       ),
                     ),
                     const Spacer(),
@@ -43,7 +50,7 @@ class DiarioOficialPage extends ConsumerWidget {
                       icon: const Icon(Icons.clear, size: 16),
                       label: const Text('Limpar filtro'),
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF8F2A1D),
+                        foregroundColor: const Color(0xFFD62828),
                       ),
                     ),
                   ],
@@ -52,7 +59,9 @@ class DiarioOficialPage extends ConsumerWidget {
             if (state.isLoading)
               const Padding(
                 padding: EdgeInsets.all(40.0),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFFD62828)),
+                ),
               )
             else if (state.errorMessage != null)
               _buildError(state.errorMessage!, ref)
@@ -74,77 +83,29 @@ class DiarioOficialPage extends ConsumerWidget {
     WidgetRef ref,
     DiarioOficialState state,
   ) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 34),
-      padding: const EdgeInsets.fromLTRB(20, 32, 20, 44),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0x3DD6A92F), width: 1)),
-        gradient: LinearGradient(
-          colors: [Color(0xFF241D19), Color(0xFF3A241D), Color(0xFF8F2A1D)],
-          stops: [0.0, 0.46, 1.0],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return HeroHeaderPublico(
+      label: '',
+      title: 'Diário Oficial',
+      subtitle: '',
+      icon: Icons.description_rounded,
+      rightWidget: IconButton(
+        constraints: const BoxConstraints.tightFor(width: 38, height: 38),
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        style: IconButton.styleFrom(
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'MPPB+',
-                  style: TextStyle(
-                    color: Color(0xFFE3C474),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.9,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Diário Oficial',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFFFF8EA),
-                    shadows: [
-                      Shadow(
-                        color: Color(0x38000000),
-                        offset: Offset(0, 2),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Acesse as edições do Diário Oficial\nEletrônico do MPPB.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFFD8C5AA),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              state.selectedDate != null
-                  ? Icons.event_available
-                  : Icons.calendar_month,
-              color: state.selectedDate != null
-                  ? const Color(0xFFE3C474)
-                  : const Color(0xFFFFF8EA),
-              size: 28,
-            ),
-            onPressed: () => _selectDate(context, ref, state),
-            tooltip: 'Filtrar por data',
-          ),
-        ],
+        icon: Icon(
+          state.selectedDate != null
+              ? Icons.event_available
+              : Icons.calendar_month,
+          color: state.selectedDate != null
+              ? const Color(0xFFD62828)
+              : const Color(0xFF697370),
+          size: 21,
+        ),
+        onPressed: () => _selectDate(context, ref, state),
+        tooltip: 'Filtrar por data',
       ),
     );
   }
@@ -171,6 +132,11 @@ class DiarioOficialPage extends ConsumerWidget {
       initialDate: initialDate,
       firstDate: firstDate,
       lastDate: lastDate,
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      locale: const Locale('pt', 'BR'),
+      cancelText: 'CANCELAR',
+      confirmText: 'OK',
+      helpText: 'Selecione uma data',
       selectableDayPredicate: (DateTime val) {
         final date = DateTime(val.year, val.month, val.day);
         return validDates.contains(date);
@@ -179,9 +145,9 @@ class DiarioOficialPage extends ConsumerWidget {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF8F2A1D),
+              primary: Color(0xFFD62828),
               onPrimary: Colors.white,
-              onSurface: Color(0xFF5C534C),
+              onSurface: Color(0xFF202322),
             ),
           ),
           child: child!,
@@ -213,7 +179,7 @@ class DiarioOficialPage extends ConsumerWidget {
               onPressed: () =>
                   ref.read(diarioOficialProvider.notifier).fetchDiarios(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8F2A1D),
+                backgroundColor: const Color(0xFFD62828),
                 foregroundColor: Colors.white,
               ),
               child: const Text('Tentar Novamente'),
@@ -236,7 +202,7 @@ class DiarioOficialPage extends ConsumerWidget {
         child: Center(
           child: Text(
             'Nenhum diário oficial encontrado.',
-            style: TextStyle(color: Color(0xFF635041)),
+            style: TextStyle(color: Color(0xFF697370)),
           ),
         ),
       );
@@ -303,8 +269,8 @@ class DiarioOficialPage extends ConsumerWidget {
             child: Text(
               '...',
               style: TextStyle(
-                color: Color(0xFF806F5E),
-                fontWeight: FontWeight.w800,
+                color: Color(0xFF697370),
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -324,8 +290,8 @@ class DiarioOficialPage extends ConsumerWidget {
             child: Text(
               '...',
               style: TextStyle(
-                color: Color(0xFF806F5E),
-                fontWeight: FontWeight.w800,
+                color: Color(0xFF697370),
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -343,8 +309,8 @@ class DiarioOficialPage extends ConsumerWidget {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           color: currentPage > 1
-              ? const Color(0xFF806F5E)
-              : const Color(0xFFC0AFA2),
+              ? const Color(0xFFD62828)
+              : const Color(0xFFB7C0BD),
           onPressed: currentPage > 1 ? () => onSelect(currentPage - 1) : null,
         ),
         ...pages,
@@ -353,8 +319,8 @@ class DiarioOficialPage extends ConsumerWidget {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           color: currentPage < totalPages
-              ? const Color(0xFF806F5E)
-              : const Color(0xFFC0AFA2),
+              ? const Color(0xFFD62828)
+              : const Color(0xFFB7C0BD),
           onPressed: currentPage < totalPages
               ? () => onSelect(currentPage + 1)
               : null,
@@ -378,26 +344,15 @@ class DiarioOficialPage extends ConsumerWidget {
         alignment: Alignment.center,
         decoration: isActive
             ? BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFA63022), Color(0xFF7A1C11)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(4),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x337A1C11),
-                    offset: Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
+                color: const Color(0xFFD62828),
+                borderRadius: BorderRadius.circular(10),
               )
             : null,
         child: Text(
           '$page',
           style: TextStyle(
-            color: isActive ? Colors.white : const Color(0xFF806F5E),
-            fontWeight: FontWeight.w800,
+            color: isActive ? Colors.white : const Color(0xFFD62828),
+            fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
         ),
@@ -412,11 +367,19 @@ class _DiarioCard extends StatelessWidget {
 
   const _DiarioCard({required this.diario, required this.isLatest});
 
-  Future<void> _abrirPdf(BuildContext context) async {
-    final urlPdf =
-        'https://ged-api.mppb.mp.br/public/arquivos/${diario.idArquivo}/file';
-    final url = Uri.parse(urlPdf);
+  String get _pdfUrl =>
+      'https://ged-api.mppb.mp.br/public/arquivos/${diario.idArquivo}/file';
 
+  Future<Uint8List> _carregarPdf() async {
+    final response = await Dio().get<List<int>>(
+      _pdfUrl,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data ?? const []);
+  }
+
+  Future<void> _abrirPdfExterno(BuildContext context) async {
+    final url = Uri.parse(_pdfUrl);
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
@@ -430,23 +393,33 @@ class _DiarioCard extends StatelessWidget {
     }
   }
 
+  void _mostrarPdf(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DiarioPdfSheet(
+        diario: diario,
+        loadPdf: _carregarPdf,
+        onOpenExternal: () => _abrirPdfExterno(context),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.fromLTRB(16, isLatest ? 10 : 16, 16, 16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFFFFF), Color(0xFFFCFAF8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: const Color(0xFFEFEAE4), width: 1),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE9EDF0), width: 1),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F5D4D40),
+            color: Color(0x10101828),
             blurRadius: 16,
-            offset: Offset(0, 4),
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -454,110 +427,307 @@ class _DiarioCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isLatest)
-            Container(
-              margin: const EdgeInsets.only(bottom: 16.0),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF8EA),
-                border: Border.all(color: const Color(0x4DD6A92F)),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Text(
-                'ÚLTIMA EDIÇÃO',
-                style: TextStyle(
-                  color: Color(0xFF8F2A1D),
-                  fontWeight: FontWeight.w800,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 6.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00A86B),
+                  border: Border.all(color: const Color(0xFF00A86B)),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'ÚLTIMA EDIÇÃO',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                  ),
                 ),
               ),
             ),
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(color: const Color(0x70FFDE8E), width: 1),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x4C24120C),
-                  offset: Offset(0, 12),
-                  blurRadius: 28,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.newspaper,
-              color: Color(0xFF211713),
-              size: 26,
-            ),
-          ),
-          const SizedBox(height: 16),
           Text(
             'Nº ${diario.numeroEdicao}',
-            style: TextStyle(
-              fontFamily: GoogleFonts.ebGaramond().fontFamily,
-              fontSize: 15,
+            style: const TextStyle(
+              fontSize: 17,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF5C534C),
+              color: Color(0xFF202322),
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            diario.dataPublicacao != null
-                ? 'Publicado em\n${DateFormat('dd/MM/yyyy').format(diario.dataPublicacao!)}'
-                : 'Data indisponível',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF806F5E)),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFA63022), Color(0xFF7A1C11)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          SizedBox(height: isLatest ? 6 : 8),
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF697370),
+                height: 1.25,
               ),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x337A1C11),
-                  offset: Offset(0, 4),
-                  blurRadius: 12,
+              children: [
+                const TextSpan(text: 'Publicado em\n'),
+                TextSpan(
+                  text: diario.dataPublicacao != null
+                      ? DateFormat('dd/MM/yyyy').format(diario.dataPublicacao!)
+                      : 'Data indisponível',
+                  style: const TextStyle(
+                    color: Color(0xFF202322),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () => _abrirPdf(context),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text(
-                      'Baixar PDF',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.download, size: 16, color: Colors.white),
-                  ],
+          ),
+          SizedBox(height: isLatest ? 12 : 14),
+          _DiarioActions(
+            onOpen: () => _mostrarPdf(context),
+            onDownload: () => _abrirPdfExterno(context),
+            compact: isLatest,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DiarioActions extends StatelessWidget {
+  const _DiarioActions({
+    required this.onOpen,
+    required this.onDownload,
+    this.compact = false,
+  });
+
+  final VoidCallback onOpen;
+  final VoidCallback onDownload;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = Row(
+      children: [
+        _DiarioActionButton(
+          label: 'Abrir',
+          filled: true,
+          compact: compact,
+          onTap: onOpen,
+        ),
+        const SizedBox(width: 8),
+        _DiarioActionButton(
+          label: 'Baixar',
+          filled: false,
+          compact: compact,
+          onTap: onDownload,
+        ),
+      ],
+    );
+
+    if (!compact) return actions;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(width: 210, child: actions),
+    );
+  }
+}
+
+class _DiarioActionButton extends StatelessWidget {
+  const _DiarioActionButton({
+    required this.label,
+    required this.filled,
+    required this.onTap,
+    required this.compact,
+  });
+
+  final String label;
+  final bool filled;
+  final VoidCallback onTap;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = filled ? Colors.white : const Color(0xFFD62828);
+    return Expanded(
+      child: SizedBox(
+        height: compact ? 30 : 32,
+        child: Material(
+          color: filled ? const Color(0xFFD62828) : Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+            side: filled
+                ? BorderSide.none
+                : const BorderSide(color: Color(0x66D62828)),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(999),
+            child: Center(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: compact ? 11 : 11,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
                 ),
               ),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DiarioPdfSheet extends StatelessWidget {
+  const _DiarioPdfSheet({
+    required this.diario,
+    required this.loadPdf,
+    required this.onOpenExternal,
+  });
+
+  final DiarioOficial diario;
+  final Future<Uint8List> Function() loadPdf;
+  final VoidCallback onOpenExternal;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return FractionallySizedBox(
+      heightFactor: 0.94,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF7F8F6),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 10, 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0x33202322),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'Diário Oficial Nº ${diario.numeroEdicao}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF202322),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onOpenExternal,
+                    tooltip: 'Abrir fora do app',
+                    icon: const Icon(
+                      Icons.open_in_new_rounded,
+                      color: Color(0xFF697370),
+                      size: 20,
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF202322),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: FutureBuilder<Uint8List>(
+                future: loadPdf(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFD62828),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.hasError ||
+                      snapshot.data == null ||
+                      snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.picture_as_pdf_outlined,
+                              color: Color(0xFFD62828),
+                              size: 42,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Não foi possível carregar o PDF.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF697370),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: onOpenExternal,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFFD62828),
+                                side: const BorderSide(
+                                  color: Color(0x66D62828),
+                                ),
+                              ),
+                              icon: const Icon(Icons.open_in_new_rounded),
+                              label: const Text('Abrir no navegador'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final pdfBytes = snapshot.data!;
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: bottomInset + 10),
+                    child: PdfPreview(
+                      build: (_) async => pdfBytes,
+                      canChangeOrientation: false,
+                      canChangePageFormat: false,
+                      canDebug: false,
+                      allowPrinting: false,
+                      allowSharing: false,
+                      pdfFileName: 'diario-oficial-${diario.numeroEdicao}.pdf',
+                      loadingWidget: const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFD62828),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

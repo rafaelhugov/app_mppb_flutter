@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,8 +8,50 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../network/connectivity_provider.dart';
 import 'mppb_app_bar.dart';
+import 'widgets/services_bottom_sheet.dart';
+
+class _DockSlot {
+  const _DockSlot.item({
+    required this.index,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  }) : width = null;
+
+  const _DockSlot.space(this.width)
+    : index = null,
+      icon = null,
+      label = null,
+      onTap = null;
+
+  final int? index;
+  final IconData? icon;
+  final String? label;
+  final VoidCallback? onTap;
+  final double? width;
+}
+
+class _DockIndicatorMetrics {
+  const _DockIndicatorMetrics({required this.left, required this.width});
+
+  final double left;
+  final double width;
+}
 
 class MainLayout extends ConsumerStatefulWidget {
+  static const double dockStructuralHeight = 68;
+  static const double dockContentGap = 16;
+  static const double authenticatedHorizontalPadding = 16;
+  static const double authenticatedSectionGap = 12;
+
+  static double contentBottomPadding(BuildContext context) {
+    return MediaQuery.paddingOf(context).bottom + dockContentGap;
+  }
+
+  static double authenticatedContentTopPadding(BuildContext context) {
+    return authenticatedSectionGap;
+  }
+
   final Widget child;
 
   const MainLayout({super.key, required this.child});
@@ -57,8 +102,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       if (location == '/') return 0;
       if (location == '/processos') return 1;
       if (location == '/diario_oficial') return 3;
-      if (location == '/noticias') return 4;
-      return 0;
+      if (location == '/ouvidoria' || location == '/noticias') return 4;
+      return -1;
     }
   }
 
@@ -77,7 +122,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           context.go('/contracheque');
           break;
         case 2:
-          _showMaisMenu(context, isAuthenticated);
+          ServicesBottomSheet.show(context, isAuthenticated);
           break;
         case 3:
           context.go('/carteira');
@@ -95,250 +140,34 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           context.go('/processos');
           break;
         case 2:
-          _showMaisMenu(context, isAuthenticated);
+          ServicesBottomSheet.show(context, isAuthenticated);
           break;
         case 3:
           context.go('/diario_oficial');
           break;
         case 4:
-          context.go('/noticias');
+          context.go(extraRoute ?? '/ouvidoria');
           break;
       }
     }
   }
 
-  void _showMaisMenu(BuildContext context, bool isAuthenticated) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext ctx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFDF7EF),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x29432B1D),
-                blurRadius: 40,
-                offset: Offset(0, -8),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: 32,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Serviços',
-                        style: TextStyle(
-                          color: Color(0xFF2F2923),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => Navigator.pop(ctx),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF9C7A54).withAlpha(36),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            color: Color(0xFF73543E),
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    alignment: WrapAlignment.start,
-                    children: isAuthenticated
-                        ? [
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.newspaper,
-                                'Notícias',
-                                '/noticias',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.description,
-                                'Diário',
-                                '/diario_oficial',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.assignment,
-                                'Pagamentos',
-                                '/pagamentos',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.event_available,
-                                'Concessões',
-                                '/concessao-folga',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.assignment_ind,
-                                'Designações',
-                                '/designacoes',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.gavel,
-                                'Processos',
-                                '/processos',
-                              ),
-                            ),
-                          ]
-                        : [
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.newspaper,
-                                'Notícias',
-                                '/noticias',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.description,
-                                'Diário',
-                                '/diario_oficial',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.gavel,
-                                'Processos',
-                                '/processos',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.lock,
-                                'Área Restrita',
-                                '/login',
-                              ),
-                            ),
-                          ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMenuShortcut(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String route,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pop(context);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.go(route);
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.only(top: 16, bottom: 12, left: 8, right: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF9C7A54).withAlpha(20),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.transparent, width: 1.5),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: const Color(0xFF8F2A1D).withAlpha(25),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: const Color(0xFF8F2A1D), size: 22),
-            ),
-            const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                style: const TextStyle(
-                  color: Color(0xFF3A2416),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  int _getFlexForLabel(String label) {
+    switch (label) {
+      case 'Contr.':
+      case 'Pagam.':
+      case 'Desig.':
+      case 'Proc.':
+      case 'Ouvid.':
+      case 'Cart.':
+      case 'Notíc.':
+      case 'Diár.':
+        return 11;
+      case 'Início':
+      case 'Folga':
+      default:
+        return 10;
+    }
   }
 
   Widget _buildNavItem(
@@ -350,88 +179,254 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   ) {
     final isSelected = index == selectedIndex;
 
-    const selectedBgColor = Color(0xFFFFF0C2);
-    const selectedIconColor = Color(0xFFA96A1D);
-    const selectedTextColor = Color(0xFF5E421E);
-    const unselectedColor = Color(0xFF8B8177);
+    const selectedIconColor = Color(0xFFF7F8F6);
+    const selectedTextColor = Color(0xFFF7F8F6);
+    const unselectedColor = Color(0xDDF7F8F6);
 
-    return Expanded(
-      child: InkWell(
+    return Flexible(
+      flex: _getFlexForLabel(label),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        splashColor: const Color(0xFF9C7A54).withAlpha(25),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          decoration: isSelected
-              ? BoxDecoration(
-                  color: selectedBgColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0x55E5B84C)),
-                )
-              : null,
-          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 4),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 21,
-                color: isSelected ? selectedIconColor : unselectedColor,
-              ),
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isSelected ? selectedTextColor : unselectedColor,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    height: 1,
+        child: Center(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(24),
+              splashColor: const Color(0xFFF7F8F6).withAlpha(18),
+              highlightColor: const Color(0xFFF7F8F6).withAlpha(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                height: 40,
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minWidth: 42, minHeight: 37),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: Colors.transparent),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 2,
+                    horizontal: isSelected ? 8 : 3,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 17,
+                        color: isSelected ? selectedIconColor : unselectedColor,
+                      ),
+                      const SizedBox(height: 1),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 9,
+                            letterSpacing: 0,
+                            color: isSelected
+                                ? selectedTextColor
+                                : unselectedColor,
+                            fontWeight: isSelected
+                                ? FontWeight.w800
+                                : FontWeight.w600,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMoreButton(VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(32),
-        child: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF2F2923), Color(0xFF181310)],
-            ),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: const Color(0x66E5B84C), width: 1.2),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x3D2F2923),
-                blurRadius: 22,
-                offset: Offset(0, 10),
+  Widget _buildMoreButton(VoidCallback onTap, bool isHome) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+      width: isHome ? 0.0 : 50.0,
+      height: isHome ? 0.0 : 46.0,
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      child: OverflowBox(
+        maxWidth: 50.0,
+        maxHeight: 46.0,
+        minWidth: 0.0,
+        minHeight: 0.0,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          opacity: isHome ? 0.0 : 1.0,
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            scale: isHome ? 0.85 : 1.0,
+            child: GestureDetector(
+              onTap: isHome ? null : onTap,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF202322),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0x26FFFFFF)),
+                ),
+                child: const Icon(
+                  Icons.add_rounded,
+                  color: Color(0xFFF7F8F6),
+                  size: 26,
+                ),
               ),
-            ],
-          ),
-          child: const Icon(
-            Icons.add_rounded,
-            color: Color(0xFFFFF8EA),
-            size: 34,
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  _DockIndicatorMetrics? _calculateDockIndicator(
+    List<_DockSlot> slots,
+    int selectedIndex,
+    double width,
+  ) {
+    final selectedSlot = slots.where((slot) => slot.index == selectedIndex);
+    if (selectedSlot.isEmpty) return null;
+
+    final fixedWidth = slots.fold<double>(
+      0,
+      (sum, slot) => sum + (slot.width ?? 0),
+    );
+    final totalFlex = slots.fold<int>(
+      0,
+      (sum, slot) =>
+          sum + (slot.label == null ? 0 : _getFlexForLabel(slot.label!)),
+    );
+    if (totalFlex == 0) return null;
+
+    final flexWidth = math.max(0.0, width - fixedWidth);
+    var offset = 0.0;
+
+    for (final slot in slots) {
+      final slotWidth =
+          slot.width ?? flexWidth * _getFlexForLabel(slot.label!) / totalFlex;
+      if (slot.index == selectedIndex) {
+        final indicatorWidth = math.min(math.max(slotWidth - 4, 48.0), 64.0);
+        return _DockIndicatorMetrics(
+          left: offset + (slotWidth - indicatorWidth) / 2,
+          width: indicatorWidth,
+        );
+      }
+      offset += slotWidth;
+    }
+
+    return null;
+  }
+
+  Widget _buildDockIndicator(List<_DockSlot> slots, int selectedIndex) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final metrics = _calculateDockIndicator(
+          slots,
+          selectedIndex,
+          constraints.maxWidth,
+        );
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            if (metrics != null)
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 420),
+                curve: Curves.easeInOutCubic,
+                left: metrics.left,
+                top: 4,
+                width: metrics.width,
+                height: 40,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: const Color(0x0FFFFFFF),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: const Color(0x38FFFFFF),
+                              width: 0.55,
+                            ),
+                            gradient: const RadialGradient(
+                              center: Alignment.topCenter,
+                              radius: 1.1,
+                              colors: [
+                                Color(0x30FFFFFF),
+                                Color(0x12FFFFFF),
+                                Color(0x08000000),
+                              ],
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x44000000),
+                                blurRadius: 12,
+                                spreadRadius: -1,
+                              ),
+                              BoxShadow(
+                                color: Color(0x24FFFFFF),
+                                blurRadius: 10,
+                                spreadRadius: -3,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Align(
+                          alignment: const Alignment(0, -0.18),
+                          child: Container(
+                            width: metrics.width * 0.74,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              gradient: const RadialGradient(
+                                colors: [Color(0x24FFFFFF), Color(0x00FFFFFF)],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Row(
+              children: slots.map((slot) {
+                if (slot.width != null) {
+                  return SizedBox(width: slot.width);
+                }
+
+                return _buildNavItem(
+                  slot.index!,
+                  slot.icon!,
+                  slot.label!,
+                  selectedIndex,
+                  slot.onTap!,
+                );
+              }).toList(),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -443,40 +438,35 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     required IconData extraIcon,
     required String extraLabel,
     required String extraRoute,
+    required bool isHome,
   }) {
-    final children = isAuthenticated
+    final slots = isAuthenticated
         ? isOnline
               ? [
-                  _buildNavItem(
-                    0,
-                    Icons.home_rounded,
-                    'Início',
-                    selectedIndex,
-                    () => _onItemTapped(0, context, isAuthenticated),
+                  _DockSlot.item(
+                    index: 0,
+                    icon: Icons.home_rounded,
+                    label: 'Início',
+                    onTap: () => _onItemTapped(0, context, isAuthenticated),
                   ),
-                  _buildNavItem(
-                    1,
-                    Icons.receipt_long_rounded,
-                    'Contracheque',
-                    selectedIndex,
-                    () => _onItemTapped(1, context, isAuthenticated),
+                  _DockSlot.item(
+                    index: 1,
+                    icon: Icons.receipt_long_rounded,
+                    label: 'Contr.',
+                    onTap: () => _onItemTapped(1, context, isAuthenticated),
                   ),
-                  _buildMoreButton(
-                    () => _onItemTapped(2, context, isAuthenticated),
+                  const _DockSlot.space(52),
+                  _DockSlot.item(
+                    index: 3,
+                    icon: Icons.badge_rounded,
+                    label: 'Cart.',
+                    onTap: () => _onItemTapped(3, context, isAuthenticated),
                   ),
-                  _buildNavItem(
-                    3,
-                    Icons.badge_rounded,
-                    'Carteira',
-                    selectedIndex,
-                    () => _onItemTapped(3, context, isAuthenticated),
-                  ),
-                  _buildNavItem(
-                    4,
-                    extraIcon,
-                    extraLabel,
-                    selectedIndex,
-                    () => _onItemTapped(
+                  _DockSlot.item(
+                    index: 4,
+                    icon: extraIcon,
+                    label: extraLabel,
+                    onTap: () => _onItemTapped(
                       4,
                       context,
                       isAuthenticated,
@@ -485,83 +475,95 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   ),
                 ]
               : [
-                  _buildNavItem(
-                    0,
-                    Icons.home_rounded,
-                    'Início',
-                    selectedIndex,
-                    () => _onItemTapped(0, context, isAuthenticated),
+                  _DockSlot.item(
+                    index: 0,
+                    icon: Icons.home_rounded,
+                    label: 'Início',
+                    onTap: () => _onItemTapped(0, context, isAuthenticated),
                   ),
-                  const Spacer(),
-                  _buildMoreButton(
-                    () => _onItemTapped(2, context, isAuthenticated),
-                  ),
-                  const Spacer(),
-                  _buildNavItem(
-                    3,
-                    Icons.badge_rounded,
-                    'Carteira',
-                    selectedIndex,
-                    () => _onItemTapped(3, context, isAuthenticated),
+                  const _DockSlot.space(52),
+                  const _DockSlot.space(52),
+                  _DockSlot.item(
+                    index: 3,
+                    icon: Icons.badge_rounded,
+                    label: 'Cart.',
+                    onTap: () => _onItemTapped(3, context, isAuthenticated),
                   ),
                 ]
         : [
-            _buildNavItem(
-              0,
-              Icons.home_rounded,
-              'Início',
-              selectedIndex,
-              () => _onItemTapped(0, context, isAuthenticated),
+            _DockSlot.item(
+              index: 0,
+              icon: Icons.home_rounded,
+              label: 'Início',
+              onTap: () => _onItemTapped(0, context, isAuthenticated),
             ),
-            _buildNavItem(
-              1,
-              Icons.gavel_rounded,
-              'Processos',
-              selectedIndex,
-              () => _onItemTapped(1, context, isAuthenticated),
+            _DockSlot.item(
+              index: 1,
+              icon: Icons.gavel_rounded,
+              label: 'Proc.',
+              onTap: () => _onItemTapped(1, context, isAuthenticated),
             ),
-            _buildMoreButton(() => _onItemTapped(2, context, isAuthenticated)),
-            _buildNavItem(
-              3,
-              Icons.description_rounded,
-              'Diário',
-              selectedIndex,
-              () => _onItemTapped(3, context, isAuthenticated),
+            const _DockSlot.space(52),
+            _DockSlot.item(
+              index: 3,
+              icon: Icons.description_rounded,
+              label: 'Diár.',
+              onTap: () => _onItemTapped(3, context, isAuthenticated),
             ),
-            _buildNavItem(
-              4,
-              Icons.newspaper_rounded,
-              'Notícias',
-              selectedIndex,
-              () => _onItemTapped(4, context, isAuthenticated),
+            _DockSlot.item(
+              index: 4,
+              icon: extraIcon,
+              label: extraLabel,
+              onTap: () => _onItemTapped(
+                4,
+                context,
+                isAuthenticated,
+                extraRoute: extraRoute,
+              ),
             ),
           ];
 
-    return Container(
-      height: 104,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
-      decoration: const BoxDecoration(color: Color(0x00FFFFFF)),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Container(
-            height: 78,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFBF4).withAlpha(238),
-              borderRadius: BorderRadius.circular(34),
-              border: Border.all(color: const Color(0x66FFFFFF), width: 1.3),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x303A241D),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final dockWidth = math.min(screenWidth - 56, 336.0);
+    final sideInset = math.max(28.0, (screenWidth - dockWidth) / 2);
+
+    return SizedBox(
+      height: MainLayout.dockStructuralHeight + bottomInset,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          Positioned(
+            left: sideInset,
+            right: sideInset,
+            bottom: bottomInset + 12,
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF202322).withAlpha(245),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0x26FFFFFF), width: 1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33202322),
+                    blurRadius: 14,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: _buildDockIndicator(slots, selectedIndex),
             ),
-            child: Row(children: children),
           ),
-        ),
+          Positioned(
+            top: 0,
+            child: _buildMoreButton(
+              () => _onItemTapped(2, context, isAuthenticated),
+              isHome,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -575,6 +577,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final location = GoRouterState.of(context).matchedLocation;
 
     final isHiddenPage = location == '/login' || location.contains('/detalhes');
+    final isHome = location == '/' || location == '/restrito';
+    final isDockHidden = isHiddenPage || isHome;
     final selectedIndex = _calculateSelectedIndex(
       context,
       isAuthenticated,
@@ -586,7 +590,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     String route4 = '/concessao-folga';
     if (isAuthenticated) {
       if (location == '/pagamentos') {
-        label4 = 'Pagamentos';
+        label4 = 'Pagam.';
         icon4 = Icons.assignment_rounded;
         route4 = '/pagamentos';
       } else if (location == '/concessao-folga') {
@@ -594,55 +598,84 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
         icon4 = Icons.event_available_rounded;
         route4 = '/concessao-folga';
       } else if (location == '/designacoes') {
-        label4 = 'Designações';
+        label4 = 'Desig.';
         icon4 = Icons.assignment_ind_rounded;
         route4 = '/designacoes';
       } else if (location == '/processos') {
-        label4 = 'Processos';
+        label4 = 'Proc.';
         icon4 = Icons.gavel_rounded;
         route4 = '/processos';
       } else if (location == '/noticias') {
-        label4 = 'Notícias';
+        label4 = 'Notíc.';
         icon4 = Icons.newspaper_rounded;
         route4 = '/noticias';
       } else if (location == '/diario_oficial') {
-        label4 = 'Diário';
+        label4 = 'Diár.';
         icon4 = Icons.description_rounded;
         route4 = '/diario_oficial';
       }
+    } else {
+      if (location == '/ouvidoria') {
+        label4 = 'Ouvid.';
+        icon4 = Icons.record_voice_over;
+        route4 = '/ouvidoria';
+      } else {
+        label4 = 'Notíc.';
+        icon4 = Icons.newspaper_rounded;
+        route4 = '/noticias';
+      }
     }
 
-    return Scaffold(
-      extendBody: !isHiddenPage,
-      appBar: isHiddenPage ? null : const MppbAppBar(),
-      body: NotificationListener<ScrollNotification>(
-        onNotification: _handleScrollNotification,
-        child: widget.child,
-      ),
-      bottomNavigationBar: isHiddenPage
-          ? null
-          : IgnorePointer(
-              ignoring: !_isNavVisible,
-              child: AnimatedSlide(
-                duration: const Duration(milliseconds: 380),
-                curve: Curves.easeInOutCubic,
-                offset: _isNavVisible ? Offset.zero : const Offset(0, 1.18),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 280),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final homeRoute = isAuthenticated ? '/restrito' : '/';
+        if (location != homeRoute) {
+          context.go(homeRoute);
+        }
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: false,
+        extendBody: !isDockHidden,
+        appBar: isHiddenPage
+            ? null
+            : isAuthenticated
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(MppbAppBar.authenticatedAltura),
+                child: MppbAppBar(),
+              )
+            : const MppbAppBar(),
+        body: NotificationListener<ScrollNotification>(
+          onNotification: _handleScrollNotification,
+          child: widget.child,
+        ),
+        bottomNavigationBar: isDockHidden
+            ? null
+            : IgnorePointer(
+                ignoring: !_isNavVisible,
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 380),
                   curve: Curves.easeInOutCubic,
-                  opacity: _isNavVisible ? 1 : 0,
-                  child: _buildBottomNavBar(
-                    context: context,
-                    isAuthenticated: isAuthenticated,
-                    isOnline: isOnline,
-                    selectedIndex: selectedIndex,
-                    extraIcon: icon4,
-                    extraLabel: label4,
-                    extraRoute: route4,
+                  offset: _isNavVisible ? Offset.zero : const Offset(0, 1.18),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeInOutCubic,
+                    opacity: _isNavVisible ? 1 : 0,
+                    child: _buildBottomNavBar(
+                      context: context,
+                      isAuthenticated: isAuthenticated,
+                      isOnline: isOnline,
+                      selectedIndex: selectedIndex,
+                      extraIcon: icon4,
+                      extraLabel: label4,
+                      extraRoute: route4,
+                      isHome: isHome,
+                    ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

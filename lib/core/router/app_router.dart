@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/carteira/ui/carteira_page.dart';
+import '../../features/certidao_extrajudicial/ui/certidao_extrajudicial_page.dart';
 import '../../features/contra_cheque/ui/contra_cheque_page.dart';
 import '../../features/dashboard/ui/dashboard_page.dart';
 import '../../features/designacoes/ui/designacoes_page.dart';
@@ -14,6 +15,8 @@ import '../../features/processos/ui/processo_detalhes_page.dart';
 import '../../features/public/ui/public_dashboard_page.dart';
 import '../../features/concessao_folga/ui/concessao_folga_page.dart';
 import '../../features/pagamentos/ui/pagamentos_page.dart';
+import '../../features/ouvidoria/ui/ouvidoria_page.dart';
+import '../../features/contatos/ui/contatos_page.dart';
 import '../network/connectivity_provider.dart';
 import '../ui/main_layout.dart';
 
@@ -55,7 +58,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/designacoes',
     '/noticias',
     '/diario_oficial',
+    '/certidao-extrajudicial',
     '/processos',
+    '/ouvidoria',
   ];
 
   return GoRouter(
@@ -132,6 +137,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const DiarioOficialPage(),
           ),
           GoRoute(
+            path: '/certidao-extrajudicial',
+            builder: (context, state) => const CertidaoExtrajudicialPage(),
+          ),
+          GoRoute(
             path: '/noticias',
             builder: (context, state) => const NoticiasPage(),
           ),
@@ -153,6 +162,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 captchaValue: captchaValue,
               );
             },
+          ),
+          GoRoute(
+            path: '/ouvidoria',
+            builder: (context, state) => const OuvidoriaPage(),
+          ),
+          GoRoute(
+            path: '/contatos',
+            builder: (context, state) => const ContatosPage(),
           ),
         ],
       ),

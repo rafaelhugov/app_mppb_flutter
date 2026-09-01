@@ -3,6 +3,7 @@ import 'package:app_mppb_flutter/features/concessao_folga/models/ausencia_calend
 import 'package:app_mppb_flutter/features/concessao_folga/models/concessao_folga.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/solicitacao_concessao.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/status_solicitacao_concessao.dart';
+import 'package:app_mppb_flutter/features/concessao_folga/models/sugestao_data_final.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_ausencia.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_concessao.dart';
 import 'package:app_mppb_flutter/features/concessao_folga/models/tipo_solicitacao_concessao.dart';
@@ -92,6 +93,70 @@ void main() {
       );
       expect(solicitacao.diasCalculados, 2);
       expect(solicitacao.possuiDivergenciaDias, isTrue);
+    });
+
+    test('parseia sugestao no contrato real da API RH', () {
+      final sugestao = SugestaoDataFinal.fromJson({
+        'numeroDias': 10,
+        'dataInicial': '08/09/2026',
+        'dataFinal': '17/09/2026',
+      });
+
+      expect(sugestao.numeroDias, 10);
+      expect(sugestao.dataInicial, DateTime(2026, 9, 8));
+      expect(sugestao.dataFinal, DateTime(2026, 9, 17));
+      expect(sugestao.dataInicialFormatada, '08/09/2026');
+      expect(sugestao.dataFinalFormatada, '17/09/2026');
+    });
+
+    test('numeroDias e dataFinal sao obtidos diretamente da resposta', () {
+      final sugestao = SugestaoDataFinal.fromJson({
+        'numeroDias': 15,
+        'dataInicial': '08/09/2026',
+        'dataFinal': '22/09/2026',
+      });
+
+      expect(sugestao.numeroDias, 15);
+      expect(sugestao.dataFinal, DateTime(2026, 9, 22));
+      expect(sugestao.resumo, '22/09/2026 - 15 dia(s)');
+    });
+
+    test('sugestao sem numeroDias e invalida', () {
+      expect(
+        () => SugestaoDataFinal.fromJson({
+          'dataInicial': '08/09/2026',
+          'dataFinal': '17/09/2026',
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('sugestao sem dataFinal e invalida', () {
+      expect(
+        () => SugestaoDataFinal.fromJson({
+          'numeroDias': 10,
+          'dataInicial': '08/09/2026',
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('aliases antigos nao sao aceitos como contrato valido', () {
+      expect(
+        () => SugestaoDataFinal.fromJson({
+          'dias': 10,
+          'data': '17/09/2026',
+          'dataFim': '17/09/2026',
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('string simples nao e sugestao valida', () {
+      expect(
+        () => SugestaoDataFinal.fromJson('17/09/2026' as dynamic),
+        throwsA(isA<TypeError>()),
+      );
     });
   });
 

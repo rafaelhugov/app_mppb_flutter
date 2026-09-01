@@ -5,9 +5,16 @@ import 'package:just_the_tooltip/just_the_tooltip.dart';
 import '../providers/privacy_provider.dart';
 
 class PrivacyToggleButton extends ConsumerStatefulWidget {
-  const PrivacyToggleButton({super.key, this.size = 50});
+  const PrivacyToggleButton({
+    super.key,
+    this.size = 50,
+    this.compact = false,
+    this.showEveryTime = false,
+  });
 
   final double size;
+  final bool compact;
+  final bool showEveryTime;
 
   @override
   ConsumerState<PrivacyToggleButton> createState() =>
@@ -22,9 +29,10 @@ class _PrivacyToggleButtonState extends ConsumerState<PrivacyToggleButton> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted || _hasShownTooltip || !ref.read(privacyProvider)) return;
+      if (!mounted || !ref.read(privacyProvider)) return;
+      if (!widget.showEveryTime && _hasShownTooltip) return;
 
-      _hasShownTooltip = true;
+      if (!widget.showEveryTime) _hasShownTooltip = true;
       _tooltipController.showTooltip();
       Future.delayed(const Duration(seconds: 30), () {
         if (mounted) _tooltipController.hideTooltip();
@@ -55,7 +63,7 @@ class _PrivacyToggleButtonState extends ConsumerState<PrivacyToggleButton> {
         tailLength: 10,
         tailBaseWidth: 16,
         margin: const EdgeInsets.all(16),
-        backgroundColor: const Color(0xFF8F2A1D),
+        backgroundColor: const Color(0xFFF59E0B),
         content: InkWell(
           onTap: _tooltipController.hideTooltip,
           child: const Padding(
@@ -63,7 +71,7 @@ class _PrivacyToggleButtonState extends ConsumerState<PrivacyToggleButton> {
             child: Text(
               'Os valores estão ocultos. Toque no olho para exibir.',
               style: TextStyle(
-                color: Color(0xFFFFF8EA),
+                color: Color(0xFF202322),
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
               ),
@@ -79,28 +87,36 @@ class _PrivacyToggleButtonState extends ConsumerState<PrivacyToggleButton> {
           child: Container(
             width: widget.size,
             height: widget.size,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0x70FFDE8E)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x4C24120C),
-                  blurRadius: 24,
-                  offset: Offset(0, 10),
-                ),
-              ],
-            ),
+            decoration: widget.compact
+                ? BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFD7DDDA)),
+                  )
+                : BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0x70FFDE8E)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x4C24120C),
+                        blurRadius: 24,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                  ),
             child: Icon(
               isPrivacyEnabled
                   ? Icons.visibility_off_rounded
                   : Icons.visibility_rounded,
-              color: const Color(0xFF211713),
-              size: widget.size * 0.50,
+              color: widget.compact
+                  ? const Color(0xFF697370)
+                  : const Color(0xFF211713),
+              size: widget.size * (widget.compact ? 0.38 : 0.50),
             ),
           ),
         ),

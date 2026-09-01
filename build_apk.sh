@@ -21,14 +21,25 @@ fi
 
 BUILD_NAME="${PUBSPEC_VERSION%%+*}"
 BUILD_NUMBER="${PUBSPEC_VERSION#*+}"
-VERSION_CLEAN="${PUBSPEC_VERSION/+/_}"
-NEW_APK_NAME="MPPB+_v${VERSION_CLEAN}.apk"
-OUTPUT_DIR="build/app/outputs/flutter-apk"
 
 if [ "$BUILD_NAME" = "$BUILD_NUMBER" ]; then
   echo "❌ A versão do pubspec.yaml deve estar no formato version: x.y.z+n."
   exit 1
 fi
+
+# Incremento automático do build number
+NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
+NEW_VERSION="${BUILD_NAME}+${NEW_BUILD_NUMBER}"
+
+# Substitui a versão no pubspec.yaml
+sed -i "s/^version: $PUBSPEC_VERSION/version: $NEW_VERSION/" pubspec.yaml
+echo "✅ Versão atualizada no pubspec.yaml: $PUBSPEC_VERSION -> $NEW_VERSION"
+
+# Atualiza as variáveis para os próximos passos
+BUILD_NUMBER=$NEW_BUILD_NUMBER
+VERSION_CLEAN="${NEW_VERSION/+/_}"
+NEW_APK_NAME="MPPB+_v${VERSION_CLEAN}.apk"
+OUTPUT_DIR="build/app/outputs/flutter-apk"
 
 echo "Versão: $BUILD_NAME"
 echo "Build: $BUILD_NUMBER"

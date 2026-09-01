@@ -6,15 +6,15 @@ import '../../models/tipo_concessao.dart';
 
 class ConcessaoFolgaColors {
   static const ferias = Color(0xFF2563EB);
-  static const licenca = Color(0xFF7C3AED);
-  static const licencaEleitoral = Color(0xFFC16A2B);
-  static const plantao = Color(0xFF8F2A1D);
-  static const diarias = Color(0xFF16A34A);
-  static const outros = Color(0xFF6B7280);
-  static const surface = Color(0xFFF7EFE3);
-  static const ink = Color(0xFF2F2923);
-  static const muted = Color(0xFF73543E);
-  static const brand = Color(0xFF8F2A1D);
+  static const licenca = Color(0xFF9333EA);
+  static const licencaEleitoral = Color(0xFFF97316);
+  static const plantao = Color(0xFFD62828);
+  static const diarias = Color(0xFF00A86B);
+  static const outros = Color(0xFF64748B);
+  static const surface = Color(0xFFFFFFFF);
+  static const ink = Color(0xFF202322);
+  static const muted = Color(0xFF697370);
+  static const brand = Color(0xFF202322);
 }
 
 extension TipoConcessaoColor on TipoConcessao {
@@ -62,13 +62,13 @@ extension StatusSolicitacaoColor on StatusSolicitacaoConcessao {
       case StatusSolicitacaoConcessao.homologado:
       case StatusSolicitacaoConcessao.confirmado:
       case StatusSolicitacaoConcessao.migrado:
-        return const Color(0xFF15803D);
+        return const Color(0xFF00A86B);
       case StatusSolicitacaoConcessao.pendente:
-        return const Color(0xFFB45309);
+        return const Color(0xFFF97316);
       case StatusSolicitacaoConcessao.cancelado:
       case StatusSolicitacaoConcessao.negado:
       case StatusSolicitacaoConcessao.indeferido:
-        return const Color(0xFFB91C1C);
+        return const Color(0xFFD62828);
       case StatusSolicitacaoConcessao.desconhecido:
         return ConcessaoFolgaColors.outros;
     }

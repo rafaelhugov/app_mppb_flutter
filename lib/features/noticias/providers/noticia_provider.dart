@@ -1,9 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../models/noticia.dart';
 
 class NoticiaState {
+  static const int itemsPerPage = 6;
+
   final bool isLoading;
   final List<Noticia> noticias;
   final String? errorMessage;
@@ -41,25 +42,29 @@ class NoticiaState {
   List<Noticia> get filteredNews {
     final term = _normalize(searchTerm);
     return noticias.where((noticia) {
-      final searchable = _normalize('${noticia.titulo} ${noticia.resumo ?? ''} ${noticia.categoria ?? ''}');
+      final searchable = _normalize(
+        '${noticia.titulo} ${noticia.resumo ?? ''} ${noticia.categoria ?? ''}',
+      );
       return term.isEmpty || searchable.contains(term);
     }).toList();
   }
 
-  Noticia? get featuredNews => filteredNews.isNotEmpty ? filteredNews.first : null;
-  List<Noticia> get regularNews => filteredNews.length > 1 ? filteredNews.sublist(1) : [];
+  Noticia? get featuredNews =>
+      filteredNews.isNotEmpty ? filteredNews.first : null;
+  List<Noticia> get regularNews =>
+      filteredNews.length > 1 ? filteredNews.sublist(1) : [];
 
   int get totalPages {
-    final pages = (regularNews.length / 4.0).ceil();
+    final pages = (filteredNews.length / itemsPerPage).ceil();
     return pages > 0 ? pages : 1;
   }
 
   List<Noticia> get paginatedNews {
-    final start = (currentPage - 1) * 4;
-    final end = start + 4;
-    if (start >= regularNews.length) return [];
-    if (end > regularNews.length) return regularNews.sublist(start);
-    return regularNews.sublist(start, end);
+    final start = (currentPage - 1) * itemsPerPage;
+    final end = start + itemsPerPage;
+    if (start >= filteredNews.length) return [];
+    if (end > filteredNews.length) return filteredNews.sublist(start);
+    return filteredNews.sublist(start, end);
   }
 }
 
@@ -79,12 +84,11 @@ class NoticiaNotifier extends Notifier<NoticiaState> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        final noticiasList = data.map((item) => Noticia.fromJson(item)).toList();
+        final noticiasList = data
+            .map((item) => Noticia.fromJson(item))
+            .toList();
 
-        state = state.copyWith(
-          isLoading: false,
-          noticias: noticiasList,
-        );
+        state = state.copyWith(isLoading: false, noticias: noticiasList);
       } else {
         throw Exception('Status code: ${response.statusCode}');
       }
@@ -97,7 +101,10 @@ class NoticiaNotifier extends Notifier<NoticiaState> {
   }
 
   void setSearchTerm(String term) {
-    state = state.copyWith(searchTerm: term, currentPage: 1); // Volta pra pág 1 ao pesquisar
+    state = state.copyWith(
+      searchTerm: term,
+      currentPage: 1,
+    ); // Volta pra pág 1 ao pesquisar
   }
 
   void setPage(int page) {

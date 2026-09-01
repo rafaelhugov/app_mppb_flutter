@@ -25,7 +25,7 @@ enum TipoAusencia {
       case TipoAusencia.licenca:
         return 'Licença Especial';
       case TipoAusencia.licencaEleitoral:
-        return 'Afastamento Eleiroral';
+        return 'Afastamento Eleitoral';
       case TipoAusencia.plantao:
         return 'Plantão';
       case TipoAusencia.diarias:

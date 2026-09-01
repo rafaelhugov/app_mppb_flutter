@@ -39,6 +39,55 @@ class ProcessoResumo {
   }
 }
 
+class ProcessoFiltroOption {
+  final String id;
+  final String label;
+
+  const ProcessoFiltroOption({
+    required this.id,
+    required this.label,
+  });
+
+  factory ProcessoFiltroOption.fromJson(Map<String, dynamic> json) {
+    return ProcessoFiltroOption(
+      id: json['id']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+    );
+  }
+}
+
+class ProcessoFiltros {
+  final List<ProcessoFiltroOption> comarcas;
+  final List<ProcessoFiltroOption> classes;
+  final List<ProcessoFiltroOption> tiposAtividade;
+  final List<ProcessoFiltroOption> status;
+
+  const ProcessoFiltros({
+    this.comarcas = const [],
+    this.classes = const [],
+    this.tiposAtividade = const [],
+    this.status = const [],
+  });
+
+  factory ProcessoFiltros.fromJson(Map<String, dynamic> json) {
+    return ProcessoFiltros(
+      comarcas: _parseOptions(json['comarcas']),
+      classes: _parseOptions(json['classes']),
+      tiposAtividade: _parseOptions(json['tiposAtividade']),
+      status: _parseOptions(json['status']),
+    );
+  }
+
+  static List<ProcessoFiltroOption> _parseOptions(dynamic value) {
+    if (value is! List) return const [];
+    return value
+        .whereType<Map<String, dynamic>>()
+        .map(ProcessoFiltroOption.fromJson)
+        .where((item) => item.id.isNotEmpty && item.label.isNotEmpty)
+        .toList(growable: false);
+  }
+}
+
 class Movimentacao {
   final String? tipo;
   final String? data;

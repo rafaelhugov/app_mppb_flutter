@@ -1,4 +1,4 @@
-package com.example.app_mppb_flutter
+package br.mp.mppbapp.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

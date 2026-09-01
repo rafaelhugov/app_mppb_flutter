@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/ui/main_layout.dart';
 import '../../models/ausencia_calendario.dart';
 import '../../models/solicitacao_concessao.dart';
 import '../../services/concessao_folga_service.dart';
@@ -34,6 +35,7 @@ class ConcessaoFolgaCalendar extends StatefulWidget {
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
   final VoidCallback onSelectMonth;
+  final void Function(DateTime)? onNavigateToMonth;
 
   const ConcessaoFolgaCalendar({
     super.key,
@@ -46,6 +48,7 @@ class ConcessaoFolgaCalendar extends StatefulWidget {
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onSelectMonth,
+    this.onNavigateToMonth,
   });
 
   @override
@@ -59,17 +62,22 @@ class _ConcessaoFolgaCalendarState extends State<ConcessaoFolgaCalendar> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (widget.errorMessage != null && widget.ausencias.isEmpty) {
-      return _ErrorState(
-        message: widget.errorMessage!,
-        onRetry: widget.onRetry,
-      );
-    }
+    // if (widget.errorMessage != null && widget.ausencias.isEmpty) {
+    //   return _ErrorState(
+    //     message: widget.errorMessage!,
+    //     onRetry: widget.onRetry,
+    //   );
+    // }
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MainLayout.contentBottomPadding(context),
+        ),
         children: [
           _CalendarGrid(
             mes: widget.mes,
@@ -85,7 +93,11 @@ class _ConcessaoFolgaCalendarState extends State<ConcessaoFolgaCalendar> {
               onRetry: widget.onRetry,
             ),
           ] else ...[
-            _SummaryPanel(mes: widget.mes, ausencias: widget.ausencias),
+            _SummaryPanel(
+              mes: widget.mes,
+              ausencias: widget.ausencias,
+              onSelectMonth: widget.onNavigateToMonth,
+            ),
           ],
         ],
       ),
@@ -112,11 +124,11 @@ class _NavButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(13),
           child: SizedBox(
-            width: 36,
-            height: 36,
-            child: Icon(icon, color: const Color(0xFFEDE2CF), size: 27),
+            width: 30,
+            height: 30,
+            child: Icon(icon, color: const Color(0xFF202322), size: 22),
           ),
         ),
       ),
@@ -175,14 +187,14 @@ class _CalendarGrid extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF241D19),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0x33111111)),
+        border: Border.all(color: const Color(0x26343A40)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x24432B1D),
-            blurRadius: 24,
-            offset: Offset(0, 12),
+            color: Color(0x14101828),
+            blurRadius: 18,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -204,9 +216,9 @@ class _CalendarGrid extends StatelessWidget {
                         mes,
                       ).replaceFirst(' de ', ' '),
                       style: const TextStyle(
-                        color: Color(0xFFF7EFE3),
+                        color: Color(0xFF202322),
                         fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -228,9 +240,9 @@ class _CalendarGrid extends StatelessWidget {
                       child: Text(
                         day,
                         style: const TextStyle(
-                          color: Color(0xFF9A8D80),
+                          color: Color(0xFF697370),
                           fontSize: 9,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -289,7 +301,7 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isInRange = rangeInfo.inRange;
-    final lineRadius = BorderRadius.horizontal(
+    final highlightRadius = BorderRadius.horizontal(
       left: rangeInfo.isStart ? const Radius.circular(999) : Radius.zero,
       right: rangeInfo.isEnd ? const Radius.circular(999) : Radius.zero,
     );
@@ -299,14 +311,14 @@ class _DayCell extends StatelessWidget {
       children: [
         if (isInRange)
           Positioned(
-            left: rangeInfo.isStart ? 12 : 0,
-            right: rangeInfo.isEnd ? 12 : 0,
-            bottom: 5,
-            child: Container(
-              height: 2.5,
+            left: rangeInfo.isStart ? 4 : -1,
+            right: rangeInfo.isEnd ? 4 : -1,
+            top: 2,
+            bottom: 4,
+            child: DecoratedBox(
               decoration: BoxDecoration(
                 color: rangeInfo.color,
-                borderRadius: lineRadius,
+                borderRadius: highlightRadius,
               ),
             ),
           ),
@@ -315,7 +327,7 @@ class _DayCell extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: const Color(0xFF8F2A1D),
+              color: const Color(0xFFD62828),
               shape: BoxShape.circle,
             ),
           ),
@@ -326,14 +338,18 @@ class _DayCell extends StatelessWidget {
               '${dia.day}',
               style: TextStyle(
                 color: _isToday
-                    ? const Color(0xFFFFF8EA)
+                    ? Colors.white
+                    : isInRange
+                    ? rangeInfo.color.computeLuminance() > 0.45
+                          ? const Color(0xFF202322)
+                          : Colors.white
                     : currentMonth
-                    ? const Color(0xFFEDE2CF)
-                    : const Color(0xFF756A60),
+                    ? const Color(0xFF202322)
+                    : const Color(0xFFB2BAB8),
                 fontSize: 11.5,
                 fontWeight: _isToday || isInRange
-                    ? FontWeight.w900
-                    : FontWeight.w700,
+                    ? FontWeight.w800
+                    : FontWeight.w500,
               ),
             ),
             const SizedBox(height: 5),
@@ -351,29 +367,106 @@ class _DayCell extends StatelessWidget {
 class _SummaryPanel extends StatelessWidget {
   final DateTime mes;
   final List<AusenciaCalendario> ausencias;
+  final Function(DateTime)? onSelectMonth;
 
-  const _SummaryPanel({required this.mes, required this.ausencias});
+  const _SummaryPanel({
+    required this.mes,
+    required this.ausencias,
+    this.onSelectMonth,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Only show events that overlap with this month
-    final primeiroDia = DateTime(mes.year, mes.month);
-    final ultimoDia = DateTime(mes.year, mes.month + 1, 0);
+    final today = normalizarData(DateTime.now());
+    final selectedStart = DateTime(mes.year, mes.month);
+    final selectedEnd = DateTime(mes.year, mes.month + 1, 0);
+    final currentMonth = DateTime(today.year, today.month);
+    final isCurrentMonth = selectedStart == currentMonth;
 
-    final relevantes = ausencias.where((a) {
-      return !a.fimNormalizado.isBefore(primeiroDia) &&
-          !a.inicioNormalizado.isAfter(ultimoDia);
-    }).toList();
+    final eventsInMonth = ausencias.where((a) => a.intersectaMes(mes)).toList()
+      ..sort((a, b) => a.inicioNormalizado.compareTo(b.inicioNormalizado));
 
+    final previousInCurrentMonth = isCurrentMonth
+        ? eventsInMonth.where((a) => a.fimNormalizado.isBefore(today)).toList()
+        : <AusenciaCalendario>[];
+    final activeMonthEvents = isCurrentMonth
+        ? eventsInMonth.where((a) => !a.fimNormalizado.isBefore(today)).toList()
+        : eventsInMonth;
+    final upcomingEvents =
+        ausencias
+            .where((a) => a.inicioNormalizado.isAfter(selectedEnd))
+            .toList()
+          ..sort((a, b) => a.inicioNormalizado.compareTo(b.inicioNormalizado));
+
+    final sections = <Widget>[
+      if (previousInCurrentMonth.isNotEmpty)
+        _EventSectionCard(
+          title: 'Eventos anteriores',
+          icon: Icons.history_rounded,
+          events: previousInCurrentMonth,
+          emptyMessage: '',
+          onSelectMonth: null,
+        ),
+      _EventSectionCard(
+        title: 'Eventos do mês',
+        icon: Icons.event_available_rounded,
+        events: activeMonthEvents,
+        emptyMessage:
+            'Nenhum evento em ${ConcessaoFolgaService.nomeMesAno(mes)}.',
+        onSelectMonth: null,
+      ),
+      _EventSectionCard(
+        title: 'Próximos eventos',
+        icon: Icons.list_alt_rounded,
+        events: upcomingEvents,
+        emptyMessage: 'Nenhum próximo evento agendado.',
+        onSelectMonth: onSelectMonth,
+        groupedByMonth: true,
+      ),
+    ];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < sections.length; i++) ...[
+          if (i == 0)
+            const SizedBox(height: 14)
+          else
+            const SizedBox(height: 12),
+          sections[i],
+        ],
+      ],
+    );
+  }
+}
+
+class _EventSectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<AusenciaCalendario> events;
+  final String emptyMessage;
+  final Function(DateTime)? onSelectMonth;
+  final bool groupedByMonth;
+
+  const _EventSectionCard({
+    required this.title,
+    required this.icon,
+    required this.events,
+    required this.emptyMessage,
+    required this.onSelectMonth,
+    this.groupedByMonth = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F0E5),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0x33936F52)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0x26343A40)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x18432B1D),
+            color: Color(0x14101828),
             blurRadius: 18,
             offset: Offset(0, 8),
           ),
@@ -383,7 +476,6 @@ class _SummaryPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Panel header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             child: Row(
@@ -391,39 +483,40 @@ class _SummaryPanel extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE9D8C2),
+                    color: const Color(0xFFF7F8F6),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0x33936F52)),
+                    border: Border.all(color: const Color(0x26343A40)),
                   ),
-                  child: const Icon(
-                    Icons.list_alt_rounded,
+                  child: Icon(
+                    icon,
                     size: 16,
                     color: ConcessaoFolgaColors.brand,
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Text(
-                  'Eventos do mês',
-                  style: TextStyle(
-                    color: ConcessaoFolgaColors.ink,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: ConcessaoFolgaColors.ink,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                if (relevantes.isNotEmpty)
+                if (events.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE9D8C2),
+                      color: const Color(0xFFF7F8F6),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0x33936F52)),
+                      border: Border.all(color: const Color(0x26343A40)),
                     ),
                     child: Text(
-                      '${relevantes.length}',
+                      '${events.length}',
                       style: const TextStyle(
                         color: ConcessaoFolgaColors.brand,
                         fontSize: 12,
@@ -434,50 +527,145 @@ class _SummaryPanel extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0x2673543E)),
-          if (relevantes.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 22, horizontal: 16),
+          const Divider(height: 1, color: Color(0x20343A40)),
+          if (events.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.event_busy_rounded,
                     size: 18,
                     color: ConcessaoFolgaColors.muted,
                   ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Nenhum evento neste mês',
-                    style: TextStyle(
-                      color: ConcessaoFolgaColors.muted,
-                      fontSize: 13,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      emptyMessage,
+                      style: const TextStyle(
+                        color: ConcessaoFolgaColors.muted,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
               ),
             )
+          else if (groupedByMonth)
+            _buildGroupedList(events)
           else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              itemCount: relevantes.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                return _SummaryItem(ausencia: relevantes[index], mes: mes);
-              },
-            ),
+            _buildPlainList(events),
         ],
       ),
+    );
+  }
+
+  Widget _buildPlainList(List<AusenciaCalendario> relevantes) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      itemCount: relevantes.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        return _SummaryItem(ausencia: relevantes[index], onTap: null);
+      },
+    );
+  }
+
+  Widget _buildGroupedList(List<AusenciaCalendario> relevantes) {
+    final groups = <String, List<AusenciaCalendario>>{};
+    for (final a in relevantes) {
+      DateTime groupDate = a.inicioNormalizado;
+      final key = '${groupDate.year}-${groupDate.month}';
+      groups.putIfAbsent(key, () => []).add(a);
+    }
+
+    final List<Widget> children = [];
+    final sortedKeys = groups.keys.toList()
+      ..sort((a, b) {
+        final aParts = a.split('-');
+        final bParts = b.split('-');
+        final aYear = int.parse(aParts[0]);
+        final aMonth = int.parse(aParts[1]);
+        final bYear = int.parse(bParts[0]);
+        final bMonth = int.parse(bParts[1]);
+        if (aYear != bYear) return aYear.compareTo(bYear);
+        return aMonth.compareTo(bMonth);
+      });
+
+    for (int i = 0; i < sortedKeys.length; i++) {
+      final key = sortedKeys[i];
+      final items = groups[key]!;
+      final parts = key.split('-');
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final monthName = ConcessaoFolgaService.nomeMesAno(
+        DateTime(year, month),
+      ).toUpperCase();
+
+      children.add(
+        Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: i == 0 ? 12 : 20,
+            bottom: 8,
+          ),
+          child: Text(
+            monthName,
+            style: const TextStyle(
+              color: ConcessaoFolgaColors.muted,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+      );
+
+      for (int j = 0; j < items.length; j++) {
+        children.add(
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              14,
+              0,
+              14,
+              j == items.length - 1 ? 0 : 8,
+            ),
+            child: _SummaryItem(
+              ausencia: items[j],
+              onTap: onSelectMonth != null
+                  ? () {
+                      onSelectMonth!(
+                        DateTime(
+                          items[j].inicioNormalizado.year,
+                          items[j].inicioNormalizado.month,
+                        ),
+                      );
+                    }
+                  : null,
+            ),
+          ),
+        );
+      }
+    }
+
+    children.add(const SizedBox(height: 14));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: children,
     );
   }
 }
 
 class _SummaryItem extends StatelessWidget {
   final AusenciaCalendario ausencia;
-  final DateTime mes;
+  final VoidCallback? onTap;
 
-  const _SummaryItem({required this.ausencia, required this.mes});
+  const _SummaryItem({required this.ausencia, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -492,93 +680,111 @@ class _SummaryItem extends StatelessWidget {
         dataInicio.day == dataFim.day;
     final duracao = dataFim.difference(dataInicio).inDays + 1;
     final eventColor = ausencia.tipo.color;
-    final cardColor = Color.lerp(const Color(0xFFFFF8EA), eventColor, 0.18)!;
-    final cardBorder = Color.lerp(cardColor, eventColor, 0.38)!;
-    final chipColor = Color.lerp(const Color(0xFFFFF8EA), eventColor, 0.10)!;
+    final onColor = eventColor.computeLuminance() > 0.45
+        ? const Color(0xFF202322)
+        : Colors.white;
+    final secondaryColor = eventColor.computeLuminance() > 0.45
+        ? const Color(0xD9202322)
+        : const Color(0xE6FFFFFF);
+    final chipColor = Colors.white.withValues(alpha: 0.18);
+    final chipBorder = Colors.white.withValues(alpha: 0.36);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-      decoration: BoxDecoration(
-        color: cardColor,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: eventColor.withAlpha(24),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 3),
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: eventColor,
-                shape: BoxShape.circle,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+          decoration: BoxDecoration(
+            color: eventColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: eventColor.withValues(alpha: 0.28),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ausencia.descricao,
-                  style: const TextStyle(
-                    color: ConcessaoFolgaColors.ink,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: onColor,
+                    shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  sameDay
-                      ? dateFormat.format(dataInicio)
-                      : '${dateFormat.format(dataInicio)} a ${dateFormat.format(dataFim)}',
-                  style: TextStyle(
-                    color: eventColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ausencia.descricao,
+                      style: TextStyle(
+                        color: onColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      sameDay
+                          ? dateFormat.format(dataInicio)
+                          : '${dateFormat.format(dataInicio)} a ${dateFormat.format(dataFim)}',
+                      style: TextStyle(
+                        color: onColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (ausencia.status?.isNotEmpty == true) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        ausencia.status!,
+                        style: TextStyle(color: secondaryColor, fontSize: 12),
+                      ),
+                    ],
+                  ],
                 ),
-                if (ausencia.status?.isNotEmpty == true) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    ausencia.status!,
-                    style: const TextStyle(
-                      color: ConcessaoFolgaColors.muted,
-                      fontSize: 12,
+              ),
+              if (onTap != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, top: 4),
+                  child: Icon(Icons.chevron_right, size: 20, color: onColor),
+                )
+              else
+                const SizedBox(width: 8),
+              if (onTap == null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: chipColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: chipBorder),
+                  ),
+                  child: Text(
+                    duracao == 1 ? '1 dia' : '$duracao dias',
+                    style: TextStyle(
+                      color: onColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                ],
-              ],
-            ),
+                ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            decoration: BoxDecoration(
-              color: chipColor,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: eventColor.withAlpha(170)),
-            ),
-            child: Text(
-              duracao == 1 ? '1 dia' : '$duracao dias',
-              style: TextStyle(
-                color: eventColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

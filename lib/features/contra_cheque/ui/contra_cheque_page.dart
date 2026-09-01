@@ -1,10 +1,15 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:printing/printing.dart';
+import '../../../core/ui/main_layout.dart';
 import '../providers/contra_cheque_provider.dart';
 import 'widgets/competencia_selector.dart';
 import 'widgets/grafico_contracheque.dart';
 import 'widgets/contracheque_lancamentos.dart';
+import '../../../core/ui/widgets/feature_header.dart';
 
 class ContraChequePage extends ConsumerWidget {
   const ContraChequePage({super.key});
@@ -14,138 +19,44 @@ class ContraChequePage extends ConsumerWidget {
     final state = ref.watch(contraChequeProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDED4C5),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromRGBO(82, 56, 41, 0.20),
-              Color.fromRGBO(82, 56, 41, 0),
-            ],
-            stops: [0.0, 0.3], // Aproximando o 240px
-          ),
-        ),
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: _buildHeader(),
+      backgroundColor: const Color(0xFFF7F8F6),
+      body: CustomScrollView(
+        slivers: [
+          const SliverToBoxAdapter(
+            child: FeatureHeader(
+              category: '',
+              title: 'Contracheque',
+              description: '',
+              icon: Icons.receipt_long,
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              sliver: SliverToBoxAdapter(
-                child: state.isLoading
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(40.0),
-                          child: CircularProgressIndicator(color: Color(0xFF8F2A1D)),
+          ),
+          if (!state.isLoading && state.competenciaSelecionada != null)
+            const SliverPersistentHeader(
+              pinned: true,
+              delegate: _CompetenciaHeaderDelegate(),
+            ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: MainLayout.authenticatedHorizontalPadding,
+              vertical: 8,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: state.isLoading
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40.0),
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF00A86B),
                         ),
-                      )
-                    : state.errorMessage != null
-                        ? _buildError(state.errorMessage!, ref)
-                        : _buildContent(state, context),
-              ),
-            ),
-            // Padding extra no final para o scroll não ficar colado
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 100),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        border: const Border(
-          bottom: BorderSide(color: Color.fromRGBO(214, 169, 47, 0.24)),
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color.fromRGBO(255, 221, 132, 0.14),
-            offset: Offset(0, -1),
-          ),
-        ],
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF241D19),
-            Color(0xFF3A241D),
-            Color(0xFF8F2A1D),
-          ],
-          stops: [0.0, 0.46, 1.0],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 44),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color.fromRGBO(255, 222, 142, 0.44)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(36, 18, 12, 0.30),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.receipt_long, color: Color(0xFF211713), size: 30),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'ÁREA FINANCEIRA',
-                  style: TextStyle(
-                    color: Color(0xFFE3C474),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.9,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Contracheque',
-                  style: TextStyle(
-                    color: Color(0xFFFFF8EA),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.22),
-                        blurRadius: 12,
-                        offset: Offset(0, 2),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 3),
-                const Text(
-                  'Visualize e baixe seus últimos contracheques.',
-                  style: TextStyle(
-                    color: Color(0xFFD8C5AA),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+                    )
+                  : state.errorMessage != null
+                  ? _buildError(state.errorMessage!, ref)
+                  : _buildContent(state, context),
             ),
+          ),
+          SliverToBoxAdapter(
+            child: SizedBox(height: MainLayout.contentBottomPadding(context)),
           ),
         ],
       ),
@@ -157,24 +68,26 @@ class ContraChequePage extends ConsumerWidget {
       if (state.competenciaSelecionada != null) {
         return Column(
           children: [
-            const CompetenciaSelector(),
-            const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7EFE3),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color.fromRGBO(156, 122, 84, 0.35)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFE9EDF0)),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.receipt_long, size: 54, color: Color(0xFF8F2A1D)),
+                  const Icon(
+                    Icons.receipt_long,
+                    size: 54,
+                    color: Color(0xFF00A86B),
+                  ),
                   const SizedBox(height: 12),
                   const Text(
                     'Nenhum contracheque encontrado para esta competência.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Color(0xFF73543E),
+                      color: Color(0xFF697370),
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                     ),
@@ -189,35 +102,43 @@ class ContraChequePage extends ConsumerWidget {
     }
 
     final cheque = state.contrachequeAtual!;
-    final proventos = cheque.lancamentos.where((l) => l.tipo == 'V').toList();
+    final vantagens = cheque.lancamentos.where((l) => l.tipo == 'V').toList();
     final descontos = cheque.lancamentos.where((l) => l.tipo == 'D').toList();
 
     return Column(
       children: [
-        const CompetenciaSelector(),
-        const SizedBox(height: 16),
         GraficoContracheque(
           totalVantagens: cheque.valorBruto, // ou calcular da soma
           totalDescontos: cheque.totalDescontos,
           salarioLiquido: cheque.valorLiquido,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         OutlinedButton.icon(
-          onPressed: () => _abrirPdf(context, cheque.linkPdf),
+          onPressed: () => _abrirPdf(
+            context,
+            cheque.linkPdf,
+            'contracheque-${cheque.mes}-${cheque.ano}.pdf',
+          ),
           icon: const Icon(Icons.file_download, size: 18),
           label: const Text('BAIXAR PDF'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF8F2A1D),
-            side: const BorderSide(color: Color.fromRGBO(143, 42, 29, 0.55), width: 1.5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+            foregroundColor: const Color(0xFF2563EB),
+            side: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
         const SizedBox(height: 22),
         if (cheque.lancamentos.isNotEmpty)
           ContrachequeLancamentos(
-            proventos: proventos,
+            vantagens: vantagens,
             descontos: descontos,
             totalVantagens: cheque.valorBruto, // Usando valor bruto como total
           ),
@@ -229,19 +150,19 @@ class ContraChequePage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7EFE3),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color.fromRGBO(143, 42, 29, 0.20)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE9EDF0)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error, color: Color(0xFF8F2A1D)),
+          const Icon(Icons.error, color: Color(0xFFD62828)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               error,
               style: const TextStyle(
-                color: Color(0xFF8F2A1D),
+                color: Color(0xFFD62828),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -251,7 +172,11 @@ class ContraChequePage extends ConsumerWidget {
     );
   }
 
-  Future<void> _abrirPdf(BuildContext context, String? linkPdf) async {
+  Future<void> _abrirPdf(
+    BuildContext context,
+    String? linkPdf,
+    String fileName,
+  ) async {
     if (linkPdf == null || linkPdf.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Link do PDF indisponível.')),
@@ -260,14 +185,193 @@ class ContraChequePage extends ConsumerWidget {
     }
 
     final url = Uri.parse(linkPdf);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível abrir o PDF.')),
+    final pdfFuture = Dio()
+        .getUri<List<int>>(
+          url,
+          options: Options(responseType: ResponseType.bytes),
+        )
+        .then((response) => Uint8List.fromList(response.data ?? const []));
+
+    if (!context.mounted) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+        return FractionallySizedBox(
+          heightFactor: 0.94,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7F8F6),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 10, 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0x33202322),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Text(
+                          'Contracheque',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Color(0xFF202322),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFF202322),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: FutureBuilder<Uint8List>(
+                    future: pdfFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF00A86B),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError ||
+                          snapshot.data == null ||
+                          snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text(
+                              'Não foi possível carregar o PDF.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF697370),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final pdfBytes = snapshot.data!;
+                      return Stack(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(bottom: bottomInset + 72),
+                            child: PdfPreview(
+                              build: (_) async => pdfBytes,
+                              canChangeOrientation: false,
+                              canChangePageFormat: false,
+                              canDebug: false,
+                              allowPrinting: false,
+                              allowSharing: false,
+                              pdfFileName: fileName,
+                              loadingWidget: const Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF00A86B),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: 16,
+                            right: 16,
+                            bottom: bottomInset + 12,
+                            child: SizedBox(
+                              height: 42,
+                              child: FilledButton(
+                                onPressed: () => Printing.sharePdf(
+                                  bytes: pdfBytes,
+                                  filename: fileName,
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF00A86B),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                child: const Text('Salvar PDF'),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
-      }
-    }
+      },
+    );
   }
+}
+
+class _CompetenciaHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _CompetenciaHeaderDelegate();
+
+  @override
+  double get minExtent => 62;
+
+  @override
+  double get maxExtent => 62;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return ColoredBox(
+      color: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          MainLayout.authenticatedHorizontalPadding,
+          6,
+          MainLayout.authenticatedHorizontalPadding,
+          4,
+        ),
+        child: const Align(
+          alignment: Alignment.center,
+          child: CompetenciaSelector(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _CompetenciaHeaderDelegate oldDelegate) => false;
 }

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/ui/main_layout.dart';
 import '../../models/concessao_folga.dart';
+import '../../models/operacao_solicitacao_concessao.dart';
+import '../../models/solicitacao_concessao.dart';
+import '../../models/sugestao_data_final.dart';
 import 'concessao_folga_card.dart';
 import 'concessao_folga_theme.dart';
 
@@ -10,6 +14,28 @@ class ConcessoesVigentesList extends StatelessWidget {
   final String? errorMessage;
   final VoidCallback onRetry;
   final Future<void> Function() onRefresh;
+  final Future<void> Function(
+    ConcessaoFolga concessao,
+    DateTime dataInicial,
+    int numeroDias,
+  )?
+  onSolicitar;
+  final Future<List<SugestaoDataFinal>> Function(
+    ConcessaoFolga concessao,
+    DateTime dataInicial,
+  )?
+  onBuscarSugestoes;
+  final Future<List<OperacaoSolicitacaoConcessao>> Function(
+    SolicitacaoConcessao solicitacao,
+  )?
+  onBuscarOperacoes;
+  final Future<void> Function(
+    SolicitacaoConcessao solicitacao,
+    OperacaoSolicitacaoConcessao operacao, {
+    DateTime? data,
+    DateTime? dataFim,
+  })?
+  onExecutarOperacao;
 
   const ConcessoesVigentesList({
     super.key,
@@ -18,6 +44,10 @@ class ConcessoesVigentesList extends StatelessWidget {
     this.errorMessage,
     required this.onRetry,
     required this.onRefresh,
+    this.onSolicitar,
+    this.onBuscarSugestoes,
+    this.onBuscarOperacoes,
+    this.onExecutarOperacao,
   });
 
   @override
@@ -33,7 +63,12 @@ class ConcessoesVigentesList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MainLayout.contentBottomPadding(context),
+        ),
         children: [
           if (errorMessage != null)
             _InlineError(message: errorMessage!, onRetry: onRetry),
@@ -41,7 +76,13 @@ class ConcessoesVigentesList extends StatelessWidget {
             const _EmptyState()
           else
             ...concessoes.map(
-              (concessao) => ConcessaoFolgaCard(concessao: concessao),
+              (concessao) => ConcessaoFolgaCard(
+                concessao: concessao,
+                onSolicitar: onSolicitar,
+                onBuscarSugestoes: onBuscarSugestoes,
+                onBuscarOperacoes: onBuscarOperacoes,
+                onExecutarOperacao: onExecutarOperacao,
+              ),
             ),
         ],
       ),

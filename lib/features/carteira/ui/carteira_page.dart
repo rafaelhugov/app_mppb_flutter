@@ -12,6 +12,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:local_auth/local_auth.dart';
+import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/carteira_provider.dart';
 import '../models/usuario_carteira.dart';
 
@@ -212,10 +214,22 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
             physics: const BouncingScrollPhysics(),
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
+                padding: EdgeInsets.fromLTRB(
+                  0,
+                  MainLayout.authenticatedContentTopPadding(context),
+                  0,
+                  MainLayout.contentBottomPadding(context),
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const HeroHeaderPublico(
+                      label: '',
+                      title: 'Carteira Funcional',
+                      subtitle: '',
+                      icon: Icons.badge_rounded,
+                    ),
+                    const SizedBox(height: 10),
                     GestureDetector(
                       onTap: _flipCard,
                       child: AnimatedBuilder(
@@ -259,21 +273,18 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
                         _isExportingPdf ? 'GERANDO PDF' : 'BAIXAR PDF',
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF8F2A1D),
-                        side: const BorderSide(
-                          color: Color.fromRGBO(143, 42, 29, 0.55),
-                          width: 1.5,
-                        ),
+                        foregroundColor: const Color(0xFFD62828),
+                        side: const BorderSide(color: Color(0xBFD62828)),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 18,
-                          vertical: 12,
+                          vertical: 10,
                         ),
                         textStyle: const TextStyle(
                           fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
                         ),
                       ),
@@ -286,7 +297,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
         : const Center(child: Text('Nenhum dado encontrado'));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEBE3D7), // Cor de fundo do screenshot
+      backgroundColor: const Color(0xFFF7F8F6),
       body: Stack(
         clipBehavior: Clip.none,
         children: [

@@ -18,6 +18,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _usuarioController = TextEditingController();
   final _senhaController = TextEditingController();
   bool _biometricsEnabled = false;
+  bool _obscurePassword = true;
+  bool _autoBiometricPrompted = false;
 
   @override
   void initState() {
@@ -30,12 +32,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _checkBiometricLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
     final isEnabled = await secureStorage.read(key: 'biometrics_enabled');
-    if (isEnabled == 'true') {
+    final savedUsername = await secureStorage.read(key: 'saved_username');
+    final savedPassword = await secureStorage.read(key: 'saved_password');
+    final canUseBiometrics =
+        isEnabled == 'true' && savedUsername != null && savedPassword != null;
+
+    if (canUseBiometrics && mounted) {
       setState(() => _biometricsEnabled = true);
+
+      if (!_autoBiometricPrompted) {
+        _autoBiometricPrompted = true;
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+        if (mounted) {
+          await _doBiometricLogin(showFailureSnack: false);
+        }
+      }
     }
   }
 
-  Future<void> _doBiometricLogin() async {
+  Future<void> _doBiometricLogin({bool showFailureSnack = true}) async {
     final localAuth = LocalAuthentication();
     final bool authenticated;
     try {
@@ -45,7 +60,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         persistAcrossBackgrounding: true,
       );
     } on MissingPluginException {
-      if (mounted) {
+      if (mounted && showFailureSnack) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Biometria não disponível nesta plataforma.'),
@@ -55,7 +70,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
       return;
     } catch (_) {
-      if (mounted) {
+      if (mounted && showFailureSnack) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Não foi possível autenticar por biometria.'),
@@ -70,15 +85,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final success = await ref
           .read(authProvider.notifier)
           .loginWithSavedCredentials();
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bem-vindo(a)!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // O app_router fará o redirecionamento automaticamente.
-      } else if (mounted) {
+      if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -105,14 +112,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         .read(authProvider.notifier)
         .login(_usuarioController.text.trim(), _senhaController.text);
 
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bem-vindo(a)!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
+    if (!success || !mounted) {
+      return;
     }
   }
 
@@ -125,9 +126,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFF202322),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -139,63 +140,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
       body: Stack(
         children: [
-          // Background Color
-          Container(color: const Color(0xFF1A1717)),
-
-          // Subtle Reddish Radial Gradient (Top Left)
-          Positioned(
-            top: -100,
-            left: -50,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Color(0x26C83232),
-                    Colors.transparent,
-                  ], // rgba(200, 50, 50, 0.15)
-                ),
-              ),
-            ),
-          ),
-
-          // Subtle Golden/Orange Radial Gradient (Bottom Right)
-          Positioned(
-            bottom: -50,
-            right: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Color(0x1AC89632),
-                    Colors.transparent,
-                  ], // rgba(200, 150, 50, 0.1)
-                ),
-              ),
-            ),
-          ),
+          Container(color: const Color(0xFFF7F8F6)),
 
           SafeArea(
-            child: Center(
+            child: Align(
+              alignment: Alignment.topCenter,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.fromLTRB(22, 52, 22, 24),
                 child: Container(
                   width: double.infinity,
                   constraints: const BoxConstraints(maxWidth: 360),
                   decoration: BoxDecoration(
-                    color: const Color(0xE6111111),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0x243C332A)),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFE9EDF0)),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x80000000), // #00000080
-                        blurRadius: 60,
-                        offset: Offset(0, 30),
+                        color: Color(0x14101828),
+                        blurRadius: 20,
+                        offset: Offset(0, 8),
                       ),
                     ],
                   ),
@@ -208,72 +171,85 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // MPPB Brasão
                             Image.asset(
                               'assets/images/brasao_mppb_sem_fundo.png',
-                              width: 80,
-                              height: 80,
+                              width: 68,
+                              height: 68,
                               errorBuilder: (context, error, stackTrace) =>
                                   const Icon(
                                     Icons.shield,
-                                    color: Color(0xFFC5A059),
-                                    size: 80,
+                                    color: Color(0xFFD62828),
+                                    size: 62,
                                   ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
 
-                            // Titles
                             const Text(
-                              'MPPB VIRTUAL',
+                              'MPPB+',
                               style: TextStyle(
-                                fontFamily:
-                                    'Montserrat', // Assumindo que a fonte está no pubspec. Se não, o flutter usa a default.
                                 fontSize: 24,
-                                color: Colors.white,
-                                letterSpacing: 2.0,
+                                color: Color(0xFF202322),
+                                fontWeight: FontWeight.w700,
+                                height: 1,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 7),
                             const Text(
                               'ACESSO RESTRITO',
                               style: TextStyle(
-                                color: Color(0xFFC5A059),
-                                fontWeight: FontWeight.w500,
+                                color: Color(0xFFD62828),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
                                 letterSpacing: 0.5,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 48),
+                            const SizedBox(height: 32),
 
-                            // Usuário Input
                             TextFormField(
                               controller: _usuarioController,
-                              style: const TextStyle(color: Colors.white),
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              textCapitalization: TextCapitalization.none,
+                              keyboardType: TextInputType.visiblePassword,
+                              style: const TextStyle(
+                                color: Color(0xFF202322),
+                                fontSize: 15,
+                              ),
                               decoration: InputDecoration(
                                 labelText: 'Usuário',
                                 labelStyle: const TextStyle(
-                                  color: Colors.white70,
+                                  color: Color(0xFF697370),
                                 ),
                                 prefixIcon: const Icon(
                                   Icons.person,
-                                  color: Colors.white,
+                                  color: Color(0xFF697370),
+                                  size: 20,
                                 ),
                                 filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.08),
+                                fillColor: const Color(0xFFF7F8F6),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE9EDF0),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE9EDF0),
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(15),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFFC5A059),
-                                    width: 2,
+                                    color: Color(0xFFD62828),
+                                    width: 1.2,
                                   ),
                                 ),
                               ),
@@ -284,37 +260,65 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 14),
 
-                            // Senha Input
                             TextFormField(
                               controller: _senhaController,
-                              obscureText: true,
-                              style: const TextStyle(color: Colors.white),
+                              obscureText: _obscurePassword,
+                              style: const TextStyle(
+                                color: Color(0xFF202322),
+                                fontSize: 15,
+                              ),
                               decoration: InputDecoration(
                                 labelText: 'Senha',
                                 labelStyle: const TextStyle(
-                                  color: Colors.white70,
+                                  color: Color(0xFF697370),
                                 ),
                                 prefixIcon: const Icon(
                                   Icons.lock,
-                                  color: Colors.white,
+                                  color: Color(0xFF697370),
+                                  size: 20,
+                                ),
+                                suffixIcon: IconButton(
+                                  tooltip: _obscurePassword
+                                      ? 'Mostrar senha'
+                                      : 'Ocultar senha',
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                    color: const Color(0xFF697370),
+                                    size: 20,
+                                  ),
                                 ),
                                 filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.08),
+                                fillColor: const Color(0xFFF7F8F6),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE9EDF0),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE9EDF0),
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(15),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFFC5A059),
-                                    width: 2,
+                                    color: Color(0xFFD62828),
+                                    width: 1.2,
                                   ),
                                 ),
                               ),
@@ -325,21 +329,53 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 48),
+                            const SizedBox(height: 28),
 
-                            // Submit Button
+                            if (_biometricsEnabled) ...[
+                              SizedBox(
+                                width: double.infinity,
+                                height: 46,
+                                child: OutlinedButton.icon(
+                                  onPressed: authState.isLoading
+                                      ? null
+                                      : _doBiometricLogin,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF202322),
+                                    side: const BorderSide(
+                                      color: Color(0xFFDDE4DF),
+                                    ),
+                                    backgroundColor: const Color(0xFFF7F8F6),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.fingerprint_rounded,
+                                    color: Color(0xFFD62828),
+                                    size: 21,
+                                  ),
+                                  label: const Text('Acessar com biometria'),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                            ],
+
                             SizedBox(
                               width: double.infinity,
-                              height: 56,
+                              height: 46,
                               child: ElevatedButton(
                                 onPressed: authState.isLoading
                                     ? null
                                     : _fazerLogin,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF7A1B1B),
+                                  backgroundColor: const Color(0xFFD62828),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(999),
                                   ),
                                   elevation: 0,
                                 ),
@@ -350,32 +386,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     : const Text(
                                         'ACESSAR',
                                         style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
                                           letterSpacing: 0.5,
                                         ),
                                       ),
                               ),
                             ),
-
-                            if (_biometricsEnabled) ...[
-                              const SizedBox(height: 16),
-                              TextButton.icon(
-                                onPressed: _doBiometricLogin,
-                                icon: const Icon(
-                                  Icons.fingerprint,
-                                  color: Color(0xFFC5A059),
-                                  size: 28,
-                                ),
-                                label: const Text(
-                                  'Acessar com Biometria',
-                                  style: TextStyle(
-                                    color: Color(0xFFC5A059),
-                                    fontSize: 16,
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 42,
+                              child: OutlinedButton(
+                                onPressed: authState.isLoading
+                                    ? null
+                                    : () => context.go('/'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF697370),
+                                  side: const BorderSide(
+                                    color: Color(0xFFE0E5E3),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                                child: const Text('Cancelar'),
                               ),
-                            ],
+                            ),
 
                             if (authState.errorMessage != null)
                               Padding(
@@ -384,15 +425,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xCCBA1A1A,
-                                    ), // rgba(186, 26, 26, 0.8)
-                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0x14D62828),
+                                    border: Border.all(
+                                      color: const Color(0x33D62828),
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Text(
                                     authState.errorMessage!,
                                     style: const TextStyle(
-                                      color: Color(0xFFFFDAD6),
+                                      color: Color(0xFFD62828),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

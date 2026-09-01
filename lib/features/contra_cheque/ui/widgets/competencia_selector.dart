@@ -25,89 +25,100 @@ class CompetenciaSelector extends ConsumerWidget {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
+        constraints: const BoxConstraints(maxWidth: 280),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFBF4).withAlpha(242),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0x66FFFFFF), width: 1.2),
+            color: const Color(0xFF202322),
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(color: const Color(0x66FFFFFF)),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x263A241D),
-                blurRadius: 22,
-                offset: Offset(0, 10),
-              ),
-              BoxShadow(
-                color: Color(0x99FFFFFF),
-                blurRadius: 10,
-                offset: Offset(0, -3),
+                color: Color(0x2A101828),
+                blurRadius: 14,
+                offset: Offset(0, 5),
               ),
             ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _buildNavButton(
-                icon: Icons.chevron_left_rounded,
-                enabled: hasOlder,
-                onTap: () {
-                  ref
-                      .read(contraChequeProvider.notifier)
-                      .selecionarMesAnterior();
-                },
+              const SizedBox(
+                height: 2,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: Color(0xFFFFFFFF)),
+                ),
               ),
-              Expanded(
-                child: InkWell(
-                  onTap: () => _showCompetenciaModal(context, ref, state),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(5, 3, 5, 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildNavButton(
+                      icon: Icons.chevron_left_rounded,
+                      enabled: hasOlder,
+                      onTap: () {
+                        ref
+                            .read(contraChequeProvider.notifier)
+                            .selecionarMesAnterior();
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 200,
+                      child: InkWell(
+                        onTap: () => _showCompetenciaModal(context, ref, state),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 13,
-                              color: Color(0xFF8F2A1D),
+                          children: [
+                            const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 10,
+                                  color: Color(0xFFF4F7F4),
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'MÊS DE REFERÊNCIA',
+                                  style: TextStyle(
+                                    color: Color(0xFFDDE4DF),
+                                    fontSize: 7,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0,
+                                    height: 1,
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(height: 3),
                             Text(
-                              'MÊS DE REFERÊNCIA',
-                              style: TextStyle(
-                                color: Color(0xFF8F6A4A),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5,
+                              '$mesCapitalized ${selected.ano}',
+                              style: const TextStyle(
+                                color: Color(0xFFFFFFFF),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                height: 1,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$mesCapitalized ${selected.ano}',
-                          style: const TextStyle(
-                            color: Color(0xFF2F2923),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    _buildNavButton(
+                      icon: Icons.chevron_right_rounded,
+                      enabled: hasNewer,
+                      onTap: () {
+                        ref
+                            .read(contraChequeProvider.notifier)
+                            .selecionarProximoMes();
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              _buildNavButton(
-                icon: Icons.chevron_right_rounded,
-                enabled: hasNewer,
-                onTap: () {
-                  ref
-                      .read(contraChequeProvider.notifier)
-                      .selecionarProximoMes();
-                },
               ),
             ],
           ),
@@ -125,15 +136,24 @@ class CompetenciaSelector extends ConsumerWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(13),
         child: Container(
-          width: 40,
-          height: 40,
+          width: 28,
+          height: 28,
           alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: enabled ? const Color(0xFFF1F3F5) : const Color(0x33F1F3F5),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: enabled
+                  ? const Color(0xFFD7DEDA)
+                  : const Color(0x44D7DEDA),
+            ),
+          ),
           child: Icon(
             icon,
-            color: enabled ? const Color(0xFF73543E) : const Color(0x4773543E),
-            size: 22,
+            color: enabled ? const Color(0xFF202322) : const Color(0x77FFFFFF),
+            size: 16,
           ),
         ),
       ),
@@ -148,6 +168,7 @@ class CompetenciaSelector extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return _CompetenciaModal(state: state, ref: ref);
@@ -156,24 +177,40 @@ class CompetenciaSelector extends ConsumerWidget {
   }
 }
 
-class _CompetenciaModal extends StatelessWidget {
+class _CompetenciaModal extends StatefulWidget {
   final ContraChequeState state;
   final WidgetRef ref;
 
   const _CompetenciaModal({required this.state, required this.ref});
 
   @override
-  Widget build(BuildContext context) {
-    // Agrupar competências por ano
-    final Map<int, List<Competencia>> byYear = {};
-    for (var c in state.competencias) {
+  State<_CompetenciaModal> createState() => _CompetenciaModalState();
+}
+
+class _CompetenciaModalState extends State<_CompetenciaModal> {
+  late int selectedYear;
+  late Map<int, List<Competencia>> byYear;
+  late List<int> sortedYears;
+
+  @override
+  void initState() {
+    super.initState();
+    byYear = {};
+    for (var c in widget.state.competencias) {
       if (!byYear.containsKey(c.ano)) {
         byYear[c.ano] = [];
       }
       byYear[c.ano]!.add(c);
     }
-    final sortedYears = byYear.keys.toList()..sort((a, b) => b.compareTo(a));
+    sortedYears = byYear.keys.toList()..sort((a, b) => b.compareTo(a));
 
+    selectedYear =
+        widget.state.competenciaSelecionada?.ano ??
+        (sortedYears.isNotEmpty ? sortedYears.first : DateTime.now().year);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final mesesNomes = [
       'Jan',
       'Fev',
@@ -191,7 +228,7 @@ class _CompetenciaModal extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFFFFFBF4),
+        color: Color(0xFFF7F8F6),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
@@ -208,7 +245,7 @@ class _CompetenciaModal extends StatelessWidget {
               const Text(
                 'Selecionar Competência',
                 style: TextStyle(
-                  color: Color(0xFF2F2923),
+                  color: Color(0xFF202322),
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
@@ -220,12 +257,12 @@ class _CompetenciaModal extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1EBE1),
+                    color: const Color(0xFFE9EDF0),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.close,
-                    color: Color(0xFF5A4434),
+                    color: Color(0xFF202322),
                     size: 20,
                   ),
                 ),
@@ -234,95 +271,113 @@ class _CompetenciaModal extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          ...sortedYears.map((year) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+          if (sortedYears.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE9EDF0)),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: selectedYear,
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFF202322),
                   ),
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  style: const TextStyle(
+                    color: Color(0xFF202322),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  onChanged: (int? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        selectedYear = newValue;
+                      });
+                    }
+                  },
+                  items: sortedYears.map<DropdownMenuItem<int>>((int year) {
+                    return DropdownMenuItem<int>(
+                      value: year,
+                      child: Text(year.toString()),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 20),
+
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 2.0,
+            ),
+            itemCount: 12,
+            itemBuilder: (ctx, idx) {
+              final mes = idx + 1;
+              final String mesLabel = mesesNomes[idx];
+
+              final isAvailable =
+                  byYear[selectedYear]?.any((c) => c.mes == mes) ?? false;
+              final isSelected =
+                  widget.state.competenciaSelecionada?.ano == selectedYear &&
+                  widget.state.competenciaSelecionada?.mes == mes;
+
+              Color bgColor = Colors.white;
+              Color textColor = const Color(0xFFB0B8B4);
+              FontWeight fontWeight = FontWeight.w600;
+              Border? border = Border.all(color: const Color(0xFFE9EDF0));
+
+              if (isSelected) {
+                bgColor = const Color(0xFFD62828);
+                textColor = Colors.white;
+                fontWeight = FontWeight.w800;
+                border = null;
+              } else if (isAvailable) {
+                textColor = const Color(0xFF202322);
+                fontWeight = FontWeight.w800;
+              }
+
+              return InkWell(
+                onTap: isAvailable
+                    ? () {
+                        widget.ref
+                            .read(contraChequeProvider.notifier)
+                            .buscarContracheque(
+                              Competencia(mes: mes, ano: selectedYear),
+                            );
+                        Navigator.pop(context);
+                      }
+                    : null,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8F2A1D),
+                    color: bgColor,
                     borderRadius: BorderRadius.circular(8),
+                    border: border,
                   ),
                   child: Text(
-                    year.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
+                    mesLabel,
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: fontWeight,
+                      fontSize: 13,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 2.0,
-                  ),
-                  itemCount: 12,
-                  itemBuilder: (ctx, idx) {
-                    final mes = idx + 1;
-                    final String mesLabel = mesesNomes[idx];
-
-                    final isAvailable = byYear[year]!.any((c) => c.mes == mes);
-                    final isSelected =
-                        state.competenciaSelecionada?.ano == year &&
-                        state.competenciaSelecionada?.mes == mes;
-
-                    Color bgColor = const Color(0xFFF6EFE6);
-                    Color textColor = const Color(0xFFC4B8A9);
-                    FontWeight fontWeight = FontWeight.w600;
-
-                    if (isSelected) {
-                      bgColor = const Color(0xFF8F2A1D);
-                      textColor = Colors.white;
-                      fontWeight = FontWeight.w800;
-                    } else if (isAvailable) {
-                      textColor = const Color(0xFF5A4434);
-                      fontWeight = FontWeight.w800;
-                    }
-
-                    return InkWell(
-                      onTap: isAvailable
-                          ? () {
-                              ref
-                                  .read(contraChequeProvider.notifier)
-                                  .buscarContracheque(
-                                    Competencia(mes: mes, ano: year),
-                                  );
-                              Navigator.pop(context);
-                            }
-                          : null,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: bgColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          mesLabel,
-                          style: TextStyle(
-                            color: textColor,
-                            fontWeight: fontWeight,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-              ],
-            );
-          }),
+              );
+            },
+          ),
         ],
       ),
     );

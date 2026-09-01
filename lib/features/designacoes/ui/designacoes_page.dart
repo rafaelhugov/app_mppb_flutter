@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/widgets/hero_header_publico.dart';
 
 import '../../concessao_folga/ui/widgets/concessao_folga_theme.dart';
 import '../models/designacao_ativa.dart';
@@ -14,10 +16,10 @@ class DesignacoesPage extends ConsumerWidget {
     final notifier = ref.read(designacoesProvider.notifier);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDED4C5),
+      backgroundColor: const Color(0xFFF7F8F6),
       body: Column(
         children: [
-          _Header(tipoUsuario: state.tipoUsuario),
+          const _Header(),
           Expanded(
             child: _DesignacoesList(
               designacoes: state.designacoes,
@@ -34,110 +36,15 @@ class DesignacoesPage extends ConsumerWidget {
 }
 
 class _Header extends StatelessWidget {
-  final String tipoUsuario;
-
-  const _Header({required this.tipoUsuario});
+  const _Header();
 
   @override
   Widget build(BuildContext context) {
-    final perfil = switch (tipoUsuario) {
-      'MEMBRO' => 'Membro',
-      'SERVIDOR' => 'Servidor',
-      _ => 'Membro ou Servidor',
-    };
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 44),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0x3DD6A92F), width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: Color.fromRGBO(255, 221, 132, 0.14),
-            offset: Offset(0, -1),
-          ),
-        ],
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF241D19), Color(0xFF3A241D), Color(0xFF8F2A1D)],
-          stops: [0.0, 0.46, 1.0],
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE5B84C), Color(0xFFA96A1D)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color.fromRGBO(255, 222, 142, 0.44),
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(36, 18, 12, 0.30),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.assignment_ind,
-              color: Color(0xFF211713),
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'MINISTÉRIO PÚBLICO DA PARAÍBA',
-                  style: TextStyle(
-                    color: Color(0xFFE3C474),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.9,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Designações Ativas',
-                  style: TextStyle(
-                    color: Color(0xFFFFF8EA),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.22),
-                        blurRadius: 12,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  perfil,
-                  style: const TextStyle(
-                    color: Color(0xFFD8C5AA),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return const HeroHeaderPublico(
+      label: '',
+      title: 'Designações Ativas',
+      subtitle: '',
+      icon: Icons.assignment_ind,
     );
   }
 }
@@ -171,7 +78,12 @@ class _DesignacoesList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MainLayout.contentBottomPadding(context),
+        ),
         children: [
           if (errorMessage != null)
             _InlineError(message: errorMessage!, onRetry: onRetry),
@@ -206,15 +118,35 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalized = title.toLowerCase();
+    final isLotacao = normalized.contains('lota');
+    final isFuncao = normalized.contains('fun');
+    final icon = isLotacao
+        ? Icons.home_rounded
+        : isFuncao
+        ? Icons.work_rounded
+        : Icons.assignment_ind_rounded;
+    final color = isLotacao
+        ? const Color(0xFFFFC400)
+        : isFuncao
+        ? const Color(0xFF1769FF)
+        : const Color(0xFF697370);
+
     return Padding(
-      padding: const EdgeInsets.only(left: 2, top: 8, bottom: 10),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Color(0xFF2F2923),
-          fontSize: 15,
-          fontWeight: FontWeight.w900,
-        ),
+      padding: const EdgeInsets.only(left: 2, top: 10, bottom: 10),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF202322),
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -330,20 +262,34 @@ class _DesignacaoSolidContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      constraints: const BoxConstraints(minHeight: 168),
       decoration: BoxDecoration(
         color: category.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: category.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12432B1D),
+            color: Color(0x10101828),
             blurRadius: 18,
             offset: Offset(0, 8),
           ),
         ],
       ),
-      child: child,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          Positioned(
+            right: -34,
+            top: -34,
+            child: Icon(
+              category.icon,
+              color: category.backgroundIconColor,
+              size: 132,
+            ),
+          ),
+          Padding(padding: const EdgeInsets.all(14), child: child),
+        ],
+      ),
     );
   }
 }
@@ -356,16 +302,18 @@ class _DesignacaoCardTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Flexible(
-          child: Container(
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        alignment: WrapAlignment.start,
+        spacing: 8,
+        runSpacing: 6,
+        children: [
+          Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: category.chipBackground,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: category.border),
             ),
             child: Text(
               label,
@@ -374,30 +322,28 @@ class _DesignacaoCardTopBar extends StatelessWidget {
                 color: category.textOnChip,
                 fontSize: 11,
                 height: 1.1,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: category.badgeBackground,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: category.badgeBorder),
-          ),
-          child: Text(
-            'Ativa',
-            style: TextStyle(
-              color: category.badgeText,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              height: 1,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+            decoration: BoxDecoration(
+              color: category.badgeBackground,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              'Ativa',
+              style: TextStyle(
+                color: category.badgeText,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -416,52 +362,72 @@ class _DesignacaoIdentity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasSubtitle = subtitulo != null && subtitulo!.trim().isNotEmpty;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: category.iconBackground,
-            shape: BoxShape.circle,
-            border: Border.all(color: category.border),
+    final titleText = _capitalizeText(titulo);
+    final subtitleText = hasSubtitle ? _capitalizeText(subtitulo!.trim()) : '';
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, right: 68),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titleText,
+            softWrap: true,
+            style: TextStyle(
+              color: category.titleColor,
+              fontSize: 14.2,
+              fontWeight: FontWeight.w700,
+              height: 1.24,
+            ),
           ),
-          child: Icon(category.icon, color: category.iconColor, size: 22),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                titulo,
-                softWrap: true,
-                style: TextStyle(
-                  color: category.titleColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
-                ),
+          if (hasSubtitle) ...[
+            const SizedBox(height: 6),
+            Text(
+              subtitleText,
+              softWrap: true,
+              style: TextStyle(
+                color: category.subtitleColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                height: 1.3,
               ),
-              if (hasSubtitle) ...[
-                const SizedBox(height: 4),
-                Text(
-                  subtitulo!.trim(),
-                  softWrap: true,
-                  style: TextStyle(
-                    color: category.subtitleColor,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        ],
+      ),
     );
+  }
+
+  static String _capitalizeText(String value) {
+    final smallWords = <String>{
+      'a',
+      'as',
+      'ao',
+      'aos',
+      'da',
+      'das',
+      'de',
+      'do',
+      'dos',
+      'e',
+      'em',
+      'na',
+      'nas',
+      'no',
+      'nos',
+      'por',
+      'para',
+    };
+    final words = value.trim().toLowerCase().split(RegExp(r'\s+'));
+    return words
+        .asMap()
+        .entries
+        .map((entry) {
+          final word = entry.value;
+          if (word.isEmpty) return word;
+          if (entry.key > 0 && smallWords.contains(word)) return word;
+          return word[0].toUpperCase() + word.substring(1);
+        })
+        .join(' ');
   }
 }
 
@@ -474,22 +440,52 @@ class _DesignacaoMetadataGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final twoColumns = constraints.maxWidth >= 360 && items.length > 1;
-        final itemWidth = twoColumns
-            ? (constraints.maxWidth - 8) / 2
-            : constraints.maxWidth;
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: items
-              .map(
-                (item) => SizedBox(
-                  width: itemWidth,
-                  child: _DesignacaoMetadataItem(item: item),
+        final twoColumns = constraints.maxWidth >= 260 && items.length > 1;
+        if (!twoColumns) {
+          return Column(
+            children: items
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _DesignacaoMetadataItem(item: item),
+                  ),
+                )
+                .toList(),
+          );
+        }
+
+        final rows = <Widget>[];
+        for (var index = 0; index < items.length; index += 2) {
+          final secondIndex = index + 1;
+          rows.add(
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: secondIndex + 1 < items.length ? 8 : 0,
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _DesignacaoMetadataItem(item: items[index]),
+                    ),
+                    const SizedBox(width: 8),
+                    if (secondIndex < items.length)
+                      Expanded(
+                        child: _DesignacaoMetadataItem(
+                          item: items[secondIndex],
+                        ),
+                      )
+                    else
+                      const Spacer(),
+                  ],
                 ),
-              )
-              .toList(),
-        );
+              ),
+            ),
+          );
+        }
+
+        return Column(children: rows);
       },
     );
   }
@@ -503,8 +499,8 @@ class _DesignacaoMetadataItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 44),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
         color: item.background,
         borderRadius: BorderRadius.circular(10),
@@ -524,19 +520,19 @@ class _DesignacaoMetadataItem extends StatelessWidget {
                   style: TextStyle(
                     color: item.labelColor,
                     fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     height: 1,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 5),
                 Text(
                   item.value,
                   softWrap: true,
                   style: TextStyle(
                     color: item.valueColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
+                    fontSize: 11.2,
+                    fontWeight: FontWeight.w500,
+                    height: 1.18,
                   ),
                 ),
               ],
@@ -578,8 +574,6 @@ class _DesignacaoCategoryStyle {
   final Color subtitleColor;
   final Color chipBackground;
   final Color textOnChip;
-  final Color iconBackground;
-  final Color iconColor;
   final Color metadataBackground;
   final Color metadataBorder;
   final Color metadataLabelColor;
@@ -587,6 +581,7 @@ class _DesignacaoCategoryStyle {
   final Color badgeBackground;
   final Color badgeBorder;
   final Color badgeText;
+  final Color backgroundIconColor;
   final IconData icon;
 
   const _DesignacaoCategoryStyle({
@@ -597,8 +592,6 @@ class _DesignacaoCategoryStyle {
     required this.subtitleColor,
     required this.chipBackground,
     required this.textOnChip,
-    required this.iconBackground,
-    required this.iconColor,
     required this.metadataBackground,
     required this.metadataBorder,
     required this.metadataLabelColor,
@@ -606,76 +599,89 @@ class _DesignacaoCategoryStyle {
     required this.badgeBackground,
     required this.badgeBorder,
     required this.badgeText,
+    required this.backgroundIconColor,
     required this.icon,
   });
 
   factory _DesignacaoCategoryStyle.from(String categoria) {
     final normalized = categoria.toLowerCase();
-    const institutionalBlack = Color(0xFF241D19);
-    const cream = Color(0xFFF7EFE3);
-    const inkMuted = Color(0xFF73543E);
-    const accentGold = Color(0xFFA96A1D);
-    const accentRed = Color(0xFF8F2A1D);
-    const accentWine = Color(0xFF7A2E26);
-    const accentOrange = Color(0xFFC16A2B);
-    const accentBrown = Color(0xFF73543E);
-    const accentGray = Color(0xFF746A60);
-    const softGold = Color(0xFFE3C474);
-    const warmCream = Color(0xFFFFF8EA);
+    const ink = Color(0xFF202322);
+    const white = Color(0xFFFFFFFF);
+    const mutedOnLight = Color(0xFF697370);
+    const lotacaoYellow = Color(0xFFFFC400);
+    const funcaoBlue = Color(0xFF1769FF);
+    const neutralGray = Color(0xFF343A40);
+    const activeGreen = Color(0xFF00A86B);
+
+    final isLotacao = normalized.contains('lota');
+    final isFuncao =
+        normalized.contains('fun') ||
+        normalized.contains('atribui') ||
+        normalized.contains('exerc');
     final base = switch (normalized) {
-      String value when value.contains('titular') => accentWine,
-      String value when value.contains('substitui') => accentOrange,
-      String value when value.contains('fun') => accentRed,
-      String value when value.contains('lota') => accentGold,
+      String value when value.contains('lota') => lotacaoYellow,
+      String value when value.contains('fun') => funcaoBlue,
       String value when value.contains('atribui') || value.contains('exerc') =>
-        accentBrown,
-      String value when value.contains('tempor') => accentGold,
-      _ => accentGray,
-    };
-    final surface = switch (normalized) {
-      String value when value.contains('titular') => const Color(0xFFF8EEEA),
-      String value when value.contains('substitui') => const Color(0xFFFFF1E4),
-      String value when value.contains('fun') => const Color(0xFFF9EDEA),
-      String value when value.contains('lota') => const Color(0xFFFFF5DA),
-      String value when value.contains('atribui') || value.contains('exerc') =>
-        const Color(0xFFF5EDE3),
-      String value when value.contains('tempor') => const Color(0xFFFFF5DA),
-      _ => const Color(0xFFF1ECE5),
+        funcaoBlue,
+      String value when value.contains('titular') => funcaoBlue,
+      String value when value.contains('substitui') => funcaoBlue,
+      _ => neutralGray,
     };
     final icon = switch (normalized) {
       String value when value.contains('titular') =>
         Icons.workspace_premium_rounded,
       String value when value.contains('substitui') => Icons.swap_horiz_rounded,
       String value when value.contains('fun') => Icons.badge_rounded,
-      String value when value.contains('lota') => Icons.location_city_rounded,
+      String value when value.contains('lota') => Icons.home_rounded,
       String value when value.contains('atribui') || value.contains('exerc') =>
         Icons.account_tree_rounded,
       String value when value.contains('tempor') => Icons.event_rounded,
       _ => Icons.assignment_ind_rounded,
     };
-    const titleColor = institutionalBlack;
-    const subtitleColor = inkMuted;
-    final chipBackground = Color.lerp(cream, base, 0.16)!;
-    final chipTextColor = Color.lerp(base, institutionalBlack, 0.20)!;
-    final softIconBackground = Color.lerp(cream, base, 0.08)!;
+    const surface = white;
+    const border = Color(0xFFE9EDF0);
+    const titleColor = ink;
+    const subtitleColor = mutedOnLight;
+    final chipBackground = isLotacao
+        ? lotacaoYellow
+        : isFuncao
+        ? funcaoBlue
+        : neutralGray;
+    final chipTextColor = isLotacao
+        ? ink
+        : isFuncao
+        ? white
+        : white;
+    const backgroundIconColor = Color(0x14101828);
+    final metadataBackground = isLotacao
+        ? const Color(0x14FFC400)
+        : isFuncao
+        ? const Color(0x101769FF)
+        : const Color(0xFFF7F8F6);
+    final metadataBorder = isLotacao
+        ? const Color(0x40FFC400)
+        : isFuncao
+        ? const Color(0x331769FF)
+        : const Color(0xFFE9EDF0);
+    const metadataLabelColor = Color(0xFF343A40);
+    const metadataValueColor = ink;
 
     return _DesignacaoCategoryStyle(
       base: base,
       surface: surface,
-      border: Color.lerp(surface, base, 0.16)!,
+      border: border,
       titleColor: titleColor,
       subtitleColor: subtitleColor,
       chipBackground: chipBackground,
       textOnChip: chipTextColor,
-      iconBackground: softIconBackground,
-      iconColor: chipTextColor,
-      metadataBackground: warmCream,
-      metadataBorder: Color.lerp(cream, base, 0.08)!,
-      metadataLabelColor: inkMuted,
-      metadataValueColor: institutionalBlack,
-      badgeBackground: Color.lerp(warmCream, softGold, 0.28)!,
-      badgeBorder: Color.lerp(warmCream, accentGold, 0.22)!,
-      badgeText: institutionalBlack,
+      metadataBackground: metadataBackground,
+      metadataBorder: metadataBorder,
+      metadataLabelColor: metadataLabelColor,
+      metadataValueColor: metadataValueColor,
+      badgeBackground: activeGreen,
+      badgeBorder: activeGreen,
+      badgeText: white,
+      backgroundIconColor: backgroundIconColor,
       icon: icon,
     );
   }

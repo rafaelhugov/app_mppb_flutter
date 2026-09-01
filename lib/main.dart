@@ -5,6 +5,7 @@ import 'core/router/app_router.dart';
 import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
@@ -45,6 +46,14 @@ class MyApp extends ConsumerWidget {
       routerConfig: router,
       scrollBehavior: AppScrollBehavior(),
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('pt', 'BR'),
+      ],
     );
   }
 }

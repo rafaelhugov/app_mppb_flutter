@@ -71,18 +71,41 @@ class ConcessaoAfastamentoRepository {
     required int numeroDias,
   }) async {
     final dateFormat = DateFormat('dd/MM/yyyy');
-    await dio.post(
-      '/api/recursos-humanos/concessoes/$concessaoId/solicitacoes',
-      queryParameters: {'token': token},
-      data: {
-        'dataInicial': dateFormat.format(dataInicial),
-        'numeroDias': numeroDias,
-      },
-      options: Options(
-        headers: {'Authorization': 'Token $token'},
-        extra: {'skipAuthLogout': true},
-      ),
+    final body = {
+      'dataInicial': dateFormat.format(dataInicial),
+      'numeroDias': numeroDias,
+    };
+
+    debugPrint(
+      '[ConcessaoAfastamento] Solicitando gozo: '
+      'concessao=$concessaoId body=$body',
     );
+
+    try {
+      final response = await dio.post(
+        '/api/recursos-humanos/concessoes/$concessaoId/solicitacoes',
+        queryParameters: {'token': token},
+        data: body,
+        options: Options(
+          headers: {'Authorization': 'Token $token'},
+          extra: {'skipAuthLogout': true},
+          responseType: ResponseType.plain,
+        ),
+      );
+
+      debugPrint(
+        '[ConcessaoAfastamento] Gozo solicitado: '
+        'concessao=$concessaoId status=${response.statusCode} '
+        'response=${response.data}',
+      );
+    } on DioException catch (e) {
+      debugPrint(
+        '[ConcessaoAfastamento] Solicitacao de gozo falhou: '
+        'concessao=$concessaoId status=${e.response?.statusCode} '
+        'response=${e.response?.data}',
+      );
+      rethrow;
+    }
   }
 
   Future<List<SugestaoDataFinal>> buscarSugestoesDatasFinais({
@@ -200,6 +223,7 @@ class ConcessaoAfastamentoRepository {
         options: Options(
           headers: {'Authorization': 'Token $token'},
           extra: {'skipAuthLogout': true},
+          responseType: ResponseType.plain,
         ),
       );
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/concessao_afastamento.dart';
@@ -585,9 +586,61 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       messenger.showSnackBar(
-        SnackBar(content: Text('Não foi possível marcar o gozo: $e')),
+        SnackBar(content: Text(_solicitacaoErrorMessage(e))),
       );
     }
+  }
+
+  String _solicitacaoErrorMessage(Object error) {
+    if (error is DioException) {
+      final responseMessage = _extractResponseMessage(error.response?.data);
+      if (responseMessage != null) {
+        return 'Não foi possível marcar o gozo: $responseMessage';
+      }
+
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        return 'Não foi possível marcar o gozo: sessão expirada ou usuário sem permissão.';
+      }
+      if (statusCode != null) {
+        return 'Não foi possível marcar o gozo. Código HTTP $statusCode.';
+      }
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout) {
+        return 'O serviço demorou para responder. Tente novamente.';
+      }
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.unknown) {
+        return 'Sem conexão com o serviço. Verifique sua internet e tente novamente.';
+      }
+    }
+
+    return 'Não foi possível marcar o gozo: $error';
+  }
+
+  String? _extractResponseMessage(dynamic data) {
+    if (data == null) return null;
+    if (data is String) {
+      final message = data.trim();
+      return message.isEmpty ? null : message;
+    }
+    if (data is Map) {
+      for (final key in const [
+        'message',
+        'mensagem',
+        'detail',
+        'detalhe',
+        'error',
+        'erro',
+      ]) {
+        final value = data[key];
+        if (value is String && value.trim().isNotEmpty) {
+          return value.trim();
+        }
+      }
+    }
+    return null;
   }
 }
 

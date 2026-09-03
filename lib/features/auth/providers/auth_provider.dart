@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/notifications/device_registration_provider.dart';
 import '../../../core/storage/secure_storage.dart';
 
 // Definimos o estado da autenticação
@@ -60,6 +61,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
     if (token != null && token.isNotEmpty) {
       state = state.copyWith(isAuthenticated: true, token: token);
+      await _registrarDispositivoAutenticado(token);
     }
   }
 
@@ -131,6 +133,7 @@ class AuthNotifier extends Notifier<AuthState> {
         tempUsername: offerBiometrics ? username : null,
         tempPassword: offerBiometrics ? password : null,
       );
+      await _registrarDispositivoAutenticado(token);
       return true;
     } on DioException catch (e) {
       state = state.copyWith(
@@ -233,11 +236,22 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> logout() async {
     final secureStorage = ref.read(secureStorageProvider);
+    final token = state.token ?? await secureStorage.read(key: 'auth_token');
+    await ref
+        .read(deviceRegistrationManagerProvider)
+        .desativarAntesLogout(token);
+
     await secureStorage.delete(key: 'auth_token');
     await secureStorage.delete(key: 'auth_username');
     await secureStorage.delete(key: 'carteira_cache_data');
 
     state = AuthState(); // Reset state
+  }
+
+  Future<void> _registrarDispositivoAutenticado(String token) async {
+    final manager = ref.read(deviceRegistrationManagerProvider);
+    manager.startTokenRefreshListener(() => state.token);
+    await manager.registrarSeAutenticado(token);
   }
 }
 

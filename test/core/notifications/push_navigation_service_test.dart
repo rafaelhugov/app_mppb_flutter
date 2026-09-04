@@ -10,6 +10,7 @@ void main() {
     late FakePushMessageGateway gateway;
     late FakePushNavigationDelegate navigator;
     late FakeDesignacoesRefresher refresher;
+    late FakeNoticiasRefresher noticiasRefresher;
     late bool authenticated;
     late PushNavigationService service;
 
@@ -17,12 +18,14 @@ void main() {
       gateway = FakePushMessageGateway();
       navigator = FakePushNavigationDelegate();
       refresher = FakeDesignacoesRefresher();
+      noticiasRefresher = FakeNoticiasRefresher();
       authenticated = true;
       service = PushNavigationService(
         gateway: gateway,
         navigator: navigator,
         isAuthenticated: () => authenticated,
         refreshDesignacoes: refresher.refresh,
+        refreshNoticias: noticiasRefresher.refresh,
       );
     });
 
@@ -38,6 +41,16 @@ void main() {
       expect(navigator.routes, isEmpty);
     });
 
+    test('foreground de noticias atualiza provider sem navegar', () async {
+      authenticated = false;
+
+      await service.handleForegroundPayload(_noticiasPayload());
+
+      expect(noticiasRefresher.refreshCount, 1);
+      expect(refresher.forceRefreshes, isEmpty);
+      expect(navigator.routes, isEmpty);
+    });
+
     test('background com toque abre designacoes e atualiza provider', () async {
       await service.handleOpenedPayload(
         _designacoesPayload(),
@@ -47,6 +60,22 @@ void main() {
       expect(navigator.routes, ['/designacoes']);
       expect(refresher.forceRefreshes, [true]);
     });
+
+    test(
+      'background com toque abre noticias e atualiza provider publico',
+      () async {
+        authenticated = false;
+
+        await service.handleOpenedPayload(
+          _noticiasPayload(),
+          messageKey: 'noticia-1',
+        );
+
+        expect(navigator.routes, ['/noticias']);
+        expect(noticiasRefresher.refreshCount, 1);
+        expect(refresher.forceRefreshes, isEmpty);
+      },
+    );
 
     test(
       'app encerrado com toque abre designacoes ao iniciar servico',
@@ -63,6 +92,19 @@ void main() {
         expect(refresher.forceRefreshes, [true]);
       },
     );
+
+    test('app encerrado com toque abre noticias ao iniciar servico', () async {
+      gateway.initialMessage = const RemoteMessage(
+        messageId: 'noticia-inicial',
+        data: {'tipo_evento': 'NOVAS_NOTICIAS', 'rota': '/noticias'},
+      );
+
+      service.start();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(navigator.routes, ['/noticias']);
+      expect(noticiasRefresher.refreshCount, 1);
+    });
 
     test(
       'usuario nao autenticado respeita login e aguarda autenticacao',
@@ -121,6 +163,19 @@ void main() {
       expect(refresher.forceRefreshes, isEmpty);
     });
 
+    test('rota arbitraria de noticias e ignorada', () async {
+      await service.handleOpenedPayload(
+        const PushTechnicalPayload(
+          tipoEvento: 'NOVAS_NOTICIAS',
+          rota: '/designacoes',
+        ),
+        messageKey: 'noticia-invalida',
+      );
+
+      expect(navigator.routes, isEmpty);
+      expect(noticiasRefresher.refreshCount, 0);
+    });
+
     test('navegacao duplicada e evitada para mesmo evento', () async {
       await service.handleOpenedPayload(
         _designacoesPayload(),
@@ -135,6 +190,23 @@ void main() {
       expect(refresher.forceRefreshes, [true]);
     });
 
+    test(
+      'navegacao duplicada de noticias e evitada para mesmo evento',
+      () async {
+        await service.handleOpenedPayload(
+          _noticiasPayload(),
+          messageKey: 'noticia-2',
+        );
+        await service.handleOpenedPayload(
+          _noticiasPayload(),
+          messageKey: 'noticia-2',
+        );
+
+        expect(navigator.routes, ['/noticias']);
+        expect(noticiasRefresher.refreshCount, 1);
+      },
+    );
+
     test('nao empilha rota quando ja esta em designacoes', () async {
       navigator.current = '/designacoes';
 
@@ -146,6 +218,18 @@ void main() {
       expect(navigator.routes, isEmpty);
       expect(refresher.forceRefreshes, [true]);
     });
+
+    test('nao empilha rota quando ja esta em noticias', () async {
+      navigator.current = '/noticias';
+
+      await service.handleOpenedPayload(
+        _noticiasPayload(),
+        messageKey: 'noticia-3',
+      );
+
+      expect(navigator.routes, isEmpty);
+      expect(noticiasRefresher.refreshCount, 1);
+    });
   });
 }
 
@@ -153,6 +237,13 @@ PushTechnicalPayload _designacoesPayload() {
   return const PushTechnicalPayload(
     tipoEvento: 'NOVAS_DESIGNACOES',
     rota: '/designacoes',
+  );
+}
+
+PushTechnicalPayload _noticiasPayload() {
+  return const PushTechnicalPayload(
+    tipoEvento: 'NOVAS_NOTICIAS',
+    rota: '/noticias',
   );
 }
 
@@ -206,5 +297,13 @@ class FakeDesignacoesRefresher {
 
   Future<void> refresh({required bool forceRefresh}) async {
     forceRefreshes.add(forceRefresh);
+  }
+}
+
+class FakeNoticiasRefresher {
+  int refreshCount = 0;
+
+  Future<void> refresh() async {
+    refreshCount++;
   }
 }

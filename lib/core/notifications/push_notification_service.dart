@@ -37,6 +37,10 @@ class PushTechnicalPayload {
     return tipoEvento == 'NOVAS_DESIGNACOES' && rota == '/designacoes';
   }
 
+  bool get isSupportedNoticiasSignal {
+    return tipoEvento == 'NOVAS_NOTICIAS' && rota == '/noticias';
+  }
+
   Map<String, String> toAllowedData() {
     final data = <String, String>{};
     final tipoEvento = this.tipoEvento;
@@ -63,6 +67,7 @@ class PushNotificationService {
   PushNotificationService._();
 
   static final PushNotificationService instance = PushNotificationService._();
+  static const String publicNewsTopic = 'mppb_noticias';
 
   static bool get isSupportedPlatform {
     return defaultTargetPlatform == TargetPlatform.android;
@@ -92,6 +97,7 @@ class PushNotificationService {
     FirebaseMessaging.onMessage.listen(_foregroundMessages.add);
     FirebaseMessaging.onMessageOpenedApp.listen(_openedMessages.add);
     _messaging.onTokenRefresh.listen(_tokenRefreshes.add);
+    await _preparePublicNewsTopic();
 
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
@@ -106,6 +112,21 @@ class PushNotificationService {
 
   Future<String?> getToken() {
     return _messaging.getToken();
+  }
+
+  Future<void> subscribeToPublicNewsTopic() {
+    return _messaging.subscribeToTopic(publicNewsTopic);
+  }
+
+  Future<void> _preparePublicNewsTopic() async {
+    try {
+      await requestPermission();
+      await subscribeToPublicNewsTopic();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('FCM public topic unavailable.');
+      }
+    }
   }
 
   PushTechnicalPayload technicalPayload(RemoteMessage message) {

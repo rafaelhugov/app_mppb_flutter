@@ -7,11 +7,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/designacoes/providers/designacoes_provider.dart';
+import '../../features/noticias/providers/noticia_provider.dart';
 import '../router/app_router.dart';
 import 'push_notification_service.dart';
 
 const String _designacoesEventType = 'NOVAS_DESIGNACOES';
 const String _designacoesRoute = '/designacoes';
+const String _noticiasEventType = 'NOVAS_NOTICIAS';
+const String _noticiasRoute = '/noticias';
 
 abstract class PushMessageGateway {
   Stream<RemoteMessage> get foregroundMessages;
@@ -88,6 +91,7 @@ class PushNavigationService {
   final PushNavigationDelegate navigator;
   final bool Function() isAuthenticated;
   final Future<void> Function({required bool forceRefresh}) refreshDesignacoes;
+  final Future<void> Function() refreshNoticias;
 
   StreamSubscription<RemoteMessage>? _foregroundSubscription;
   StreamSubscription<RemoteMessage>? _openedSubscription;
@@ -99,6 +103,7 @@ class PushNavigationService {
     required this.navigator,
     required this.isAuthenticated,
     required this.refreshDesignacoes,
+    required this.refreshNoticias,
   });
 
   void start() {
@@ -134,10 +139,15 @@ class PushNavigationService {
     PushTechnicalPayload payload, {
     String? messageKey,
   }) async {
-    if (!_isAllowedDesignacoesPayload(payload) || !isAuthenticated()) {
+    if (_isAllowedDesignacoesPayload(payload) && isAuthenticated()) {
+      await refreshDesignacoes(forceRefresh: true);
       return;
     }
-    await refreshDesignacoes(forceRefresh: true);
+
+    if (_isAllowedNoticiasPayload(payload)) {
+      await refreshNoticias();
+      return;
+    }
   }
 
   @visibleForTesting
@@ -145,18 +155,29 @@ class PushNavigationService {
     PushTechnicalPayload payload, {
     String? messageKey,
   }) async {
-    if (!_isAllowedDesignacoesPayload(payload) ||
-        !_markOpenedMessageAsPending(messageKey)) {
+    if (!_isAllowedDesignacoesPayload(payload) &&
+        !_isAllowedNoticiasPayload(payload)) {
       return;
     }
 
-    if (!isAuthenticated()) {
+    if (!_markOpenedMessageAsPending(messageKey)) {
+      return;
+    }
+
+    if (_isAllowedDesignacoesPayload(payload) && !isAuthenticated()) {
       _pendingRoute = _designacoesRoute;
       _goToDesignacoesIfNeeded();
       return;
     }
 
-    await _openDesignacoesAndRefresh();
+    if (_isAllowedDesignacoesPayload(payload)) {
+      await _openDesignacoesAndRefresh();
+      return;
+    }
+
+    if (_isAllowedNoticiasPayload(payload)) {
+      await _openNoticiasAndRefresh();
+    }
   }
 
   Future<void> handleAuthenticated() async {
@@ -179,15 +200,31 @@ class PushNavigationService {
     await refreshDesignacoes(forceRefresh: true);
   }
 
+  Future<void> _openNoticiasAndRefresh() async {
+    _goToNoticiasIfNeeded();
+    await refreshNoticias();
+  }
+
   void _goToDesignacoesIfNeeded() {
     if (navigator.currentLocation != _designacoesRoute) {
       navigator.go(_designacoesRoute);
     }
   }
 
+  void _goToNoticiasIfNeeded() {
+    if (navigator.currentLocation != _noticiasRoute) {
+      navigator.go(_noticiasRoute);
+    }
+  }
+
   bool _isAllowedDesignacoesPayload(PushTechnicalPayload payload) {
     return payload.tipoEvento == _designacoesEventType &&
         payload.rota == _designacoesRoute;
+  }
+
+  bool _isAllowedNoticiasPayload(PushTechnicalPayload payload) {
+    return payload.tipoEvento == _noticiasEventType &&
+        payload.rota == _noticiasRoute;
   }
 
   bool _markOpenedMessageAsPending(String? key) {
@@ -233,6 +270,7 @@ final pushNavigationServiceProvider = Provider<PushNavigationService>((ref) {
           .read(designacoesProvider.notifier)
           .carregar(forceRefresh: forceRefresh);
     },
+    refreshNoticias: () => ref.read(noticiaProvider.notifier).fetchNoticias(),
   );
 
   service.start();

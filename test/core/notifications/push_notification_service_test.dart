@@ -13,9 +13,26 @@ void main() {
     });
 
     expect(payload.isSupportedDesignacaoSignal, isTrue);
+    expect(payload.isSupportedNoticiasSignal, isFalse);
     expect(payload.toAllowedData(), {
       'tipo_evento': 'NOVAS_DESIGNACOES',
       'rota': '/designacoes',
+    });
+  });
+
+  test('reconhece payload tecnico publico de noticias', () {
+    final payload = PushTechnicalPayload.fromData({
+      'tipo_evento': 'NOVAS_NOTICIAS',
+      'rota': '/noticias',
+      'jwt': 'token',
+      'matricula': '12345',
+    });
+
+    expect(payload.isSupportedNoticiasSignal, isTrue);
+    expect(payload.isSupportedDesignacaoSignal, isFalse);
+    expect(payload.toAllowedData(), {
+      'tipo_evento': 'NOVAS_NOTICIAS',
+      'rota': '/noticias',
     });
   });
 

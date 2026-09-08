@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../models/noticia.dart';
 import '../../providers/noticia_provider.dart';
+import '../../ui/noticias_page.dart';
 import '../../utils/noticia_share.dart';
 
 class NewsCarousel extends ConsumerStatefulWidget {
@@ -177,6 +179,37 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
     }
   }
 
+  void _showNewsModal(Noticia noticia) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => NewsDetailSheet(
+        noticia: noticia,
+        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
+        date: _dateForNews(noticia),
+        readingTime: _readingTime(noticia),
+        onOpenLink: () => _openNews(noticia.link),
+        onShare: () => compartilharNoticia(noticia),
+      ),
+    );
+  }
+
+  int _readingTime(Noticia noticia) {
+    final words = (noticia.resumo ?? '')
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .length;
+    final minutes = (words / 180).ceil();
+    return minutes > 0 ? minutes : 1;
+  }
+
+  String _dateForNews(Noticia noticia) {
+    final date = noticia.dataPublicacao ?? '';
+    return date.split(' ').isNotEmpty ? date.split(' ')[0] : '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final noticiaState = ref.watch(noticiaProvider);
@@ -266,7 +299,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                         Expanded(
                           flex: 9,
                           child: GestureDetector(
-                            onTap: () => _openNews(noticia.link),
+                            onTap: () => _showNewsModal(noticia),
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: const BorderRadius.only(
@@ -390,7 +423,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                               SizedBox(
                                 width: 132,
                                 child: ElevatedButton(
-                                  onPressed: () => _openNews(noticia.link),
+                                  onPressed: () => _showNewsModal(noticia),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFD62828),
                                     foregroundColor: Colors.white,
@@ -416,7 +449,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                                       children: [
                                         Text('Ler notícia'),
                                         SizedBox(width: 5),
-                                        Icon(Icons.open_in_new, size: 14),
+                                        Icon(Icons.article_outlined, size: 14),
                                       ],
                                     ),
                                   ),

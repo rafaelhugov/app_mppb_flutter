@@ -11,13 +11,24 @@ class NoticiasPage extends ConsumerStatefulWidget {
   static const fallbackImageUrl =
       'https://commons.wikimedia.org/wiki/Special:Redirect/file/Minist%C3%A9rio_P%C3%BAblico_da_Para%C3%ADba%2C_Jo%C3%A3o_Pessoa_%28PB%29.jpg?width=900';
 
-  const NoticiasPage({super.key});
+  final String? initialNewsKey;
+  final String? initialNewsLink;
+  final String? initialNewsTitle;
+
+  const NoticiasPage({
+    super.key,
+    this.initialNewsKey,
+    this.initialNewsLink,
+    this.initialNewsTitle,
+  });
 
   @override
   ConsumerState<NoticiasPage> createState() => _NoticiasPageState();
 }
 
 class _NoticiasPageState extends ConsumerState<NoticiasPage> {
+  String? _openedInitialTarget;
+
   Future<void> _abrirNoticia(String? link) async {
     if (link == null || link.isEmpty) return;
     final url = Uri.parse(link);
@@ -59,6 +70,7 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(noticiaProvider);
+    _openInitialNewsWhenReady(state);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
@@ -88,6 +100,78 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
               ),
             ),
     );
+  }
+
+  void _openInitialNewsWhenReady(NoticiaState state) {
+    if (state.isLoading ||
+        state.errorMessage != null ||
+        state.noticias.isEmpty) {
+      return;
+    }
+
+    final target = _initialTarget;
+    if (target == null || _openedInitialTarget == target) {
+      return;
+    }
+
+    final noticia = _findInitialNews(state.noticias);
+    if (noticia == null) {
+      return;
+    }
+
+    _openedInitialTarget = target;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _mostrarNoticia(noticia);
+      }
+    });
+  }
+
+  String? get _initialTarget {
+    final key = widget.initialNewsKey?.trim();
+    if (key != null && key.isNotEmpty) {
+      return 'key:$key';
+    }
+    final link = widget.initialNewsLink?.trim();
+    if (link != null && link.isNotEmpty) {
+      return 'link:$link';
+    }
+    final title = widget.initialNewsTitle?.trim();
+    if (title != null && title.isNotEmpty) {
+      return 'title:${title.toLowerCase()}';
+    }
+    return null;
+  }
+
+  Noticia? _findInitialNews(List<Noticia> noticias) {
+    final key = widget.initialNewsKey?.trim();
+    if (key != null && key.isNotEmpty) {
+      for (final noticia in noticias) {
+        if (noticia.chaveExterna == key) {
+          return noticia;
+        }
+      }
+    }
+
+    final link = widget.initialNewsLink?.trim();
+    if (link != null && link.isNotEmpty) {
+      for (final noticia in noticias) {
+        if (noticia.link == link) {
+          return noticia;
+        }
+      }
+    }
+
+    final title = widget.initialNewsTitle?.trim().toLowerCase();
+    if (title != null && title.isNotEmpty) {
+      for (final noticia in noticias) {
+        if (noticia.titulo.trim().toLowerCase() == title) {
+          return noticia;
+        }
+      }
+    }
+
+    return null;
   }
 
   Widget _buildError(String error) {

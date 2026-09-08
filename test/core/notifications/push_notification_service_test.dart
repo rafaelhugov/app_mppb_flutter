@@ -24,6 +24,9 @@ void main() {
     final payload = PushTechnicalPayload.fromData({
       'tipo_evento': 'NOVAS_NOTICIAS',
       'rota': '/noticias',
+      'noticia_chave': 'chave-1',
+      'noticia_link': 'https://www.mppb.mp.br/noticia/1',
+      'noticia_titulo': 'Titulo publico',
       'jwt': 'token',
       'matricula': '12345',
     });
@@ -33,7 +36,12 @@ void main() {
     expect(payload.toAllowedData(), {
       'tipo_evento': 'NOVAS_NOTICIAS',
       'rota': '/noticias',
+      'noticia_chave': 'chave-1',
+      'noticia_link': 'https://www.mppb.mp.br/noticia/1',
+      'noticia_titulo': 'Titulo publico',
     });
+    expect(payload.toAllowedData().containsKey('jwt'), isFalse);
+    expect(payload.toAllowedData().containsKey('matricula'), isFalse);
   });
 
   test('normaliza valores vazios do payload tecnico', () {

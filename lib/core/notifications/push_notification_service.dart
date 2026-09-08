@@ -23,13 +23,25 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class PushTechnicalPayload {
   final String? tipoEvento;
   final String? rota;
+  final String? noticiaChave;
+  final String? noticiaLink;
+  final String? noticiaTitulo;
 
-  const PushTechnicalPayload({this.tipoEvento, this.rota});
+  const PushTechnicalPayload({
+    this.tipoEvento,
+    this.rota,
+    this.noticiaChave,
+    this.noticiaLink,
+    this.noticiaTitulo,
+  });
 
   factory PushTechnicalPayload.fromData(Map<String, dynamic> data) {
     return PushTechnicalPayload(
       tipoEvento: _stringValue(data['tipo_evento']),
       rota: _stringValue(data['rota']),
+      noticiaChave: _stringValue(data['noticia_chave']),
+      noticiaLink: _stringValue(data['noticia_link']),
+      noticiaTitulo: _stringValue(data['noticia_titulo']),
     );
   }
 
@@ -50,6 +62,15 @@ class PushTechnicalPayload {
     }
     if (rota != null) {
       data['rota'] = rota;
+    }
+    if (noticiaChave != null) {
+      data['noticia_chave'] = noticiaChave!;
+    }
+    if (noticiaLink != null) {
+      data['noticia_link'] = noticiaLink!;
+    }
+    if (noticiaTitulo != null) {
+      data['noticia_titulo'] = noticiaTitulo!;
     }
     return data;
   }

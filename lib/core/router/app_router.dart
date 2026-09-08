@@ -142,7 +142,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/noticias',
-            builder: (context, state) => const NoticiasPage(),
+            builder: (context, state) => NoticiasPage(
+              initialNewsKey: state.uri.queryParameters['noticia'],
+              initialNewsLink: state.uri.queryParameters['link'],
+              initialNewsTitle: state.uri.queryParameters['titulo'],
+            ),
           ),
           GoRoute(
             path: '/processos',

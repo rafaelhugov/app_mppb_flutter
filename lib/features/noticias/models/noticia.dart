@@ -1,4 +1,5 @@
 class Noticia {
+  final String? chaveExterna;
   final String titulo;
   final String? resumo;
   final String? link;
@@ -7,6 +8,7 @@ class Noticia {
   final String? dataPublicacao;
 
   Noticia({
+    this.chaveExterna,
     required this.titulo,
     this.resumo,
     this.link,
@@ -17,6 +19,7 @@ class Noticia {
 
   factory Noticia.fromJson(Map<String, dynamic> json) {
     return Noticia(
+      chaveExterna: json['chaveExterna'],
       titulo: json['titulo'] ?? '',
       resumo: json['resumo'],
       link: json['link'],

@@ -176,7 +176,7 @@ class PushNavigationService {
     }
 
     if (_isAllowedNoticiasPayload(payload)) {
-      await _openNoticiasAndRefresh();
+      await _openNoticiasAndRefresh(payload);
     }
   }
 
@@ -200,8 +200,8 @@ class PushNavigationService {
     await refreshDesignacoes(forceRefresh: true);
   }
 
-  Future<void> _openNoticiasAndRefresh() async {
-    _goToNoticiasIfNeeded();
+  Future<void> _openNoticiasAndRefresh(PushTechnicalPayload payload) async {
+    _goToNoticiasIfNeeded(payload);
     await refreshNoticias();
   }
 
@@ -211,10 +211,35 @@ class PushNavigationService {
     }
   }
 
-  void _goToNoticiasIfNeeded() {
+  void _goToNoticiasIfNeeded(PushTechnicalPayload payload) {
+    final route = _noticiasRouteWithPayload(payload);
     if (navigator.currentLocation != _noticiasRoute) {
-      navigator.go(_noticiasRoute);
+      navigator.go(route);
+      return;
     }
+    if (route != _noticiasRoute) {
+      navigator.go(route);
+    }
+  }
+
+  String _noticiasRouteWithPayload(PushTechnicalPayload payload) {
+    final params = <String, String>{};
+    final chave = payload.noticiaChave?.trim();
+    final link = payload.noticiaLink?.trim();
+    final titulo = payload.noticiaTitulo?.trim();
+    if (chave != null && chave.isNotEmpty) {
+      params['noticia'] = chave;
+    }
+    if (link != null && link.isNotEmpty) {
+      params['link'] = link;
+    }
+    if (titulo != null && titulo.isNotEmpty) {
+      params['titulo'] = titulo;
+    }
+    if (params.isEmpty) {
+      return _noticiasRoute;
+    }
+    return Uri(path: _noticiasRoute, queryParameters: params).toString();
   }
 
   bool _isAllowedDesignacoesPayload(PushTechnicalPayload payload) {

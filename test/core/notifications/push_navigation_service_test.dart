@@ -78,6 +78,27 @@ void main() {
     );
 
     test(
+      'background com toque em noticia leva identificador para abrir modal',
+      () async {
+        authenticated = false;
+
+        await service.handleOpenedPayload(
+          _noticiasPayload(
+            chave: 'noticia-externa-1',
+            link: 'https://www.mppb.mp.br/noticia/1',
+            titulo: 'Noticia especial',
+          ),
+          messageKey: 'noticia-rica-1',
+        );
+
+        expect(navigator.routes, [
+          '/noticias?noticia=noticia-externa-1&link=https%3A%2F%2Fwww.mppb.mp.br%2Fnoticia%2F1&titulo=Noticia+especial',
+        ]);
+        expect(noticiasRefresher.refreshCount, 1);
+      },
+    );
+
+    test(
       'app encerrado com toque abre designacoes ao iniciar servico',
       () async {
         gateway.initialMessage = const RemoteMessage(
@@ -240,10 +261,17 @@ PushTechnicalPayload _designacoesPayload() {
   );
 }
 
-PushTechnicalPayload _noticiasPayload() {
-  return const PushTechnicalPayload(
+PushTechnicalPayload _noticiasPayload({
+  String? chave,
+  String? link,
+  String? titulo,
+}) {
+  return PushTechnicalPayload(
     tipoEvento: 'NOVAS_NOTICIAS',
     rota: '/noticias',
+    noticiaChave: chave,
+    noticiaLink: link,
+    noticiaTitulo: titulo,
   );
 }
 
@@ -288,7 +316,7 @@ class FakePushNavigationDelegate implements PushNavigationDelegate {
   @override
   void go(String route) {
     routes.add(route);
-    current = route;
+    current = Uri.parse(route).path;
   }
 }
 

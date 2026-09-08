@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/noticias/providers/noticia_provider.dart';
+import 'widgets/notification_center_sheet.dart';
 
 class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
   static const Color background = Color(0xFFFAFAF7);
@@ -20,6 +23,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final isAuthenticated = authState.isAuthenticated;
 
     if (isAuthenticated) {
+      final noticiaState = ref.watch(noticiaProvider);
+      final designacoesState = ref.watch(designacoesProvider);
+
       return AppBar(
         toolbarHeight: MppbAppBar.authenticatedAltura,
         backgroundColor: MppbAppBar.background,
@@ -64,7 +70,15 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
               color: Color(0xFF202322),
               size: 22,
             ),
-            onPressed: () {},
+            onPressed: () {
+              NotificationCenterSheet.show(
+                context,
+                newsCount: noticiaState.noticias.length,
+                designationsCount: designacoesState.designacoes.length,
+                onOpenNews: () => context.go('/noticias'),
+                onOpenDesignations: () => context.go('/designacoes'),
+              );
+            },
           ),
           IconButton(
             visualDensity: VisualDensity.compact,

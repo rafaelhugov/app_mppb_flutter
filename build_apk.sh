@@ -12,6 +12,29 @@ echo "========================================="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+AMBIENTE="${1:-homolog}"
+API_URL_ARGUMENTO="${2:-}"
+
+case "$AMBIENTE" in
+  homolog|homologacao)
+    FLAVOR="homolog"
+    DEFAULT_API_URL="https://aplicativo-mppb-homolog.mppb.mp.br"
+    APK_LABEL="Homolog"
+    ;;
+  producao|prod)
+    FLAVOR="producao"
+    DEFAULT_API_URL="https://aplicativo-api.mppb.mp.br"
+    APK_LABEL="Producao"
+    ;;
+  *)
+    echo "❌ Ambiente inválido: $AMBIENTE"
+    echo "Use: homolog ou producao"
+    exit 1
+    ;;
+esac
+
+API_URL="${API_URL_ARGUMENTO:-${API_URL:-$DEFAULT_API_URL}}"
+
 PUBSPEC_VERSION="$(grep '^version: ' pubspec.yaml | awk '{print $2}')"
 
 if [ -z "$PUBSPEC_VERSION" ]; then
@@ -38,21 +61,29 @@ echo "✅ Versão atualizada no pubspec.yaml: $PUBSPEC_VERSION -> $NEW_VERSION"
 # Atualiza as variáveis para os próximos passos
 BUILD_NUMBER=$NEW_BUILD_NUMBER
 VERSION_CLEAN="${NEW_VERSION/+/_}"
-NEW_APK_NAME="MPPB+_v${VERSION_CLEAN}.apk"
+NEW_APK_NAME="MPPB+_${APK_LABEL}_v${VERSION_CLEAN}.apk"
 OUTPUT_DIR="build/app/outputs/flutter-apk"
+FLAVOR_APK="$OUTPUT_DIR/app-${FLAVOR}-release.apk"
 
+echo "Ambiente: $FLAVOR"
+echo "API_URL: $API_URL"
 echo "Versão: $BUILD_NAME"
 echo "Build: $BUILD_NUMBER"
 echo "Arquivo final: $NEW_APK_NAME"
 echo ""
 
 mkdir -p "$OUTPUT_DIR"
-rm -f "$OUTPUT_DIR"/MPPB+_v*.apk "$OUTPUT_DIR"/app-release.apk "$OUTPUT_DIR"/app-release.apk.sha1
+rm -f "$OUTPUT_DIR"/MPPB+_"$APK_LABEL"_v*.apk "$FLAVOR_APK" "$FLAVOR_APK.sha1"
 
-flutter build apk --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+flutter build apk \
+  --release \
+  --flavor "$FLAVOR" \
+  --dart-define=API_URL="$API_URL" \
+  --build-name="$BUILD_NAME" \
+  --build-number="$BUILD_NUMBER"
 
-mv "$OUTPUT_DIR/app-release.apk" "$OUTPUT_DIR/$NEW_APK_NAME"
-rm -f "$OUTPUT_DIR/app-release.apk.sha1"
+mv "$FLAVOR_APK" "$OUTPUT_DIR/$NEW_APK_NAME"
+rm -f "$FLAVOR_APK.sha1"
 
 echo ""
 echo "✅ APK gerado com sucesso!"

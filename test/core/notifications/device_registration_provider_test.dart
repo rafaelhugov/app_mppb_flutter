@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:app_mppb_flutter/core/notifications/device_registration_diagnostics_provider.dart';
 import 'package:app_mppb_flutter/core/notifications/device_registration_provider.dart';
 import 'package:app_mppb_flutter/core/notifications/device_registration_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,6 +15,7 @@ void main() {
     late FakePushTokenProvider pushTokenProvider;
     late FakeDeviceRegistrationStore store;
     late FakePlatformResolver platformResolver;
+    late ProviderContainer diagnosticsContainer;
     late DeviceRegistrationManager manager;
 
     setUp(() {
@@ -20,17 +23,22 @@ void main() {
       pushTokenProvider = FakePushTokenProvider();
       store = FakeDeviceRegistrationStore();
       platformResolver = FakePlatformResolver('ANDROID');
+      diagnosticsContainer = ProviderContainer();
       manager = DeviceRegistrationManager(
         repository: repository,
         pushTokenProvider: pushTokenProvider,
         store: store,
         platformResolver: platformResolver,
+        diagnostics: diagnosticsContainer.read(
+          deviceRegistrationDiagnosticsProvider.notifier,
+        ),
       );
     });
 
     tearDown(() async {
       await manager.dispose();
       await pushTokenProvider.dispose();
+      diagnosticsContainer.dispose();
     });
 
     test('registra dispositivo apos autenticacao', () async {
@@ -42,6 +50,13 @@ void main() {
       expect(repository.registros.single.identificador, store.installationId);
       expect(repository.registros.single.tokenFcm, 'fcm-token-1');
       expect(repository.registros.single.plataforma, 'ANDROID');
+      final diagnostics = diagnosticsContainer.read(
+        deviceRegistrationDiagnosticsProvider,
+      );
+      expect(diagnostics.step, DeviceRegistrationStep.registered);
+      expect(diagnostics.hasToken, isTrue);
+      expect(diagnostics.tokenLength, 'fcm-token-1'.length);
+      expect(diagnostics.backendStatus, 200);
     });
 
     test('nao registra sem usuario autenticado', () async {
@@ -116,6 +131,25 @@ void main() {
       await manager.registrarSeAutenticado('auth-token');
 
       expect(repository.registros, isEmpty);
+      final diagnostics = diagnosticsContainer.read(
+        deviceRegistrationDiagnosticsProvider,
+      );
+      expect(diagnostics.step, DeviceRegistrationStep.tokenMissing);
+      expect(diagnostics.hasToken, isFalse);
+    });
+
+    test('diagnostica erro http do registro', () async {
+      pushTokenProvider.token = 'fcm-token-1';
+      repository.falharRegistroStatus = 401;
+
+      await manager.registrarSeAutenticado('auth-token');
+
+      final diagnostics = diagnosticsContainer.read(
+        deviceRegistrationDiagnosticsProvider,
+      );
+      expect(diagnostics.step, DeviceRegistrationStep.failed);
+      expect(diagnostics.backendStatus, 401);
+      expect(diagnostics.lastError, contains('HTTP 401'));
     });
 
     test('nao imprime token FCM em logs', () async {
@@ -148,6 +182,7 @@ class FakePushTokenProvider implements PushTokenProvider {
   final StreamController<String> _tokenRefreshController =
       StreamController<String>.broadcast();
   String? token;
+  String permissionStatus = 'authorized';
   int permissionRequests = 0;
 
   @override
@@ -157,8 +192,9 @@ class FakePushTokenProvider implements PushTokenProvider {
   Future<String?> getToken() async => token;
 
   @override
-  Future<void> requestPermission() async {
+  Future<String> requestPermission() async {
     permissionRequests += 1;
+    return permissionStatus;
   }
 
   void emitTokenRefresh(String token) {
@@ -202,6 +238,8 @@ class FakePlatformResolver extends DevicePlatformResolver {
 class FakeDeviceRegistrationRepository extends DeviceRegistrationRepository {
   final List<RegistroCapturado> registros = [];
   final List<DesativacaoCapturada> desativacoes = [];
+  final List<DeviceRegistrationDiagnosticsState> diagnosticos = [];
+  int? falharRegistroStatus;
   bool falharDesativacao = false;
 
   FakeDeviceRegistrationRepository() : super(Dio());
@@ -212,6 +250,20 @@ class FakeDeviceRegistrationRepository extends DeviceRegistrationRepository {
     required String tokenFcm,
     required String plataforma,
   }) async {
+    final status = falharRegistroStatus;
+    if (status != null) {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/api/notificacoes/dispositivos'),
+        response: Response(
+          requestOptions: RequestOptions(
+            path: '/api/notificacoes/dispositivos',
+          ),
+          statusCode: status,
+        ),
+        type: DioExceptionType.badResponse,
+      );
+    }
+
     registros.add(
       RegistroCapturado(
         identificador: identificador,
@@ -235,6 +287,11 @@ class FakeDeviceRegistrationRepository extends DeviceRegistrationRepository {
         type: DioExceptionType.connectionError,
       );
     }
+  }
+
+  @override
+  Future<void> diagnosticar(DeviceRegistrationDiagnosticsState state) async {
+    diagnosticos.add(state);
   }
 }
 

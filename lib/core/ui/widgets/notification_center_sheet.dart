@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../notifications/device_registration_diagnostics_provider.dart';
 import '../../notifications/notification_center_provider.dart';
 
 class NotificationCenterSheet {
@@ -8,6 +9,8 @@ class NotificationCenterSheet {
     required List<NotificationCenterItem> items,
     required ValueChanged<NotificationCenterItem> onOpenItem,
     required VoidCallback onClearAll,
+    DeviceRegistrationDiagnosticsState? deviceDiagnostics,
+    VoidCallback? onRetryDeviceRegistration,
   }) {
     showModalBottomSheet<void>(
       context: context,
@@ -24,6 +27,8 @@ class NotificationCenterSheet {
             Navigator.pop(ctx);
             onOpenItem(item);
           },
+          deviceDiagnostics: deviceDiagnostics,
+          onRetryDeviceRegistration: onRetryDeviceRegistration,
         );
       },
     );
@@ -35,6 +40,8 @@ class NotificationCenterContent extends StatefulWidget {
   final VoidCallback onClose;
   final VoidCallback onClearAll;
   final ValueChanged<NotificationCenterItem> onOpenItem;
+  final DeviceRegistrationDiagnosticsState? deviceDiagnostics;
+  final VoidCallback? onRetryDeviceRegistration;
 
   const NotificationCenterContent({
     super.key,
@@ -42,6 +49,8 @@ class NotificationCenterContent extends StatefulWidget {
     required this.onClose,
     required this.onClearAll,
     required this.onOpenItem,
+    this.deviceDiagnostics,
+    this.onRetryDeviceRegistration,
   });
 
   @override
@@ -145,6 +154,13 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
                 ],
               ),
               const SizedBox(height: 18),
+              if (widget.deviceDiagnostics != null) ...[
+                _DeviceRegistrationDiagnosticCard(
+                  state: widget.deviceDiagnostics!,
+                  onRetry: widget.onRetryDeviceRegistration,
+                ),
+                const SizedBox(height: 14),
+              ],
               if (widget.items.isEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -201,6 +217,149 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeviceRegistrationDiagnosticCard extends StatelessWidget {
+  final DeviceRegistrationDiagnosticsState state;
+  final VoidCallback? onRetry;
+
+  const _DeviceRegistrationDiagnosticCard({
+    required this.state,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = state.isSuccessful
+        ? const Color(0xFF167C45)
+        : const Color(0xFFD62828);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x26343A40)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.phonelink_ring_rounded, color: color, size: 18),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Push do aparelho',
+                  style: TextStyle(
+                    color: Color(0xFF202322),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              if (onRetry != null)
+                TextButton(
+                  onPressed: onRetry,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFD62828),
+                    textStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 30),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Testar'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            state.message,
+            style: const TextStyle(
+              color: Color(0xFF697370),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _DiagnosticPill(label: 'etapa', value: state.step.name),
+              if (state.permissionStatus != null)
+                _DiagnosticPill(
+                  label: 'permissao',
+                  value: state.permissionStatus!,
+                ),
+              _DiagnosticPill(
+                label: 'token',
+                value: state.hasToken ? 'sim' : 'nao',
+              ),
+              if (state.tokenLength != null)
+                _DiagnosticPill(label: 'tam', value: '${state.tokenLength}'),
+              if (state.backendStatus != null)
+                _DiagnosticPill(
+                  label: 'backend',
+                  value: '${state.backendStatus}',
+                ),
+              if (state.lastError != null)
+                _DiagnosticPill(label: 'erro', value: state.lastError!),
+            ],
+          ),
+          if (state.updatedAt != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Atualizado: ${_formatTime(state.updatedAt!)}',
+              style: const TextStyle(
+                color: Color(0xFF8A9490),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  static String _formatTime(DateTime value) {
+    String two(int number) => number.toString().padLeft(2, '0');
+    return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}';
+  }
+}
+
+class _DiagnosticPill extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DiagnosticPill({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F3F0),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$label: $value',
+        style: const TextStyle(
+          color: Color(0xFF4C5753),
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
         ),
       ),
     );

@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../network/api_client.dart';
 import '../storage/secure_storage.dart';
+import 'device_registration_diagnostics_provider.dart';
 import 'device_registration_repository.dart';
 import 'push_notification_service.dart';
 
@@ -15,7 +17,7 @@ const _installationIdStorageKey = 'push_installation_id';
 abstract class PushTokenProvider {
   Stream<String> get tokenRefreshes;
 
-  Future<void> requestPermission();
+  Future<String> requestPermission();
 
   Future<String?> getToken();
 }
@@ -29,8 +31,9 @@ class FirebasePushTokenProvider implements PushTokenProvider {
   Stream<String> get tokenRefreshes => service.tokenRefreshes;
 
   @override
-  Future<void> requestPermission() async {
-    await service.requestPermission();
+  Future<String> requestPermission() async {
+    final settings = await service.requestPermission();
+    return settings.authorizationStatus.name;
   }
 
   @override
@@ -93,6 +96,7 @@ class DeviceRegistrationManager {
   final DeviceRegistrationRepository repository;
   final DeviceRegistrationStore store;
   final DevicePlatformResolver platformResolver;
+  final DeviceRegistrationDiagnosticsNotifier? diagnostics;
   final PushTokenProvider Function() _pushTokenProviderFactory;
 
   StreamSubscription<String>? _tokenRefreshSubscription;
@@ -102,6 +106,7 @@ class DeviceRegistrationManager {
     required this.repository,
     required this.store,
     required this.platformResolver,
+    this.diagnostics,
     PushTokenProvider? pushTokenProvider,
     PushTokenProvider Function()? pushTokenProviderFactory,
   }) : assert(pushTokenProvider != null || pushTokenProviderFactory != null),
@@ -129,20 +134,97 @@ class DeviceRegistrationManager {
   }
 
   Future<void> registrarSeAutenticado(String? authToken) async {
-    if (_isBlank(authToken) ||
-        platformResolver.currentPlatform() == null ||
-        !PushNotificationService.isSupportedPlatform) {
+    if (_isBlank(authToken)) {
+      _diagnostic(
+        const DeviceRegistrationDiagnosticsState(
+          step: DeviceRegistrationStep.skipped,
+          message: 'Registro ignorado: usuario sem token de autenticacao',
+        ),
+      );
       return;
     }
 
+    final plataforma = platformResolver.currentPlatform();
+    if (plataforma == null || !PushNotificationService.isSupportedPlatform) {
+      _diagnostic(
+        const DeviceRegistrationDiagnosticsState(
+          step: DeviceRegistrationStep.skipped,
+          message: 'Registro ignorado: plataforma sem suporte FCM',
+        ),
+      );
+      return;
+    }
+
+    String? permissionStatus;
+    String? tokenFcm;
+
     try {
-      await _tokens.requestPermission();
-      final tokenFcm = await _tokens.getToken();
+      _diagnostic(
+        const DeviceRegistrationDiagnosticsState(
+          step: DeviceRegistrationStep.requestingPermission,
+          message: 'Solicitando permissao de notificacao',
+        ),
+      );
+      permissionStatus = await _tokens.requestPermission();
+      _diagnostic(
+        DeviceRegistrationDiagnosticsState(
+          step: DeviceRegistrationStep.permissionResolved,
+          message: 'Permissao de notificacao consultada',
+          permissionStatus: permissionStatus,
+        ),
+      );
+      _diagnostic(
+        DeviceRegistrationDiagnosticsState(
+          step: DeviceRegistrationStep.requestingToken,
+          message: 'Solicitando token FCM',
+          permissionStatus: permissionStatus,
+        ),
+      );
+      tokenFcm = await _tokens.getToken();
       if (_isBlank(tokenFcm)) {
+        _diagnostic(
+          DeviceRegistrationDiagnosticsState(
+            step: DeviceRegistrationStep.tokenMissing,
+            message: 'Firebase nao retornou token FCM',
+            permissionStatus: permissionStatus,
+            hasToken: false,
+          ),
+        );
         return;
       }
-      await _registrarComToken(tokenFcm!.trim());
-    } catch (_) {
+      final tokenFcmNormalizado = tokenFcm!.trim();
+      _diagnostic(
+        DeviceRegistrationDiagnosticsState(
+          step: DeviceRegistrationStep.registering,
+          message: 'Enviando dispositivo ao backend',
+          permissionStatus: permissionStatus,
+          hasToken: true,
+          tokenLength: tokenFcmNormalizado.length,
+        ),
+      );
+      await _registrarComToken(tokenFcmNormalizado);
+      _diagnostic(
+        DeviceRegistrationDiagnosticsState(
+          step: DeviceRegistrationStep.registered,
+          message: 'Dispositivo registrado no backend',
+          permissionStatus: permissionStatus,
+          hasToken: true,
+          tokenLength: tokenFcmNormalizado.length,
+          backendStatus: 200,
+        ),
+      );
+    } catch (e) {
+      _diagnostic(
+        DeviceRegistrationDiagnosticsState(
+          step: DeviceRegistrationStep.failed,
+          message: 'Falha ao registrar dispositivo',
+          permissionStatus: permissionStatus,
+          hasToken: !_isBlank(tokenFcm),
+          tokenLength: _isBlank(tokenFcm) ? null : tokenFcm!.trim().length,
+          lastError: _safeError(e),
+          backendStatus: _statusCode(e),
+        ),
+      );
       return;
     }
   }
@@ -182,6 +264,35 @@ class DeviceRegistrationManager {
     );
   }
 
+  void _diagnostic(DeviceRegistrationDiagnosticsState state) {
+    diagnostics?.update(state);
+    unawaited(_sendDiagnostic(state));
+  }
+
+  Future<void> _sendDiagnostic(DeviceRegistrationDiagnosticsState state) async {
+    try {
+      await repository.diagnosticar(state);
+    } catch (_) {
+      return;
+    }
+  }
+
+  static int? _statusCode(Object error) {
+    if (error is DioException) {
+      return error.response?.statusCode;
+    }
+    return null;
+  }
+
+  static String _safeError(Object error) {
+    if (error is DioException) {
+      final status = error.response?.statusCode;
+      final type = error.type.name;
+      return status == null ? 'DioException/$type' : 'HTTP $status/$type';
+    }
+    return error.runtimeType.toString();
+  }
+
   static bool _isBlank(String? value) {
     return value == null || value.trim().isEmpty;
   }
@@ -213,6 +324,7 @@ final deviceRegistrationManagerProvider = Provider<DeviceRegistrationManager>((
     repository: ref.read(deviceRegistrationRepositoryProvider),
     store: ref.read(deviceRegistrationStoreProvider),
     platformResolver: ref.read(devicePlatformResolverProvider),
+    diagnostics: ref.read(deviceRegistrationDiagnosticsProvider.notifier),
     pushTokenProviderFactory: () => ref.read(pushTokenProvider),
   );
   ref.onDispose(() {

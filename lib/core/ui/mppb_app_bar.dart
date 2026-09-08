@@ -9,6 +9,8 @@ import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
 import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/noticias/utils/noticia_share.dart';
+import '../notifications/device_registration_diagnostics_provider.dart';
+import '../notifications/device_registration_provider.dart';
 import '../notifications/notification_center_provider.dart';
 import 'widgets/notification_center_sheet.dart';
 
@@ -32,6 +34,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       final noticiaState = ref.watch(noticiaProvider);
       final designacoesState = ref.watch(designacoesProvider);
       final notificationState = ref.watch(notificationCenterProvider);
+      final deviceDiagnostics = ref.watch(
+        deviceRegistrationDiagnosticsProvider,
+      );
       final notificationItems = buildNotificationCenterItems(
         noticias: noticiaState.noticias,
         designacoes: designacoesState.designacoes,
@@ -85,6 +90,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 items: notificationItems,
                 onOpenItem: (item) => _openNotificationItem(context, ref, item),
                 onClearAll: () => _clearNotifications(ref, notificationItems),
+                deviceDiagnostics: deviceDiagnostics,
+                onRetryDeviceRegistration: () =>
+                    _retryDeviceRegistration(ref, authState.token),
               );
             },
           ),
@@ -225,6 +233,14 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ref
           .read(notificationCenterProvider.notifier)
           .markAllAsRead(notificationItems.map((item) => item.key)),
+    );
+  }
+
+  void _retryDeviceRegistration(WidgetRef ref, String? authToken) {
+    unawaited(
+      ref
+          .read(deviceRegistrationManagerProvider)
+          .registrarSeAutenticado(authToken),
     );
   }
 

@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import 'device_registration_diagnostics_provider.dart';
+
 class DeviceRegistrationResponse {
   final String identificador;
   final String plataforma;
@@ -47,6 +49,22 @@ class DeviceRegistrationRepository {
   Future<void> desativar({required String identificador}) async {
     await dio.delete<void>(
       '/api/notificacoes/dispositivos/${Uri.encodeComponent(identificador)}',
+      options: Options(extra: {'skipAuthLogout': true}),
+    );
+  }
+
+  Future<void> diagnosticar(DeviceRegistrationDiagnosticsState state) async {
+    await dio.post<void>(
+      '/api/notificacoes/dispositivos/diagnostico',
+      data: {
+        'etapa': state.step.name,
+        'mensagem': state.message,
+        'permissao': state.permissionStatus,
+        'possuiToken': state.hasToken,
+        'tamanhoToken': state.tokenLength,
+        'statusBackend': state.backendStatus,
+        'erro': state.lastError,
+      },
       options: Options(extra: {'skipAuthLogout': true}),
     );
   }

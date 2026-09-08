@@ -19,11 +19,13 @@ case "$AMBIENTE" in
   homolog|homologacao)
     FLAVOR="homolog"
     DEFAULT_API_URL="https://aplicativo-mppb-homolog.mppb.mp.br"
+    FIREBASE_ANDROID_APP_ID="1:205396983225:android:a7dce4ef0ae72c9e788a68"
     APK_LABEL="Homolog"
     ;;
   producao|prod)
     FLAVOR="producao"
     DEFAULT_API_URL="https://aplicativo-api.mppb.mp.br"
+    FIREBASE_ANDROID_APP_ID="1:205396983225:android:44dd38aa9f796d5f788a68"
     APK_LABEL="Producao"
     ;;
   *)
@@ -79,6 +81,7 @@ flutter build apk \
   --release \
   --flavor "$FLAVOR" \
   --dart-define=API_URL="$API_URL" \
+  --dart-define=FIREBASE_ANDROID_APP_ID="$FIREBASE_ANDROID_APP_ID" \
   --build-name="$BUILD_NAME" \
   --build-number="$BUILD_NUMBER"
 

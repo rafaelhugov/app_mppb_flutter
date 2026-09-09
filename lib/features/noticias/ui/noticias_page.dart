@@ -682,6 +682,7 @@ class NewsDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final textBlocks = _textBlocksFor(noticia.resumo);
+    final imageUrl = noticia.imagemUrl ?? fallbackImageUrl;
 
     return FractionallySizedBox(
       heightFactor: 0.92,
@@ -721,17 +722,10 @@ class NewsDetailSheet extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.fromLTRB(20, 0, 20, 32 + bottomInset),
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 10,
-                      child: Image.network(
-                        noticia.imagemUrl ?? fallbackImageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
-                            Image.network(fallbackImageUrl, fit: BoxFit.cover),
-                      ),
-                    ),
+                  _NewsDetailImage(
+                    imageUrl: imageUrl,
+                    fallbackImageUrl: fallbackImageUrl,
+                    title: noticia.titulo,
                   ),
                   const SizedBox(height: 16),
                   Wrap(
@@ -841,6 +835,151 @@ class NewsDetailSheet extends StatelessWidget {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NewsDetailImage extends StatelessWidget {
+  const _NewsDetailImage({
+    required this.imageUrl,
+    required this.fallbackImageUrl,
+    required this.title,
+  });
+
+  final String imageUrl;
+  final String fallbackImageUrl;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Ampliar imagem da notícia',
+      child: InkWell(
+        onTap: () => _showImageViewer(context),
+        borderRadius: BorderRadius.circular(22),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: AspectRatio(
+            aspectRatio: 16 / 10,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) =>
+                      Image.network(fallbackImageUrl, fit: BoxFit.cover),
+                ),
+                Positioned(
+                  right: 10,
+                  bottom: 10,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: const Color(0xCC202322),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0x33FFFFFF)),
+                    ),
+                    child: const Icon(
+                      Icons.zoom_out_map_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showImageViewer(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _NewsImageViewerSheet(
+        imageUrl: imageUrl,
+        fallbackImageUrl: fallbackImageUrl,
+        title: title,
+      ),
+    );
+  }
+}
+
+class _NewsImageViewerSheet extends StatelessWidget {
+  const _NewsImageViewerSheet({
+    required this.imageUrl,
+    required this.fallbackImageUrl,
+    required this.title,
+  });
+
+  final String imageUrl;
+  final String fallbackImageUrl;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.paddingOf(context);
+
+    return FractionallySizedBox(
+      heightFactor: 0.94,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF101211),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, 10, 8, 8 + padding.top * 0.1),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        height: 1.18,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 4,
+                child: Center(
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) =>
+                        Image.network(fallbackImageUrl, fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: padding.bottom + 12),
           ],
         ),
       ),

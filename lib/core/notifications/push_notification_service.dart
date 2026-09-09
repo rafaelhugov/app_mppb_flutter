@@ -91,7 +91,7 @@ class PushNotificationService {
   static const String publicNewsTopic = 'mppb_noticias';
 
   static bool get isSupportedPlatform {
-    return defaultTargetPlatform == TargetPlatform.android;
+    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
   }
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;

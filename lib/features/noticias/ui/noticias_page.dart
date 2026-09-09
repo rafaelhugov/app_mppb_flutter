@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/noticia_provider.dart';
 import '../models/noticia.dart';
@@ -205,10 +206,13 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   }
 
   Widget _buildSearchBar() {
+    final responsive = MppbResponsive.of(context);
+    final width = responsive.isTablet ? 460.0 : 304.0;
+
     return Center(
       child: Container(
-        width: MediaQuery.of(context).size.width.clamp(0, 360) - 56,
-        constraints: const BoxConstraints(maxWidth: 304),
+        width: double.infinity,
+        constraints: BoxConstraints(maxWidth: width),
         height: 44,
         decoration: BoxDecoration(
           color: const Color(0xFF202322),
@@ -272,21 +276,27 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
 
     final children = <Widget>[];
     final gridNews = state.paginatedNews;
+    final responsive = MppbResponsive.of(context);
+    final horizontalPadding = MainLayout.publicHorizontalPadding(context);
+    final spacing = responsive.isTablet ? 14.0 : 10.0;
 
     if (gridNews.isNotEmpty) {
       children.add(
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 8,
+          ),
           child: GridView.builder(
             padding: EdgeInsets.zero,
             itemCount: gridNews.length,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              mainAxisExtent: 260,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: responsive.gridColumns,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              mainAxisExtent: responsive.isTablet ? 286 : 260,
             ),
             itemBuilder: (context, index) => _buildRegularCard(gridNews[index]),
           ),
@@ -304,6 +314,9 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   }
 
   Widget _buildRegularCard(Noticia noticia) {
+    final responsive = MppbResponsive.of(context);
+    final isTablet = responsive.isTablet;
+
     return GestureDetector(
       onTap: () => _mostrarNoticia(noticia),
       child: Container(
@@ -324,7 +337,7 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              height: 90,
+              height: isTablet ? 112 : 90,
               width: double.infinity,
               child: Image.network(
                 noticia.imagemUrl ?? NoticiasPage.fallbackImageUrl,
@@ -337,7 +350,12 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
+                padding: EdgeInsets.fromLTRB(
+                  isTablet ? 12 : 10,
+                  isTablet ? 11 : 9,
+                  isTablet ? 12 : 10,
+                  10,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

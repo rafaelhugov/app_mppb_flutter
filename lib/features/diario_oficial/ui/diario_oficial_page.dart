@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/diario_oficial_provider.dart';
 import '../models/diario_oficial.dart';
@@ -70,6 +71,7 @@ class DiarioOficialPage extends ConsumerWidget {
                 state.paginatedDiarios,
                 state.currentPage,
                 state.totalPages,
+                context,
                 ref,
               ),
           ],
@@ -194,6 +196,7 @@ class DiarioOficialPage extends ConsumerWidget {
     List<DiarioOficial> diarios,
     int currentPage,
     int totalPages,
+    BuildContext context,
     WidgetRef ref,
   ) {
     if (diarios.isEmpty) {
@@ -214,36 +217,45 @@ class DiarioOficialPage extends ConsumerWidget {
         ref.read(diarioOficialProvider).selectedDate == null;
     final startIndexForGrid = hasLatest ? 1 : 0;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (hasLatest && diarios.isNotEmpty) ...[
-            _DiarioCard(diario: diarios[0], isLatest: true),
-            const SizedBox(height: 12),
-          ],
-          for (int i = startIndexForGrid; i < diarios.length; i += 2)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _DiarioCard(diario: diarios[i], isLatest: false),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: i + 1 < diarios.length
-                        ? _DiarioCard(diario: diarios[i + 1], isLatest: false)
-                        : const SizedBox(),
-                  ),
-                ],
+    final responsive = MppbResponsive.of(context);
+    final horizontalPadding = MainLayout.publicHorizontalPadding(context);
+    final spacing = responsive.isTablet ? 14.0 : 12.0;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MainLayout.contentMaxWidth(context),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (hasLatest && diarios.isNotEmpty) ...[
+                _DiarioCard(diario: diarios[0], isLatest: true),
+                SizedBox(height: spacing),
+              ],
+              GridView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: diarios.length - startIndexForGrid,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: responsive.gridColumns,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                  mainAxisExtent: responsive.isTablet ? 172 : 160,
+                ),
+                itemBuilder: (context, index) {
+                  final diario = diarios[index + startIndexForGrid];
+                  return _DiarioCard(diario: diario, isLatest: false);
+                },
               ),
-            ),
-          const SizedBox(height: 24),
-          _buildPagination(currentPage, totalPages, ref),
-        ],
+              const SizedBox(height: 24),
+              _buildPagination(currentPage, totalPages, ref),
+            ],
+          ),
+        ),
       ),
     );
   }

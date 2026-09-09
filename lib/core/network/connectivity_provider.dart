@@ -43,7 +43,8 @@ class ConnectivityNotifier extends Notifier<bool> {
 
   Future<void> refresh({List<ConnectivityResult>? connectivityResult}) async {
     final currentCheck = ++_checkGeneration;
-    final result = connectivityResult ?? await _connectivity.checkConnectivity();
+    final result =
+        connectivityResult ?? await _connectivity.checkConnectivity();
     final hasNetwork = result.any((item) => item != ConnectivityResult.none);
     final hasInternet = hasNetwork && await _hasInternetAccess();
     if (currentCheck == _checkGeneration) {
@@ -76,9 +77,11 @@ class ConnectivityNotifier extends Notifier<bool> {
     try {
       final baseUri = Uri.parse(_apiUrl);
       probeUri = baseUri.replace(path: '/api/public/noticias');
-      
+
       final response = await dio.get(probeUri.toString());
-      return response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 500;
+      return response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 500;
     } catch (e) {
       debugPrint('=== CONNECTIVITY_PROVIDER ERROR ===');
       debugPrint('Tried URL: ${probeUri ?? _apiUrl}');

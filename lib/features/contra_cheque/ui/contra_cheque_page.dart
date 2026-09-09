@@ -20,45 +20,50 @@ class ContraChequePage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
-      body: CustomScrollView(
-        slivers: [
-          const SliverToBoxAdapter(
-            child: FeatureHeader(
-              category: '',
-              title: 'Contracheque',
-              description: '',
-              icon: Icons.receipt_long,
+      body: RefreshIndicator(
+        onRefresh: () =>
+            ref.read(contraChequeProvider.notifier).carregarCompetencias(),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            const SliverToBoxAdapter(
+              child: FeatureHeader(
+                category: '',
+                title: 'Contracheque',
+                description: '',
+                icon: Icons.receipt_long,
+              ),
             ),
-          ),
-          if (!state.isLoading && state.competenciaSelecionada != null)
-            const SliverPersistentHeader(
-              pinned: true,
-              delegate: _CompetenciaHeaderDelegate(),
-            ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: MainLayout.authenticatedHorizontalPadding,
-              vertical: 8,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: state.isLoading
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40.0),
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF00A86B),
+            if (!state.isLoading && state.competenciaSelecionada != null)
+              const SliverPersistentHeader(
+                pinned: true,
+                delegate: _CompetenciaHeaderDelegate(),
+              ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: MainLayout.authenticatedHorizontalPadding,
+                vertical: 8,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: state.isLoading
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(40.0),
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF00A86B),
+                          ),
                         ),
-                      ),
-                    )
-                  : state.errorMessage != null
-                  ? _buildError(state.errorMessage!, ref)
-                  : _buildContent(state, context),
+                      )
+                    : state.errorMessage != null
+                    ? _buildError(state.errorMessage!, ref)
+                    : _buildContent(state, context),
+              ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(height: MainLayout.contentBottomPadding(context)),
-          ),
-        ],
+            SliverToBoxAdapter(
+              child: SizedBox(height: MainLayout.contentBottomPadding(context)),
+            ),
+          ],
+        ),
       ),
     );
   }

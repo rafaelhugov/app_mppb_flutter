@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/network/connectivity_provider.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -85,6 +86,15 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
     if (_idTipoAtividade != null) filtros['idTipoAtividade'] = _idTipoAtividade;
 
     ref.read(consultaProcessosProvider.notifier).buscarProcessos(filtros);
+  }
+
+  Future<void> _refresh() async {
+    final notifier = ref.read(consultaProcessosProvider.notifier);
+    await ref.read(connectivityProvider.notifier).refresh();
+    await notifier.carregarFiltros(forceRefresh: true);
+    if (ref.read(consultaProcessosProvider).searched) {
+      _buscar();
+    }
   }
 
   void _limparBusca() {
@@ -251,34 +261,38 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // HERO SECTION
-            const HeroHeaderPublico(
-              label: '',
-              title: 'Consulta Processual',
-              subtitle: '',
-              icon: Icons.gavel,
-            ),
-
-            // FORM CONTAINER
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: 8,
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // HERO SECTION
+              const HeroHeaderPublico(
+                label: '',
+                title: 'Consulta Processual',
+                subtitle: '',
+                icon: Icons.gavel,
               ),
-              child: _buildFormPanel(state),
-            ),
 
-            // RESULTS
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: _buildResults(state),
-            ),
-            SizedBox(height: MainLayout.contentBottomPadding(context)),
-          ],
+              // FORM CONTAINER
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 8,
+                ),
+                child: _buildFormPanel(state),
+              ),
+
+              // RESULTS
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: _buildResults(state),
+              ),
+              SizedBox(height: MainLayout.contentBottomPadding(context)),
+            ],
+          ),
         ),
       ),
     );

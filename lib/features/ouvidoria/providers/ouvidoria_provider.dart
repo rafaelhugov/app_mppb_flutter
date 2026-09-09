@@ -6,7 +6,9 @@ import '../../../../services/captcha_service.dart';
 import '../../../../services/upload_service.dart';
 import '../../../../models/attachment_model.dart';
 
-final ouvidoriaProvider = NotifierProvider<OuvidoriaNotifier, OuvidoriaState>(OuvidoriaNotifier.new);
+final ouvidoriaProvider = NotifierProvider<OuvidoriaNotifier, OuvidoriaState>(
+  OuvidoriaNotifier.new,
+);
 
 class OuvidoriaState {
   final int currentStep;
@@ -80,9 +82,9 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
     _repository = OuvidoriaRepository();
     _captchaService = CaptchaService();
     _uploadService = UploadService();
-    
+
     Future.microtask(_initCombos);
-    
+
     return OuvidoriaState(
       currentStep: 0,
       requestModel: ManifestacaoRequestModel(),
@@ -98,7 +100,7 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
         ComboItem(id: 2, descricao: 'Ouvidoria das Mulheres'),
       ];
       final municipios = await _repository.fetchMunicipios();
-      
+
       state = state.copyWith(
         tipos: tipos,
         materias: materias,
@@ -106,9 +108,14 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Erro ao carregar dados iniciais.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Erro ao carregar dados iniciais.',
+      );
     }
   }
+
+  Future<void> recarregarDadosIniciais() => _initCombos();
 
   Future<void> loadAssuntos(int? materiaId) async {
     state.requestModel.assunto = null;
@@ -116,12 +123,19 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
       state = state.copyWith(assuntos: [], requestModel: state.requestModel);
       return;
     }
-    state = state.copyWith(isLoading: true, assuntos: [], requestModel: state.requestModel);
+    state = state.copyWith(
+      isLoading: true,
+      assuntos: [],
+      requestModel: state.requestModel,
+    );
     try {
       final assuntos = await _repository.fetchAssuntos(materiaId);
       state = state.copyWith(assuntos: assuntos, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Erro ao carregar assuntos.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Erro ao carregar assuntos.',
+      );
     }
   }
 
@@ -131,12 +145,19 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
       state = state.copyWith(bairros: [], requestModel: state.requestModel);
       return;
     }
-    state = state.copyWith(isLoading: true, bairros: [], requestModel: state.requestModel);
+    state = state.copyWith(
+      isLoading: true,
+      bairros: [],
+      requestModel: state.requestModel,
+    );
     try {
       final bairros = await _repository.fetchBairros(municipioId);
       state = state.copyWith(bairros: bairros, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Erro ao carregar bairros.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Erro ao carregar bairros.',
+      );
     }
   }
 
@@ -147,7 +168,10 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
       state.requestModel.captchaId = captchaData.captchaId;
       state = state.copyWith(captchaData: captchaData, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Erro ao carregar Captcha.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Erro ao carregar Captcha.',
+      );
     }
   }
 
@@ -155,20 +179,34 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
     final model = state.requestModel;
     if (state.currentStep == 0) {
       if (!model.anonimo) {
-        if (model.cpfCnpj == null || model.cpfCnpj!.isEmpty) return 'O CPF/CNPJ é obrigatório.';
-        if (model.tipoRemetente == 'F' && !_isValidCPF(model.cpfCnpj!)) return 'O CPF informado é inválido.';
-        if (model.tipoRemetente == 'J' && !_isValidCNPJ(model.cpfCnpj!)) return 'O CNPJ informado é inválido.';
-        if (model.nome == null || model.nome!.isEmpty) return 'O Nome é obrigatório.';
+        if (model.cpfCnpj == null || model.cpfCnpj!.isEmpty) {
+          return 'O CPF/CNPJ é obrigatório.';
+        }
+        if (model.tipoRemetente == 'F' && !_isValidCPF(model.cpfCnpj!)) {
+          return 'O CPF informado é inválido.';
+        }
+        if (model.tipoRemetente == 'J' && !_isValidCNPJ(model.cpfCnpj!)) {
+          return 'O CNPJ informado é inválido.';
+        }
+        if (model.nome == null || model.nome!.isEmpty) {
+          return 'O Nome é obrigatório.';
+        }
       }
     } else if (state.currentStep == 1) {
       if (!model.sigilo) {
-        if (model.origemMunicipio == null) return 'O Município de Origem é obrigatório.';
-        if (model.origemBairro == null) return 'O Bairro de Origem é obrigatório.';
+        if (model.origemMunicipio == null) {
+          return 'O Município de Origem é obrigatório.';
+        }
+        if (model.origemBairro == null) {
+          return 'O Bairro de Origem é obrigatório.';
+        }
       }
       if (model.tipo == null) return 'O Tipo de Manifestação é obrigatório.';
       if (model.materia == null) return 'A Matéria é obrigatória.';
       if (model.assunto == null) return 'O Assunto é obrigatório.';
-      if (model.municipio == null) return 'O Município Destinatário é obrigatório.';
+      if (model.municipio == null) {
+        return 'O Município Destinatário é obrigatório.';
+      }
     } else if (state.currentStep == 2) {
       if (model.texto.isEmpty) return 'O Relato é obrigatório.';
     }
@@ -185,14 +223,20 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
 
   bool _isValidCPF(String cpf) {
     cpf = cpf.replaceAll(RegExp(r'\D'), '');
-    if (cpf.length != 11 || RegExp(r'^(\d)\1*$').hasMatch(cpf)) return false;
+    if (cpf.length != 11 || RegExp(r'^(\d)\1*$').hasMatch(cpf)) {
+      return false;
+    }
     List<int> n = cpf.split('').map(int.parse).toList();
     int sum1 = 0, sum2 = 0;
-    for (int i = 0; i < 9; i++) sum1 += n[i] * (10 - i);
+    for (int i = 0; i < 9; i++) {
+      sum1 += n[i] * (10 - i);
+    }
     int d1 = 11 - (sum1 % 11);
     if (d1 >= 10) d1 = 0;
     if (n[9] != d1) return false;
-    for (int i = 0; i < 10; i++) sum2 += n[i] * (11 - i);
+    for (int i = 0; i < 10; i++) {
+      sum2 += n[i] * (11 - i);
+    }
     int d2 = 11 - (sum2 % 11);
     if (d2 >= 10) d2 = 0;
     return n[10] == d2;
@@ -200,16 +244,22 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
 
   bool _isValidCNPJ(String cnpj) {
     cnpj = cnpj.replaceAll(RegExp(r'\D'), '');
-    if (cnpj.length != 14 || RegExp(r'^(\d)\1*$').hasMatch(cnpj)) return false;
+    if (cnpj.length != 14 || RegExp(r'^(\d)\1*$').hasMatch(cnpj)) {
+      return false;
+    }
     List<int> n = cnpj.split('').map(int.parse).toList();
     int sum1 = 0, sum2 = 0;
     List<int> w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    for (int i = 0; i < 12; i++) sum1 += n[i] * w1[i];
+    for (int i = 0; i < 12; i++) {
+      sum1 += n[i] * w1[i];
+    }
     int d1 = 11 - (sum1 % 11);
     if (d1 >= 10) d1 = 0;
     if (n[12] != d1) return false;
     List<int> w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    for (int i = 0; i < 13; i++) sum2 += n[i] * w2[i];
+    for (int i = 0; i < 13; i++) {
+      sum2 += n[i] * w2[i];
+    }
     int d2 = 11 - (sum2 % 11);
     if (d2 >= 10) d2 = 0;
     return n[13] == d2;
@@ -241,7 +291,11 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
   }
 
   Future<String?> submit() async {
-    state = state.copyWith(isSubmitting: true, errorMessage: null, uploadProgress: 0.0);
+    state = state.copyWith(
+      isSubmitting: true,
+      errorMessage: null,
+      uploadProgress: 0.0,
+    );
     try {
       final protocolo = await _uploadService.enviarManifestacao(
         requestModel: state.requestModel,
@@ -258,7 +312,7 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
       return null;
     }
   }
-  
+
   void clearError() {
     state = state.copyWith(errorMessage: null);
   }

@@ -1,201 +1,213 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/network/connectivity_provider.dart';
+import '../../noticias/providers/noticia_provider.dart';
 import '../../noticias/ui/widgets/news_carousel.dart';
 import '../../contatos/ui/widgets/secao_institucional.dart';
 
-class PublicDashboardPage extends StatelessWidget {
+class PublicDashboardPage extends ConsumerWidget {
   const PublicDashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          top: MediaQuery.paddingOf(context).top,
-          bottom: 112,
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 20,
-                    right: 20,
-                    top: 16,
-                    bottom: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Bem-vindo',
-                        style: TextStyle(
-                          color: const Color(0xFF202322),
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          height: 1.2,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(connectivityProvider.notifier).refresh();
+          await ref.read(noticiaProvider.notifier).fetchNoticias();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.only(
+            top: MediaQuery.paddingOf(context).top,
+            bottom: 112,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 20,
+                      right: 20,
+                      top: 16,
+                      bottom: 16,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bem-vindo',
+                          style: TextStyle(
+                            color: const Color(0xFF202322),
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Acesse os principais serviços do Ministério Público da Paraíba.',
-                        style: TextStyle(
-                          color: Color(0xFF697370),
-                          fontSize: 13,
-                          height: 1.3,
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Acesse os principais serviços do Ministério Público da Paraíba.',
+                          style: TextStyle(
+                            color: Color(0xFF697370),
+                            fontSize: 13,
+                            height: 1.3,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.grid_view_rounded,
-                            color: Color(0xFF2563EB),
-                            size: 21,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Serviços ao Cidadão',
-                            style: TextStyle(
-                              color: const Color(0xFF202322),
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.grid_view_rounded,
+                              color: Color(0xFF2563EB),
+                              size: 21,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 22),
-
-                      GridView(
-                        padding: EdgeInsets.zero,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              mainAxisExtent: 140,
-                            ),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          _buildSmallCard(
-                            context,
-                            'Certidão',
-                            'Extrajudicial',
-                            Icons.verified_outlined,
-                            '/certidao-extrajudicial',
-                            backgroundIcon: true,
-                          ),
-                          _buildSmallCard(
-                            context,
-                            'Diário Oficial',
-                            'Atos e editais',
-                            Icons.description,
-                            '/diario_oficial',
-                            backgroundIcon: true,
-                          ),
-                          _buildSmallCard(
-                            context,
-                            'Notícias',
-                            'Fique por dentro',
-                            Icons.newspaper,
-                            '/noticias',
-                            backgroundIcon: true,
-                          ),
-                          _buildSmallCard(
-                            context,
-                            'Ouvidoria',
-                            'Manifestações',
-                            Icons.record_voice_over,
-                            '/ouvidoria',
-                            backgroundIcon: true,
-                          ),
-                          _buildSmallCard(
-                            context,
-                            'Processos',
-                            'Andamentos',
-                            Icons.manage_search,
-                            '/processos',
-                            backgroundIcon: true,
-                          ),
-                          _buildSmallCard(
-                            context,
-                            'Contatos',
-                            'Atendimento',
-                            Icons.contact_support_outlined,
-                            '/contatos',
-                            backgroundIcon: true,
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 48),
-
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.newspaper_rounded,
-                            color: Color(0xFFD62828),
-                            size: 21,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Notícias',
-                            style: TextStyle(
-                              color: Color(0xFF202322),
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const Spacer(),
-                          FilledButton(
-                            onPressed: () => context.go('/noticias'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFFD62828),
-                              foregroundColor: const Color(0xFFD62828),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 9,
-                              ),
-                              minimumSize: const Size(82, 34),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              elevation: 0,
-                              side: const BorderSide(color: Color(0xFFD62828)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                            const SizedBox(width: 8),
+                            Text(
+                              'Serviços ao Cidadão',
+                              style: TextStyle(
+                                color: const Color(0xFF202322),
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
-                            child: const Text(
-                              'Todas as notícias',
-                              style: TextStyle(color: Colors.white),
+                          ],
+                        ),
+                        const SizedBox(height: 22),
+
+                        GridView(
+                          padding: EdgeInsets.zero,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                mainAxisExtent: 140,
+                              ),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            _buildSmallCard(
+                              context,
+                              'Certidão',
+                              'Extrajudicial',
+                              Icons.verified_outlined,
+                              '/certidao-extrajudicial',
+                              backgroundIcon: true,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      const NewsCarousel(),
-                      const SizedBox(height: 48),
-                      const SecaoInstitucional(),
-                    ],
+                            _buildSmallCard(
+                              context,
+                              'Diário Oficial',
+                              'Atos e editais',
+                              Icons.description,
+                              '/diario_oficial',
+                              backgroundIcon: true,
+                            ),
+                            _buildSmallCard(
+                              context,
+                              'Notícias',
+                              'Fique por dentro',
+                              Icons.newspaper,
+                              '/noticias',
+                              backgroundIcon: true,
+                            ),
+                            _buildSmallCard(
+                              context,
+                              'Ouvidoria',
+                              'Manifestações',
+                              Icons.record_voice_over,
+                              '/ouvidoria',
+                              backgroundIcon: true,
+                            ),
+                            _buildSmallCard(
+                              context,
+                              'Processos',
+                              'Andamentos',
+                              Icons.manage_search,
+                              '/processos',
+                              backgroundIcon: true,
+                            ),
+                            _buildSmallCard(
+                              context,
+                              'Contatos',
+                              'Atendimento',
+                              Icons.contact_support_outlined,
+                              '/contatos',
+                              backgroundIcon: true,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 48),
+
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.newspaper_rounded,
+                              color: Color(0xFFD62828),
+                              size: 21,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Notícias',
+                              style: TextStyle(
+                                color: Color(0xFF202322),
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const Spacer(),
+                            FilledButton(
+                              onPressed: () => context.go('/noticias'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFD62828),
+                                foregroundColor: const Color(0xFFD62828),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 9,
+                                ),
+                                minimumSize: const Size(82, 34),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                elevation: 0,
+                                side: const BorderSide(
+                                  color: Color(0xFFD62828),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: const Text(
+                                'Todas as notícias',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        const NewsCarousel(),
+                        const SizedBox(height: 48),
+                        const SecaoInstitucional(),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

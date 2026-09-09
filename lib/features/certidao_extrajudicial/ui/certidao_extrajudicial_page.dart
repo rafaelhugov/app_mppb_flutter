@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
+import '../../../core/network/connectivity_provider.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../models/certidao_extrajudicial.dart';
@@ -41,44 +42,59 @@ class _CertidaoExtrajudicialPageState
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const HeroHeaderPublico(
-              label: '',
-              title: 'Certidão Extrajudicial',
-              subtitle: '',
-              icon: Icons.verified_outlined,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildTabs(),
-                  const SizedBox(height: 14),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 240),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    child: _tabIndex == 0
-                        ? _buildEmissaoForm(state)
-                        : _buildValidacaoForm(state),
-                  ),
-                  if (state.errorMessage != null) ...[
-                    const SizedBox(height: 14),
-                    _buildError(state.errorMessage!),
-                  ],
-                  if (state.certidao != null && _tabIndex == 1) ...[
-                    const SizedBox(height: 14),
-                    _buildResultadoValidacao(state.certidao!),
-                  ],
-                  SizedBox(height: MainLayout.contentBottomPadding(context)),
-                ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(connectivityProvider.notifier).refresh();
+          final codigo = _codigoController.text.trim();
+          if (_tabIndex == 1 && codigo.isNotEmpty) {
+            await ref
+                .read(certidaoExtrajudicialProvider.notifier)
+                .consultarCodigo(codigo);
+          }
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const HeroHeaderPublico(
+                label: '',
+                title: 'Certidão Extrajudicial',
+                subtitle: '',
+                icon: Icons.verified_outlined,
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildTabs(),
+                    const SizedBox(height: 14),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 240),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      child: _tabIndex == 0
+                          ? _buildEmissaoForm(state)
+                          : _buildValidacaoForm(state),
+                    ),
+                    if (state.errorMessage != null) ...[
+                      const SizedBox(height: 14),
+                      _buildError(state.errorMessage!),
+                    ],
+                    if (state.certidao != null && _tabIndex == 1) ...[
+                      const SizedBox(height: 14),
+                      _buildResultadoValidacao(state.certidao!),
+                    ],
+                    SizedBox(height: MainLayout.contentBottomPadding(context)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

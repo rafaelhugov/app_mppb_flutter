@@ -211,7 +211,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
           )
         : state.data != null
         ? SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Center(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -301,7 +301,13 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
       body: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned.fill(child: content),
+          Positioned.fill(
+            child: RefreshIndicator(
+              onRefresh: () =>
+                  ref.read(carteiraProvider.notifier).fetchCarteira(),
+              child: content,
+            ),
+          ),
           if (state.data != null)
             Positioned(
               left: -10000,
@@ -355,13 +361,13 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
         : const Color(0xFF6D4C41);
 
     final labelColor = isMembro
-        ? Colors.white.withOpacity(0.6)
+        ? Colors.white.withValues(alpha: 0.6)
         : const Color(0xFF6D4C41);
     final valueColor = isMembro ? Colors.white : const Color(0xFF3E2723);
 
     final borderColor = isMembro
         ? Colors.transparent
-        : Colors.white.withOpacity(0.2);
+        : Colors.white.withValues(alpha: 0.2);
     final borderSize = isMembro ? 0.0 : 2.0;
 
     return Container(
@@ -547,8 +553,8 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
                         colors: [
                           Colors.transparent,
                           isMembro
-                              ? Colors.white.withOpacity(0.2)
-                              : Colors.black.withOpacity(0.15),
+                              ? Colors.white.withValues(alpha: 0.2)
+                              : Colors.black.withValues(alpha: 0.15),
                           Colors.transparent,
                         ],
                       ),
@@ -651,13 +657,13 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
         : const Color(0xFFE8DCD1);
 
     final labelColor = isMembro
-        ? Colors.white.withOpacity(0.8)
+        ? Colors.white.withValues(alpha: 0.8)
         : const Color(0xFF5C524F);
     final valueColor = isMembro ? Colors.white : const Color(0xFF1C1917);
 
     final borderColor = isMembro
         ? Colors.transparent
-        : Colors.white.withOpacity(0.2);
+        : Colors.white.withValues(alpha: 0.2);
     final borderSize = isMembro ? 0.0 : 2.0;
 
     final qrData =
@@ -980,8 +986,8 @@ class _PatternPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = isMembro
-          ? Colors.white.withOpacity(0.02)
-          : Colors.black.withOpacity(0.02)
+          ? Colors.white.withValues(alpha: 0.02)
+          : Colors.black.withValues(alpha: 0.02)
       ..strokeWidth = 1.0;
 
     for (double i = -size.height; i < size.width; i += 10) {

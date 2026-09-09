@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/ui/responsive_layout.dart';
 import '../../models/noticia.dart';
 import '../../providers/noticia_provider.dart';
 import '../../ui/noticias_page.dart';
@@ -17,7 +18,8 @@ class NewsCarousel extends ConsumerStatefulWidget {
 
 class _NewsCarouselState extends ConsumerState<NewsCarousel>
     with SingleTickerProviderStateMixin {
-  final PageController _pageController = PageController(viewportFraction: 0.92);
+  PageController? _pageController;
+  double? _currentViewportFraction;
   Timer? _autoPlayTimer;
   int _currentNewsIndex = 0;
   int _carouselNewsCount = 0;
@@ -41,8 +43,34 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
   void dispose() {
     _autoPlayTimer?.cancel();
     _autoPlayProgressController.dispose();
-    _pageController.dispose();
+    _pageController?.dispose();
     super.dispose();
+  }
+
+  double _viewportFractionFor(MppbResponsiveMetrics responsive) {
+    if (responsive.windowClass == MppbWindowClass.large) return 0.30;
+    if (responsive.usesWideLayout) return 0.36;
+    if (responsive.isTablet && responsive.isLandscape) return 0.46;
+    return 0.92;
+  }
+
+  PageController _controllerFor(double viewportFraction) {
+    final currentController = _pageController;
+    if (currentController != null &&
+        _currentViewportFraction == viewportFraction) {
+      return currentController;
+    }
+
+    final initialPage = _currentNewsIndex;
+    _autoPlayTimer?.cancel();
+    _autoPlayTimer = null;
+    _currentViewportFraction = viewportFraction;
+    _pageController?.dispose();
+    _pageController = PageController(
+      initialPage: initialPage,
+      viewportFraction: viewportFraction,
+    );
+    return _pageController!;
   }
 
   void _restartAutoPlayProgress() {
@@ -69,12 +97,13 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
 
     _restartAutoPlayProgress();
     _autoPlayTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (!mounted || !_pageController.hasClients) {
+      final controller = _pageController;
+      if (!mounted || controller == null || !controller.hasClients) {
         return;
       }
 
       final nextPage = (_currentNewsIndex + 1) % itemCount;
-      _pageController.animateToPage(
+      controller.animateToPage(
         nextPage,
         duration: const Duration(milliseconds: 420),
         curve: Curves.easeOutCubic,
@@ -213,9 +242,15 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
   @override
   Widget build(BuildContext context) {
     final noticiaState = ref.watch(noticiaProvider);
+    final responsive = MppbResponsive.of(context);
+    final pageController = _controllerFor(_viewportFractionFor(responsive));
     final todasNoticias = noticiaState.noticias;
-    final carouselNews = todasNoticias.take(3).toList();
+    final carouselNews = todasNoticias
+        .take(responsive.usesWideLayout ? 6 : 4)
+        .toList();
     _syncAutoPlay(carouselNews.length);
+    final carouselHeight = responsive.usesWideLayout ? 300.0 : 380.0;
+    final itemRightPadding = responsive.isTablet ? 10.0 : 12.0;
 
     return Column(
       children: [
@@ -254,9 +289,9 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
           )
         else ...[
           SizedBox(
-            height: 380,
+            height: carouselHeight,
             child: PageView.builder(
-              controller: _pageController,
+              controller: pageController,
               itemCount: carouselNews.length,
               padEnds: false,
               onPageChanged: (index) {
@@ -278,7 +313,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
+                  padding: EdgeInsets.only(right: itemRightPadding),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,

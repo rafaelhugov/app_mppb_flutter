@@ -70,6 +70,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
     _pageController = PageController(
       initialPage: initialPage,
       viewportFraction: viewportFraction,
+      keepPage: false,
     );
     return _pageController!;
   }

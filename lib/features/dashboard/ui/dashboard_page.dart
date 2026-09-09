@@ -159,6 +159,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     _pageController = PageController(
       initialPage: initialPage,
       viewportFraction: viewportFraction,
+      keepPage: false,
     );
     return _pageController!;
   }

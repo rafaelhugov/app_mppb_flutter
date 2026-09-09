@@ -96,7 +96,7 @@ class ConcessoesVigentesList extends StatelessWidget {
                           crossAxisCount: 2,
                           crossAxisSpacing: spacing,
                           mainAxisSpacing: spacing,
-                          mainAxisExtent: 236,
+                          mainAxisExtent: 292,
                         ),
                         itemBuilder: (context, index) =>
                             ConcessaoAfastamentoCard(

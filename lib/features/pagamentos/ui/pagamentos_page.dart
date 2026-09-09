@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/pagamentos_provider.dart';
 import '../models/pagamento_model.dart';
@@ -33,6 +34,8 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(pagamentosProvider);
     final isPrivacyEnabled = ref.watch(privacyProvider);
+    final horizontalPadding = MainLayout.horizontalPadding(context);
+    final contentMaxWidth = _contentMaxWidth(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
@@ -51,11 +54,16 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
             SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: MainLayout.authenticatedHorizontalPadding,
-                  vertical: 8.0,
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 8,
                 ),
-                child: _buildExercicioSelector(state),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                    child: _buildExercicioSelector(state),
+                  ),
+                ),
               ),
             ),
             if (state.isLoadingAnos || state.isLoading)
@@ -104,32 +112,43 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
               )
             else if (state.dados != null)
               SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: MainLayout.authenticatedHorizontalPadding,
-                  vertical: 8.0,
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 8,
                 ),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _buildResumoCard(state.dados!, isPrivacyEnabled),
-                    const SizedBox(height: 16),
-                    _buildSectionHeading(state.dados!.pagamentos.length),
-                    const SizedBox(height: 12),
-                    ...state.dados!.pagamentos.map(
-                      (p) => _buildPagamentoCard(p, isPrivacyEnabled),
-                    ),
-                    const SizedBox(height: 16),
-                    const Center(
-                      child: Text(
-                        'Fonte: Sistema Pitágoras.',
-                        style: TextStyle(
-                          color: Color(0xFF697370),
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic,
-                        ),
+                sliver: SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                      child: Column(
+                        children: [
+                          _buildResumoCard(state.dados!, isPrivacyEnabled),
+                          const SizedBox(height: 16),
+                          _buildSectionHeading(state.dados!.pagamentos.length),
+                          const SizedBox(height: 12),
+                          _buildPagamentosList(
+                            context,
+                            state.dados!.pagamentos,
+                            isPrivacyEnabled,
+                          ),
+                          const SizedBox(height: 16),
+                          const Center(
+                            child: Text(
+                              'Fonte: Sistema Pitágoras.',
+                              style: TextStyle(
+                                color: Color(0xFF697370),
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: MainLayout.contentBottomPadding(context),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: MainLayout.contentBottomPadding(context)),
-                  ]),
+                  ),
                 ),
               )
             else if (state.dados == null || state.anosDisponiveis.isEmpty)
@@ -183,6 +202,14 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
         ),
       ),
     );
+  }
+
+  double _contentMaxWidth(BuildContext context) {
+    final responsive = MppbResponsive.of(context);
+    if (responsive.isTablet && responsive.isLandscape) {
+      return 760;
+    }
+    return MainLayout.contentMaxWidth(context);
   }
 
   Widget _buildHeader() {
@@ -617,10 +644,49 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
     );
   }
 
-  Widget _buildPagamentoCard(Pagamento pag, bool isPrivacyEnabled) {
+  Widget _buildPagamentosList(
+    BuildContext context,
+    List<Pagamento> pagamentos,
+    bool isPrivacyEnabled,
+  ) {
+    final responsive = MppbResponsive.of(context);
+    if (responsive.isTablet &&
+        responsive.isLandscape &&
+        pagamentos.length > 1) {
+      return GridView.builder(
+        padding: EdgeInsets.zero,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: pagamentos.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          mainAxisExtent: 286,
+        ),
+        itemBuilder: (context, index) => _buildPagamentoCard(
+          pagamentos[index],
+          isPrivacyEnabled,
+          compact: true,
+        ),
+      );
+    }
+
+    return Column(
+      children: pagamentos
+          .map((p) => _buildPagamentoCard(p, isPrivacyEnabled))
+          .toList(),
+    );
+  }
+
+  Widget _buildPagamentoCard(
+    Pagamento pag,
+    bool isPrivacyEnabled, {
+    bool compact = false,
+  }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.only(bottom: compact ? 0 : 12),
+      padding: EdgeInsets.all(compact ? 16 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -640,93 +706,108 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (pag.nuProcesso != null) ...[
-                    Row(
-                      children: const [
-                        Icon(Icons.folder, color: Color(0xFF697370), size: 12),
-                        SizedBox(width: 6),
-                        Text(
-                          'Processo',
-                          style: TextStyle(
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (pag.nuProcesso != null) ...[
+                      Row(
+                        children: const [
+                          Icon(
+                            Icons.folder,
                             color: Color(0xFF697370),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            height: 1.1,
+                            size: 12,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Nº ${pag.nuProcesso}',
-                      style: TextStyle(
-                        color: const Color(0xFF202322),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        height: 1.15,
+                          SizedBox(width: 6),
+                          Text(
+                            'Processo',
+                            style: TextStyle(
+                              color: Color(0xFF697370),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              height: 1.1,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  if (pag.documento != null) ...[
-                    Row(
-                      children: const [
-                        Icon(
-                          Icons.description,
-                          color: Color(0xFF697370),
-                          size: 12,
+                      const SizedBox(height: 3),
+                      Text(
+                        'Nº ${pag.nuProcesso}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: const Color(0xFF202322),
+                          fontSize: compact ? 14 : 15,
+                          fontWeight: FontWeight.w600,
+                          height: 1.15,
                         ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Documento',
-                          style: TextStyle(
-                            color: Color(0xFF697370),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            height: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Nº ${pag.documento}',
-                      style: TextStyle(
-                        color: const Color(0xFF202322),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        height: 1.15,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  if (pag.dtPagamento != null)
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.event,
-                          color: Color(0xFF697370),
-                          size: 12,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Pago em ${_formatarData(pag.dtPagamento)}',
-                          style: const TextStyle(
+                      const SizedBox(height: 10),
+                    ],
+                    if (pag.documento != null) ...[
+                      Row(
+                        children: const [
+                          Icon(
+                            Icons.description,
                             color: Color(0xFF697370),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            height: 1.1,
+                            size: 12,
                           ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Documento',
+                            style: TextStyle(
+                              color: Color(0xFF697370),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              height: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Nº ${pag.documento}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: const Color(0xFF202322),
+                          fontSize: compact ? 14 : 15,
+                          fontWeight: FontWeight.w600,
+                          height: 1.15,
                         ),
-                      ],
-                    ),
-                ],
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    if (pag.dtPagamento != null)
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.event,
+                            color: Color(0xFF697370),
+                            size: 12,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Pago em ${_formatarData(pag.dtPagamento)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF697370),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                height: 1.1,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
               if (pag.dsModalidadePag != null)
                 Container(
+                  margin: const EdgeInsets.only(left: 10),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,

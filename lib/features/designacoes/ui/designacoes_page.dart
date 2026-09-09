@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ui/main_layout.dart';
@@ -78,7 +80,7 @@ class _DesignacoesList extends StatelessWidget {
     final agrupadas = _agrupar(designacoes);
     final responsive = MppbResponsive.of(context);
     final horizontalPadding = MainLayout.horizontalPadding(context);
-    final spacing = responsive.isTablet ? 14.0 : 10.0;
+    final spacing = responsive.isTablet && responsive.isLandscape ? 12.0 : 10.0;
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
@@ -113,12 +115,20 @@ class _DesignacoesList extends StatelessWidget {
                             itemCount: entry.value.length,
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: responsive.usesWideLayout
+                                  crossAxisCount:
+                                      responsive.isTablet &&
+                                          responsive.isLandscape
+                                      ? math.min(4, entry.value.length)
+                                      : responsive.usesWideLayout
                                       ? 2
                                       : 1,
                                   crossAxisSpacing: spacing,
                                   mainAxisSpacing: spacing,
-                                  mainAxisExtent: 176,
+                                  mainAxisExtent:
+                                      responsive.isTablet &&
+                                          responsive.isLandscape
+                                      ? 226
+                                      : 190,
                                 ),
                             itemBuilder: (context, index) => DesignacaoCard(
                               designacao: entry.value[index],

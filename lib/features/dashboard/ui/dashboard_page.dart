@@ -1311,11 +1311,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required List<_DashboardService> services,
   }) {
     final responsive = MppbResponsive.of(context);
-    final keepCardsInline =
-        responsive.isTablet &&
-        (responsive.isLandscape || responsive.size.width >= 1000);
-    final columns = keepCardsInline ? services.length : responsive.gridColumns;
-    final spacing = responsive.isTablet && responsive.isLandscape ? 8.0 : 8.0;
+    final isTabletPortrait = responsive.isTablet && !responsive.isLandscape;
+    final keepCardsInline = responsive.isTablet && responsive.isLandscape;
+    final columns = isTabletPortrait
+        ? 2
+        : keepCardsInline
+        ? services.length
+        : responsive.gridColumns;
+    final spacing = isTabletPortrait ? 12.0 : 8.0;
+    final cardHeight = isTabletPortrait
+        ? 116.0
+        : responsive.isTablet && responsive.isLandscape
+        ? 92.0
+        : responsive.isTablet
+        ? 104.0
+        : 92.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1328,11 +1338,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
             crossAxisCount: columns,
             crossAxisSpacing: spacing,
             mainAxisSpacing: spacing,
-            mainAxisExtent: responsive.isTablet && responsive.isLandscape
-                ? 92
-                : responsive.isTablet
-                ? 104
-                : 92,
+            mainAxisExtent: cardHeight,
           ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

@@ -35,6 +35,19 @@ void main() {
       expect(metrics.cardGridColumns, 2);
     });
 
+    test('mantem tablet medio em layout de leitura no retrato', () {
+      final metrics = MppbResponsive.fromSize(const Size(768, 1024));
+
+      expect(metrics.windowClass, MppbWindowClass.medium);
+      expect(metrics.isTablet, isTrue);
+      expect(metrics.usesWideLayout, isFalse);
+      expect(metrics.isLandscape, isFalse);
+      expect(metrics.horizontalPadding, 28);
+      expect(metrics.contentMaxWidth, 760);
+      expect(metrics.gridColumns, 2);
+      expect(metrics.cardGridColumns, 1);
+    });
+
     test('usa mais colunas em tablet grande', () {
       final metrics = MppbResponsive.fromSize(const Size(1366, 912));
 

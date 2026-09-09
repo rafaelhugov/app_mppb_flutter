@@ -299,6 +299,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     }
   }
 
+  String? _newsImageUrl(Noticia noticia) {
+    final url = noticia.imagemUrl?.trim();
+    if (url == null || url.isEmpty) return null;
+    return url.replaceFirst(
+      'http://www.mppb.mp.br/',
+      'https://www.mppb.mp.br/',
+    );
+  }
+
   void _showNewsModal(Noticia noticia) {
     showModalBottomSheet<void>(
       context: context,
@@ -619,6 +628,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                             if (parts.length > 1) {
                               dateFormatted = '${parts[0]}, ${parts[1]}';
                             }
+                            final imageUrl = _newsImageUrl(noticia);
+                            final cardHorizontalPadding = isTabletLandscape
+                                ? 12.0
+                                : 18.0;
+                            final cardTopPadding = isTabletLandscape
+                                ? 10.0
+                                : 16.0;
+                            final cardBottomPadding = isTabletLandscape
+                                ? 6.0
+                                : 10.0;
 
                             return Padding(
                               padding: EdgeInsets.only(
@@ -645,7 +664,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                   children: [
                                     // IMAGE
                                     Expanded(
-                                      flex: 9,
+                                      flex: isTabletLandscape ? 8 : 9,
                                       child: GestureDetector(
                                         onTap: () => _showNewsModal(noticia),
                                         child: Container(
@@ -664,22 +683,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                             ),
-                                            image:
-                                                noticia.imagemUrl != null &&
-                                                    noticia
-                                                        .imagemUrl!
-                                                        .isNotEmpty
+                                            image: imageUrl != null
                                                 ? DecorationImage(
                                                     image: NetworkImage(
-                                                      noticia.imagemUrl!,
+                                                      imageUrl,
                                                     ),
                                                     fit: BoxFit.cover,
                                                   )
                                                 : null,
                                           ),
-                                          child:
-                                              (noticia.imagemUrl == null ||
-                                                  noticia.imagemUrl!.isEmpty)
+                                          child: imageUrl == null
                                               ? const Center(
                                                   child: Icon(
                                                     Icons.newspaper,
@@ -693,24 +706,27 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                     ),
                                     // CONTENT
                                     Expanded(
-                                      flex: 11,
+                                      flex: isTabletLandscape ? 10 : 11,
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 18,
-                                          right: 16,
-                                          top: 16,
-                                          bottom: 10,
+                                        padding: EdgeInsets.only(
+                                          left: cardHorizontalPadding,
+                                          right: cardHorizontalPadding,
+                                          top: cardTopPadding,
+                                          bottom: cardBottomPadding,
                                         ),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
                                             Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 9,
-                                                    vertical: 7,
-                                                  ),
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isTabletLandscape
+                                                    ? 7
+                                                    : 9,
+                                                vertical: isTabletLandscape
+                                                    ? 5
+                                                    : 7,
+                                              ),
                                               decoration: BoxDecoration(
                                                 color: const Color(0x1FD62828),
                                                 borderRadius:
@@ -720,65 +736,84 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                                 (noticia.categoria ??
                                                         'Destaque')
                                                     .toUpperCase(),
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color: Color(0xFFD62828),
-                                                  fontSize: 10,
+                                                  fontSize: isTabletLandscape
+                                                      ? 8.5
+                                                      : 10,
                                                   fontWeight: FontWeight.w700,
                                                   letterSpacing: 0.2,
                                                   height: 1.0,
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
+                                            SizedBox(
+                                              height: isTabletLandscape ? 6 : 8,
+                                            ),
                                             Text(
                                               dateFormatted,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: Color(0xFF697370),
-                                                fontSize: 12,
+                                                fontSize: isTabletLandscape
+                                                    ? 10.5
+                                                    : 12,
                                                 fontWeight: FontWeight.w800,
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
+                                            SizedBox(
+                                              height: isTabletLandscape ? 6 : 8,
+                                            ),
                                             Text(
                                               noticia.titulo,
-                                              maxLines: 2,
+                                              maxLines: isTabletLandscape
+                                                  ? 2
+                                                  : 2,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: Color(0xFF202322),
-                                                fontSize: 18,
+                                                fontSize: isTabletLandscape
+                                                    ? 14
+                                                    : 18,
                                                 fontWeight: FontWeight.w900,
-                                                height: 1.18,
+                                                height: isTabletLandscape
+                                                    ? 1.08
+                                                    : 1.12,
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
-                                            Expanded(
-                                              child: Text(
-                                                noticia.resumo ?? '',
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: Color(0xFF697370),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  height: 1.4,
+                                            if (!isTabletLandscape) ...[
+                                              const SizedBox(height: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  noticia.resumo ?? '',
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF697370),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.4,
+                                                  ),
                                                 ),
                                               ),
-                                            ),
+                                            ],
                                           ],
                                         ),
                                       ),
                                     ),
                                     // ACTIONS
                                     Padding(
-                                      padding: const EdgeInsets.only(
-                                        left: 18,
-                                        right: 16,
-                                        bottom: 16,
+                                      padding: EdgeInsets.only(
+                                        left: cardHorizontalPadding,
+                                        right: cardHorizontalPadding,
+                                        bottom: isTabletLandscape ? 10 : 16,
                                       ),
                                       child: Row(
                                         children: [
                                           SizedBox(
-                                            width: 132,
+                                            width: isTabletLandscape
+                                                ? 104
+                                                : 132,
                                             child: ElevatedButton(
                                               onPressed: () =>
                                                   _showNewsModal(noticia),
@@ -794,14 +829,22 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),
-                                                minimumSize: const Size(0, 32),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 8,
-                                                    ),
-                                                textStyle: const TextStyle(
-                                                  fontSize: 11.5,
+                                                minimumSize: Size(
+                                                  0,
+                                                  isTabletLandscape ? 28 : 32,
+                                                ),
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: isTabletLandscape
+                                                      ? 9
+                                                      : 12,
+                                                  vertical: isTabletLandscape
+                                                      ? 6
+                                                      : 8,
+                                                ),
+                                                textStyle: TextStyle(
+                                                  fontSize: isTabletLandscape
+                                                      ? 10
+                                                      : 11.5,
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
@@ -824,8 +867,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                           ),
                                           const Spacer(),
                                           SizedBox(
-                                            width: 38,
-                                            height: 34,
+                                            width: isTabletLandscape ? 32 : 38,
+                                            height: isTabletLandscape ? 30 : 34,
                                             child: _DashboardNewsShareButton(
                                               onPressed: () =>
                                                   compartilharNoticia(noticia),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../dados/dados_institucionais.dart';
 import '../servicos/servico_links_externos.dart';
 
@@ -25,98 +26,95 @@ class ContatosPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
-      appBar: AppBar(
-        title: const Text(
-          'Contatos e Atendimento',
-          style: TextStyle(
-            color: _ink,
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: _ink),
-      ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(connectivityProvider.notifier).refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            isCompact ? 18 : 24,
-            horizontalPadding,
-            MainLayout.contentBottomPadding(context),
+          padding: EdgeInsets.only(
+            bottom: MainLayout.contentBottomPadding(context),
           ),
           children: [
+            const HeroHeaderPublico(
+              label: '',
+              title: 'Contatos e Atendimento',
+              subtitle: '',
+              icon: Icons.contact_phone_rounded,
+            ),
             Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: MainLayout.contentMaxWidth(context),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _PageLead(compact: isCompact),
-                    const SizedBox(height: 22),
-                    if (isWide)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _ContactSection(
-                              icon: Icons.account_balance_rounded,
-                              iconColor: _red,
-                              title: 'Sede do MPPB',
-                              child: _buildSedeCard(),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    isCompact ? 12 : 18,
+                    horizontalPadding,
+                    0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _PageLead(compact: isCompact),
+                      const SizedBox(height: 22),
+                      if (isWide)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _ContactSection(
+                                icon: Icons.account_balance_rounded,
+                                iconColor: _red,
+                                title: 'Sede do MPPB',
+                                child: _buildSedeCard(),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                _ContactSection(
-                                  icon: Icons.schedule_rounded,
-                                  iconColor: _blue,
-                                  title: 'Atendimento nas Promotorias',
-                                  child: _buildPromotoriasCard(),
-                                ),
-                                const SizedBox(height: 18),
-                                _ContactSection(
-                                  icon: Icons.support_agent_rounded,
-                                  iconColor: _green,
-                                  title: 'Ouvidoria',
-                                  child: _buildOuvidoriaCard(),
-                                ),
-                              ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  _ContactSection(
+                                    icon: Icons.schedule_rounded,
+                                    iconColor: _blue,
+                                    title: 'Atendimento nas Promotorias',
+                                    child: _buildPromotoriasCard(),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  _ContactSection(
+                                    icon: Icons.support_agent_rounded,
+                                    iconColor: _green,
+                                    title: 'Ouvidoria',
+                                    child: _buildOuvidoriaCard(),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      )
-                    else ...[
-                      _ContactSection(
-                        icon: Icons.account_balance_rounded,
-                        iconColor: _red,
-                        title: 'Sede do MPPB',
-                        child: _buildSedeCard(),
-                      ),
-                      const SizedBox(height: 24),
-                      _ContactSection(
-                        icon: Icons.schedule_rounded,
-                        iconColor: _blue,
-                        title: 'Atendimento nas Promotorias',
-                        child: _buildPromotoriasCard(),
-                      ),
-                      const SizedBox(height: 24),
-                      _ContactSection(
-                        icon: Icons.support_agent_rounded,
-                        iconColor: _green,
-                        title: 'Ouvidoria',
-                        child: _buildOuvidoriaCard(),
-                      ),
+                          ],
+                        )
+                      else ...[
+                        _ContactSection(
+                          icon: Icons.account_balance_rounded,
+                          iconColor: _red,
+                          title: 'Sede do MPPB',
+                          child: _buildSedeCard(),
+                        ),
+                        const SizedBox(height: 24),
+                        _ContactSection(
+                          icon: Icons.schedule_rounded,
+                          iconColor: _blue,
+                          title: 'Atendimento nas Promotorias',
+                          child: _buildPromotoriasCard(),
+                        ),
+                        const SizedBox(height: 24),
+                        _ContactSection(
+                          icon: Icons.support_agent_rounded,
+                          iconColor: _green,
+                          title: 'Ouvidoria',
+                          child: _buildOuvidoriaCard(),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -251,57 +249,29 @@ class _PageLead extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ContatosPage._border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F101828),
-            blurRadius: 18,
-            offset: Offset(0, 8),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Canais oficiais',
+          style: TextStyle(
+            color: ContatosPage._ink,
+            fontSize: compact ? 22 : 24,
+            fontWeight: FontWeight.w900,
+            height: 1.05,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(compact ? 16 : 18),
-        child: Row(
-          children: [
-            const _IconBadge(
-              icon: Icons.contact_phone_rounded,
-              color: ContatosPage._red,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Canais oficiais',
-                    style: TextStyle(
-                      color: ContatosPage._ink,
-                      fontSize: compact ? 18 : 20,
-                      fontWeight: FontWeight.w900,
-                      height: 1.08,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  const Text(
-                    'Sede, promotorias e Ouvidoria em um só lugar.',
-                    style: TextStyle(
-                      color: ContatosPage._muted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      height: 1.25,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
-      ),
+        const SizedBox(height: 6),
+        const Text(
+          'Sede, promotorias e Ouvidoria em um só lugar.',
+          style: TextStyle(
+            color: ContatosPage._muted,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            height: 1.35,
+          ),
+        ),
+      ],
     );
   }
 }

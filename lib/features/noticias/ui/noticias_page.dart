@@ -715,8 +715,17 @@ class NewsDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final responsive = MppbResponsive.of(context);
-    final maxWidth = responsive.usesWideLayout ? 860.0 : 760.0;
-    final heightFactor = responsive.usesWideLayout ? 0.88 : 0.92;
+    final isTabletLandscape = responsive.isTablet && responsive.isLandscape;
+    final maxWidth = responsive.usesWideLayout
+        ? 1120.0
+        : isTabletLandscape
+        ? 1040.0
+        : 760.0;
+    final heightFactor = isTabletLandscape
+        ? 0.90
+        : responsive.usesWideLayout
+        ? 0.88
+        : 0.92;
     final horizontalPadding = responsive.isTablet ? 28.0 : 20.0;
     final textBlocks = _textBlocksFor(noticia.resumo);
     final imageUrl = noticia.imagemUrl ?? fallbackImageUrl;
@@ -983,8 +992,17 @@ class _NewsImageViewerSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
     final responsive = MppbResponsive.of(context);
-    final maxWidth = responsive.usesWideLayout ? 980.0 : 760.0;
-    final heightFactor = responsive.usesWideLayout ? 0.90 : 0.94;
+    final isTabletLandscape = responsive.isTablet && responsive.isLandscape;
+    final maxWidth = responsive.usesWideLayout
+        ? 1240.0
+        : isTabletLandscape
+        ? 1120.0
+        : 760.0;
+    final heightFactor = isTabletLandscape
+        ? 0.92
+        : responsive.usesWideLayout
+        ? 0.90
+        : 0.94;
 
     return Align(
       alignment: Alignment.bottomCenter,

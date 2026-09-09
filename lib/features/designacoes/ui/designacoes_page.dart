@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 
 import '../../concessao_afastamento/ui/widgets/concessao_afastamento_theme.dart';
@@ -75,13 +78,16 @@ class _DesignacoesList extends StatelessWidget {
     }
 
     final agrupadas = _agrupar(designacoes);
+    final responsive = MppbResponsive.of(context);
+    final horizontalPadding = MainLayout.horizontalPadding(context);
+    final spacing = responsive.isTablet && responsive.isLandscape ? 12.0 : 10.0;
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
         padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
           16,
-          16,
-          16,
+          horizontalPadding,
           MainLayout.contentBottomPadding(context),
         ),
         children: [
@@ -90,12 +96,55 @@ class _DesignacoesList extends StatelessWidget {
           if (designacoes.isEmpty)
             const _EmptyState()
           else
-            ...agrupadas.entries.expand(
-              (entry) => [
-                _SectionTitle(title: entry.key),
-                ...entry.value.map((item) => DesignacaoCard(designacao: item)),
-                const SizedBox(height: 8),
-              ],
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MainLayout.contentMaxWidth(context),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ...agrupadas.entries.expand(
+                      (entry) => [
+                        _SectionTitle(title: entry.key),
+                        if (responsive.isTablet && entry.value.length > 1)
+                          GridView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: entry.value.length,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount:
+                                      responsive.isTablet &&
+                                          responsive.isLandscape
+                                      ? math.min(4, entry.value.length)
+                                      : responsive.usesWideLayout
+                                      ? 2
+                                      : 1,
+                                  crossAxisSpacing: spacing,
+                                  mainAxisSpacing: spacing,
+                                  mainAxisExtent:
+                                      responsive.isTablet &&
+                                          responsive.isLandscape
+                                      ? 284
+                                      : 190,
+                                ),
+                            itemBuilder: (context, index) => DesignacaoCard(
+                              designacao: entry.value[index],
+                              compact: true,
+                            ),
+                          )
+                        else
+                          ...entry.value.map(
+                            (item) => DesignacaoCard(designacao: item),
+                          ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
         ],
       ),
@@ -154,8 +203,13 @@ class _SectionTitle extends StatelessWidget {
 
 class DesignacaoCard extends StatelessWidget {
   final DesignacaoAtiva designacao;
+  final bool compact;
 
-  const DesignacaoCard({super.key, required this.designacao});
+  const DesignacaoCard({
+    super.key,
+    required this.designacao,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -168,9 +222,10 @@ class DesignacaoCard extends StatelessWidget {
           '${designacao.periodo.isEmpty ? '' : designacao.periodo}.',
       button: false,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+        padding: EdgeInsets.only(bottom: compact ? 0 : 10),
         child: _DesignacaoSolidContainer(
           category: category,
+          compact: compact,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -183,10 +238,11 @@ class DesignacaoCard extends StatelessWidget {
                 category: category,
                 titulo: designacao.titulo,
                 subtitulo: designacao.subtitulo,
+                compact: compact,
               ),
               if (details.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                _DesignacaoMetadataGrid(items: details),
+                _DesignacaoMetadataGrid(items: details, compact: compact),
               ],
             ],
           ),
@@ -253,16 +309,18 @@ class DesignacaoCard extends StatelessWidget {
 class _DesignacaoSolidContainer extends StatelessWidget {
   final _DesignacaoCategoryStyle category;
   final Widget child;
+  final bool compact;
 
   const _DesignacaoSolidContainer({
     required this.category,
     required this.child,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 168),
+      constraints: BoxConstraints(minHeight: compact ? 156 : 168),
       decoration: BoxDecoration(
         color: category.surface,
         borderRadius: BorderRadius.circular(16),
@@ -279,15 +337,15 @@ class _DesignacaoSolidContainer extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            right: -34,
-            top: -34,
+            right: compact ? -26 : -34,
+            top: compact ? -30 : -34,
             child: Icon(
               category.icon,
               color: category.backgroundIconColor,
-              size: 132,
+              size: compact ? 116 : 132,
             ),
           ),
-          Padding(padding: const EdgeInsets.all(14), child: child),
+          Padding(padding: EdgeInsets.all(compact ? 12 : 14), child: child),
         ],
       ),
     );
@@ -352,11 +410,13 @@ class _DesignacaoIdentity extends StatelessWidget {
   final _DesignacaoCategoryStyle category;
   final String titulo;
   final String? subtitulo;
+  final bool compact;
 
   const _DesignacaoIdentity({
     required this.category,
     required this.titulo,
     this.subtitulo,
+    this.compact = false,
   });
 
   @override
@@ -365,30 +425,34 @@ class _DesignacaoIdentity extends StatelessWidget {
     final titleText = _capitalizeText(titulo);
     final subtitleText = hasSubtitle ? _capitalizeText(subtitulo!.trim()) : '';
     return Padding(
-      padding: const EdgeInsets.only(top: 4, right: 68),
+      padding: EdgeInsets.only(top: 4, right: compact ? 42 : 68),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             titleText,
             softWrap: true,
+            maxLines: compact ? 4 : null,
+            overflow: compact ? TextOverflow.ellipsis : null,
             style: TextStyle(
               color: category.titleColor,
-              fontSize: 14.2,
+              fontSize: compact ? 13.2 : 14.2,
               fontWeight: FontWeight.w700,
-              height: 1.24,
+              height: compact ? 1.18 : 1.24,
             ),
           ),
           if (hasSubtitle) ...[
-            const SizedBox(height: 6),
+            SizedBox(height: compact ? 5 : 6),
             Text(
               subtitleText,
               softWrap: true,
+              maxLines: compact ? 3 : null,
+              overflow: compact ? TextOverflow.ellipsis : null,
               style: TextStyle(
                 color: category.subtitleColor,
-                fontSize: 11,
+                fontSize: compact ? 10.3 : 11,
                 fontWeight: FontWeight.w400,
-                height: 1.3,
+                height: compact ? 1.22 : 1.3,
               ),
             ),
           ],
@@ -433,8 +497,9 @@ class _DesignacaoIdentity extends StatelessWidget {
 
 class _DesignacaoMetadataGrid extends StatelessWidget {
   final List<_DesignacaoMetadataItemData> items;
+  final bool compact;
 
-  const _DesignacaoMetadataGrid({required this.items});
+  const _DesignacaoMetadataGrid({required this.items, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -447,7 +512,10 @@ class _DesignacaoMetadataGrid extends StatelessWidget {
                 .map(
                   (item) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: _DesignacaoMetadataItem(item: item),
+                    child: _DesignacaoMetadataItem(
+                      item: item,
+                      compact: compact,
+                    ),
                   ),
                 )
                 .toList(),
@@ -467,13 +535,17 @@ class _DesignacaoMetadataGrid extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
-                      child: _DesignacaoMetadataItem(item: items[index]),
+                      child: _DesignacaoMetadataItem(
+                        item: items[index],
+                        compact: compact,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     if (secondIndex < items.length)
                       Expanded(
                         child: _DesignacaoMetadataItem(
                           item: items[secondIndex],
+                          compact: compact,
                         ),
                       )
                     else
@@ -493,14 +565,18 @@ class _DesignacaoMetadataGrid extends StatelessWidget {
 
 class _DesignacaoMetadataItem extends StatelessWidget {
   final _DesignacaoMetadataItemData item;
+  final bool compact;
 
-  const _DesignacaoMetadataItem({required this.item});
+  const _DesignacaoMetadataItem({required this.item, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 56),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      constraints: BoxConstraints(minHeight: compact ? 52 : 56),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 9 : 10,
+        vertical: compact ? 8 : 9,
+      ),
       decoration: BoxDecoration(
         color: item.background,
         borderRadius: BorderRadius.circular(10),
@@ -528,11 +604,13 @@ class _DesignacaoMetadataItem extends StatelessWidget {
                 Text(
                   item.value,
                   softWrap: true,
+                  maxLines: compact ? 3 : null,
+                  overflow: compact ? TextOverflow.ellipsis : null,
                   style: TextStyle(
                     color: item.valueColor,
-                    fontSize: 11.2,
+                    fontSize: compact ? 10.6 : 11.2,
                     fontWeight: FontWeight.w500,
-                    height: 1.18,
+                    height: compact ? 1.14 : 1.18,
                   ),
                 ),
               ],

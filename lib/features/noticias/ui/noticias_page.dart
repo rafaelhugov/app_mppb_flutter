@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/noticia_provider.dart';
 import '../models/noticia.dart';
@@ -205,10 +206,13 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   }
 
   Widget _buildSearchBar() {
+    final responsive = MppbResponsive.of(context);
+    final width = responsive.isTablet ? 460.0 : 304.0;
+
     return Center(
       child: Container(
-        width: MediaQuery.of(context).size.width.clamp(0, 360) - 56,
-        constraints: const BoxConstraints(maxWidth: 304),
+        width: double.infinity,
+        constraints: BoxConstraints(maxWidth: width),
         height: 44,
         decoration: BoxDecoration(
           color: const Color(0xFF202322),
@@ -272,21 +276,27 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
 
     final children = <Widget>[];
     final gridNews = state.paginatedNews;
+    final responsive = MppbResponsive.of(context);
+    final horizontalPadding = MainLayout.publicHorizontalPadding(context);
+    final spacing = responsive.isTablet ? 14.0 : 10.0;
 
     if (gridNews.isNotEmpty) {
       children.add(
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 8,
+          ),
           child: GridView.builder(
             padding: EdgeInsets.zero,
             itemCount: gridNews.length,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              mainAxisExtent: 260,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: responsive.gridColumns,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              mainAxisExtent: responsive.isTablet ? 286 : 260,
             ),
             itemBuilder: (context, index) => _buildRegularCard(gridNews[index]),
           ),
@@ -304,6 +314,9 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   }
 
   Widget _buildRegularCard(Noticia noticia) {
+    final responsive = MppbResponsive.of(context);
+    final isTablet = responsive.isTablet;
+
     return GestureDetector(
       onTap: () => _mostrarNoticia(noticia),
       child: Container(
@@ -324,7 +337,7 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              height: 90,
+              height: isTablet ? 112 : 90,
               width: double.infinity,
               child: Image.network(
                 noticia.imagemUrl ?? NoticiasPage.fallbackImageUrl,
@@ -337,7 +350,12 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
+                padding: EdgeInsets.fromLTRB(
+                  isTablet ? 12 : 10,
+                  isTablet ? 11 : 9,
+                  isTablet ? 12 : 10,
+                  10,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -681,161 +699,181 @@ class NewsDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final responsive = MppbResponsive.of(context);
+    final maxWidth = responsive.usesWideLayout ? 860.0 : 760.0;
+    final heightFactor = responsive.usesWideLayout ? 0.88 : 0.92;
+    final horizontalPadding = responsive.isTablet ? 28.0 : 20.0;
     final textBlocks = _textBlocksFor(noticia.resumo);
     final imageUrl = noticia.imagemUrl ?? fallbackImageUrl;
 
-    return FractionallySizedBox(
-      heightFactor: 0.92,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFF7F8F6),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0x33202322),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Color(0xFF202322),
-                    ),
-                  ),
-                ],
-              ),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: FractionallySizedBox(
+          widthFactor: 1,
+          heightFactor: heightFactor,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7F8F6),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 32 + bottomInset),
-                children: [
-                  _NewsDetailImage(
-                    imageUrl: imageUrl,
-                    fallbackImageUrl: fallbackImageUrl,
-                    title: noticia.titulo,
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 8),
+                  child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
+                        width: 38,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: const Color(0x1FD62828),
+                          color: const Color(0x33202322),
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: Text(
-                          (noticia.categoria ?? 'Institucional').toUpperCase(),
-                          style: const TextStyle(
-                            color: Color(0xFFD62828),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            height: 1,
-                          ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFF202322),
                         ),
-                      ),
-                      _NewsMetaPill(
-                        icon: Icons.calendar_today_rounded,
-                        text: date,
-                        color: const Color(0xFFD62828),
-                      ),
-                      _NewsMetaPill(
-                        icon: Icons.schedule_rounded,
-                        text: '$readingTime min de leitura',
-                        color: const Color(0xFF2563EB),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  Text(
-                    noticia.titulo,
-                    style: const TextStyle(
-                      color: Color(0xFF202322),
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      height: 1.14,
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      0,
+                      horizontalPadding,
+                      32 + bottomInset,
                     ),
-                  ),
-                  if (textBlocks.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    ...textBlocks.map(
-                      (block) => Padding(
-                        padding: EdgeInsets.only(
-                          top: block.isHeading ? 4 : 0,
-                          bottom: block.isHeading ? 8 : 12,
-                        ),
-                        child: Text(
-                          block.text,
-                          textAlign: TextAlign.start,
-                          style: block.isHeading
-                              ? const TextStyle(
-                                  color: Color(0xFF202322),
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.18,
-                                )
-                              : const TextStyle(
-                                  color: Color(0xFF4A5350),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.42,
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 22),
-                  Row(
                     children: [
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: onOpenLink,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFD62828),
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size.fromHeight(48),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                      _NewsDetailImage(
+                        imageUrl: imageUrl,
+                        fallbackImageUrl: fallbackImageUrl,
+                        title: noticia.titulo,
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
                             ),
-                            textStyle: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                            decoration: BoxDecoration(
+                              color: const Color(0x1FD62828),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              (noticia.categoria ?? 'Institucional')
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                color: Color(0xFFD62828),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                height: 1,
+                              ),
                             ),
                           ),
-                          icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                          label: const Text('Abrir no site'),
+                          _NewsMetaPill(
+                            icon: Icons.calendar_today_rounded,
+                            text: date,
+                            color: const Color(0xFFD62828),
+                          ),
+                          _NewsMetaPill(
+                            icon: Icons.schedule_rounded,
+                            text: '$readingTime min de leitura',
+                            color: const Color(0xFF2563EB),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        noticia.titulo,
+                        style: TextStyle(
+                          color: const Color(0xFF202322),
+                          fontSize: responsive.isTablet ? 24 : 22,
+                          fontWeight: FontWeight.w700,
+                          height: 1.14,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 52,
-                        height: 48,
-                        child: _NewsShareButton(onPressed: onShare),
+                      if (textBlocks.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        ...textBlocks.map(
+                          (block) => Padding(
+                            padding: EdgeInsets.only(
+                              top: block.isHeading ? 4 : 0,
+                              bottom: block.isHeading ? 8 : 12,
+                            ),
+                            child: Text(
+                              block.text,
+                              textAlign: TextAlign.start,
+                              style: block.isHeading
+                                  ? TextStyle(
+                                      color: const Color(0xFF202322),
+                                      fontSize: responsive.isTablet ? 18 : 17,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.18,
+                                    )
+                                  : TextStyle(
+                                      color: const Color(0xFF4A5350),
+                                      fontSize: responsive.isTablet ? 17 : 16,
+                                      fontWeight: FontWeight.w400,
+                                      height: 1.42,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: onOpenLink,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFD62828),
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size.fromHeight(48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.open_in_new_rounded,
+                                size: 18,
+                              ),
+                              label: const Text('Abrir no site'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            width: 52,
+                            height: 48,
+                            child: _NewsShareButton(onPressed: onShare),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -929,58 +967,78 @@ class _NewsImageViewerSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
+    final responsive = MppbResponsive.of(context);
+    final maxWidth = responsive.usesWideLayout ? 980.0 : 760.0;
+    final heightFactor = responsive.usesWideLayout ? 0.90 : 0.94;
 
-    return FractionallySizedBox(
-      heightFactor: 0.94,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF101211),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 10, 8, 8 + padding.top * 0.1),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        height: 1.18,
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: FractionallySizedBox(
+          widthFactor: 1,
+          heightFactor: heightFactor,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF101211),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    responsive.isTablet ? 22 : 16,
+                    10,
+                    8,
+                    8 + padding.top * 0.1,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: responsive.isTablet ? 16 : 14,
+                            fontWeight: FontWeight.w700,
+                            height: 1.18,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: InteractiveViewer(
+                    minScale: 1,
+                    maxScale: 4,
+                    child: Center(
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => Image.network(
+                          fallbackImageUrl,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: InteractiveViewer(
-                minScale: 1,
-                maxScale: 4,
-                child: Center(
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) =>
-                        Image.network(fallbackImageUrl, fit: BoxFit.contain),
-                  ),
                 ),
-              ),
+                SizedBox(height: padding.bottom + 12),
+              ],
             ),
-            SizedBox(height: padding.bottom + 12),
-          ],
+          ),
         ),
       ),
     );

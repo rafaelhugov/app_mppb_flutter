@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/ui/responsive_layout.dart';
 import '../../models/noticia.dart';
 import '../../providers/noticia_provider.dart';
 import '../../ui/noticias_page.dart';
@@ -17,7 +19,8 @@ class NewsCarousel extends ConsumerStatefulWidget {
 
 class _NewsCarouselState extends ConsumerState<NewsCarousel>
     with SingleTickerProviderStateMixin {
-  final PageController _pageController = PageController(viewportFraction: 0.92);
+  PageController? _pageController;
+  double? _currentViewportFraction;
   Timer? _autoPlayTimer;
   int _currentNewsIndex = 0;
   int _carouselNewsCount = 0;
@@ -41,8 +44,35 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
   void dispose() {
     _autoPlayTimer?.cancel();
     _autoPlayProgressController.dispose();
-    _pageController.dispose();
+    _pageController?.dispose();
     super.dispose();
+  }
+
+  double _viewportFractionFor(MppbResponsiveMetrics responsive) {
+    if (responsive.windowClass == MppbWindowClass.large) return 0.25;
+    if (responsive.usesWideLayout) return 0.32;
+    if (responsive.isTablet && responsive.isLandscape) return 0.34;
+    return 0.92;
+  }
+
+  PageController _controllerFor(double viewportFraction) {
+    final currentController = _pageController;
+    if (currentController != null &&
+        _currentViewportFraction == viewportFraction) {
+      return currentController;
+    }
+
+    final initialPage = _currentNewsIndex;
+    _autoPlayTimer?.cancel();
+    _autoPlayTimer = null;
+    _currentViewportFraction = viewportFraction;
+    _pageController?.dispose();
+    _pageController = PageController(
+      initialPage: initialPage,
+      viewportFraction: viewportFraction,
+      keepPage: false,
+    );
+    return _pageController!;
   }
 
   void _restartAutoPlayProgress() {
@@ -69,12 +99,13 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
 
     _restartAutoPlayProgress();
     _autoPlayTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (!mounted || !_pageController.hasClients) {
+      final controller = _pageController;
+      if (!mounted || controller == null || !controller.hasClients) {
         return;
       }
 
       final nextPage = (_currentNewsIndex + 1) % itemCount;
-      _pageController.animateToPage(
+      controller.animateToPage(
         nextPage,
         duration: const Duration(milliseconds: 420),
         curve: Curves.easeOutCubic,
@@ -179,6 +210,16 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
     }
   }
 
+  String? _newsImageUrl(Noticia noticia) {
+    final url = noticia.imagemUrl?.trim();
+    if (url == null || url.isEmpty) return null;
+    if (kIsWeb) return null;
+    return url.replaceFirst(
+      'http://www.mppb.mp.br/',
+      'https://www.mppb.mp.br/',
+    );
+  }
+
   void _showNewsModal(Noticia noticia) {
     showModalBottomSheet<void>(
       context: context,
@@ -213,9 +254,23 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
   @override
   Widget build(BuildContext context) {
     final noticiaState = ref.watch(noticiaProvider);
+    final responsive = MppbResponsive.of(context);
+    final pageController = _controllerFor(_viewportFractionFor(responsive));
     final todasNoticias = noticiaState.noticias;
-    final carouselNews = todasNoticias.take(3).toList();
+    final carouselNews = todasNoticias
+        .take(responsive.isTablet && responsive.isLandscape ? 8 : 4)
+        .toList();
     _syncAutoPlay(carouselNews.length);
+    final carouselHeight = responsive.isTablet && responsive.isLandscape
+        ? 292.0
+        : 380.0;
+    final itemRightPadding = responsive.isTablet && responsive.isLandscape
+        ? 8.0
+        : 12.0;
+    final compactCard = responsive.isTablet && responsive.isLandscape;
+    final cardHorizontalPadding = compactCard ? 12.0 : 18.0;
+    final cardTopPadding = compactCard ? 10.0 : 16.0;
+    final cardBottomPadding = compactCard ? 6.0 : 10.0;
 
     return Column(
       children: [
@@ -254,9 +309,9 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
           )
         else ...[
           SizedBox(
-            height: 380,
+            height: carouselHeight,
             child: PageView.builder(
-              controller: _pageController,
+              controller: pageController,
               itemCount: carouselNews.length,
               padEnds: false,
               onPageChanged: (index) {
@@ -276,9 +331,10 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                 if (parts.length > 1) {
                   dateFormatted = '${parts[0]}, ${parts[1]}';
                 }
+                final imageUrl = _newsImageUrl(noticia);
 
                 return Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
+                  padding: EdgeInsets.only(right: itemRightPadding),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -297,7 +353,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                       children: [
                         // IMAGE
                         Expanded(
-                          flex: 9,
+                          flex: compactCard ? 8 : 9,
                           child: GestureDetector(
                             onTap: () => _showNewsModal(noticia),
                             child: Container(
@@ -315,18 +371,14 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                image:
-                                    noticia.imagemUrl != null &&
-                                        noticia.imagemUrl!.isNotEmpty
+                                image: imageUrl != null
                                     ? DecorationImage(
-                                        image: NetworkImage(noticia.imagemUrl!),
+                                        image: NetworkImage(imageUrl),
                                         fit: BoxFit.cover,
                                       )
                                     : null,
                               ),
-                              child:
-                                  (noticia.imagemUrl == null ||
-                                      noticia.imagemUrl!.isEmpty)
+                              child: imageUrl == null
                                   ? const Center(
                                       child: Icon(
                                         Icons.newspaper,
@@ -340,21 +392,21 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                         ),
                         // CONTENT
                         Expanded(
-                          flex: 11,
+                          flex: compactCard ? 10 : 11,
                           child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 18,
-                              right: 16,
-                              top: 16,
-                              bottom: 10,
+                            padding: EdgeInsets.only(
+                              left: cardHorizontalPadding,
+                              right: cardHorizontalPadding,
+                              top: cardTopPadding,
+                              bottom: cardBottomPadding,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 9,
-                                    vertical: 7,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: compactCard ? 7 : 9,
+                                    vertical: compactCard ? 5 : 7,
                                   ),
                                   decoration: BoxDecoration(
                                     color: const Color(0x1FD62828),
@@ -363,65 +415,67 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                                   child: Text(
                                     (noticia.categoria ?? 'Destaque')
                                         .toUpperCase(),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Color(0xFFD62828),
-                                      fontSize: 10,
+                                      fontSize: compactCard ? 8.5 : 10,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.2,
                                       height: 1.0,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                SizedBox(height: compactCard ? 6 : 8),
                                 Text(
                                   dateFormatted,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xFF697370),
-                                    fontSize: 12,
+                                    fontSize: compactCard ? 10.5 : 12,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                SizedBox(height: compactCard ? 6 : 8),
                                 Text(
                                   noticia.titulo,
-                                  maxLines: 2,
+                                  maxLines: compactCard ? 2 : 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xFF202322),
-                                    fontSize: 18,
+                                    fontSize: compactCard ? 14 : 18,
                                     fontWeight: FontWeight.w900,
-                                    height: 1.18,
+                                    height: compactCard ? 1.08 : 1.12,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Expanded(
-                                  child: Text(
-                                    noticia.resumo ?? '',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Color(0xFF697370),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.4,
+                                if (!compactCard) ...[
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                    child: Text(
+                                      noticia.resumo ?? '',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Color(0xFF697370),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.4,
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ),
                         ),
                         // ACTIONS
                         Padding(
-                          padding: const EdgeInsets.only(
-                            left: 18,
-                            right: 16,
-                            bottom: 16,
+                          padding: EdgeInsets.only(
+                            left: cardHorizontalPadding,
+                            right: cardHorizontalPadding,
+                            bottom: compactCard ? 10 : 16,
                           ),
                           child: Row(
                             children: [
                               SizedBox(
-                                width: 132,
+                                width: compactCard ? 104 : 132,
                                 child: ElevatedButton(
                                   onPressed: () => _showNewsModal(noticia),
                                   style: ElevatedButton.styleFrom(
@@ -431,13 +485,13 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    minimumSize: const Size(0, 32),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
+                                    minimumSize: Size(0, compactCard ? 28 : 32),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: compactCard ? 9 : 12,
+                                      vertical: compactCard ? 6 : 8,
                                     ),
-                                    textStyle: const TextStyle(
-                                      fontSize: 11.5,
+                                    textStyle: TextStyle(
+                                      fontSize: compactCard ? 10 : 11.5,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -457,8 +511,8 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                               ),
                               const Spacer(),
                               SizedBox(
-                                width: 38,
-                                height: 34,
+                                width: compactCard ? 32 : 38,
+                                height: compactCard ? 30 : 34,
                                 child: _CarouselNewsShareButton(
                                   onPressed: () => compartilharNoticia(noticia),
                                 ),

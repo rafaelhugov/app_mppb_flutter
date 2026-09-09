@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../notifications/device_registration_diagnostics_provider.dart';
 import '../../notifications/notification_center_provider.dart';
+import '../responsive_layout.dart';
 
 class NotificationCenterSheet {
   static void show(
@@ -14,6 +15,7 @@ class NotificationCenterSheet {
   }) {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return NotificationCenterContent(
@@ -66,6 +68,9 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = MppbResponsive.of(context);
+    final maxWidth = responsive.isTablet ? 720.0 : double.infinity;
+    final heightFactor = responsive.usesWideLayout ? 0.82 : 0.92;
     final newsItems = widget.items
         .where((item) => item.type == NotificationCenterItemType.noticia)
         .toList();
@@ -73,149 +78,162 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
         .where((item) => item.type == NotificationCenterItemType.designacao)
         .toList();
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF7F8F6),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x14101828),
-            blurRadius: 40,
-            offset: Offset(0, -8),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: 28,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.notifications_rounded,
-                    color: Color(0xFFD62828),
-                    size: 22,
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Notificações',
-                      style: TextStyle(
-                        color: Color(0xFF202322),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  if (widget.items.isNotEmpty)
-                    TextButton(
-                      onPressed: widget.onClearAll,
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFD62828),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        minimumSize: const Size(0, 32),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const Text('Limpar tudo'),
-                    ),
-                  const SizedBox(width: 6),
-                  InkWell(
-                    onTap: widget.onClose,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0x1A343A40),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Color(0xFF697370),
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ],
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: FractionallySizedBox(
+          widthFactor: 1,
+          heightFactor: heightFactor,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7F8F6),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
-              const SizedBox(height: 18),
-              if (widget.deviceDiagnostics != null) ...[
-                _DeviceRegistrationDiagnosticCard(
-                  state: widget.deviceDiagnostics!,
-                  onRetry: widget.onRetryDeviceRegistration,
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x14101828),
+                  blurRadius: 40,
+                  offset: Offset(0, -8),
                 ),
-                const SizedBox(height: 14),
               ],
-              if (widget.items.isEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 18,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0x26343A40)),
-                  ),
-                  child: const Text(
-                    'Nenhuma notificação nova',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF697370),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0,
+            ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: responsive.isTablet ? 24 : 20,
+                  right: responsive.isTablet ? 24 : 20,
+                  top: responsive.isTablet ? 22 : 20,
+                  bottom: 28,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.notifications_rounded,
+                          color: Color(0xFFD62828),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Notificações',
+                            style: TextStyle(
+                              color: Color(0xFF202322),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (widget.items.isNotEmpty)
+                          TextButton(
+                            onPressed: widget.onClearAll,
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFFD62828),
+                              textStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              minimumSize: const Size(0, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('Limpar tudo'),
+                          ),
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: widget.onClose,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: const Color(0x1A343A40),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Color(0xFF697370),
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                )
-              else ...[
-                if (newsItems.isNotEmpty)
-                  _NotificationGroup(
-                    title: 'Notícias',
-                    count: newsItems.length,
-                    icon: Icons.newspaper_rounded,
-                    accentColor: const Color(0xFFD62828),
-                    items: newsItems,
-                    previewLimit: _previewLimit,
-                    showAll: _showAllNews,
-                    onToggleShowAll: () {
-                      setState(() => _showAllNews = !_showAllNews);
-                    },
-                    onOpenItem: widget.onOpenItem,
-                  ),
-                if (designationItems.isNotEmpty)
-                  _NotificationGroup(
-                    title: 'Designações',
-                    count: designationItems.length,
-                    icon: Icons.assignment_ind_rounded,
-                    accentColor: const Color(0xFF2563EB),
-                    items: designationItems,
-                    previewLimit: _previewLimit,
-                    showAll: _showAllDesignations,
-                    onToggleShowAll: () {
-                      setState(
-                        () => _showAllDesignations = !_showAllDesignations,
-                      );
-                    },
-                    onOpenItem: widget.onOpenItem,
-                  ),
-              ],
-            ],
+                    const SizedBox(height: 18),
+                    if (widget.deviceDiagnostics != null) ...[
+                      _DeviceRegistrationDiagnosticCard(
+                        state: widget.deviceDiagnostics!,
+                        onRetry: widget.onRetryDeviceRegistration,
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.items.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 18,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0x26343A40)),
+                        ),
+                        child: const Text(
+                          'Nenhuma notificação nova',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF697370),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                      )
+                    else ...[
+                      if (newsItems.isNotEmpty)
+                        _NotificationGroup(
+                          title: 'Notícias',
+                          count: newsItems.length,
+                          icon: Icons.newspaper_rounded,
+                          accentColor: const Color(0xFFD62828),
+                          items: newsItems,
+                          previewLimit: _previewLimit,
+                          showAll: _showAllNews,
+                          onToggleShowAll: () {
+                            setState(() => _showAllNews = !_showAllNews);
+                          },
+                          onOpenItem: widget.onOpenItem,
+                        ),
+                      if (designationItems.isNotEmpty)
+                        _NotificationGroup(
+                          title: 'Designações',
+                          count: designationItems.length,
+                          icon: Icons.assignment_ind_rounded,
+                          accentColor: const Color(0xFF2563EB),
+                          items: designationItems,
+                          previewLimit: _previewLimit,
+                          showAll: _showAllDesignations,
+                          onToggleShowAll: () {
+                            setState(
+                              () =>
+                                  _showAllDesignations = !_showAllDesignations,
+                            );
+                          },
+                          onOpenItem: widget.onOpenItem,
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -391,8 +409,10 @@ class _NotificationGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = MppbResponsive.of(context);
     final visibleItems = showAll ? items : items.take(previewLimit).toList();
     final hiddenCount = items.length - visibleItems.length;
+    final useGrid = responsive.usesWideLayout && visibleItems.length > 1;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -420,19 +440,44 @@ class _NotificationGroup extends StatelessWidget {
               ],
             ),
           ),
-          ...visibleItems.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _NotificationShortcut(
-                icon: icon,
-                title: item.title,
-                subtitle: item.subtitle,
-                imageUrl: item.imageUrl,
-                accentColor: accentColor,
-                onTap: () => onOpenItem(item),
+          if (useGrid)
+            GridView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: visibleItems.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                mainAxisExtent: 82,
+              ),
+              itemBuilder: (context, index) {
+                final item = visibleItems[index];
+                return _NotificationShortcut(
+                  icon: icon,
+                  title: item.title,
+                  subtitle: item.subtitle,
+                  imageUrl: item.imageUrl,
+                  accentColor: accentColor,
+                  onTap: () => onOpenItem(item),
+                );
+              },
+            )
+          else
+            ...visibleItems.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _NotificationShortcut(
+                  icon: icon,
+                  title: item.title,
+                  subtitle: item.subtitle,
+                  imageUrl: item.imageUrl,
+                  accentColor: accentColor,
+                  onTap: () => onOpenItem(item),
+                ),
               ),
             ),
-          ),
           if (hiddenCount > 0 || showAll)
             Align(
               alignment: Alignment.centerLeft,

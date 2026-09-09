@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../network/connectivity_provider.dart';
 import 'mppb_app_bar.dart';
+import 'responsive_layout.dart';
 import 'widgets/services_bottom_sheet.dart';
 
 class _DockSlot {
@@ -44,12 +45,30 @@ class MainLayout extends ConsumerStatefulWidget {
   static const double authenticatedHorizontalPadding = 16;
   static const double authenticatedSectionGap = 12;
 
+  static double horizontalPadding(BuildContext context) {
+    final metrics = MppbResponsive.of(context);
+    return metrics.windowClass == MppbWindowClass.compact
+        ? authenticatedHorizontalPadding
+        : metrics.horizontalPadding;
+  }
+
+  static double publicHorizontalPadding(BuildContext context) {
+    return MppbResponsive.of(context).horizontalPadding;
+  }
+
+  static double contentMaxWidth(BuildContext context) {
+    return MppbResponsive.of(context).contentMaxWidth;
+  }
+
   static double contentBottomPadding(BuildContext context) {
-    return MediaQuery.paddingOf(context).bottom + dockContentGap;
+    final metrics = MppbResponsive.of(context);
+    final gap = metrics.usesWideLayout ? 24.0 : dockContentGap;
+    return MediaQuery.paddingOf(context).bottom + gap;
   }
 
   static double authenticatedContentTopPadding(BuildContext context) {
-    return authenticatedSectionGap;
+    final metrics = MppbResponsive.of(context);
+    return metrics.usesWideLayout ? 20 : authenticatedSectionGap;
   }
 
   final Widget child;
@@ -203,6 +222,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     VoidCallback onTap,
   ) {
     final isSelected = index == selectedIndex;
+    final metrics = MppbResponsive.of(context);
+    final itemHeight = metrics.isTablet ? 42.0 : 40.0;
+    final iconSize = metrics.isTablet ? 18.0 : 17.0;
+    final fontSize = metrics.isTablet ? 9.5 : 9.0;
 
     const selectedIconColor = Color(0xFFF7F8F6);
     const selectedTextColor = Color(0xFFF7F8F6);
@@ -224,7 +247,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
-                height: 40,
+                height: itemHeight,
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minWidth: 42, minHeight: 37),
                 decoration: BoxDecoration(
@@ -243,7 +266,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                     children: [
                       Icon(
                         icon,
-                        size: 17,
+                        size: iconSize,
                         color: isSelected ? selectedIconColor : unselectedColor,
                       ),
                       const SizedBox(height: 1),
@@ -253,7 +276,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                           label,
                           maxLines: 1,
                           style: TextStyle(
-                            fontSize: 9,
+                            fontSize: fontSize,
                             letterSpacing: 0,
                             color: isSelected
                                 ? selectedTextColor
@@ -550,8 +573,18 @@ class _MainLayoutState extends ConsumerState<MainLayout>
 
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final dockWidth = math.min(screenWidth - 56, 336.0);
-    final sideInset = math.max(28.0, (screenWidth - dockWidth) / 2);
+    final metrics = MppbResponsive.of(context);
+    final dockMaxWidth = metrics.usesWideLayout ? 460.0 : 336.0;
+    final horizontalInset = metrics.usesWideLayout
+        ? metrics.horizontalPadding
+        : 28.0;
+    final dockWidth = math.min(
+      screenWidth - (horizontalInset * 2),
+      dockMaxWidth,
+    );
+    final sideInset = math.max(horizontalInset, (screenWidth - dockWidth) / 2);
+    final dockHeight = metrics.isTablet ? 52.0 : 48.0;
+    final dockRadius = dockHeight / 2;
 
     return SizedBox(
       height: MainLayout.dockStructuralHeight + bottomInset,
@@ -564,11 +597,13 @@ class _MainLayoutState extends ConsumerState<MainLayout>
             right: sideInset,
             bottom: bottomInset + 12,
             child: Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              height: dockHeight,
+              padding: EdgeInsets.symmetric(
+                horizontal: metrics.isTablet ? 8 : 4,
+              ),
               decoration: BoxDecoration(
                 color: const Color(0xFF202322).withAlpha(245),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(dockRadius),
                 border: Border.all(color: const Color(0x26FFFFFF), width: 1),
                 boxShadow: const [
                   BoxShadow(
@@ -665,12 +700,12 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         extendBody: !isDockHidden,
         appBar: isHiddenPage
             ? null
-            : isAuthenticated
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(MppbAppBar.authenticatedAltura),
-                child: MppbAppBar(),
-              )
-            : const MppbAppBar(),
+            : PreferredSize(
+                preferredSize: Size.fromHeight(
+                  MppbAppBar.heightForContext(context, isAuthenticated),
+                ),
+                child: const MppbAppBar(),
+              ),
         body: NotificationListener<ScrollNotification>(
           onNotification: _handleScrollNotification,
           child: widget.child,

@@ -82,6 +82,9 @@ class DevicePlatformResolver {
   const DevicePlatformResolver();
 
   String? currentPlatform() {
+    if (kIsWeb) {
+      return null;
+    }
     if (defaultTargetPlatform == TargetPlatform.android) {
       return 'ANDROID';
     }

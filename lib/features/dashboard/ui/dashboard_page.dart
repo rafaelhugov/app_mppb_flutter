@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ import '../../carteira/providers/carteira_provider.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
 import '../../noticias/models/noticia.dart';
@@ -29,7 +31,8 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage>
     with TickerProviderStateMixin {
-  final PageController _pageController = PageController(viewportFraction: 0.92);
+  PageController? _pageController;
+  double? _currentViewportFraction;
   Timer? _autoPlayTimer;
   int _currentNewsIndex = 0;
   int _carouselNewsCount = 0;
@@ -130,8 +133,35 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     _autoPlayTimer?.cancel();
     _blinkController.dispose();
     _newsAutoPlayProgressController.dispose();
-    _pageController.dispose();
+    _pageController?.dispose();
     super.dispose();
+  }
+
+  double _newsViewportFractionFor(MppbResponsiveMetrics responsive) {
+    if (responsive.windowClass == MppbWindowClass.large) return 0.25;
+    if (responsive.usesWideLayout) return 0.32;
+    if (responsive.isTablet && responsive.isLandscape) return 0.34;
+    return 0.92;
+  }
+
+  PageController _newsControllerFor(double viewportFraction) {
+    final currentController = _pageController;
+    if (currentController != null &&
+        _currentViewportFraction == viewportFraction) {
+      return currentController;
+    }
+
+    final initialPage = _currentNewsIndex;
+    _autoPlayTimer?.cancel();
+    _autoPlayTimer = null;
+    _currentViewportFraction = viewportFraction;
+    _pageController?.dispose();
+    _pageController = PageController(
+      initialPage: initialPage,
+      viewportFraction: viewportFraction,
+      keepPage: false,
+    );
+    return _pageController!;
   }
 
   void _restartNewsAutoPlayProgress() {
@@ -158,12 +188,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
     _restartNewsAutoPlayProgress();
     _autoPlayTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (!mounted || !_pageController.hasClients) {
+      final controller = _pageController;
+      if (!mounted || controller == null || !controller.hasClients) {
         return;
       }
 
       final nextPage = (_currentNewsIndex + 1) % itemCount;
-      _pageController.animateToPage(
+      controller.animateToPage(
         nextPage,
         duration: const Duration(milliseconds: 420),
         curve: Curves.easeOutCubic,
@@ -270,6 +301,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     }
   }
 
+  String? _newsImageUrl(Noticia noticia) {
+    final url = noticia.imagemUrl?.trim();
+    if (url == null || url.isEmpty) return null;
+    if (kIsWeb) return null;
+    return url.replaceFirst(
+      'http://www.mppb.mp.br/',
+      'https://www.mppb.mp.br/',
+    );
+  }
+
   void _showNewsModal(Noticia noticia) {
     showModalBottomSheet<void>(
       context: context,
@@ -345,6 +386,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     final hasInternet = ref.watch(connectivityProvider);
     final isOnline = hasInternet;
     final usuario = carteiraState.data;
+    final responsive = MppbResponsive.of(context);
+    final isTablet = responsive.isTablet;
+    final isWide = responsive.usesWideLayout;
+    final isTabletLandscape = isTablet && responsive.isLandscape;
 
     final firstName = _capitalizeName(
       usuario?.nome
@@ -361,7 +406,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
     final noticiaState = ref.watch(noticiaProvider);
     final todasNoticias = noticiaState.noticias;
-    final carouselNews = todasNoticias.take(3).toList();
+    final carouselNews = todasNoticias.take(isTabletLandscape ? 8 : 4).toList();
+    final newsPageController = _newsControllerFor(
+      _newsViewportFractionFor(responsive),
+    );
     _syncAutoPlay(carouselNews.length);
 
     return Scaffold(
@@ -377,163 +425,29 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.only(
-            left: MainLayout.authenticatedHorizontalPadding,
-            right: MainLayout.authenticatedHorizontalPadding,
+            left: _dashboardHorizontalPadding(responsive),
+            right: _dashboardHorizontalPadding(responsive),
             top: MainLayout.authenticatedContentTopPadding(context),
             bottom: MainLayout.contentBottomPadding(context),
           ),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
+              constraints: BoxConstraints(
+                maxWidth: MainLayout.contentMaxWidth(context),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(2, 4, 2, 2),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: RichText(
-                        textAlign: TextAlign.left,
-                        text: TextSpan(
-                          text: '$greeting,\n',
-                          style: const TextStyle(
-                            color: Color(0xFF697370),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            height: 1.05,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: firstName,
-                              style: const TextStyle(
-                                color: Color(0xFF202322),
-                                fontSize: 36,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  _buildDashboardIntro(
+                    context: context,
+                    responsive: responsive,
+                    greeting: greeting,
+                    firstName: firstName,
+                    userRole: userRole,
+                    usuario: usuario,
                   ),
 
-                  const SizedBox(height: 12),
-
-                  // WALLET CARD
-                  InkWell(
-                    onTap: () => context.go('/carteira'),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: const Color(0xFF202322),
-                        border: Border.all(color: const Color(0x33FFFFFF)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x24101828),
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              right: 18,
-                              top: 12,
-                              child: _WalletMiniature(usuario: usuario),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                16,
-                                22,
-                                16,
-                                20,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(right: 72),
-                                    child: Text(
-                                      'Carteira Funcional',
-                                      style: TextStyle(
-                                        color: Color(0xFFFFFFFF),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w900,
-                                        height: 1.1,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 72),
-                                    child: Text(
-                                      userRole,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Color(0xFFDDE4DF),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                        height: 1.2,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 42),
-                                  Row(
-                                    children: [
-                                      FadeTransition(
-                                        opacity: _blinkAnimation,
-                                        child: Container(
-                                          width: 7,
-                                          height: 7,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF00A86B),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 7),
-                                      const Text(
-                                        'Ativa e segura',
-                                        style: TextStyle(
-                                          color: Color(0xFFDDE4DF),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      const Text(
-                                        'Acessar',
-                                        style: TextStyle(
-                                          color: Color(0xFFDDE4DF),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      SizedBox(width: 5),
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
-                                        color: Color(0xFFDDE4DF),
-                                        size: 15,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 34),
+                  SizedBox(height: isTablet ? 38 : 34),
 
                   if (isOnline) ...[
                     _buildServicesSection(
@@ -569,7 +483,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       ],
                     ),
 
-                    const SizedBox(height: 26),
+                    SizedBox(height: isWide ? 30 : 26),
 
                     _buildServicesSection(
                       context,
@@ -604,7 +518,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       ],
                     ),
 
-                    const SizedBox(height: 34),
+                    SizedBox(height: isTablet ? 38 : 34),
 
                     Row(
                       children: [
@@ -651,7 +565,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isTablet ? 18 : 16),
 
                     if (noticiaState.isLoading && carouselNews.isEmpty)
                       Container(
@@ -694,9 +608,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       )
                     else ...[
                       SizedBox(
-                        height: 380,
+                        height: isTabletLandscape ? 292 : 380,
                         child: PageView.builder(
-                          controller: _pageController,
+                          controller: newsPageController,
                           itemCount: carouselNews.length,
                           padEnds: false,
                           onPageChanged: (index) {
@@ -717,9 +631,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                             if (parts.length > 1) {
                               dateFormatted = '${parts[0]}, ${parts[1]}';
                             }
+                            final imageUrl = _newsImageUrl(noticia);
+                            final cardHorizontalPadding = isTabletLandscape
+                                ? 12.0
+                                : 18.0;
+                            final cardTopPadding = isTabletLandscape
+                                ? 10.0
+                                : 16.0;
+                            final cardBottomPadding = isTabletLandscape
+                                ? 6.0
+                                : 10.0;
 
                             return Padding(
-                              padding: const EdgeInsets.only(right: 12.0),
+                              padding: EdgeInsets.only(
+                                right: isTabletLandscape ? 8.0 : 12.0,
+                              ),
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -741,7 +667,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                   children: [
                                     // IMAGE
                                     Expanded(
-                                      flex: 9,
+                                      flex: isTabletLandscape ? 8 : 9,
                                       child: GestureDetector(
                                         onTap: () => _showNewsModal(noticia),
                                         child: Container(
@@ -760,22 +686,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                             ),
-                                            image:
-                                                noticia.imagemUrl != null &&
-                                                    noticia
-                                                        .imagemUrl!
-                                                        .isNotEmpty
+                                            image: imageUrl != null
                                                 ? DecorationImage(
                                                     image: NetworkImage(
-                                                      noticia.imagemUrl!,
+                                                      imageUrl,
                                                     ),
                                                     fit: BoxFit.cover,
                                                   )
                                                 : null,
                                           ),
-                                          child:
-                                              (noticia.imagemUrl == null ||
-                                                  noticia.imagemUrl!.isEmpty)
+                                          child: imageUrl == null
                                               ? const Center(
                                                   child: Icon(
                                                     Icons.newspaper,
@@ -789,24 +709,27 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                     ),
                                     // CONTENT
                                     Expanded(
-                                      flex: 11,
+                                      flex: isTabletLandscape ? 10 : 11,
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 18,
-                                          right: 16,
-                                          top: 16,
-                                          bottom: 10,
+                                        padding: EdgeInsets.only(
+                                          left: cardHorizontalPadding,
+                                          right: cardHorizontalPadding,
+                                          top: cardTopPadding,
+                                          bottom: cardBottomPadding,
                                         ),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
                                             Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 9,
-                                                    vertical: 7,
-                                                  ),
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: isTabletLandscape
+                                                    ? 7
+                                                    : 9,
+                                                vertical: isTabletLandscape
+                                                    ? 5
+                                                    : 7,
+                                              ),
                                               decoration: BoxDecoration(
                                                 color: const Color(0x1FD62828),
                                                 borderRadius:
@@ -816,65 +739,84 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                                 (noticia.categoria ??
                                                         'Destaque')
                                                     .toUpperCase(),
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color: Color(0xFFD62828),
-                                                  fontSize: 10,
+                                                  fontSize: isTabletLandscape
+                                                      ? 8.5
+                                                      : 10,
                                                   fontWeight: FontWeight.w700,
                                                   letterSpacing: 0.2,
                                                   height: 1.0,
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
+                                            SizedBox(
+                                              height: isTabletLandscape ? 6 : 8,
+                                            ),
                                             Text(
                                               dateFormatted,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: Color(0xFF697370),
-                                                fontSize: 12,
+                                                fontSize: isTabletLandscape
+                                                    ? 10.5
+                                                    : 12,
                                                 fontWeight: FontWeight.w800,
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
+                                            SizedBox(
+                                              height: isTabletLandscape ? 6 : 8,
+                                            ),
                                             Text(
                                               noticia.titulo,
-                                              maxLines: 2,
+                                              maxLines: isTabletLandscape
+                                                  ? 2
+                                                  : 2,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: Color(0xFF202322),
-                                                fontSize: 18,
+                                                fontSize: isTabletLandscape
+                                                    ? 14
+                                                    : 18,
                                                 fontWeight: FontWeight.w900,
-                                                height: 1.18,
+                                                height: isTabletLandscape
+                                                    ? 1.08
+                                                    : 1.12,
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
-                                            Expanded(
-                                              child: Text(
-                                                noticia.resumo ?? '',
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: Color(0xFF697370),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  height: 1.4,
+                                            if (!isTabletLandscape) ...[
+                                              const SizedBox(height: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  noticia.resumo ?? '',
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF697370),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.4,
+                                                  ),
                                                 ),
                                               ),
-                                            ),
+                                            ],
                                           ],
                                         ),
                                       ),
                                     ),
                                     // ACTIONS
                                     Padding(
-                                      padding: const EdgeInsets.only(
-                                        left: 18,
-                                        right: 16,
-                                        bottom: 16,
+                                      padding: EdgeInsets.only(
+                                        left: cardHorizontalPadding,
+                                        right: cardHorizontalPadding,
+                                        bottom: isTabletLandscape ? 10 : 16,
                                       ),
                                       child: Row(
                                         children: [
                                           SizedBox(
-                                            width: 132,
+                                            width: isTabletLandscape
+                                                ? 104
+                                                : 132,
                                             child: ElevatedButton(
                                               onPressed: () =>
                                                   _showNewsModal(noticia),
@@ -890,14 +832,22 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),
-                                                minimumSize: const Size(0, 32),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 8,
-                                                    ),
-                                                textStyle: const TextStyle(
-                                                  fontSize: 11.5,
+                                                minimumSize: Size(
+                                                  0,
+                                                  isTabletLandscape ? 28 : 32,
+                                                ),
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: isTabletLandscape
+                                                      ? 9
+                                                      : 12,
+                                                  vertical: isTabletLandscape
+                                                      ? 6
+                                                      : 8,
+                                                ),
+                                                textStyle: TextStyle(
+                                                  fontSize: isTabletLandscape
+                                                      ? 10
+                                                      : 11.5,
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
@@ -920,8 +870,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                                           ),
                                           const Spacer(),
                                           SizedBox(
-                                            width: 38,
-                                            height: 34,
+                                            width: isTabletLandscape ? 32 : 38,
+                                            height: isTabletLandscape ? 30 : 34,
                                             child: _DashboardNewsShareButton(
                                               onPressed: () =>
                                                   compartilharNoticia(noticia),
@@ -988,6 +938,254 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     );
   }
 
+  double _dashboardHorizontalPadding(MppbResponsiveMetrics responsive) {
+    if (responsive.isTablet && responsive.isLandscape) {
+      return 20;
+    }
+    return MainLayout.authenticatedHorizontalPadding;
+  }
+
+  Widget _buildDashboardIntro({
+    required BuildContext context,
+    required MppbResponsiveMetrics responsive,
+    required String greeting,
+    required String firstName,
+    required String userRole,
+    required UsuarioCarteira? usuario,
+  }) {
+    final greetingWidget = _buildGreeting(
+      responsive: responsive,
+      greeting: greeting,
+      firstName: firstName,
+    );
+    final walletCard = _buildWalletCard(
+      context: context,
+      responsive: responsive,
+      userRole: userRole,
+      usuario: usuario,
+    );
+
+    if (responsive.usesWideLayout) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(width: 260, child: greetingWidget),
+          const SizedBox(width: 24),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 340),
+                child: walletCard,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        greetingWidget,
+        SizedBox(height: responsive.isTablet ? 16 : 12),
+        walletCard,
+      ],
+    );
+  }
+
+  Widget _buildGreeting({
+    required MppbResponsiveMetrics responsive,
+    required String greeting,
+    required String firstName,
+  }) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(2, responsive.isTablet ? 8 : 4, 2, 2),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: RichText(
+          textAlign: TextAlign.left,
+          text: TextSpan(
+            text: '$greeting,\n',
+            style: const TextStyle(
+              color: Color(0xFF697370),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              height: 1.05,
+            ),
+            children: [
+              TextSpan(
+                text: firstName,
+                style: TextStyle(
+                  color: const Color(0xFF202322),
+                  fontSize: responsive.usesWideLayout ? 34 : 36,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWalletCard({
+    required BuildContext context,
+    required MppbResponsiveMetrics responsive,
+    required String userRole,
+    required UsuarioCarteira? usuario,
+  }) {
+    final compactLandscape = responsive.isTablet && responsive.isLandscape;
+    final horizontalInset = compactLandscape
+        ? 18.0
+        : responsive.isTablet
+        ? 24.0
+        : 16.0;
+    final topInset = compactLandscape
+        ? 18.0
+        : responsive.isTablet
+        ? 24.0
+        : 22.0;
+    final bottomInset = compactLandscape ? 16.0 : 20.0;
+    final thumbnailRight = compactLandscape
+        ? 18.0
+        : responsive.isTablet
+        ? 24.0
+        : 18.0;
+    final thumbnailTop = compactLandscape
+        ? 16.0
+        : responsive.isTablet
+        ? 16.0
+        : 12.0;
+    final reservedThumbnailWidth = compactLandscape
+        ? 82.0
+        : responsive.isTablet
+        ? 104.0
+        : 72.0;
+
+    final card = InkWell(
+      onTap: () => context.go('/carteira'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xFF202322),
+          border: Border.all(color: const Color(0x33FFFFFF)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x24101828),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            children: [
+              Positioned(
+                right: thumbnailRight,
+                top: thumbnailTop,
+                child: _WalletMiniature(
+                  usuario: usuario,
+                  compact: compactLandscape,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalInset,
+                  topInset,
+                  horizontalInset,
+                  bottomInset,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(right: reservedThumbnailWidth),
+                      child: Text(
+                        'Carteira Funcional',
+                        style: TextStyle(
+                          color: const Color(0xFFFFFFFF),
+                          fontSize: responsive.isTablet ? 18 : 17,
+                          fontWeight: FontWeight.w900,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: EdgeInsets.only(right: reservedThumbnailWidth),
+                      child: Text(
+                        userRole,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: const Color(0xFFDDE4DF),
+                          fontSize: responsive.isTablet ? 12 : 12,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        FadeTransition(
+                          opacity: _blinkAnimation,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF00A86B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          'Ativa e segura',
+                          style: TextStyle(
+                            color: const Color(0xFFDDE4DF),
+                            fontSize: responsive.isTablet ? 12 : 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Acessar',
+                          style: TextStyle(
+                            color: const Color(0xFFDDE4DF),
+                            fontSize: responsive.isTablet ? 12 : 12,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Color(0xFFDDE4DF),
+                          size: 15,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (responsive.usesWideLayout) {
+      return AspectRatio(aspectRatio: 1.76, child: card);
+    }
+
+    return card;
+  }
+
   Widget _buildServiceCard(
     BuildContext context,
     String title,
@@ -995,6 +1193,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     IconData icon,
     String route,
   ) {
+    final responsive = MppbResponsive.of(context);
+    final isTablet = responsive.isTablet;
+
     return InkWell(
       onTap: () => context.go(route),
       borderRadius: BorderRadius.circular(14),
@@ -1016,12 +1217,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
           child: Stack(
             children: [
               Positioned(
-                right: -15,
-                bottom: -22,
-                child: Icon(icon, color: const Color(0x24343A40), size: 86),
+                right: isTablet ? -8 : -15,
+                bottom: isTablet ? -18 : -22,
+                child: Icon(
+                  icon,
+                  color: const Color(0x24343A40),
+                  size: isTablet ? 96 : 86,
+                ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
+                padding: EdgeInsets.fromLTRB(
+                  isTablet ? 15 : 12,
+                  isTablet ? 14 : 11,
+                  isTablet ? 14 : 12,
+                  isTablet ? 12 : 10,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -1030,9 +1240,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF202322),
-                        fontSize: 12.5,
+                      style: TextStyle(
+                        color: const Color(0xFF202322),
+                        fontSize: isTablet ? 14 : 12.5,
                         fontWeight: FontWeight.w700,
                         height: 1.15,
                       ),
@@ -1040,9 +1250,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF697370),
-                        fontSize: 9.5,
+                      style: TextStyle(
+                        color: const Color(0xFF697370),
+                        fontSize: isTablet ? 10.5 : 9.5,
                         fontWeight: FontWeight.w600,
                         height: 1.15,
                       ),
@@ -1066,18 +1276,28 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required Color iconColor,
     required List<_DashboardService> services,
   }) {
+    final responsive = MppbResponsive.of(context);
+    final columns = responsive.isTablet && responsive.isLandscape
+        ? services.length
+        : responsive.gridColumns;
+    final spacing = responsive.isTablet && responsive.isLandscape ? 8.0 : 8.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader(title: title, icon: icon, iconColor: iconColor),
-        const SizedBox(height: 16),
+        SizedBox(height: responsive.isTablet ? 18 : 16),
         GridView.builder(
           padding: EdgeInsets.zero,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            mainAxisExtent: 92,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: spacing,
+            mainAxisExtent: responsive.isTablet && responsive.isLandscape
+                ? 92
+                : responsive.isTablet
+                ? 104
+                : 92,
           ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -1102,15 +1322,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required IconData icon,
     required Color iconColor,
   }) {
+    final responsive = MppbResponsive.of(context);
+
     return Row(
       children: [
-        Icon(icon, color: iconColor, size: 20),
+        Icon(icon, color: iconColor, size: responsive.isTablet ? 22 : 20),
         const SizedBox(width: 7),
         Text(
           title,
-          style: const TextStyle(
-            color: Color(0xFF202322),
-            fontSize: 17,
+          style: TextStyle(
+            color: const Color(0xFF202322),
+            fontSize: responsive.isTablet ? 19 : 17,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -1164,9 +1386,10 @@ class _DashboardNewsShareButton extends StatelessWidget {
 }
 
 class _WalletMiniature extends StatefulWidget {
-  const _WalletMiniature({required this.usuario});
+  const _WalletMiniature({required this.usuario, this.compact = false});
 
   final UsuarioCarteira? usuario;
+  final bool compact;
 
   @override
   State<_WalletMiniature> createState() => _WalletMiniatureState();
@@ -1193,11 +1416,14 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 
   @override
   Widget build(BuildContext context) {
+    final width = widget.compact ? 48.0 : 56.0;
+    final height = widget.compact ? 62.0 : 72.0;
+
     return Transform.rotate(
       angle: -0.025,
       child: SizedBox(
-        width: 56,
-        height: 72,
+        width: width,
+        height: height,
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
@@ -1247,6 +1473,7 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 
   Widget _buildFront() {
     return _MiniCardShell(
+      compact: widget.compact,
       child: Stack(
         children: [
           Positioned(
@@ -1285,6 +1512,7 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 
   Widget _buildBack() {
     return _MiniCardShell(
+      compact: widget.compact,
       child: Stack(
         children: [
           Positioned(
@@ -1328,15 +1556,19 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 }
 
 class _MiniCardShell extends StatelessWidget {
-  const _MiniCardShell({required this.child});
+  const _MiniCardShell({required this.child, this.compact = false});
 
   final Widget child;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final width = compact ? 48.0 : 56.0;
+    final height = compact ? 62.0 : 72.0;
+
     return Container(
-      width: 56,
-      height: 72,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
         color: const Color(0xFFFFF6EC),
         borderRadius: BorderRadius.circular(9),

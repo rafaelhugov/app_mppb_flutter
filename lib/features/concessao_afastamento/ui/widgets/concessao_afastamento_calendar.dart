@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../core/ui/main_layout.dart';
+import '../../../../../core/ui/responsive_layout.dart';
 import '../../models/ausencia_calendario.dart';
 import '../../models/solicitacao_concessao.dart';
 import '../../services/concessao_afastamento_service.dart';
@@ -75,36 +76,95 @@ class _ConcessaoAfastamentoCalendarState
     //   );
     // }
 
+    final responsive = MppbResponsive.of(context);
+    final horizontalPadding = MainLayout.horizontalPadding(context);
+    final contentMaxWidth = responsive.usesWideLayout
+        ? 980.0
+        : MainLayout.contentMaxWidth(context);
+
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView(
         primary: false,
         padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
           16,
-          16,
-          16,
+          horizontalPadding,
           MainLayout.contentBottomPadding(context),
         ),
         children: [
-          _CalendarGrid(
-            mes: widget.mes,
-            ausencias: widget.ausencias,
-            onPreviousMonth: widget.onPreviousMonth,
-            onNextMonth: widget.onNextMonth,
-            onSelectMonth: widget.onSelectMonth,
-          ),
-          if (widget.errorMessage != null) ...[
-            const SizedBox(height: 14),
-            _InlineError(
-              message: widget.errorMessage!,
-              onRetry: widget.onRetry,
+          if (responsive.isTablet && responsive.isLandscape)
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: _CalendarGrid(
+                        mes: widget.mes,
+                        ausencias: widget.ausencias,
+                        onPreviousMonth: widget.onPreviousMonth,
+                        onNextMonth: widget.onNextMonth,
+                        onSelectMonth: widget.onSelectMonth,
+                        compact: true,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    if (widget.errorMessage != null)
+                      Expanded(
+                        flex: 6,
+                        child: _InlineError(
+                          message: widget.errorMessage!,
+                          onRetry: widget.onRetry,
+                        ),
+                      )
+                    else
+                      Expanded(
+                        flex: 6,
+                        child: _SummaryPanel(
+                          mes: widget.mes,
+                          ausencias: widget.ausencias,
+                          onSelectMonth: widget.onNavigateToMonth,
+                          inline: true,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            )
+          else ...[
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                child: _CalendarGrid(
+                  mes: widget.mes,
+                  ausencias: widget.ausencias,
+                  onPreviousMonth: widget.onPreviousMonth,
+                  onNextMonth: widget.onNextMonth,
+                  onSelectMonth: widget.onSelectMonth,
+                ),
+              ),
             ),
-          ] else ...[
-            _SummaryPanel(
-              mes: widget.mes,
-              ausencias: widget.ausencias,
-              onSelectMonth: widget.onNavigateToMonth,
-            ),
+            if (widget.errorMessage != null) ...[
+              const SizedBox(height: 14),
+              _InlineError(
+                message: widget.errorMessage!,
+                onRetry: widget.onRetry,
+              ),
+            ] else ...[
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                  child: _SummaryPanel(
+                    mes: widget.mes,
+                    ausencias: widget.ausencias,
+                    onSelectMonth: widget.onNavigateToMonth,
+                  ),
+                ),
+              ),
+            ],
           ],
         ],
       ),
@@ -153,6 +213,7 @@ class _CalendarGrid extends StatelessWidget {
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
   final VoidCallback onSelectMonth;
+  final bool compact;
 
   const _CalendarGrid({
     required this.mes,
@@ -160,6 +221,7 @@ class _CalendarGrid extends StatelessWidget {
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onSelectMonth,
+    this.compact = false,
   });
 
   RangeInfo _rangeInfoFor(DateTime dia) {
@@ -224,7 +286,7 @@ class _CalendarGrid extends StatelessWidget {
     const weekDays = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      padding: EdgeInsets.fromLTRB(14, compact ? 10 : 12, 14, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -270,7 +332,7 @@ class _CalendarGrid extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 8 : 12),
           Row(
             children: weekDays
                 .map(
@@ -290,17 +352,17 @@ class _CalendarGrid extends StatelessWidget {
                 )
                 .toList(),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: compact ? 4 : 6),
           GridView.builder(
             padding: EdgeInsets.zero,
             itemCount: totalCells,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               mainAxisSpacing: 0,
               crossAxisSpacing: 0,
-              childAspectRatio: 1.72,
+              childAspectRatio: compact ? 1.46 : 1.72,
             ),
             itemBuilder: (context, index) {
               final dia = primeiroVisivel.add(Duration(days: index));
@@ -506,11 +568,13 @@ class _SummaryPanel extends StatelessWidget {
   final DateTime mes;
   final List<AusenciaCalendario> ausencias;
   final Function(DateTime)? onSelectMonth;
+  final bool inline;
 
   const _SummaryPanel({
     required this.mes,
     required this.ausencias,
     this.onSelectMonth,
+    this.inline = false,
   });
 
   @override
@@ -562,6 +626,57 @@ class _SummaryPanel extends StatelessWidget {
         groupedByMonth: true,
       ),
     ];
+
+    final responsive = MppbResponsive.of(context);
+    if (inline && responsive.isTablet && responsive.isLandscape) {
+      final visibleSections = sections.length > 2
+          ? sections.sublist(sections.length - 2)
+          : sections;
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < visibleSections.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Expanded(child: visibleSections[i]),
+          ],
+        ],
+      );
+    }
+
+    if (responsive.usesWideLayout && sections.length > 1) {
+      final firstSection = sections.first;
+      final remainingSections = sections.skip(1).toList();
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 14),
+          if (sections.length == 2)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: firstSection),
+                const SizedBox(width: 14),
+                Expanded(child: remainingSections.first),
+              ],
+            )
+          else ...[
+            firstSection,
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int i = 0; i < remainingSections.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 14),
+                  Expanded(child: remainingSections[i]),
+                ],
+              ],
+            ),
+          ],
+        ],
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,

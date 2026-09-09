@@ -275,10 +275,25 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
     }
 
     final children = <Widget>[];
-    final gridNews = state.paginatedNews;
     final responsive = MppbResponsive.of(context);
     final horizontalPadding = MainLayout.publicHorizontalPadding(context);
     final spacing = responsive.isTablet ? 14.0 : 10.0;
+    final gridColumns = responsive.isTablet && responsive.isLandscape
+        ? 4
+        : responsive.gridColumns;
+    final itemsPerPage = responsive.isTablet && responsive.isLandscape
+        ? 8
+        : NoticiaState.itemsPerPage;
+    final totalPages = (state.filteredNews.length / itemsPerPage).ceil();
+    final currentPage = state.currentPage.clamp(
+      1,
+      totalPages == 0 ? 1 : totalPages,
+    );
+    final startIndex = (currentPage - 1) * itemsPerPage;
+    final gridNews = state.filteredNews
+        .skip(startIndex)
+        .take(itemsPerPage)
+        .toList();
 
     if (gridNews.isNotEmpty) {
       children.add(
@@ -293,7 +308,7 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: responsive.gridColumns,
+              crossAxisCount: gridColumns,
               crossAxisSpacing: spacing,
               mainAxisSpacing: spacing,
               mainAxisExtent: responsive.isTablet ? 286 : 260,
@@ -305,9 +320,9 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
     }
 
     // Pagination
-    if (state.totalPages > 1) {
+    if (totalPages > 1) {
       children.add(const SizedBox(height: 16));
-      children.add(_buildPagination(state.currentPage, state.totalPages));
+      children.add(_buildPagination(currentPage, totalPages));
     }
 
     return Column(children: children);

@@ -50,8 +50,8 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
 
   double _viewportFractionFor(MppbResponsiveMetrics responsive) {
     if (responsive.windowClass == MppbWindowClass.large) return 0.25;
+    if (responsive.isTablet && responsive.isLandscape) return 0.25;
     if (responsive.usesWideLayout) return 0.32;
-    if (responsive.isTablet && responsive.isLandscape) return 0.34;
     return 0.92;
   }
 

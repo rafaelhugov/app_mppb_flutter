@@ -17,9 +17,9 @@ class PublicDashboardPage extends ConsumerWidget {
     final isTablet = responsive.isTablet;
     final isWide = responsive.usesWideLayout;
     final horizontalPadding = _dashboardHorizontalPadding(responsive);
-    final serviceColumns = isTablet && responsive.isLandscape
-        ? 6
-        : responsive.gridColumns;
+    final keepCardsInline =
+        isTablet && (responsive.isLandscape || responsive.size.width >= 1000);
+    final serviceColumns = keepCardsInline ? 6 : responsive.gridColumns;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),

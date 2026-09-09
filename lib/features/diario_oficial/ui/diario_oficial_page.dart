@@ -220,8 +220,10 @@ class DiarioOficialPage extends ConsumerWidget {
     final responsive = MppbResponsive.of(context);
     final horizontalPadding = MainLayout.publicHorizontalPadding(context);
     final spacing = responsive.isTablet ? 14.0 : 12.0;
-    final gridColumns = responsive.windowClass == MppbWindowClass.large
-        ? 3
+    final gridColumns = responsive.isTablet
+        ? responsive.isLandscape
+              ? 4
+              : 2
         : responsive.gridColumns;
 
     return Center(

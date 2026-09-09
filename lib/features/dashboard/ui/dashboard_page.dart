@@ -139,8 +139,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   double _newsViewportFractionFor(MppbResponsiveMetrics responsive) {
     if (responsive.windowClass == MppbWindowClass.large) return 0.25;
+    if (responsive.isTablet && responsive.isLandscape) return 0.25;
     if (responsive.usesWideLayout) return 0.32;
-    if (responsive.isTablet && responsive.isLandscape) return 0.34;
     return 0.92;
   }
 
@@ -1311,9 +1311,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required List<_DashboardService> services,
   }) {
     final responsive = MppbResponsive.of(context);
-    final columns = responsive.isTablet && responsive.isLandscape
-        ? services.length
-        : responsive.gridColumns;
+    final keepCardsInline =
+        responsive.isTablet &&
+        (responsive.isLandscape || responsive.size.width >= 1000);
+    final columns = keepCardsInline ? services.length : responsive.gridColumns;
     final spacing = responsive.isTablet && responsive.isLandscape ? 8.0 : 8.0;
 
     return Column(

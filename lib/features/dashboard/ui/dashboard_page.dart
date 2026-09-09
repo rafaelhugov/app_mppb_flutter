@@ -1036,6 +1036,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required UsuarioCarteira? usuario,
   }) {
     final compactLandscape = responsive.isTablet && responsive.isLandscape;
+    final isMobile = !responsive.isTablet;
     final horizontalInset = compactLandscape
         ? 18.0
         : responsive.isTablet
@@ -1061,13 +1062,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         ? 82.0
         : responsive.isTablet
         ? 104.0
-        : 72.0;
+        : 96.0;
+    final cardHeight = compactLandscape
+        ? null
+        : responsive.isTablet
+        ? null
+        : 136.0;
 
     final card = InkWell(
       onTap: () => context.go('/carteira'),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         width: double.infinity,
+        height: cardHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: const Color(0xFF202322),
@@ -1132,6 +1139,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                     ),
                     const Spacer(),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         FadeTransition(
                           opacity: _blinkAnimation,
@@ -1154,25 +1162,51 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                           ),
                         ),
                         const Spacer(),
-                        Text(
-                          'Acessar',
-                          style: TextStyle(
-                            color: const Color(0xFFDDE4DF),
-                            fontSize: responsive.isTablet ? 12 : 12,
-                            fontWeight: FontWeight.w900,
+                        if (!isMobile) ...[
+                          Text(
+                            'Acessar',
+                            style: TextStyle(
+                              color: const Color(0xFFDDE4DF),
+                              fontSize: responsive.isTablet ? 12 : 12,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 5),
-                        const Icon(
-                          Icons.arrow_forward_rounded,
-                          color: Color(0xFFDDE4DF),
-                          size: 15,
-                        ),
+                          const SizedBox(width: 5),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Color(0xFFDDE4DF),
+                            size: 15,
+                          ),
+                        ],
                       ],
                     ),
                   ],
                 ),
               ),
+              if (isMobile)
+                Positioned(
+                  right: thumbnailRight + 2,
+                  bottom: 22,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Acessar',
+                        style: TextStyle(
+                          color: Color(0xFFDDE4DF),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(width: 5),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Color(0xFFDDE4DF),
+                        size: 15,
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),

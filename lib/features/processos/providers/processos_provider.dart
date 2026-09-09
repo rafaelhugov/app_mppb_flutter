@@ -81,8 +81,9 @@ class ConsultaProcessosNotifier extends Notifier<ConsultaProcessosState> {
     return ConsultaProcessosState();
   }
 
-  Future<void> carregarFiltros() async {
-    if (state.isLoadingFiltros || state.filtrosOrEmpty.comarcas.isNotEmpty) {
+  Future<void> carregarFiltros({bool forceRefresh = false}) async {
+    if (state.isLoadingFiltros ||
+        (!forceRefresh && state.filtrosOrEmpty.comarcas.isNotEmpty)) {
       return;
     }
 

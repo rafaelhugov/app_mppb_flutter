@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/network/connectivity_provider.dart';
 import '../dados/dados_institucionais.dart';
 import '../servicos/servico_links_externos.dart';
 
-class ContatosPage extends StatelessWidget {
+class ContatosPage extends ConsumerWidget {
   const ContatosPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
       appBar: AppBar(
@@ -23,32 +25,36 @@ class ContatosPage extends StatelessWidget {
         centerTitle: true,
         iconTheme: const IconThemeData(color: Color(0xFF202322)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 112),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle('Sede do MPPB'),
-                  const SizedBox(height: 16),
-                  _buildSedeCard(),
-                  
-                  const SizedBox(height: 32),
-                  
-                  _buildSectionTitle('Atendimento nas Promotorias'),
-                  const SizedBox(height: 16),
-                  _buildPromotoriasCard(),
-                  
-                  const SizedBox(height: 32),
-                  
-                  _buildSectionTitle('Ouvidoria'),
-                  const SizedBox(height: 16),
-                  _buildOuvidoriaCard(),
-                ],
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(connectivityProvider.notifier).refresh(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 112),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Sede do MPPB'),
+                    const SizedBox(height: 16),
+                    _buildSedeCard(),
+
+                    const SizedBox(height: 32),
+
+                    _buildSectionTitle('Atendimento nas Promotorias'),
+                    const SizedBox(height: 16),
+                    _buildPromotoriasCard(),
+
+                    const SizedBox(height: 32),
+
+                    _buildSectionTitle('Ouvidoria'),
+                    const SizedBox(height: 16),
+                    _buildOuvidoriaCard(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -91,15 +97,19 @@ class ContatosPage extends StatelessWidget {
           title: 'Telefone',
           subtitle: DadosInstitucionais.telefoneSedeFormatado,
           actionLabel: 'Ligar',
-          onAction: () => ServicoLinksExternos.abrirTelefone(DadosInstitucionais.telefoneSede),
+          onAction: () => ServicoLinksExternos.abrirTelefone(
+            DadosInstitucionais.telefoneSede,
+          ),
         ),
         const Divider(height: 1, color: Color(0xFFE9EDF0)),
         _buildInfoTile(
           icon: Icons.location_on_outlined,
           title: 'Endereço',
-          subtitle: '${DadosInstitucionais.enderecoSedeLinha1}\n${DadosInstitucionais.enderecoSedeLinha2}\n${DadosInstitucionais.enderecoSedeLinha3}',
+          subtitle:
+              '${DadosInstitucionais.enderecoSedeLinha1}\n${DadosInstitucionais.enderecoSedeLinha2}\n${DadosInstitucionais.enderecoSedeLinha3}',
           actionLabel: 'Como chegar',
-          onAction: () => ServicoLinksExternos.abrirMapa(DadosInstitucionais.queryMapa),
+          onAction: () =>
+              ServicoLinksExternos.abrirMapa(DadosInstitucionais.queryMapa),
         ),
       ],
     );
@@ -126,10 +136,7 @@ class ContatosPage extends StatelessWidget {
               ),
               Text(
                 DadosInstitucionais.atendimentoPromotorias,
-                style: const TextStyle(
-                  color: Color(0xFF697370),
-                  fontSize: 15,
-                ),
+                style: const TextStyle(color: Color(0xFF697370), fontSize: 15),
               ),
             ],
           ),
@@ -146,7 +153,9 @@ class ContatosPage extends StatelessWidget {
           title: 'Telefone',
           subtitle: DadosInstitucionais.telefoneOuvidoriaFormatado,
           actionLabel: 'Ligar',
-          onAction: () => ServicoLinksExternos.abrirTelefone(DadosInstitucionais.telefoneOuvidoria),
+          onAction: () => ServicoLinksExternos.abrirTelefone(
+            DadosInstitucionais.telefoneOuvidoria,
+          ),
         ),
         const Divider(height: 1, color: Color(0xFFE9EDF0)),
         _buildInfoTile(
@@ -165,13 +174,16 @@ class ContatosPage extends StatelessWidget {
           title: 'E-mail',
           subtitle: DadosInstitucionais.emailOuvidoria,
           actionLabel: 'Enviar e-mail',
-          onAction: () => ServicoLinksExternos.abrirEmail(DadosInstitucionais.emailOuvidoria),
+          onAction: () => ServicoLinksExternos.abrirEmail(
+            DadosInstitucionais.emailOuvidoria,
+          ),
         ),
         const Divider(height: 1, color: Color(0xFFE9EDF0)),
         _buildInfoTile(
           icon: Icons.location_on_outlined,
           title: 'Atendimento presencial',
-          subtitle: 'Segunda a quinta-feira: ${DadosInstitucionais.atendimentoOuvidoriaSegQui}\nSexta-feira: ${DadosInstitucionais.atendimentoOuvidoriaSexta}\n\nLocal:\n${DadosInstitucionais.localOuvidoriaLinha1}\n${DadosInstitucionais.localOuvidoriaLinha2}\n${DadosInstitucionais.localOuvidoriaLinha3}',
+          subtitle:
+              'Segunda a quinta-feira: ${DadosInstitucionais.atendimentoOuvidoriaSegQui}\nSexta-feira: ${DadosInstitucionais.atendimentoOuvidoriaSexta}\n\nLocal:\n${DadosInstitucionais.localOuvidoriaLinha1}\n${DadosInstitucionais.localOuvidoriaLinha2}\n${DadosInstitucionais.localOuvidoriaLinha3}',
         ),
       ],
     );

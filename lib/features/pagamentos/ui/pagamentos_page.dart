@@ -36,140 +36,151 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(child: _buildHeader()),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: MainLayout.authenticatedHorizontalPadding,
-                vertical: 8.0,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          final notifier = ref.read(pagamentosProvider.notifier);
+          if (state.anosDisponiveis.isEmpty) {
+            await notifier.fetchAnosDisponiveis();
+          } else {
+            await notifier.fetchPagamentos();
+          }
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _buildHeader()),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: MainLayout.authenticatedHorizontalPadding,
+                  vertical: 8.0,
+                ),
+                child: _buildExercicioSelector(state),
               ),
-              child: _buildExercicioSelector(state),
             ),
-          ),
-          if (state.isLoadingAnos || state.isLoading)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: CircularProgressIndicator(color: Color(0xFF00A86B)),
-              ),
-            )
-          else if (state.errorMessage != null)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: MainLayout.authenticatedHorizontalPadding,
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE9EDF0)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Color(0xFFD62828),
-                        size: 24,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          state.errorMessage!,
-                          style: const TextStyle(
-                            color: Color(0xFFD62828),
-                            fontWeight: FontWeight.w500,
+            if (state.isLoadingAnos || state.isLoading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFF00A86B)),
+                ),
+              )
+            else if (state.errorMessage != null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: MainLayout.authenticatedHorizontalPadding,
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE9EDF0)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Color(0xFFD62828),
+                          size: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            state.errorMessage!,
+                            style: const TextStyle(
+                              color: Color(0xFFD62828),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          else if (state.dados != null)
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: MainLayout.authenticatedHorizontalPadding,
-                vertical: 8.0,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _buildResumoCard(state.dados!, isPrivacyEnabled),
-                  const SizedBox(height: 16),
-                  _buildSectionHeading(state.dados!.pagamentos.length),
-                  const SizedBox(height: 12),
-                  ...state.dados!.pagamentos.map(
-                    (p) => _buildPagamentoCard(p, isPrivacyEnabled),
-                  ),
-                  const SizedBox(height: 16),
-                  const Center(
-                    child: Text(
-                      'Fonte: Sistema Pitágoras.',
-                      style: TextStyle(
-                        color: Color(0xFF697370),
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                      ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: MainLayout.contentBottomPadding(context)),
-                ]),
-              ),
-            )
-          else if (state.dados == null || state.anosDisponiveis.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: MainLayout.authenticatedHorizontalPadding,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 32,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE9EDF0)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD62828),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.assignment_late,
-                          color: Colors.white,
-                          size: 40,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Nenhum pagamento encontrado para\n${state.exercicioAtual}.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
+                ),
+              )
+            else if (state.dados != null)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: MainLayout.authenticatedHorizontalPadding,
+                  vertical: 8.0,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildResumoCard(state.dados!, isPrivacyEnabled),
+                    const SizedBox(height: 16),
+                    _buildSectionHeading(state.dados!.pagamentos.length),
+                    const SizedBox(height: 12),
+                    ...state.dados!.pagamentos.map(
+                      (p) => _buildPagamentoCard(p, isPrivacyEnabled),
+                    ),
+                    const SizedBox(height: 16),
+                    const Center(
+                      child: Text(
+                        'Fonte: Sistema Pitágoras.',
+                        style: TextStyle(
                           color: Color(0xFF697370),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
                         ),
                       ),
-                    ],
+                    ),
+                    SizedBox(height: MainLayout.contentBottomPadding(context)),
+                  ]),
+                ),
+              )
+            else if (state.dados == null || state.anosDisponiveis.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: MainLayout.authenticatedHorizontalPadding,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE9EDF0)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD62828),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.assignment_late,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Nenhum pagamento encontrado para\n${state.exercicioAtual}.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF697370),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

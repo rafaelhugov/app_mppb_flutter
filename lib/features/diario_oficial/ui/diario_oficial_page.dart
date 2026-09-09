@@ -21,10 +21,10 @@ class DiarioOficialPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
       body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.delayed(const Duration(seconds: 1));
-        },
+        onRefresh: () =>
+            ref.read(diarioOficialProvider.notifier).fetchDiarios(),
         child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.only(
             bottom: MainLayout.contentBottomPadding(context),
           ),

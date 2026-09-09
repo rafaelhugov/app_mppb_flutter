@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/network/connectivity_provider.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/ouvidoria_provider.dart';
@@ -22,19 +23,29 @@ class OuvidoriaPage extends ConsumerWidget {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: OuvidoriaFormStyle.background,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(child: _buildHeader(context)),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            sliver: SliverToBoxAdapter(
-              child: _buildStepper(context, state, notifier),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(connectivityProvider.notifier).refresh();
+          await notifier.recarregarDadosIniciais();
+          if (state.currentStep >= 4) {
+            await notifier.loadCaptcha();
+          }
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _buildHeader(context)),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              sliver: SliverToBoxAdapter(
+                child: _buildStepper(context, state, notifier),
+              ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(height: MainLayout.contentBottomPadding(context)),
-          ),
-        ],
+            SliverToBoxAdapter(
+              child: SizedBox(height: MainLayout.contentBottomPadding(context)),
+            ),
+          ],
+        ),
       ),
     );
   }

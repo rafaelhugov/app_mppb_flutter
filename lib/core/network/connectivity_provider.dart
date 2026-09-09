@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ConnectivityNotifier extends Notifier<bool> {
@@ -12,6 +13,7 @@ class ConnectivityNotifier extends Notifier<bool> {
 
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _subscription;
+  Timer? _offlineRetryTimer;
   int _checkGeneration = 0;
 
   @override
@@ -20,25 +22,47 @@ class ConnectivityNotifier extends Notifier<bool> {
     _subscription = _connectivity.onConnectivityChanged.listen(
       _updateConnectionStatus,
     );
-    ref.onDispose(() => _subscription?.cancel());
+    ref.onDispose(() {
+      _subscription?.cancel();
+      _offlineRetryTimer?.cancel();
+    });
     return true;
   }
 
   Future<void> _initConnectivity() async {
     try {
-      final result = await _connectivity.checkConnectivity();
-      _updateConnectionStatus(result);
+      await refresh();
     } catch (e) {
-      state = await _hasInternetAccess();
+      await refresh();
     }
   }
 
   Future<void> _updateConnectionStatus(List<ConnectivityResult> result) async {
+    await refresh(connectivityResult: result);
+  }
+
+  Future<void> refresh({List<ConnectivityResult>? connectivityResult}) async {
     final currentCheck = ++_checkGeneration;
-    final hasInternet = await _hasInternetAccess();
+    final result =
+        connectivityResult ?? await _connectivity.checkConnectivity();
+    final hasNetwork = result.any((item) => item != ConnectivityResult.none);
+    final hasInternet = hasNetwork && await _hasInternetAccess();
     if (currentCheck == _checkGeneration) {
       state = hasInternet;
+      _syncOfflineRetry();
     }
+  }
+
+  void _syncOfflineRetry() {
+    if (state) {
+      _offlineRetryTimer?.cancel();
+      _offlineRetryTimer = null;
+      return;
+    }
+
+    _offlineRetryTimer ??= Timer.periodic(const Duration(seconds: 20), (_) {
+      refresh();
+    });
   }
 
   Future<bool> _hasInternetAccess() async {
@@ -53,13 +77,15 @@ class ConnectivityNotifier extends Notifier<bool> {
     try {
       final baseUri = Uri.parse(_apiUrl);
       probeUri = baseUri.replace(path: '/api/public/noticias');
-      
+
       final response = await dio.get(probeUri.toString());
-      return response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 500;
+      return response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 500;
     } catch (e) {
-      print('=== CONNECTIVITY_PROVIDER ERROR ===');
-      print('Tried URL: ${probeUri ?? _apiUrl}');
-      print('Error: $e');
+      debugPrint('=== CONNECTIVITY_PROVIDER ERROR ===');
+      debugPrint('Tried URL: ${probeUri ?? _apiUrl}');
+      debugPrint('Error: $e');
       return false;
     } finally {
       dio.close(force: true);

@@ -69,8 +69,12 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
   @override
   Widget build(BuildContext context) {
     final responsive = MppbResponsive.of(context);
-    final maxWidth = responsive.isTablet ? 720.0 : double.infinity;
-    final heightFactor = responsive.usesWideLayout ? 0.82 : 0.92;
+    final maxWidth = responsive.usesWideLayout
+        ? 860.0
+        : responsive.isTablet
+        ? 760.0
+        : double.infinity;
+    final heightFactor = responsive.isTablet ? 0.88 : 0.92;
     final newsItems = widget.items
         .where((item) => item.type == NotificationCenterItemType.noticia)
         .toList();
@@ -101,18 +105,16 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
               ],
             ),
             child: SafeArea(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  left: responsive.isTablet ? 24 : 20,
-                  right: responsive.isTablet ? 24 : 20,
-                  top: responsive.isTablet ? 22 : 20,
-                  bottom: 28,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      responsive.isTablet ? 24 : 20,
+                      responsive.isTablet ? 22 : 20,
+                      responsive.isTablet ? 24 : 20,
+                      14,
+                    ),
+                    child: Row(
                       children: [
                         const Icon(
                           Icons.notifications_rounded,
@@ -167,217 +169,79 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
-                    if (widget.deviceDiagnostics != null) ...[
-                      _DeviceRegistrationDiagnosticCard(
-                        state: widget.deviceDiagnostics!,
-                        onRetry: widget.onRetryDeviceRegistration,
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.only(
+                        left: responsive.isTablet ? 24 : 20,
+                        right: responsive.isTablet ? 24 : 20,
+                        bottom: 28,
                       ),
-                      const SizedBox(height: 14),
-                    ],
-                    if (widget.items.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 18,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0x26343A40)),
-                        ),
-                        child: const Text(
-                          'Nenhuma notificação nova',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color(0xFF697370),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                      )
-                    else ...[
-                      if (newsItems.isNotEmpty)
-                        _NotificationGroup(
-                          title: 'Notícias',
-                          count: newsItems.length,
-                          icon: Icons.newspaper_rounded,
-                          accentColor: const Color(0xFFD62828),
-                          items: newsItems,
-                          previewLimit: _previewLimit,
-                          showAll: _showAllNews,
-                          onToggleShowAll: () {
-                            setState(() => _showAllNews = !_showAllNews);
-                          },
-                          onOpenItem: widget.onOpenItem,
-                        ),
-                      if (designationItems.isNotEmpty)
-                        _NotificationGroup(
-                          title: 'Designações',
-                          count: designationItems.length,
-                          icon: Icons.assignment_ind_rounded,
-                          accentColor: const Color(0xFF2563EB),
-                          items: designationItems,
-                          previewLimit: _previewLimit,
-                          showAll: _showAllDesignations,
-                          onToggleShowAll: () {
-                            setState(
-                              () =>
-                                  _showAllDesignations = !_showAllDesignations,
-                            );
-                          },
-                          onOpenItem: widget.onOpenItem,
-                        ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DeviceRegistrationDiagnosticCard extends StatelessWidget {
-  final DeviceRegistrationDiagnosticsState state;
-  final VoidCallback? onRetry;
-
-  const _DeviceRegistrationDiagnosticCard({
-    required this.state,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = state.isSuccessful
-        ? const Color(0xFF167C45)
-        : const Color(0xFFD62828);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x26343A40)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.phonelink_ring_rounded, color: color, size: 18),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Push do aparelho',
-                  style: TextStyle(
-                    color: Color(0xFF202322),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ),
-              if (onRetry != null)
-                TextButton(
-                  onPressed: onRetry,
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFD62828),
-                    textStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
+                      children: [
+                        if (widget.items.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 18,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0x26343A40),
+                              ),
+                            ),
+                            child: const Text(
+                              'Nenhuma notificação nova',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF697370),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                          )
+                        else ...[
+                          if (newsItems.isNotEmpty)
+                            _NotificationGroup(
+                              title: 'Notícias',
+                              count: newsItems.length,
+                              icon: Icons.newspaper_rounded,
+                              accentColor: const Color(0xFFD62828),
+                              items: newsItems,
+                              previewLimit: _previewLimit,
+                              showAll: _showAllNews,
+                              onToggleShowAll: () {
+                                setState(() => _showAllNews = !_showAllNews);
+                              },
+                              onOpenItem: widget.onOpenItem,
+                            ),
+                          if (designationItems.isNotEmpty)
+                            _NotificationGroup(
+                              title: 'Designações',
+                              count: designationItems.length,
+                              icon: Icons.assignment_ind_rounded,
+                              accentColor: const Color(0xFF2563EB),
+                              items: designationItems,
+                              previewLimit: _previewLimit,
+                              showAll: _showAllDesignations,
+                              onToggleShowAll: () {
+                                setState(
+                                  () => _showAllDesignations =
+                                      !_showAllDesignations,
+                                );
+                              },
+                              onOpenItem: widget.onOpenItem,
+                            ),
+                        ],
+                      ],
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: const Size(0, 30),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text('Testar'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            state.message,
-            style: const TextStyle(
-              color: Color(0xFF697370),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _DiagnosticPill(label: 'etapa', value: state.step.name),
-              if (state.permissionStatus != null)
-                _DiagnosticPill(
-                  label: 'permissao',
-                  value: state.permissionStatus!,
-                ),
-              _DiagnosticPill(
-                label: 'token',
-                value: state.hasToken ? 'sim' : 'nao',
-              ),
-              if (state.tokenLength != null)
-                _DiagnosticPill(label: 'tam', value: '${state.tokenLength}'),
-              if (state.backendStatus != null)
-                _DiagnosticPill(
-                  label: 'backend',
-                  value: '${state.backendStatus}',
-                ),
-              if (state.lastError != null)
-                _DiagnosticPill(label: 'erro', value: state.lastError!),
-            ],
-          ),
-          if (state.updatedAt != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Atualizado: ${_formatTime(state.updatedAt!)}',
-              style: const TextStyle(
-                color: Color(0xFF8A9490),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0,
+                ],
               ),
             ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  static String _formatTime(DateTime value) {
-    String two(int number) => number.toString().padLeft(2, '0');
-    return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}';
-  }
-}
-
-class _DiagnosticPill extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DiagnosticPill({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F3F0),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        '$label: $value',
-        style: const TextStyle(
-          color: Color(0xFF4C5753),
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
+          ),
         ),
       ),
     );
@@ -413,6 +277,7 @@ class _NotificationGroup extends StatelessWidget {
     final visibleItems = showAll ? items : items.take(previewLimit).toList();
     final hiddenCount = items.length - visibleItems.length;
     final useGrid = responsive.usesWideLayout && visibleItems.length > 1;
+    final gridItemHeight = responsive.isTablet ? 104.0 : 92.0;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -446,11 +311,11 @@ class _NotificationGroup extends StatelessWidget {
               itemCount: visibleItems.length,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                mainAxisExtent: 82,
+                mainAxisExtent: gridItemHeight,
               ),
               itemBuilder: (context, index) {
                 final item = visibleItems[index];
@@ -473,6 +338,7 @@ class _NotificationGroup extends StatelessWidget {
                   title: item.title,
                   subtitle: item.subtitle,
                   imageUrl: item.imageUrl,
+                  isGridItem: true,
                   accentColor: accentColor,
                   onTap: () => onOpenItem(item),
                 ),
@@ -596,6 +462,7 @@ class _NotificationShortcut extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? imageUrl;
+  final bool isGridItem;
   final Color accentColor;
   final VoidCallback onTap;
 
@@ -604,6 +471,7 @@ class _NotificationShortcut extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.imageUrl,
+    this.isGridItem = false,
     required this.accentColor,
     required this.onTap,
   });
@@ -617,7 +485,7 @@ class _NotificationShortcut extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 72),
+          constraints: BoxConstraints(minHeight: isGridItem ? 92 : 72),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
@@ -638,20 +506,26 @@ class _NotificationShortcut extends StatelessWidget {
                   children: [
                     Text(
                       title,
+                      maxLines: isGridItem ? 3 : 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF202322),
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
+                        height: 1.18,
                         letterSpacing: 0,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
+                      maxLines: isGridItem ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF697370),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        height: 1.2,
                         letterSpacing: 0,
                       ),
                     ),

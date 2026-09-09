@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 
 import '../../concessao_afastamento/ui/widgets/concessao_afastamento_theme.dart';
@@ -75,13 +76,16 @@ class _DesignacoesList extends StatelessWidget {
     }
 
     final agrupadas = _agrupar(designacoes);
+    final responsive = MppbResponsive.of(context);
+    final horizontalPadding = MainLayout.horizontalPadding(context);
+    final spacing = responsive.isTablet ? 14.0 : 10.0;
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
         padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
           16,
-          16,
-          16,
+          horizontalPadding,
           MainLayout.contentBottomPadding(context),
         ),
         children: [
@@ -90,12 +94,47 @@ class _DesignacoesList extends StatelessWidget {
           if (designacoes.isEmpty)
             const _EmptyState()
           else
-            ...agrupadas.entries.expand(
-              (entry) => [
-                _SectionTitle(title: entry.key),
-                ...entry.value.map((item) => DesignacaoCard(designacao: item)),
-                const SizedBox(height: 8),
-              ],
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MainLayout.contentMaxWidth(context),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ...agrupadas.entries.expand(
+                      (entry) => [
+                        _SectionTitle(title: entry.key),
+                        if (responsive.isTablet && entry.value.length > 1)
+                          GridView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: entry.value.length,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: responsive.usesWideLayout
+                                      ? 2
+                                      : 1,
+                                  crossAxisSpacing: spacing,
+                                  mainAxisSpacing: spacing,
+                                  mainAxisExtent: 176,
+                                ),
+                            itemBuilder: (context, index) => DesignacaoCard(
+                              designacao: entry.value[index],
+                              compact: true,
+                            ),
+                          )
+                        else
+                          ...entry.value.map(
+                            (item) => DesignacaoCard(designacao: item),
+                          ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
         ],
       ),
@@ -154,8 +193,13 @@ class _SectionTitle extends StatelessWidget {
 
 class DesignacaoCard extends StatelessWidget {
   final DesignacaoAtiva designacao;
+  final bool compact;
 
-  const DesignacaoCard({super.key, required this.designacao});
+  const DesignacaoCard({
+    super.key,
+    required this.designacao,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +215,7 @@ class DesignacaoCard extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 10),
         child: _DesignacaoSolidContainer(
           category: category,
+          compact: compact,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -253,16 +298,18 @@ class DesignacaoCard extends StatelessWidget {
 class _DesignacaoSolidContainer extends StatelessWidget {
   final _DesignacaoCategoryStyle category;
   final Widget child;
+  final bool compact;
 
   const _DesignacaoSolidContainer({
     required this.category,
     required this.child,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 168),
+      constraints: BoxConstraints(minHeight: compact ? 156 : 168),
       decoration: BoxDecoration(
         color: category.surface,
         borderRadius: BorderRadius.circular(16),
@@ -279,12 +326,12 @@ class _DesignacaoSolidContainer extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            right: -34,
-            top: -34,
+            right: compact ? -26 : -34,
+            top: compact ? -30 : -34,
             child: Icon(
               category.icon,
               color: category.backgroundIconColor,
-              size: 132,
+              size: compact ? 116 : 132,
             ),
           ),
           Padding(padding: const EdgeInsets.all(14), child: child),

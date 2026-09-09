@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/ui/responsive_layout.dart';
 import '../../../../shared/providers/privacy_provider.dart';
 import '../../models/contra_cheque.dart';
 
@@ -19,6 +20,37 @@ class ContrachequeLancamentos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int totalLancs = vantagens.length + descontos.length;
+    final responsive = MppbResponsive.of(context);
+    final sideBySide =
+        responsive.usesWideLayout &&
+        vantagens.isNotEmpty &&
+        descontos.isNotEmpty;
+
+    final vantagensGroup = vantagens.isNotEmpty
+        ? _LancamentoGroup(
+            titulo: 'Vantagens',
+            icon: Icons.trending_up,
+            colorTitle: const Color(0xFF00A86B),
+            colorBgHeader: const Color(0xFF00A86B),
+            colorBorderHeader: const Color(0xFF00A86B),
+            colorIconBg: const Color(0xFFFFFFFF).withValues(alpha: 0.22),
+            lancamentos: vantagens,
+            totalVantagens: totalVantagens,
+          )
+        : null;
+
+    final descontosGroup = descontos.isNotEmpty
+        ? _LancamentoGroup(
+            titulo: 'Descontos',
+            icon: Icons.trending_down,
+            colorTitle: const Color(0xFFD62828),
+            colorBgHeader: const Color(0xFFD62828),
+            colorBorderHeader: const Color(0xFFD62828),
+            colorIconBg: const Color(0xFFFFFFFF).withValues(alpha: 0.22),
+            lancamentos: descontos,
+            totalVantagens: totalVantagens,
+          )
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,29 +80,21 @@ class ContrachequeLancamentos extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        if (vantagens.isNotEmpty)
-          _LancamentoGroup(
-            titulo: 'Vantagens',
-            icon: Icons.trending_up,
-            colorTitle: const Color(0xFF00A86B),
-            colorBgHeader: const Color(0xFF00A86B),
-            colorBorderHeader: const Color(0xFF00A86B),
-            colorIconBg: const Color(0xFFFFFFFF).withValues(alpha: 0.22),
-            lancamentos: vantagens,
-            totalVantagens: totalVantagens,
-          ),
-        if (descontos.isNotEmpty) ...[
-          const SizedBox(height: 22),
-          _LancamentoGroup(
-            titulo: 'Descontos',
-            icon: Icons.trending_down,
-            colorTitle: const Color(0xFFD62828),
-            colorBgHeader: const Color(0xFFD62828),
-            colorBorderHeader: const Color(0xFFD62828),
-            colorIconBg: const Color(0xFFFFFFFF).withValues(alpha: 0.22),
-            lancamentos: descontos,
-            totalVantagens: totalVantagens,
-          ),
+        if (sideBySide)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: vantagensGroup!),
+              const SizedBox(width: 14),
+              Expanded(child: descontosGroup!),
+            ],
+          )
+        else ...[
+          ?vantagensGroup,
+          if (descontosGroup != null) ...[
+            const SizedBox(height: 22),
+            descontosGroup,
+          ],
         ],
       ],
     );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../core/ui/main_layout.dart';
+import '../../../../../core/ui/responsive_layout.dart';
 import '../../models/ausencia_calendario.dart';
 import '../../models/solicitacao_concessao.dart';
 import '../../services/concessao_afastamento_service.dart';
@@ -75,23 +76,34 @@ class _ConcessaoAfastamentoCalendarState
     //   );
     // }
 
+    final responsive = MppbResponsive.of(context);
+    final horizontalPadding = MainLayout.horizontalPadding(context);
+    final contentMaxWidth = responsive.usesWideLayout
+        ? 980.0
+        : MainLayout.contentMaxWidth(context);
+
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView(
         primary: false,
         padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
           16,
-          16,
-          16,
+          horizontalPadding,
           MainLayout.contentBottomPadding(context),
         ),
         children: [
-          _CalendarGrid(
-            mes: widget.mes,
-            ausencias: widget.ausencias,
-            onPreviousMonth: widget.onPreviousMonth,
-            onNextMonth: widget.onNextMonth,
-            onSelectMonth: widget.onSelectMonth,
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: contentMaxWidth),
+              child: _CalendarGrid(
+                mes: widget.mes,
+                ausencias: widget.ausencias,
+                onPreviousMonth: widget.onPreviousMonth,
+                onNextMonth: widget.onNextMonth,
+                onSelectMonth: widget.onSelectMonth,
+              ),
+            ),
           ),
           if (widget.errorMessage != null) ...[
             const SizedBox(height: 14),
@@ -100,10 +112,15 @@ class _ConcessaoAfastamentoCalendarState
               onRetry: widget.onRetry,
             ),
           ] else ...[
-            _SummaryPanel(
-              mes: widget.mes,
-              ausencias: widget.ausencias,
-              onSelectMonth: widget.onNavigateToMonth,
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                child: _SummaryPanel(
+                  mes: widget.mes,
+                  ausencias: widget.ausencias,
+                  onSelectMonth: widget.onNavigateToMonth,
+                ),
+              ),
             ),
           ],
         ],
@@ -562,6 +579,41 @@ class _SummaryPanel extends StatelessWidget {
         groupedByMonth: true,
       ),
     ];
+
+    final responsive = MppbResponsive.of(context);
+    if (responsive.usesWideLayout && sections.length > 1) {
+      final firstSection = sections.first;
+      final remainingSections = sections.skip(1).toList();
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 14),
+          if (sections.length == 2)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: firstSection),
+                const SizedBox(width: 14),
+                Expanded(child: remainingSections.first),
+              ],
+            )
+          else ...[
+            firstSection,
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int i = 0; i < remainingSections.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 14),
+                  Expanded(child: remainingSections[i]),
+                ],
+              ],
+            ),
+          ],
+        ],
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,

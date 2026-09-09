@@ -425,153 +425,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(2, isTablet ? 8 : 4, 2, 2),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: RichText(
-                        textAlign: TextAlign.left,
-                        text: TextSpan(
-                          text: '$greeting,\n',
-                          style: const TextStyle(
-                            color: Color(0xFF697370),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            height: 1.05,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: firstName,
-                              style: TextStyle(
-                                color: const Color(0xFF202322),
-                                fontSize: isWide ? 42 : 36,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: isTablet ? 16 : 12),
-
-                  // WALLET CARD
-                  InkWell(
-                    onTap: () => context.go('/carteira'),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: const Color(0xFF202322),
-                        border: Border.all(color: const Color(0x33FFFFFF)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x24101828),
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              right: isTablet ? 24 : 18,
-                              top: isTablet ? 16 : 12,
-                              child: _WalletMiniature(usuario: usuario),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                isTablet ? 24 : 16,
-                                isTablet ? 26 : 22,
-                                isTablet ? 22 : 16,
-                                isTablet ? 22 : 20,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      right: isTablet ? 104 : 72,
-                                    ),
-                                    child: Text(
-                                      'Carteira Funcional',
-                                      style: TextStyle(
-                                        color: const Color(0xFFFFFFFF),
-                                        fontSize: isTablet ? 20 : 17,
-                                        fontWeight: FontWeight.w900,
-                                        height: 1.1,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      right: isTablet ? 104 : 72,
-                                    ),
-                                    child: Text(
-                                      userRole,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: const Color(0xFFDDE4DF),
-                                        fontSize: isTablet ? 13 : 12,
-                                        fontWeight: FontWeight.w800,
-                                        height: 1.2,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: isTablet ? 50 : 42),
-                                  Row(
-                                    children: [
-                                      FadeTransition(
-                                        opacity: _blinkAnimation,
-                                        child: Container(
-                                          width: 7,
-                                          height: 7,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF00A86B),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 7),
-                                      Text(
-                                        'Ativa e segura',
-                                        style: TextStyle(
-                                          color: const Color(0xFFDDE4DF),
-                                          fontSize: isTablet ? 13 : 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        'Acessar',
-                                        style: TextStyle(
-                                          color: const Color(0xFFDDE4DF),
-                                          fontSize: isTablet ? 13 : 12,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      const Icon(
-                                        Icons.arrow_forward_rounded,
-                                        color: Color(0xFFDDE4DF),
-                                        size: 15,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  _buildDashboardIntro(
+                    context: context,
+                    responsive: responsive,
+                    greeting: greeting,
+                    firstName: firstName,
+                    userRole: userRole,
+                    usuario: usuario,
                   ),
 
                   SizedBox(height: isTablet ? 38 : 34),
@@ -1031,6 +891,220 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     );
   }
 
+  Widget _buildDashboardIntro({
+    required BuildContext context,
+    required MppbResponsiveMetrics responsive,
+    required String greeting,
+    required String firstName,
+    required String userRole,
+    required UsuarioCarteira? usuario,
+  }) {
+    final greetingWidget = _buildGreeting(
+      responsive: responsive,
+      greeting: greeting,
+      firstName: firstName,
+    );
+    final walletCard = _buildWalletCard(
+      context: context,
+      responsive: responsive,
+      userRole: userRole,
+      usuario: usuario,
+    );
+
+    if (responsive.usesWideLayout) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          SizedBox(width: 260, child: greetingWidget),
+          const SizedBox(width: 24),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: walletCard,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        greetingWidget,
+        SizedBox(height: responsive.isTablet ? 16 : 12),
+        walletCard,
+      ],
+    );
+  }
+
+  Widget _buildGreeting({
+    required MppbResponsiveMetrics responsive,
+    required String greeting,
+    required String firstName,
+  }) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(2, responsive.isTablet ? 8 : 4, 2, 2),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: RichText(
+          textAlign: TextAlign.left,
+          text: TextSpan(
+            text: '$greeting,\n',
+            style: const TextStyle(
+              color: Color(0xFF697370),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              height: 1.05,
+            ),
+            children: [
+              TextSpan(
+                text: firstName,
+                style: TextStyle(
+                  color: const Color(0xFF202322),
+                  fontSize: responsive.usesWideLayout ? 34 : 36,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWalletCard({
+    required BuildContext context,
+    required MppbResponsiveMetrics responsive,
+    required String userRole,
+    required UsuarioCarteira? usuario,
+  }) {
+    final card = InkWell(
+      onTap: () => context.go('/carteira'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xFF202322),
+          border: Border.all(color: const Color(0x33FFFFFF)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x24101828),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            children: [
+              Positioned(
+                right: responsive.isTablet ? 24 : 18,
+                top: responsive.isTablet ? 16 : 12,
+                child: _WalletMiniature(usuario: usuario),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  responsive.isTablet ? 24 : 16,
+                  responsive.isTablet ? 24 : 22,
+                  responsive.isTablet ? 22 : 16,
+                  responsive.isTablet ? 20 : 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(
+                        right: responsive.isTablet ? 104 : 72,
+                      ),
+                      child: Text(
+                        'Carteira Funcional',
+                        style: TextStyle(
+                          color: const Color(0xFFFFFFFF),
+                          fontSize: responsive.isTablet ? 18 : 17,
+                          fontWeight: FontWeight.w900,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: EdgeInsets.only(
+                        right: responsive.isTablet ? 104 : 72,
+                      ),
+                      child: Text(
+                        userRole,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: const Color(0xFFDDE4DF),
+                          fontSize: responsive.isTablet ? 12 : 12,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.usesWideLayout ? 38 : 42),
+                    Row(
+                      children: [
+                        FadeTransition(
+                          opacity: _blinkAnimation,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF00A86B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          'Ativa e segura',
+                          style: TextStyle(
+                            color: const Color(0xFFDDE4DF),
+                            fontSize: responsive.isTablet ? 12 : 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Acessar',
+                          style: TextStyle(
+                            color: const Color(0xFFDDE4DF),
+                            fontSize: responsive.isTablet ? 12 : 12,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Color(0xFFDDE4DF),
+                          size: 15,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (responsive.usesWideLayout) {
+      return AspectRatio(aspectRatio: 1.9, child: card);
+    }
+
+    return card;
+  }
+
   Widget _buildServiceCard(
     BuildContext context,
     String title,
@@ -1122,6 +1196,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required List<_DashboardService> services,
   }) {
     final responsive = MppbResponsive.of(context);
+    final columns = responsive.usesWideLayout
+        ? math.min(4, services.length)
+        : responsive.gridColumns;
     final spacing = responsive.isTablet ? 12.0 : 8.0;
 
     return Column(
@@ -1132,7 +1209,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         GridView.builder(
           padding: EdgeInsets.zero,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: responsive.gridColumns,
+            crossAxisCount: columns,
             crossAxisSpacing: spacing,
             mainAxisSpacing: spacing,
             mainAxisExtent: responsive.isTablet ? 104 : 92,

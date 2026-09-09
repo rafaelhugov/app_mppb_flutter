@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../providers/contra_cheque_provider.dart';
 import 'widgets/competencia_selector.dart';
 import 'widgets/grafico_contracheque.dart';
@@ -69,6 +70,11 @@ class ContraChequePage extends ConsumerWidget {
   }
 
   Widget _buildContent(ContraChequeState state, BuildContext context) {
+    final responsive = MppbResponsive.of(context);
+    final contentMaxWidth = responsive.usesWideLayout
+        ? 980.0
+        : MainLayout.contentMaxWidth(context);
+
     if (state.contrachequeAtual == null) {
       if (state.competenciaSelecionada != null) {
         return Column(
@@ -110,44 +116,60 @@ class ContraChequePage extends ConsumerWidget {
     final vantagens = cheque.lancamentos.where((l) => l.tipo == 'V').toList();
     final descontos = cheque.lancamentos.where((l) => l.tipo == 'D').toList();
 
-    return Column(
-      children: [
-        GraficoContracheque(
-          totalVantagens: cheque.valorBruto, // ou calcular da soma
-          totalDescontos: cheque.totalDescontos,
-          salarioLiquido: cheque.valorLiquido,
-        ),
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: () => _abrirPdf(
-            context,
-            cheque.linkPdf,
-            'contracheque-${cheque.mes}-${cheque.ano}.pdf',
-          ),
-          icon: const Icon(Icons.file_download, size: 18),
-          label: const Text('BAIXAR PDF'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF2563EB),
-            side: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: contentMaxWidth),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.center,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: responsive.usesWideLayout ? 720 : contentMaxWidth,
+                ),
+                child: GraficoContracheque(
+                  totalVantagens: cheque.valorBruto,
+                  totalDescontos: cheque.totalDescontos,
+                  salarioLiquido: cheque.valorLiquido,
+                ),
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            textStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () => _abrirPdf(
+                context,
+                cheque.linkPdf,
+                'contracheque-${cheque.mes}-${cheque.ano}.pdf',
+              ),
+              icon: const Icon(Icons.file_download, size: 18),
+              label: const Text('BAIXAR PDF'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF2563EB),
+                side: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 22),
+            if (cheque.lancamentos.isNotEmpty)
+              ContrachequeLancamentos(
+                vantagens: vantagens,
+                descontos: descontos,
+                totalVantagens: cheque.valorBruto,
+              ),
+          ],
         ),
-        const SizedBox(height: 22),
-        if (cheque.lancamentos.isNotEmpty)
-          ContrachequeLancamentos(
-            vantagens: vantagens,
-            descontos: descontos,
-            totalVantagens: cheque.valorBruto, // Usando valor bruto como total
-          ),
-      ],
+      ),
     );
   }
 

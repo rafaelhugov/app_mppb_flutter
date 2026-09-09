@@ -17,6 +17,7 @@ class PublicDashboardPage extends ConsumerWidget {
     final isTablet = responsive.isTablet;
     final isWide = responsive.usesWideLayout;
     final horizontalPadding = MainLayout.publicHorizontalPadding(context);
+    final serviceColumns = isWide ? 4 : responsive.gridColumns;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
@@ -102,7 +103,7 @@ class PublicDashboardPage extends ConsumerWidget {
                           padding: EdgeInsets.zero,
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: responsive.gridColumns,
+                                crossAxisCount: serviceColumns,
                                 crossAxisSpacing: isTablet ? 14 : 12,
                                 mainAxisSpacing: isTablet ? 14 : 12,
                                 mainAxisExtent: isTablet ? 128 : 140,

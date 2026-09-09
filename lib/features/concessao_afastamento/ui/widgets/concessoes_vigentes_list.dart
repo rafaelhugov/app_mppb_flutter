@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/ui/main_layout.dart';
+import '../../../../../core/ui/responsive_layout.dart';
 import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
@@ -60,14 +61,18 @@ class ConcessoesVigentesList extends StatelessWidget {
       return _ErrorState(message: errorMessage!, onRetry: onRetry);
     }
 
+    final responsive = MppbResponsive.of(context);
+    final horizontalPadding = MainLayout.horizontalPadding(context);
+    final spacing = responsive.isTablet ? 14.0 : 10.0;
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
         primary: false,
         padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
           16,
-          16,
-          16,
+          horizontalPadding,
           MainLayout.contentBottomPadding(context),
         ),
         children: [
@@ -76,13 +81,45 @@ class ConcessoesVigentesList extends StatelessWidget {
           if (concessoes.isEmpty)
             const _EmptyState()
           else
-            ...concessoes.map(
-              (concessao) => ConcessaoAfastamentoCard(
-                concessao: concessao,
-                onSolicitar: onSolicitar,
-                onBuscarSugestoes: onBuscarSugestoes,
-                onBuscarOperacoes: onBuscarOperacoes,
-                onExecutarOperacao: onExecutarOperacao,
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MainLayout.contentMaxWidth(context),
+                ),
+                child: responsive.usesWideLayout
+                    ? GridView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: concessoes.length,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: spacing,
+                          mainAxisSpacing: spacing,
+                          mainAxisExtent: 236,
+                        ),
+                        itemBuilder: (context, index) =>
+                            ConcessaoAfastamentoCard(
+                              concessao: concessoes[index],
+                              onSolicitar: onSolicitar,
+                              onBuscarSugestoes: onBuscarSugestoes,
+                              onBuscarOperacoes: onBuscarOperacoes,
+                              onExecutarOperacao: onExecutarOperacao,
+                            ),
+                      )
+                    : Column(
+                        children: concessoes
+                            .map(
+                              (concessao) => ConcessaoAfastamentoCard(
+                                concessao: concessao,
+                                onSolicitar: onSolicitar,
+                                onBuscarSugestoes: onBuscarSugestoes,
+                                onBuscarOperacoes: onBuscarOperacoes,
+                                onExecutarOperacao: onExecutarOperacao,
+                              ),
+                            )
+                            .toList(),
+                      ),
               ),
             ),
         ],

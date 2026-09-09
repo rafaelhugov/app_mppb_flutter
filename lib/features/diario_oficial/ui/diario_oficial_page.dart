@@ -220,6 +220,9 @@ class DiarioOficialPage extends ConsumerWidget {
     final responsive = MppbResponsive.of(context);
     final horizontalPadding = MainLayout.publicHorizontalPadding(context);
     final spacing = responsive.isTablet ? 14.0 : 12.0;
+    final gridColumns = responsive.windowClass == MppbWindowClass.large
+        ? 3
+        : responsive.gridColumns;
 
     return Center(
       child: ConstrainedBox(
@@ -241,10 +244,10 @@ class DiarioOficialPage extends ConsumerWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: responsive.gridColumns,
+                  crossAxisCount: gridColumns,
                   crossAxisSpacing: spacing,
                   mainAxisSpacing: spacing,
-                  mainAxisExtent: responsive.isTablet ? 172 : 160,
+                  mainAxisExtent: responsive.isTablet ? 150 : 160,
                 ),
                 itemBuilder: (context, index) {
                   final diario = diarios[index + startIndexForGrid];

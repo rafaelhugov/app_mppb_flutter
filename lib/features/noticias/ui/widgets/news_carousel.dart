@@ -48,9 +48,9 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
   }
 
   double _viewportFractionFor(MppbResponsiveMetrics responsive) {
-    if (responsive.windowClass == MppbWindowClass.large) return 0.30;
-    if (responsive.usesWideLayout) return 0.36;
-    if (responsive.isTablet && responsive.isLandscape) return 0.46;
+    if (responsive.windowClass == MppbWindowClass.large) return 0.25;
+    if (responsive.usesWideLayout) return 0.32;
+    if (responsive.isTablet && responsive.isLandscape) return 0.34;
     return 0.92;
   }
 
@@ -246,11 +246,15 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
     final pageController = _controllerFor(_viewportFractionFor(responsive));
     final todasNoticias = noticiaState.noticias;
     final carouselNews = todasNoticias
-        .take(responsive.usesWideLayout ? 6 : 4)
+        .take(responsive.isTablet && responsive.isLandscape ? 8 : 4)
         .toList();
     _syncAutoPlay(carouselNews.length);
-    final carouselHeight = responsive.usesWideLayout ? 300.0 : 380.0;
-    final itemRightPadding = responsive.isTablet ? 10.0 : 12.0;
+    final carouselHeight = responsive.isTablet && responsive.isLandscape
+        ? 292.0
+        : 380.0;
+    final itemRightPadding = responsive.isTablet && responsive.isLandscape
+        ? 8.0
+        : 12.0;
 
     return Column(
       children: [

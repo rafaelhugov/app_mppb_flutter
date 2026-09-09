@@ -137,9 +137,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
   }
 
   double _newsViewportFractionFor(MppbResponsiveMetrics responsive) {
-    if (responsive.windowClass == MppbWindowClass.large) return 0.30;
-    if (responsive.usesWideLayout) return 0.36;
-    if (responsive.isTablet && responsive.isLandscape) return 0.46;
+    if (responsive.windowClass == MppbWindowClass.large) return 0.25;
+    if (responsive.usesWideLayout) return 0.32;
+    if (responsive.isTablet && responsive.isLandscape) return 0.34;
     return 0.92;
   }
 
@@ -377,6 +377,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     final responsive = MppbResponsive.of(context);
     final isTablet = responsive.isTablet;
     final isWide = responsive.usesWideLayout;
+    final isTabletLandscape = isTablet && responsive.isLandscape;
 
     final firstName = _capitalizeName(
       usuario?.nome
@@ -393,7 +394,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
     final noticiaState = ref.watch(noticiaProvider);
     final todasNoticias = noticiaState.noticias;
-    final carouselNews = todasNoticias.take(isWide ? 6 : 4).toList();
+    final carouselNews = todasNoticias.take(isTabletLandscape ? 8 : 4).toList();
     final newsPageController = _newsControllerFor(
       _newsViewportFractionFor(responsive),
     );
@@ -412,8 +413,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.only(
-            left: MainLayout.horizontalPadding(context),
-            right: MainLayout.horizontalPadding(context),
+            left: _dashboardHorizontalPadding(responsive),
+            right: _dashboardHorizontalPadding(responsive),
             top: MainLayout.authenticatedContentTopPadding(context),
             bottom: MainLayout.contentBottomPadding(context),
           ),
@@ -595,7 +596,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       )
                     else ...[
                       SizedBox(
-                        height: isWide ? 300 : 380,
+                        height: isTabletLandscape ? 292 : 380,
                         child: PageView.builder(
                           controller: newsPageController,
                           itemCount: carouselNews.length,
@@ -621,7 +622,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
                             return Padding(
                               padding: EdgeInsets.only(
-                                right: isTablet ? 10.0 : 12.0,
+                                right: isTabletLandscape ? 8.0 : 12.0,
                               ),
                               child: Container(
                                 decoration: BoxDecoration(
@@ -889,6 +890,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         ),
       ),
     );
+  }
+
+  double _dashboardHorizontalPadding(MppbResponsiveMetrics responsive) {
+    if (responsive.isTablet && responsive.isLandscape) {
+      return 20;
+    }
+    return MainLayout.authenticatedHorizontalPadding;
   }
 
   Widget _buildDashboardIntro({
@@ -1196,10 +1204,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required List<_DashboardService> services,
   }) {
     final responsive = MppbResponsive.of(context);
-    final columns = responsive.usesWideLayout
-        ? math.min(4, services.length)
+    final columns = responsive.isTablet && responsive.isLandscape
+        ? services.length
         : responsive.gridColumns;
-    final spacing = responsive.isTablet ? 12.0 : 8.0;
+    final spacing = responsive.isTablet && responsive.isLandscape ? 8.0 : 8.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1212,7 +1220,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
             crossAxisCount: columns,
             crossAxisSpacing: spacing,
             mainAxisSpacing: spacing,
-            mainAxisExtent: responsive.isTablet ? 104 : 92,
+            mainAxisExtent: responsive.isTablet && responsive.isLandscape
+                ? 92
+                : responsive.isTablet
+                ? 104
+                : 92,
           ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

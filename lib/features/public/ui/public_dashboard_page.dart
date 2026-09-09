@@ -16,8 +16,10 @@ class PublicDashboardPage extends ConsumerWidget {
     final responsive = MppbResponsive.of(context);
     final isTablet = responsive.isTablet;
     final isWide = responsive.usesWideLayout;
-    final horizontalPadding = MainLayout.publicHorizontalPadding(context);
-    final serviceColumns = isWide ? 4 : responsive.gridColumns;
+    final horizontalPadding = _dashboardHorizontalPadding(responsive);
+    final serviceColumns = isTablet && responsive.isLandscape
+        ? 6
+        : responsive.gridColumns;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
@@ -104,9 +106,16 @@ class PublicDashboardPage extends ConsumerWidget {
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: serviceColumns,
-                                crossAxisSpacing: isTablet ? 14 : 12,
-                                mainAxisSpacing: isTablet ? 14 : 12,
-                                mainAxisExtent: isTablet ? 128 : 140,
+                                crossAxisSpacing:
+                                    isTablet && responsive.isLandscape ? 8 : 12,
+                                mainAxisSpacing:
+                                    isTablet && responsive.isLandscape ? 8 : 12,
+                                mainAxisExtent:
+                                    isTablet && responsive.isLandscape
+                                    ? 96
+                                    : isTablet
+                                    ? 128
+                                    : 140,
                               ),
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -227,6 +236,13 @@ class PublicDashboardPage extends ConsumerWidget {
     );
   }
 
+  double _dashboardHorizontalPadding(MppbResponsiveMetrics responsive) {
+    if (responsive.isTablet && responsive.isLandscape) {
+      return 20;
+    }
+    return responsive.horizontalPadding;
+  }
+
   Widget _buildSmallCard(
     BuildContext context,
     String title,
@@ -237,6 +253,7 @@ class PublicDashboardPage extends ConsumerWidget {
   }) {
     final responsive = MppbResponsive.of(context);
     final isTablet = responsive.isTablet;
+    final isTabletLandscape = isTablet && responsive.isLandscape;
 
     return InkWell(
       onTap: () => context.go(route),
@@ -260,16 +277,34 @@ class PublicDashboardPage extends ConsumerWidget {
             children: [
               if (backgroundIcon)
                 Positioned(
-                  right: isTablet ? -12 : -22,
-                  bottom: isTablet ? -24 : -30,
+                  right: isTablet && responsive.isLandscape
+                      ? -20
+                      : isTablet
+                      ? -12
+                      : -22,
+                  bottom: isTablet && responsive.isLandscape
+                      ? -28
+                      : isTablet
+                      ? -24
+                      : -30,
                   child: Icon(
                     icon,
                     color: const Color(0x18343A40),
-                    size: isTablet ? 112 : 122,
+                    size: isTablet && responsive.isLandscape
+                        ? 92
+                        : isTablet
+                        ? 112
+                        : 122,
                   ),
                 ),
               Padding(
-                padding: EdgeInsets.all(isTablet ? 18 : 16),
+                padding: EdgeInsets.all(
+                  isTabletLandscape
+                      ? 12
+                      : isTablet
+                      ? 18
+                      : 16,
+                ),
                 child: backgroundIcon
                     ? Align(
                         alignment: Alignment.topLeft,
@@ -325,6 +360,7 @@ class PublicDashboardPage extends ConsumerWidget {
   ) {
     final responsive = MppbResponsive.of(context);
     final isTablet = responsive.isTablet;
+    final isTabletLandscape = isTablet && responsive.isLandscape;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,7 +372,11 @@ class PublicDashboardPage extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: const Color(0xFF202322),
-            fontSize: isTablet ? 16 : 15,
+            fontSize: isTabletLandscape
+                ? 14
+                : isTablet
+                ? 16
+                : 15,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -347,7 +387,11 @@ class PublicDashboardPage extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: const Color(0xFF697370),
-            fontSize: isTablet ? 12 : 11,
+            fontSize: isTabletLandscape
+                ? 10.5
+                : isTablet
+                ? 12
+                : 11,
             fontWeight: FontWeight.w400,
             height: 1.2,
           ),

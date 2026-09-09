@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -302,6 +303,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
   String? _newsImageUrl(Noticia noticia) {
     final url = noticia.imagemUrl?.trim();
     if (url == null || url.isEmpty) return null;
+    if (kIsWeb) return null;
     return url.replaceFirst(
       'http://www.mppb.mp.br/',
       'https://www.mppb.mp.br/',

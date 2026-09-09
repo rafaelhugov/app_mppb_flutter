@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -211,6 +212,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
   String? _newsImageUrl(Noticia noticia) {
     final url = noticia.imagemUrl?.trim();
     if (url == null || url.isEmpty) return null;
+    if (kIsWeb) return null;
     return url.replaceFirst(
       'http://www.mppb.mp.br/',
       'https://www.mppb.mp.br/',

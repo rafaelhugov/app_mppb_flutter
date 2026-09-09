@@ -921,7 +921,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
     if (responsive.usesWideLayout) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(width: 260, child: greetingWidget),
           const SizedBox(width: 24),
@@ -929,7 +929,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
             child: Align(
               alignment: Alignment.centerRight,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
+                constraints: const BoxConstraints(maxWidth: 340),
                 child: walletCard,
               ),
             ),
@@ -989,6 +989,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required String userRole,
     required UsuarioCarteira? usuario,
   }) {
+    final compactLandscape = responsive.isTablet && responsive.isLandscape;
+    final horizontalInset = compactLandscape
+        ? 18.0
+        : responsive.isTablet
+        ? 24.0
+        : 16.0;
+    final topInset = compactLandscape
+        ? 18.0
+        : responsive.isTablet
+        ? 24.0
+        : 22.0;
+    final bottomInset = compactLandscape ? 16.0 : 20.0;
+    final thumbnailRight = compactLandscape
+        ? 18.0
+        : responsive.isTablet
+        ? 24.0
+        : 18.0;
+    final thumbnailTop = compactLandscape
+        ? 16.0
+        : responsive.isTablet
+        ? 16.0
+        : 12.0;
+    final reservedThumbnailWidth = compactLandscape
+        ? 82.0
+        : responsive.isTablet
+        ? 104.0
+        : 72.0;
+
     final card = InkWell(
       onTap: () => context.go('/carteira'),
       borderRadius: BorderRadius.circular(16),
@@ -1011,25 +1039,26 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
           child: Stack(
             children: [
               Positioned(
-                right: responsive.isTablet ? 24 : 18,
-                top: responsive.isTablet ? 16 : 12,
-                child: _WalletMiniature(usuario: usuario),
+                right: thumbnailRight,
+                top: thumbnailTop,
+                child: _WalletMiniature(
+                  usuario: usuario,
+                  compact: compactLandscape,
+                ),
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                  responsive.isTablet ? 24 : 16,
-                  responsive.isTablet ? 24 : 22,
-                  responsive.isTablet ? 22 : 16,
-                  responsive.isTablet ? 20 : 20,
+                  horizontalInset,
+                  topInset,
+                  horizontalInset,
+                  bottomInset,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(
-                        right: responsive.isTablet ? 104 : 72,
-                      ),
+                      padding: EdgeInsets.only(right: reservedThumbnailWidth),
                       child: Text(
                         'Carteira Funcional',
                         style: TextStyle(
@@ -1042,9 +1071,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                     ),
                     const SizedBox(height: 4),
                     Padding(
-                      padding: EdgeInsets.only(
-                        right: responsive.isTablet ? 104 : 72,
-                      ),
+                      padding: EdgeInsets.only(right: reservedThumbnailWidth),
                       child: Text(
                         userRole,
                         maxLines: 1,
@@ -1057,7 +1084,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                         ),
                       ),
                     ),
-                    SizedBox(height: responsive.usesWideLayout ? 38 : 42),
+                    const Spacer(),
                     Row(
                       children: [
                         FadeTransition(
@@ -1107,7 +1134,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     );
 
     if (responsive.usesWideLayout) {
-      return AspectRatio(aspectRatio: 1.9, child: card);
+      return AspectRatio(aspectRatio: 1.76, child: card);
     }
 
     return card;
@@ -1313,9 +1340,10 @@ class _DashboardNewsShareButton extends StatelessWidget {
 }
 
 class _WalletMiniature extends StatefulWidget {
-  const _WalletMiniature({required this.usuario});
+  const _WalletMiniature({required this.usuario, this.compact = false});
 
   final UsuarioCarteira? usuario;
+  final bool compact;
 
   @override
   State<_WalletMiniature> createState() => _WalletMiniatureState();
@@ -1342,11 +1370,14 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 
   @override
   Widget build(BuildContext context) {
+    final width = widget.compact ? 48.0 : 56.0;
+    final height = widget.compact ? 62.0 : 72.0;
+
     return Transform.rotate(
       angle: -0.025,
       child: SizedBox(
-        width: 56,
-        height: 72,
+        width: width,
+        height: height,
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
@@ -1396,6 +1427,7 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 
   Widget _buildFront() {
     return _MiniCardShell(
+      compact: widget.compact,
       child: Stack(
         children: [
           Positioned(
@@ -1434,6 +1466,7 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 
   Widget _buildBack() {
     return _MiniCardShell(
+      compact: widget.compact,
       child: Stack(
         children: [
           Positioned(
@@ -1477,15 +1510,19 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 }
 
 class _MiniCardShell extends StatelessWidget {
-  const _MiniCardShell({required this.child});
+  const _MiniCardShell({required this.child, this.compact = false});
 
   final Widget child;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final width = compact ? 48.0 : 56.0;
+    final height = compact ? 62.0 : 72.0;
+
     return Container(
-      width: 56,
-      height: 72,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
         color: const Color(0xFFFFF6EC),
         borderRadius: BorderRadius.circular(9),

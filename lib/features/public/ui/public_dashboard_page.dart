@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
 import '../../noticias/ui/widgets/news_carousel.dart';
@@ -11,6 +13,11 @@ class PublicDashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final responsive = MppbResponsive.of(context);
+    final isTablet = responsive.isTablet;
+    final isWide = responsive.usesWideLayout;
+    final horizontalPadding = MainLayout.publicHorizontalPadding(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
       body: RefreshIndicator(
@@ -22,20 +29,22 @@ class PublicDashboardPage extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.only(
             top: MediaQuery.paddingOf(context).top,
-            bottom: 112,
+            bottom: MainLayout.contentBottomPadding(context),
           ),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
+              constraints: BoxConstraints(
+                maxWidth: MainLayout.contentMaxWidth(context),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(
-                      left: 20,
-                      right: 20,
-                      top: 16,
-                      bottom: 16,
+                    padding: EdgeInsets.only(
+                      left: horizontalPadding,
+                      right: horizontalPadding,
+                      top: isTablet ? 22 : 16,
+                      bottom: isTablet ? 20 : 16,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,17 +53,17 @@ class PublicDashboardPage extends ConsumerWidget {
                           'Bem-vindo',
                           style: TextStyle(
                             color: const Color(0xFF202322),
-                            fontSize: 24,
+                            fontSize: isWide ? 30 : 24,
                             fontWeight: FontWeight.w700,
                             height: 1.2,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
+                        SizedBox(height: isTablet ? 6 : 4),
+                        Text(
                           'Acesse os principais serviços do Ministério Público da Paraíba.',
                           style: TextStyle(
-                            color: Color(0xFF697370),
-                            fontSize: 13,
+                            color: const Color(0xFF697370),
+                            fontSize: isTablet ? 14 : 13,
                             height: 1.3,
                           ),
                         ),
@@ -63,38 +72,40 @@ class PublicDashboardPage extends ConsumerWidget {
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.grid_view_rounded,
-                              color: Color(0xFF2563EB),
-                              size: 21,
+                              color: const Color(0xFF2563EB),
+                              size: isTablet ? 23 : 21,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               'Serviços ao Cidadão',
                               style: TextStyle(
                                 color: const Color(0xFF202322),
-                                fontSize: 22,
+                                fontSize: isTablet ? 24 : 22,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 22),
+                        SizedBox(height: isTablet ? 24 : 22),
 
                         GridView(
                           padding: EdgeInsets.zero,
                           gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                mainAxisExtent: 140,
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: responsive.gridColumns,
+                                crossAxisSpacing: isTablet ? 14 : 12,
+                                mainAxisSpacing: isTablet ? 14 : 12,
+                                mainAxisExtent: isTablet ? 128 : 140,
                               ),
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -150,21 +161,21 @@ class PublicDashboardPage extends ConsumerWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 48),
+                        SizedBox(height: isTablet ? 44 : 48),
 
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.newspaper_rounded,
-                              color: Color(0xFFD62828),
-                              size: 21,
+                              color: const Color(0xFFD62828),
+                              size: isTablet ? 23 : 21,
                             ),
                             const SizedBox(width: 8),
-                            const Text(
+                            Text(
                               'Notícias',
                               style: TextStyle(
-                                color: Color(0xFF202322),
-                                fontSize: 20,
+                                color: const Color(0xFF202322),
+                                fontSize: isTablet ? 22 : 20,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -199,10 +210,10 @@ class PublicDashboardPage extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 18),
+                        SizedBox(height: isTablet ? 20 : 18),
                         const NewsCarousel(),
-                        const SizedBox(height: 48),
-                        const SecaoInstitucional(),
+                        SizedBox(height: isTablet ? 42 : 48),
+                        SecaoInstitucional(compacta: isWide),
                       ],
                     ),
                   ),
@@ -223,6 +234,9 @@ class PublicDashboardPage extends ConsumerWidget {
     String route, {
     bool backgroundIcon = false,
   }) {
+    final responsive = MppbResponsive.of(context);
+    final isTablet = responsive.isTablet;
+
     return InkWell(
       onTap: () => context.go(route),
       borderRadius: BorderRadius.circular(16),
@@ -245,16 +259,20 @@ class PublicDashboardPage extends ConsumerWidget {
             children: [
               if (backgroundIcon)
                 Positioned(
-                  right: -22,
-                  bottom: -30,
-                  child: Icon(icon, color: const Color(0x18343A40), size: 122),
+                  right: isTablet ? -12 : -22,
+                  bottom: isTablet ? -24 : -30,
+                  child: Icon(
+                    icon,
+                    color: const Color(0x18343A40),
+                    size: isTablet ? 112 : 122,
+                  ),
                 ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(isTablet ? 18 : 16),
                 child: backgroundIcon
                     ? Align(
                         alignment: Alignment.topLeft,
-                        child: _buildSmallCardText(title, subtitle),
+                        child: _buildSmallCardText(context, title, subtitle),
                       )
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,7 +306,7 @@ class PublicDashboardPage extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          _buildSmallCardText(title, subtitle),
+                          _buildSmallCardText(context, title, subtitle),
                         ],
                       ),
               ),
@@ -299,16 +317,25 @@ class PublicDashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSmallCardText(String title, String subtitle) {
+  Widget _buildSmallCardText(
+    BuildContext context,
+    String title,
+    String subtitle,
+  ) {
+    final responsive = MppbResponsive.of(context);
+    final isTablet = responsive.isTablet;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: Color(0xFF202322),
-            fontSize: 15,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: const Color(0xFF202322),
+            fontSize: isTablet ? 16 : 15,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -317,9 +344,9 @@ class PublicDashboardPage extends ConsumerWidget {
           subtitle,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xFF697370),
-            fontSize: 11,
+          style: TextStyle(
+            color: const Color(0xFF697370),
+            fontSize: isTablet ? 12 : 11,
             fontWeight: FontWeight.w400,
             height: 1.2,
           ),

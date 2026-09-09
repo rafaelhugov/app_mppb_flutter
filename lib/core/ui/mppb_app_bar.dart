@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -296,43 +297,140 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 }
 
-class _NotificationBell extends StatelessWidget {
+class _NotificationBell extends StatefulWidget {
   final int count;
 
   const _NotificationBell({required this.count});
 
   @override
+  State<_NotificationBell> createState() => _NotificationBellState();
+}
+
+class _NotificationBellState extends State<_NotificationBell>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _attentionController;
+  Timer? _attentionTimer;
+  int _lastAnimatedCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _attentionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _startAttentionIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _NotificationBell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.count != oldWidget.count) {
+      _startAttentionIfNeeded();
+    }
+  }
+
+  @override
+  void dispose() {
+    _attentionTimer?.cancel();
+    _attentionController.dispose();
+    super.dispose();
+  }
+
+  void _startAttentionIfNeeded() {
+    if (widget.count <= 0 || widget.count == _lastAnimatedCount) {
+      if (widget.count <= 0) {
+        _lastAnimatedCount = 0;
+        _stopAttention();
+      }
+      return;
+    }
+
+    _lastAnimatedCount = widget.count;
+    _attentionTimer?.cancel();
+    _attentionController.repeat(reverse: true);
+    _attentionTimer = Timer(const Duration(seconds: 5), _stopAttention);
+  }
+
+  void _stopAttention() {
+    _attentionTimer?.cancel();
+    _attentionTimer = null;
+    if (_attentionController.isAnimating) {
+      _attentionController.stop();
+    }
+    _attentionController.value = 0;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        const Icon(Icons.notifications, color: Color(0xFF202322), size: 22),
-        if (count > 0)
-          Positioned(
-            right: -2,
-            top: -3,
-            child: Container(
-              constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD62828),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: MppbAppBar.background, width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                count > 9 ? '9+' : '$count',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                  letterSpacing: 0,
-                ),
+    return AnimatedBuilder(
+      animation: _attentionController,
+      builder: (context, child) {
+        final attention = widget.count > 0 && _attentionController.isAnimating;
+        final shake = attention
+            ? math.sin(_attentionController.value * math.pi * 2)
+            : 0;
+        final badgeScale = attention
+            ? 1.0 + (_attentionController.value * 0.18)
+            : 1.0;
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Transform.rotate(
+              angle: shake * 0.13,
+              child: const Icon(
+                Icons.notifications,
+                color: Color(0xFF202322),
+                size: 22,
               ),
             ),
-          ),
-      ],
+            if (widget.count > 0)
+              Positioned(
+                right: -2,
+                top: -3,
+                child: Transform.scale(
+                  scale: badgeScale,
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 15,
+                      minHeight: 15,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD62828),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: MppbAppBar.background,
+                        width: 1.5,
+                      ),
+                      boxShadow: attention
+                          ? const [
+                              BoxShadow(
+                                color: Color(0x55D62828),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      widget.count > 9 ? '9+' : '${widget.count}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

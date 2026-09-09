@@ -13,6 +13,7 @@ import '../../features/noticias/utils/noticia_share.dart';
 import '../notifications/device_registration_diagnostics_provider.dart';
 import '../notifications/device_registration_provider.dart';
 import '../notifications/notification_center_provider.dart';
+import 'responsive_layout.dart';
 import 'widgets/notification_center_sheet.dart';
 
 class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
@@ -24,12 +25,22 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
     return isAuthenticated ? authenticatedAltura : altura;
   }
 
+  static double heightForContext(BuildContext context, bool isAuthenticated) {
+    final metrics = MppbResponsive.of(context);
+    if (!metrics.isTablet) {
+      return heightFor(isAuthenticated);
+    }
+    return isAuthenticated ? 54 : 46;
+  }
+
   const MppbAppBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final isAuthenticated = authState.isAuthenticated;
+    final metrics = MppbResponsive.of(context);
+    final toolbarHeight = heightForContext(context, isAuthenticated);
 
     if (isAuthenticated) {
       final noticiaState = ref.watch(noticiaProvider);
@@ -46,21 +57,21 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       );
 
       return AppBar(
-        toolbarHeight: MppbAppBar.authenticatedAltura,
+        toolbarHeight: toolbarHeight,
         backgroundColor: MppbAppBar.background,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.transparent,
         scrolledUnderElevation: 0,
         elevation: 0,
         centerTitle: true,
-        leadingWidth: 64,
+        leadingWidth: metrics.isTablet ? 82 : 64,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 14),
+          padding: EdgeInsets.only(left: metrics.isTablet ? 24 : 14),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Image.asset(
               'assets/images/brasao_mppb_sem_fundo.png',
-              height: 30,
+              height: metrics.isTablet ? 34 : 30,
               fit: BoxFit.contain,
             ),
           ),
@@ -69,11 +80,11 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
           preferredSize: const Size.fromHeight(1.0),
           child: Container(color: const Color(0xFFE8EEE4), height: 1.0),
         ),
-        title: const Text(
+        title: Text(
           'MPPB+',
           style: TextStyle(
-            color: Color(0xFF4C4741),
-            fontSize: 20,
+            color: const Color(0xFF4C4741),
+            fontSize: metrics.isTablet ? 23 : 20,
             fontWeight: FontWeight.w900,
             letterSpacing: 0,
             height: 1.0,
@@ -83,7 +94,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         actions: [
           IconButton(
             visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
             icon: _NotificationBell(count: notificationItems.length),
             onPressed: () {
               NotificationCenterSheet.show(
@@ -99,8 +110,12 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.all(8),
-            icon: const Icon(Icons.logout, color: Color(0xFF202322), size: 22),
+            padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
+            icon: Icon(
+              Icons.logout,
+              color: const Color(0xFF202322),
+              size: metrics.isTablet ? 24 : 22,
+            ),
             onPressed: () async {
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) {
@@ -108,7 +123,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
               }
             },
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: metrics.isTablet ? 12 : 4),
         ],
       );
     }
@@ -123,13 +138,13 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
     );
 
     return AppBar(
-      toolbarHeight: MppbAppBar.altura,
+      toolbarHeight: toolbarHeight,
       backgroundColor: MppbAppBar.background,
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.transparent,
       scrolledUnderElevation: 0,
       elevation: 0,
-      titleSpacing: 16,
+      titleSpacing: metrics.isTablet ? 24 : 16,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
         child: Container(color: const Color(0xFFE8EEE4), height: 1.0),
@@ -138,8 +153,8 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: 28,
-            height: 28,
+            width: metrics.isTablet ? 32 : 28,
+            height: metrics.isTablet ? 32 : 28,
             child: Image.asset(
               'assets/images/brasao_mppb_sem_fundo.png',
               fit: BoxFit.contain,
@@ -153,14 +168,14 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          const Flexible(
+          SizedBox(width: metrics.isTablet ? 10 : 8),
+          Flexible(
             child: Text(
               'MPPB+',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 22,
-                color: Color(0xFF202322),
+                fontSize: metrics.isTablet ? 24 : 22,
+                color: const Color(0xFF202322),
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -170,7 +185,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       actions: [
         IconButton(
           visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
           icon: _NotificationBell(count: notificationItems.length),
           onPressed: () {
             NotificationCenterSheet.show(
@@ -182,18 +197,21 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
           },
         ),
         Padding(
-          padding: const EdgeInsets.only(right: 10),
+          padding: EdgeInsets.only(right: metrics.isTablet ? 18 : 10),
           child: TextButton.icon(
             onPressed: () => context.go('/login'),
-            icon: const Icon(Icons.login_rounded, size: 18),
+            icon: Icon(Icons.login_rounded, size: metrics.isTablet ? 20 : 18),
             label: const Text('Entrar'),
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFF202322),
-              textStyle: const TextStyle(
-                fontSize: 13,
+              textStyle: TextStyle(
+                fontSize: metrics.isTablet ? 14 : 13,
                 fontWeight: FontWeight.w900,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: metrics.isTablet ? 12 : 10,
+                vertical: 8,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

@@ -404,7 +404,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       type: usuario?.tipoCargo ?? '',
     );
     final title = isFeminine ? 'Dra.' : 'Dr.';
-    final fullName = _formatFullName(usuario?.nome ?? firstName);
+    final fullName = _formatShortFormalName(usuario?.nome ?? firstName);
 
     return '$title $fullName';
   }
@@ -440,6 +440,31 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
           return lower[0].toUpperCase() + lower.substring(1);
         })
         .join(' ');
+  }
+
+  String _formatShortFormalName(String name) {
+    final particles = {'da', 'das', 'de', 'di', 'do', 'dos', 'e'};
+    final fullName = _formatFullName(name);
+    final words = fullName
+        .split(RegExp(r'\s+'))
+        .where((word) => word.trim().isNotEmpty)
+        .toList();
+
+    if (words.length <= 2) {
+      return fullName;
+    }
+
+    final firstName = words.first;
+    final lastName = words.lastWhere(
+      (word) => !particles.contains(word.toLowerCase()),
+      orElse: () => words.last,
+    );
+
+    if (firstName == lastName) {
+      return firstName;
+    }
+
+    return '$firstName $lastName';
   }
 
   bool _shouldAnimateGreetingName({
@@ -1589,7 +1614,13 @@ class _TypewriterNameTextState extends State<_TypewriterNameText>
           children: [
             Opacity(
               opacity: 0,
-              child: Text(widget.text, style: widget.style, softWrap: true),
+              child: Text(
+                widget.text,
+                style: widget.style,
+                softWrap: true,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             Text.rich(
               TextSpan(
@@ -1608,6 +1639,8 @@ class _TypewriterNameTextState extends State<_TypewriterNameText>
                 ],
               ),
               softWrap: true,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         );

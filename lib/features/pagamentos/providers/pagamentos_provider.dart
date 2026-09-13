@@ -28,11 +28,12 @@ class PagamentosState {
     int? exercicioAtual,
     List<int>? anosDisponiveis,
     bool? isLoadingAnos,
+    bool limparDados = false,
   }) {
     return PagamentosState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage, // Notice: we allow null explicitly
-      dados: dados ?? this.dados,
+      dados: limparDados ? null : dados ?? this.dados,
       exercicioAtual: exercicioAtual ?? this.exercicioAtual,
       anosDisponiveis: anosDisponiveis ?? this.anosDisponiveis,
       isLoadingAnos: isLoadingAnos ?? this.isLoadingAnos,
@@ -44,7 +45,10 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
   @override
   PagamentosState build() {
     Future.microtask(() => fetchAnosDisponiveis());
-    return PagamentosState(exercicioAtual: DateTime.now().year, isLoadingAnos: true);
+    return PagamentosState(
+      exercicioAtual: DateTime.now().year,
+      isLoadingAnos: true,
+    );
   }
 
   Future<void> fetchAnosDisponiveis() async {
@@ -65,7 +69,11 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
         final anos = list.map((e) => e as int).toList();
 
         if (anos.isEmpty) {
-          state = state.copyWith(isLoadingAnos: false, anosDisponiveis: []);
+          state = state.copyWith(
+            isLoadingAnos: false,
+            anosDisponiveis: [],
+            limparDados: true,
+          );
         } else {
           state = state.copyWith(
             isLoadingAnos: false,
@@ -75,10 +83,16 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
           fetchPagamentos(); // Busca do ano recém selecionado
         }
       } else {
-        state = state.copyWith(isLoadingAnos: false, errorMessage: 'Erro ao carregar anos disponíveis');
+        state = state.copyWith(
+          isLoadingAnos: false,
+          errorMessage: 'Erro ao carregar anos disponíveis',
+        );
       }
     } catch (e) {
-      state = state.copyWith(isLoadingAnos: false, errorMessage: 'Falha ao buscar exercícios. Verifique a internet.');
+      state = state.copyWith(
+        isLoadingAnos: false,
+        errorMessage: 'Falha ao buscar exercícios. Verifique a internet.',
+      );
     }
   }
 
@@ -89,14 +103,18 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
       final dio = ref.read(dioProvider);
       final secureStorage = ref.read(secureStorageProvider);
       final token = await secureStorage.read(key: 'auth_token');
-      
+
       final response = await dio.get(
         '/pagamentos/${state.exercicioAtual}',
         queryParameters: token != null ? {'token': token} : null,
       );
-      
+
       if (response.statusCode == 204) {
-        state = state.copyWith(isLoading: false, dados: null, errorMessage: null);
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: null,
+          limparDados: true,
+        );
         return;
       }
 
@@ -107,16 +125,25 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
           isLoading: false,
           dados: res,
           exercicioAtual: state.exercicioAtual,
+          anosDisponiveis: state.anosDisponiveis,
+          isLoadingAnos: state.isLoadingAnos,
           errorMessage: null,
         );
       } else {
-        state = state.copyWith(isLoading: false, errorMessage: 'Erro ao carregar dados de pagamentos');
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Erro ao carregar dados de pagamentos',
+        );
       }
     } on DioException catch (e) {
       String msg = 'Falha de conexão. Verifique sua internet.';
       if (e.response != null) {
         if (e.response?.statusCode == 404) {
-          state = state.copyWith(isLoading: false, dados: null, errorMessage: null); // Tratar 404 como empty
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: null,
+            limparDados: true,
+          ); // Tratar 404 como empty
           return;
         }
         msg = 'Erro no servidor: ${e.response?.statusCode}';
@@ -126,6 +153,8 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
         exercicioAtual: state.exercicioAtual,
         errorMessage: msg,
         dados: state.dados,
+        anosDisponiveis: state.anosDisponiveis,
+        isLoadingAnos: state.isLoadingAnos,
       );
     } catch (e) {
       state = PagamentosState(
@@ -133,6 +162,8 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
         exercicioAtual: state.exercicioAtual,
         errorMessage: 'Erro inesperado: $e',
         dados: state.dados,
+        anosDisponiveis: state.anosDisponiveis,
+        isLoadingAnos: state.isLoadingAnos,
       );
     }
   }
@@ -141,11 +172,11 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
     if (state.anosDisponiveis.isEmpty) return;
     final currentIndex = state.anosDisponiveis.indexOf(state.exercicioAtual);
     if (currentIndex == -1) return;
-    
+
     // O array deve estar ordenado descrescente, então "voltar no tempo" (delta -1) significa ir para um índice MAIOR.
     // "Avançar no tempo" (delta +1) significa ir para um índice MENOR.
     final novoIndex = currentIndex - delta;
-    
+
     if (novoIndex >= 0 && novoIndex < state.anosDisponiveis.length) {
       state = state.copyWith(exercicioAtual: state.anosDisponiveis[novoIndex]);
       fetchPagamentos();
@@ -160,6 +191,7 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
   }
 }
 
-final pagamentosProvider = NotifierProvider<PagamentosNotifier, PagamentosState>(() {
-  return PagamentosNotifier();
-});
+final pagamentosProvider =
+    NotifierProvider<PagamentosNotifier, PagamentosState>(() {
+      return PagamentosNotifier();
+    });

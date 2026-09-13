@@ -11,6 +11,9 @@ void main() {
     late FakePushNavigationDelegate navigator;
     late FakeDesignacoesRefresher refresher;
     late FakeNoticiasRefresher noticiasRefresher;
+    late FakeSimpleRefresher contrachequeRefresher;
+    late FakeSimpleRefresher pagamentosRefresher;
+    late FakeSimpleRefresher afastamentosRefresher;
     late bool authenticated;
     late PushNavigationService service;
 
@@ -19,6 +22,9 @@ void main() {
       navigator = FakePushNavigationDelegate();
       refresher = FakeDesignacoesRefresher();
       noticiasRefresher = FakeNoticiasRefresher();
+      contrachequeRefresher = FakeSimpleRefresher();
+      pagamentosRefresher = FakeSimpleRefresher();
+      afastamentosRefresher = FakeSimpleRefresher();
       authenticated = true;
       service = PushNavigationService(
         gateway: gateway,
@@ -26,6 +32,9 @@ void main() {
         isAuthenticated: () => authenticated,
         refreshDesignacoes: refresher.refresh,
         refreshNoticias: noticiasRefresher.refresh,
+        refreshContracheque: contrachequeRefresher.refresh,
+        refreshPagamentos: pagamentosRefresher.refresh,
+        refreshAfastamentos: afastamentosRefresher.refresh,
       );
     });
 
@@ -51,6 +60,16 @@ void main() {
       expect(navigator.routes, isEmpty);
     });
 
+    test(
+      'foreground de contracheque autenticado atualiza sem navegar',
+      () async {
+        await service.handleForegroundPayload(_contrachequePayload());
+
+        expect(contrachequeRefresher.refreshCount, 1);
+        expect(navigator.routes, isEmpty);
+      },
+    );
+
     test('background com toque abre designacoes e atualiza provider', () async {
       await service.handleOpenedPayload(
         _designacoesPayload(),
@@ -60,6 +79,29 @@ void main() {
       expect(navigator.routes, ['/designacoes']);
       expect(refresher.forceRefreshes, [true]);
     });
+
+    test('background com toque abre pagamentos e atualiza provider', () async {
+      await service.handleOpenedPayload(
+        _pagamentosPayload(),
+        messageKey: 'pagamento-1',
+      );
+
+      expect(navigator.routes, ['/pagamentos']);
+      expect(pagamentosRefresher.refreshCount, 1);
+    });
+
+    test(
+      'background com toque abre afastamentos e atualiza provider',
+      () async {
+        await service.handleOpenedPayload(
+          _afastamentoPayload(),
+          messageKey: 'afastamento-1',
+        );
+
+        expect(navigator.routes, ['/concessao-afastamento']);
+        expect(afastamentosRefresher.refreshCount, 1);
+      },
+    );
 
     test(
       'background com toque abre noticias e atualiza provider publico',
@@ -157,6 +199,25 @@ void main() {
       expect(navigator.routes, ['/designacoes']);
       expect(refresher.forceRefreshes, [true]);
     });
+
+    test(
+      'apos login direciona para contracheque e atualiza provider',
+      () async {
+        authenticated = false;
+        await service.handleOpenedPayload(
+          _contrachequePayload(),
+          messageKey: 'contracheque-1',
+        );
+        navigator.routes.clear();
+        navigator.current = '/login';
+        authenticated = true;
+
+        await service.handleAuthenticated();
+
+        expect(navigator.routes, ['/contracheque']);
+        expect(contrachequeRefresher.refreshCount, 1);
+      },
+    );
 
     test('payload desconhecido e ignorado', () async {
       await service.handleOpenedPayload(
@@ -275,6 +336,27 @@ PushTechnicalPayload _noticiasPayload({
   );
 }
 
+PushTechnicalPayload _contrachequePayload() {
+  return const PushTechnicalPayload(
+    tipoEvento: 'NOVO_CONTRACHEQUE',
+    rota: '/contracheque',
+  );
+}
+
+PushTechnicalPayload _pagamentosPayload() {
+  return const PushTechnicalPayload(
+    tipoEvento: 'NOVO_PAGAMENTO',
+    rota: '/pagamentos',
+  );
+}
+
+PushTechnicalPayload _afastamentoPayload() {
+  return const PushTechnicalPayload(
+    tipoEvento: 'AFASTAMENTO_MOVIMENTACAO',
+    rota: '/concessao-afastamento',
+  );
+}
+
 class FakePushMessageGateway implements PushMessageGateway {
   final StreamController<RemoteMessage> _foregroundController =
       StreamController<RemoteMessage>.broadcast();
@@ -329,6 +411,14 @@ class FakeDesignacoesRefresher {
 }
 
 class FakeNoticiasRefresher {
+  int refreshCount = 0;
+
+  Future<void> refresh() async {
+    refreshCount++;
+  }
+}
+
+class FakeSimpleRefresher {
   int refreshCount = 0;
 
   Future<void> refresh() async {

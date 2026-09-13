@@ -78,16 +78,34 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
   String _formatData(String? data) {
     if (data == null || data.isEmpty) return '';
     try {
-      final parts = data.split(' ');
+      final normalized = data.trim();
+      if (RegExp(r'^\d{10,13}$').hasMatch(normalized)) {
+        final timestamp = int.parse(normalized);
+        final milliseconds = normalized.length <= 10
+            ? timestamp * 1000
+            : timestamp;
+        final parsed = DateTime.fromMillisecondsSinceEpoch(milliseconds);
+        return '${parsed.day.toString().padLeft(2, '0')}/${parsed.month.toString().padLeft(2, '0')}/${parsed.year}';
+      }
+      final parsed = DateTime.tryParse(normalized);
+      if (parsed != null) {
+        return '${parsed.day.toString().padLeft(2, '0')}/${parsed.month.toString().padLeft(2, '0')}/${parsed.year}';
+      }
+      final parts = normalized.split(RegExp(r'[ T]'));
       final datePart = parts[0];
       final dateTokens = datePart.split('-');
       if (dateTokens.length == 3) {
         return '${dateTokens[2]}/${dateTokens[1]}/${dateTokens[0]}';
       }
-      return data;
+      return normalized;
     } catch (e) {
       return data;
     }
+  }
+
+  String _formatDataCarteira(String? data) {
+    final formatted = _formatData(data);
+    return formatted.isEmpty ? '--/--/----' : formatted;
   }
 
   Future<void> _authenticate() async {
@@ -592,7 +610,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'EMISSÃO',
+                            'POSSE',
                             style: TextStyle(
                               fontSize: 7,
                               fontWeight: FontWeight.w600,
@@ -601,7 +619,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
                             ),
                           ),
                           Text(
-                            '22/05/2026',
+                            _formatDataCarteira(usuario.dataPosse),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,

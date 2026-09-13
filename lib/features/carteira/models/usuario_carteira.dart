@@ -15,6 +15,7 @@ class UsuarioCarteira {
   final String? assinaturaPgjWhiteUrl;
   final String? md5;
   final String? tipoCargo;
+  final String? dataPosse;
 
   UsuarioCarteira({
     this.foto,
@@ -33,6 +34,7 @@ class UsuarioCarteira {
     this.assinaturaPgjWhiteUrl,
     this.md5,
     this.tipoCargo,
+    this.dataPosse,
   });
 
   factory UsuarioCarteira.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,7 @@ class UsuarioCarteira {
       assinaturaPgjWhiteUrl: json['assinaturaPgjWhiteUrl'] as String?,
       md5: json['md5'] as String?,
       tipoCargo: json['tipoCargo'] as String?,
+      dataPosse: json['dataPosse']?.toString(),
     );
   }
 
@@ -74,6 +77,7 @@ class UsuarioCarteira {
       'assinaturaPgjWhiteUrl': assinaturaPgjWhiteUrl,
       'md5': md5,
       'tipoCargo': tipoCargo,
+      'dataPosse': dataPosse,
     };
   }
 }

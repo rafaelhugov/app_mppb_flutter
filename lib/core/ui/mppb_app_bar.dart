@@ -71,13 +71,16 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
           padding: EdgeInsets.only(left: metrics.isTablet ? 24 : 14),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 180),
-              opacity: showLeadingCrest ? 1 : 0,
-              child: Image.asset(
-                'assets/images/brasao_mppb_sem_fundo.png',
-                height: metrics.isTablet ? 34 : 30,
-                fit: BoxFit.contain,
+            child: _HomeTapTarget(
+              tooltip: 'Ir para início',
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: showLeadingCrest ? 1 : 0,
+                child: Image.asset(
+                  'assets/images/brasao_mppb_sem_fundo.png',
+                  height: metrics.isTablet ? 34 : 30,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
@@ -86,16 +89,19 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
           preferredSize: const Size.fromHeight(1.0),
           child: Container(color: const Color(0xFFE8EEE4), height: 1.0),
         ),
-        title: Text(
-          'MPPB+',
-          style: TextStyle(
-            color: const Color(0xFF4C4741),
-            fontSize: metrics.isTablet ? 23 : 20,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0,
-            height: 1.0,
+        title: _HomeTapTarget(
+          tooltip: 'Ir para início',
+          child: Text(
+            'MPPB+',
+            style: TextStyle(
+              color: const Color(0xFF4C4741),
+              fontSize: metrics.isTablet ? 23 : 20,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+              height: 1.0,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
-          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           IconButton(
@@ -155,38 +161,41 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         preferredSize: const Size.fromHeight(1.0),
         child: Container(color: const Color(0xFFE8EEE4), height: 1.0),
       ),
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: metrics.isTablet ? 32 : 28,
-            height: metrics.isTablet ? 32 : 28,
-            child: Image.asset(
-              'assets/images/brasao_mppb_sem_fundo.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stack) => const Text(
-                'M',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  color: Color(0xFF202322),
+      title: _HomeTapTarget(
+        tooltip: 'Ir para início',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: metrics.isTablet ? 32 : 28,
+              height: metrics.isTablet ? 32 : 28,
+              child: Image.asset(
+                'assets/images/brasao_mppb_sem_fundo.png',
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stack) => const Text(
+                  'M',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: Color(0xFF202322),
+                  ),
                 ),
               ),
             ),
-          ),
-          SizedBox(width: metrics.isTablet ? 10 : 8),
-          Flexible(
-            child: Text(
-              'MPPB+',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: metrics.isTablet ? 24 : 22,
-                color: const Color(0xFF202322),
+            SizedBox(width: metrics.isTablet ? 10 : 8),
+            Flexible(
+              child: Text(
+                'MPPB+',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: metrics.isTablet ? 24 : 22,
+                  color: const Color(0xFF202322),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         IconButton(
@@ -318,6 +327,31 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
     }
 
     await launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+}
+
+class _HomeTapTarget extends StatelessWidget {
+  final Widget child;
+  final String tooltip;
+
+  const _HomeTapTarget({required this.child, required this.tooltip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => context.go('/'),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+            child: child,
+          ),
+        ),
+      ),
+    );
   }
 }
 

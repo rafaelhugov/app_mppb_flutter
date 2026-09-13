@@ -12,6 +12,7 @@ import '../../features/diario_oficial/ui/diario_oficial_page.dart';
 import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/processos/ui/consulta_processos_page.dart';
 import '../../features/processos/ui/processo_detalhes_page.dart';
+import '../../features/perfil/ui/perfil_page.dart';
 import '../../features/public/ui/public_dashboard_page.dart';
 import '../../features/concessao_afastamento/ui/concessao_afastamento_page.dart';
 import '../../features/pagamentos/ui/pagamentos_page.dart';
@@ -50,6 +51,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/pagamentos',
     '/concessao-afastamento',
     '/designacoes',
+    '/perfil',
   ];
   final onlineOnlyRoutes = [
     '/contracheque',
@@ -131,6 +133,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/pagamentos',
             builder: (context, state) => const PagamentosPage(),
+          ),
+          GoRoute(
+            path: '/perfil',
+            builder: (context, state) => const PerfilPage(),
           ),
           GoRoute(
             path: '/diario_oficial',

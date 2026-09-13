@@ -34,8 +34,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final isEnabled = await secureStorage.read(key: 'biometrics_enabled');
     final savedUsername = await secureStorage.read(key: 'saved_username');
     final savedPassword = await secureStorage.read(key: 'saved_password');
+    final localAuth = LocalAuthentication();
+    final bool deviceSupported;
+    try {
+      deviceSupported = await localAuth.isDeviceSupported();
+    } on MissingPluginException {
+      if (mounted) setState(() => _biometricsEnabled = false);
+      return;
+    } catch (_) {
+      if (mounted) setState(() => _biometricsEnabled = false);
+      return;
+    }
     final canUseBiometrics =
-        isEnabled == 'true' && savedUsername != null && savedPassword != null;
+        deviceSupported &&
+        isEnabled == 'true' &&
+        savedUsername != null &&
+        savedUsername.trim().isNotEmpty &&
+        savedPassword != null &&
+        savedPassword.isNotEmpty;
 
     if (canUseBiometrics && mounted) {
       setState(() => _biometricsEnabled = true);
@@ -47,6 +63,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           await _doBiometricLogin(showFailureSnack: false);
         }
       }
+    } else if (mounted) {
+      setState(() => _biometricsEnabled = false);
     }
   }
 

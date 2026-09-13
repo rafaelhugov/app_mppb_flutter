@@ -105,6 +105,17 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         actions: [
           IconButton(
+            tooltip: 'Meu perfil',
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
+            icon: Icon(
+              Icons.account_circle_rounded,
+              color: const Color(0xFF202322),
+              size: metrics.isTablet ? 24 : 22,
+            ),
+            onPressed: () => context.go('/perfil'),
+          ),
+          IconButton(
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
             icon: _NotificationBell(count: notificationItems.length),

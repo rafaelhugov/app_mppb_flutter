@@ -31,6 +31,8 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage>
     with TickerProviderStateMixin {
+  static final Set<String> _typedGreetingKeys = <String>{};
+
   PageController? _pageController;
   double? _currentViewportFraction;
   Timer? _autoPlayTimer;
@@ -342,7 +344,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     return date.split(' ').isNotEmpty ? date.split(' ')[0] : '';
   }
 
-  String _greetingForProfile({
+  String _greetingForCurrentTime(DateTime now) {
+    final hour = now.hour;
+    if (hour >= 5 && hour < 12) {
+      return 'Bom dia';
+    }
+    if (hour >= 12 && hour < 18) {
+      return 'Boa tarde';
+    }
+    return 'Boa noite';
+  }
+
+  bool _isFeminineProfile({
     required String firstName,
     required String role,
     required String type,
@@ -352,22 +365,48 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     final masculineTerms = ['servidor', 'promotor', 'procurador'];
 
     if (feminineTerms.any(profile.contains)) {
-      return 'Bem-vinda';
+      return true;
     }
 
     if (masculineTerms.any(profile.contains)) {
-      return 'Bem-vindo';
+      return false;
     }
 
     if (firstName.toLowerCase().endsWith('a')) {
-      return 'Bem-vinda';
+      return true;
     }
 
     if (firstName.toLowerCase().endsWith('o')) {
-      return 'Bem-vindo';
+      return false;
     }
 
-    return 'Bem-vindo';
+    return false;
+  }
+
+  bool _isMembro(UsuarioCarteira? usuario) {
+    final tipoCargo = usuario?.tipoCargo?.trim().toUpperCase();
+    return tipoCargo == 'M' || tipoCargo == 'MEMBRO';
+  }
+
+  String _dashboardDisplayName({
+    required UsuarioCarteira? usuario,
+    required String firstName,
+    required String role,
+    required bool isMembro,
+  }) {
+    if (!isMembro) {
+      return firstName;
+    }
+
+    final isFeminine = _isFeminineProfile(
+      firstName: firstName,
+      role: role,
+      type: usuario?.tipoCargo ?? '',
+    );
+    final title = isFeminine ? 'Dra.' : 'Dr.';
+    final fullName = _formatFullName(usuario?.nome ?? firstName);
+
+    return '$title $fullName';
   }
 
   String _capitalizeName(String name) {
@@ -380,8 +419,50 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     return lower[0].toUpperCase() + lower.substring(1);
   }
 
+  String _formatFullName(String name) {
+    final particles = {'da', 'das', 'de', 'di', 'do', 'dos', 'e'};
+    final words = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+
+    if (words.isEmpty) {
+      return 'Usuário';
+    }
+
+    return words
+        .map((word) {
+          final lower = word.toLowerCase();
+          if (particles.contains(lower)) {
+            return lower;
+          }
+          return lower[0].toUpperCase() + lower.substring(1);
+        })
+        .join(' ');
+  }
+
+  bool _shouldAnimateGreetingName({
+    required String? token,
+    required String displayName,
+    required bool hasLoadedUser,
+  }) {
+    if (!hasLoadedUser) {
+      return false;
+    }
+
+    final key = '${token ?? 'offline'}::$displayName';
+    if (_typedGreetingKeys.contains(key)) {
+      return false;
+    }
+
+    _typedGreetingKeys.add(key);
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
     final carteiraState = ref.watch(carteiraProvider);
     final hasInternet = ref.watch(connectivityProvider);
     final isOnline = hasInternet;
@@ -398,10 +479,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
           'Usuário',
     );
     final userRole = usuario?.cargo ?? 'Membro ou Servidor';
-    final greeting = _greetingForProfile(
+    final isMembro = _isMembro(usuario);
+    final greeting = _greetingForCurrentTime(DateTime.now());
+    final displayName = _dashboardDisplayName(
+      usuario: usuario,
       firstName: firstName,
       role: userRole,
-      type: usuario?.tipoCargo ?? '',
+      isMembro: isMembro,
+    );
+    final animateGreetingName = _shouldAnimateGreetingName(
+      token: authState.token,
+      displayName: displayName,
+      hasLoadedUser: usuario != null,
     );
 
     final noticiaState = ref.watch(noticiaProvider);
@@ -442,7 +531,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                     context: context,
                     responsive: responsive,
                     greeting: greeting,
-                    firstName: firstName,
+                    displayName: displayName,
+                    animateGreetingName: animateGreetingName,
                     userRole: userRole,
                     usuario: usuario,
                   ),
@@ -949,14 +1039,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     required BuildContext context,
     required MppbResponsiveMetrics responsive,
     required String greeting,
-    required String firstName,
+    required String displayName,
+    required bool animateGreetingName,
     required String userRole,
     required UsuarioCarteira? usuario,
   }) {
     final greetingWidget = _buildGreeting(
       responsive: responsive,
       greeting: greeting,
-      firstName: firstName,
+      displayName: displayName,
+      animateGreetingName: animateGreetingName,
     );
     final walletCard = _buildWalletCard(
       context: context,
@@ -997,33 +1089,38 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
   Widget _buildGreeting({
     required MppbResponsiveMetrics responsive,
     required String greeting,
-    required String firstName,
+    required String displayName,
+    required bool animateGreetingName,
   }) {
+    final nameStyle = TextStyle(
+      color: const Color(0xFF202322),
+      fontSize: responsive.usesWideLayout ? 30 : 32,
+      fontWeight: FontWeight.w400,
+      height: 1.05,
+    );
+
     return Padding(
       padding: EdgeInsets.fromLTRB(2, responsive.isTablet ? 8 : 4, 2, 2),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: RichText(
-          textAlign: TextAlign.left,
-          text: TextSpan(
-            text: '$greeting,\n',
-            style: const TextStyle(
-              color: Color(0xFF697370),
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              height: 1.05,
-            ),
-            children: [
-              TextSpan(
-                text: firstName,
-                style: TextStyle(
-                  color: const Color(0xFF202322),
-                  fontSize: responsive.usesWideLayout ? 34 : 36,
-                  fontWeight: FontWeight.w400,
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$greeting,',
+              style: const TextStyle(
+                color: Color(0xFF697370),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                height: 1.05,
               ),
-            ],
-          ),
+            ),
+            _TypewriterNameText(
+              text: displayName,
+              style: nameStyle,
+              animate: animateGreetingName,
+            ),
+          ],
         ),
       ),
     );
@@ -1067,7 +1164,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         ? null
         : responsive.isTablet
         ? null
-        : 136.0;
+        : 152.0;
+    final isMembro = _isMembro(usuario);
 
     final card = InkWell(
       onTap: () => context.go('/carteira'),
@@ -1077,7 +1175,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         height: cardHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: const Color(0xFF202322),
+          color: isMembro ? null : const Color(0xFF202322),
+          gradient: isMembro
+              ? const LinearGradient(
+                  colors: [Color(0xFF210305), Color(0xFF0F0102)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
           border: Border.all(color: const Color(0x33FFFFFF)),
           boxShadow: const [
             BoxShadow(
@@ -1186,7 +1291,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
               if (isMobile)
                 Positioned(
                   right: thumbnailRight + 2,
-                  bottom: 22,
+                  bottom: 18,
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1396,6 +1501,121 @@ class _DashboardService {
   });
 }
 
+class _TypewriterNameText extends StatefulWidget {
+  const _TypewriterNameText({
+    required this.text,
+    required this.style,
+    required this.animate,
+  });
+
+  final String text;
+  final TextStyle style;
+  final bool animate;
+
+  @override
+  State<_TypewriterNameText> createState() => _TypewriterNameTextState();
+}
+
+class _TypewriterNameTextState extends State<_TypewriterNameText>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  bool _showCursor = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.forward && !_showCursor) {
+          setState(() => _showCursor = true);
+        }
+        if (status == AnimationStatus.completed) {
+          Future<void>.delayed(const Duration(milliseconds: 520), () {
+            if (mounted && _controller.status == AnimationStatus.completed) {
+              setState(() => _showCursor = false);
+            }
+          });
+        }
+      });
+    if (widget.animate) {
+      _startTyping();
+    } else {
+      _showCursor = false;
+      _controller.value = 1;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _TypewriterNameText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text && widget.animate) {
+      _startTyping();
+      return;
+    }
+
+    if (!widget.animate) {
+      _showCursor = false;
+      _controller.value = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _startTyping() {
+    final runeCount = widget.text.runes.length;
+    final durationMs = (runeCount * 38).clamp(420, 1400);
+    _controller.duration = Duration(milliseconds: durationMs);
+    _showCursor = true;
+    _controller.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final runes = widget.text.runes.toList();
+        final visibleCount = (runes.length * _controller.value).ceil();
+        final visibleText = String.fromCharCodes(runes.take(visibleCount));
+        final cursorOpacity = _controller.status == AnimationStatus.forward
+            ? 0.35 + (math.sin(_controller.value * math.pi * 24).abs() * 0.65)
+            : 1.0;
+
+        return Stack(
+          children: [
+            Opacity(
+              opacity: 0,
+              child: Text(widget.text, style: widget.style, softWrap: true),
+            ),
+            Text.rich(
+              TextSpan(
+                text: visibleText,
+                style: widget.style,
+                children: [
+                  if (_showCursor)
+                    TextSpan(
+                      text: '|',
+                      style: widget.style.copyWith(
+                        color: widget.style.color?.withValues(
+                          alpha: cursorOpacity,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              softWrap: true,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _DashboardNewsShareButton extends StatelessWidget {
   const _DashboardNewsShareButton({required this.onPressed});
 
@@ -1438,20 +1658,32 @@ class _WalletMiniature extends StatefulWidget {
 
 class _WalletMiniatureState extends State<_WalletMiniature>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late final AnimationController _turnController;
+  late final Animation<double> _turnAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _turnController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 6200),
+      duration: const Duration(milliseconds: 4200),
     )..repeat();
+    _turnAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween<double>(0), weight: 45),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 0,
+          end: math.pi * 2,
+        ).chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 35,
+      ),
+      TweenSequenceItem(tween: ConstantTween<double>(math.pi * 2), weight: 20),
+    ]).animate(_turnController);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _turnController.dispose();
     super.dispose();
   }
 
@@ -1459,33 +1691,30 @@ class _WalletMiniatureState extends State<_WalletMiniature>
   Widget build(BuildContext context) {
     final width = widget.compact ? 48.0 : 56.0;
     final height = widget.compact ? 62.0 : 72.0;
+    final paintPadding = widget.compact ? 8.0 : 10.0;
+    final tipoCargo = widget.usuario?.tipoCargo?.trim().toUpperCase();
+    final isMembro = tipoCargo == 'M' || tipoCargo == 'MEMBRO';
 
-    return Transform.rotate(
-      angle: -0.025,
-      child: SizedBox(
-        width: width,
-        height: height,
+    return SizedBox(
+      width: width + (paintPadding * 2),
+      height: height + (paintPadding * 2),
+      child: Center(
         child: AnimatedBuilder(
-          animation: _controller,
+          animation: _turnAnimation,
           builder: (context, child) {
-            final angle = _flipAngle(_controller.value);
+            final angle = _turnAnimation.value;
             final normalizedAngle = angle % (math.pi * 2);
             final showBack =
                 normalizedAngle > math.pi / 2 &&
                 normalizedAngle < math.pi * 1.5;
+            final visibleAngle = showBack ? angle + math.pi : angle;
 
             return Transform(
               alignment: Alignment.center,
               transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.0018)
-                ..rotateY(angle),
-              child: showBack
-                  ? Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.rotationY(math.pi),
-                      child: _buildBack(),
-                    )
-                  : _buildFront(),
+                ..setEntry(3, 2, 0.0012)
+                ..rotateY(visibleAngle),
+              child: showBack ? _buildBack(isMembro) : _buildFront(isMembro),
             );
           },
         ),
@@ -1493,28 +1722,10 @@ class _WalletMiniatureState extends State<_WalletMiniature>
     );
   }
 
-  double _flipAngle(double value) {
-    const frontHoldEnd = 0.34;
-    const toBackEnd = 0.48;
-    const backHoldEnd = 0.82;
-    const toFrontEnd = 0.96;
-
-    if (value < frontHoldEnd) return 0;
-    if (value < toBackEnd) {
-      final t = (value - frontHoldEnd) / (toBackEnd - frontHoldEnd);
-      return Curves.easeInOut.transform(t) * math.pi;
-    }
-    if (value < backHoldEnd) return math.pi;
-    if (value < toFrontEnd) {
-      final t = (value - backHoldEnd) / (toFrontEnd - backHoldEnd);
-      return math.pi + Curves.easeInOut.transform(t) * math.pi;
-    }
-    return math.pi * 2;
-  }
-
-  Widget _buildFront() {
+  Widget _buildFront(bool isMembro) {
     return _MiniCardShell(
       compact: widget.compact,
+      isMembro: isMembro,
       child: Stack(
         children: [
           Positioned(
@@ -1532,7 +1743,12 @@ class _WalletMiniatureState extends State<_WalletMiniature>
             left: 9,
             right: 9,
             top: 24,
-            child: Center(child: _WalletMiniPhoto(url: widget.usuario?.foto)),
+            child: Center(
+              child: _WalletMiniPhoto(
+                url: widget.usuario?.foto,
+                isMembro: isMembro,
+              ),
+            ),
           ),
           Positioned(
             left: 10,
@@ -1541,7 +1757,9 @@ class _WalletMiniatureState extends State<_WalletMiniature>
             child: Container(
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0x1A8F2A1D),
+                color: isMembro
+                    ? const Color(0x66D4AF37)
+                    : const Color(0x1A8F2A1D),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -1551,41 +1769,29 @@ class _WalletMiniatureState extends State<_WalletMiniature>
     );
   }
 
-  Widget _buildBack() {
+  Widget _buildBack(bool isMembro) {
     return _MiniCardShell(
       compact: widget.compact,
+      isMembro: isMembro,
       child: Stack(
         children: [
-          Positioned(
-            top: 10,
-            left: 0,
-            right: 0,
-            child: Icon(
-              Icons.qr_code_2_rounded,
-              color: const Color(0xFF8F2A1D).withValues(alpha: 0.72),
-              size: 28,
-            ),
-          ),
-          Positioned(
-            left: 10,
-            right: 10,
-            bottom: 19,
-            child: Container(
-              height: 2,
-              decoration: BoxDecoration(
-                color: const Color(0x338F2A1D),
-                borderRadius: BorderRadius.circular(999),
+          Positioned.fill(
+            child: Opacity(
+              opacity: isMembro ? 0.12 : 0.08,
+              child: Image.asset(
+                'assets/images/brasao_mppb_sem_fundo.png',
+                fit: BoxFit.contain,
               ),
             ),
           ),
-          Positioned(
-            left: 14,
-            right: 14,
-            bottom: 12,
+          Center(
             child: Container(
-              height: 2,
+              width: widget.compact ? 26 : 32,
+              height: widget.compact ? 18 : 22,
               decoration: BoxDecoration(
-                color: const Color(0x228F2A1D),
+                color: isMembro
+                    ? const Color(0x66D4AF37)
+                    : Colors.white.withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -1597,9 +1803,14 @@ class _WalletMiniatureState extends State<_WalletMiniature>
 }
 
 class _MiniCardShell extends StatelessWidget {
-  const _MiniCardShell({required this.child, this.compact = false});
+  const _MiniCardShell({
+    required this.child,
+    required this.isMembro,
+    this.compact = false,
+  });
 
   final Widget child;
+  final bool isMembro;
   final bool compact;
 
   @override
@@ -1613,7 +1824,6 @@ class _MiniCardShell extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFF6EC),
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.55)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x2E101828),
@@ -1622,23 +1832,34 @@ class _MiniCardShell extends StatelessWidget {
           ),
         ],
       ),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(
+          color: isMembro
+              ? const Color(0xCCD4AF37)
+              : Colors.white.withValues(alpha: 0.55),
+          width: isMembro ? 1.1 : 1,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          const Positioned.fill(
+          Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFFFFFBF5), Color(0xFFEED6C0)],
+                  colors: isMembro
+                      ? [Color(0xFF5A0B0B), Color(0xFF210305)]
+                      : [Color(0xFFFFFBF5), Color(0xFFEED6C0)],
                 ),
               ),
             ),
           ),
           Positioned.fill(
             child: Opacity(
-              opacity: 0.05,
+              opacity: isMembro ? 0.08 : 0.05,
               child: Image.asset(
                 'assets/images/brasao_mppb_sem_fundo.png',
                 fit: BoxFit.contain,
@@ -1653,9 +1874,10 @@ class _MiniCardShell extends StatelessWidget {
 }
 
 class _WalletMiniPhoto extends StatelessWidget {
-  const _WalletMiniPhoto({required this.url});
+  const _WalletMiniPhoto({required this.url, required this.isMembro});
 
   final String? url;
+  final bool isMembro;
 
   @override
   Widget build(BuildContext context) {
@@ -1675,7 +1897,11 @@ class _WalletMiniPhoto extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+        border: Border.all(
+          color: isMembro
+              ? const Color(0xFFD4AF37)
+              : Colors.white.withValues(alpha: 0.78),
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x24101828),

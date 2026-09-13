@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
+import '../../carteira/providers/carteira_provider.dart';
 
 import '../providers/concessao_afastamento_provider.dart';
 import 'widgets/concessao_afastamento_calendar.dart';
@@ -14,6 +15,9 @@ class ConcessaoAfastamentoPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(concessaoAfastamentoProvider);
     final notifier = ref.read(concessaoAfastamentoProvider.notifier);
+    final usuario = ref.watch(carteiraProvider).data;
+    final tipoCargo = usuario?.tipoCargo?.trim().toUpperCase();
+    final isMembro = tipoCargo == 'M' || tipoCargo == 'MEMBRO';
 
     return DefaultTabController(
       length: 2,
@@ -45,6 +49,7 @@ class ConcessaoAfastamentoPage extends ConsumerWidget {
               ),
               ConcessoesVigentesList(
                 concessoes: state.concessoes.concessoes,
+                isMembro: isMembro,
                 isLoading: state.concessoes.isLoading,
                 errorMessage: state.concessoes.errorMessage,
                 onRetry: () => notifier.carregarConcessoes(forceRefresh: true),

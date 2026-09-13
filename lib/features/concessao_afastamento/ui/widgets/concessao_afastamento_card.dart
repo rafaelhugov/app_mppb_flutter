@@ -14,6 +14,7 @@ import 'concessao_afastamento_theme.dart';
 
 class ConcessaoAfastamentoCard extends StatelessWidget {
   final ConcessaoAfastamento concessao;
+  final bool isMembro;
   final Future<void> Function(
     ConcessaoAfastamento concessao,
     DateTime dataInicial,
@@ -40,6 +41,7 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
   const ConcessaoAfastamentoCard({
     super.key,
     required this.concessao,
+    required this.isMembro,
     this.onSolicitar,
     this.onBuscarSugestoes,
     this.onBuscarOperacoes,
@@ -49,9 +51,21 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final primeiraSolicitacao = concessao.solicitacoes.isEmpty
+    final gozos = concessao.solicitacoes.where((item) => item.isGozo).toList();
+    final gozosComPeriodo = gozos
+        .where((item) => item.possuiPeriodoCompleto)
+        .toList();
+    final movimentacoes = concessao.solicitacoes
+        .where((item) => item.isMovimentacao)
+        .toList();
+    final primeiraSolicitacao = gozosComPeriodo.isEmpty
         ? null
-        : concessao.solicitacoes.first;
+        : gozosComPeriodo.first;
+    final diasAguardandoRetorno = movimentacoes.fold<int>(
+      0,
+      (total, item) =>
+          total + (item.possuiDiasParaRetorno ? item.diasInformados! : 0),
+    );
     final typeColor = concessao.tipo.color;
     final titleDetail = _cardTitleDetail(concessao);
     final canSolicitar = concessao.saldoRestante > 0 && onSolicitar != null;
@@ -64,6 +78,7 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
         backgroundColor: Colors.transparent,
         builder: (_) => ConcessaoAfastamentoDetailsSheet(
           concessao: concessao,
+          isMembro: isMembro,
           onBuscarOperacoes: onBuscarOperacoes,
           onExecutarOperacao: onExecutarOperacao,
         ),
@@ -154,7 +169,7 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
               )
             else ...[
               Text(
-                'Período: ${dateFormat.format(primeiraSolicitacao.inicio)} a ${dateFormat.format(primeiraSolicitacao.fim)}',
+                'Período: ${dateFormat.format(primeiraSolicitacao.inicio!)} a ${dateFormat.format(primeiraSolicitacao.fim!)}',
                 style: const TextStyle(
                   color: ConcessaoAfastamentoColors.ink,
                   fontSize: 13,
@@ -162,16 +177,19 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 5),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   _StatusChip(
                     label: primeiraSolicitacao.status.label,
                     color: primeiraSolicitacao.status.color,
+                    foreground: primeiraSolicitacao.status.foreground,
                   ),
-                  if (concessao.solicitacoes.length > 1) ...[
-                    const SizedBox(width: 8),
+                  if (gozosComPeriodo.length > 1) ...[
                     Text(
-                      '+${concessao.solicitacoes.length - 1}',
+                      '+${gozosComPeriodo.length - 1}',
                       style: const TextStyle(
                         color: ConcessaoAfastamentoColors.muted,
                         fontSize: 12,
@@ -181,6 +199,10 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
                   ],
                 ],
               ),
+            ],
+            if (diasAguardandoRetorno > 0) ...[
+              const SizedBox(height: 8),
+              _PendingReturnNotice(dias: diasAguardandoRetorno),
             ],
             if (canSolicitar) ...[
               const SizedBox(height: 12),
@@ -303,8 +325,13 @@ class _TypeChip extends StatelessWidget {
 class _StatusChip extends StatelessWidget {
   final String label;
   final Color color;
+  final Color foreground;
 
-  const _StatusChip({required this.label, required this.color});
+  const _StatusChip({
+    required this.label,
+    required this.color,
+    required this.foreground,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -314,14 +341,58 @@ class _StatusChip extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          height: 1,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 220),
+        child: Text(
+          label,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: foreground,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            height: 1.05,
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _PendingReturnNotice extends StatelessWidget {
+  final int dias;
+
+  const _PendingReturnNotice({required this.dias});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0x33F97316)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.pending_actions_rounded,
+            size: 15,
+            color: ConcessaoAfastamentoColors.statusConfirmada,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              '$dias dia(s) solicitados para retorno',
+              style: const TextStyle(
+                color: ConcessaoAfastamentoColors.ink,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -367,6 +438,9 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
   bool get _isAfastamentoEleitoral =>
       widget.concessao.tipo == TipoConcessao.licencaEleitoral;
 
+  bool get _usesManualDayEntry =>
+      _isAfastamentoEleitoral || widget.concessao.tipo == TipoConcessao.plantao;
+
   bool get _numeroDiasValido {
     final numeroDias = _numeroDias;
     return numeroDias != null &&
@@ -406,7 +480,7 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
     if (_isSubmitting || _isLoadingSugestoes || _dataInicial == null) {
       return false;
     }
-    if (_isAfastamentoEleitoral) {
+    if (_usesManualDayEntry) {
       return _numeroDiasValido && _eleitoralValidationMessage == null;
     }
     return _sugestaoSelecionada != null;
@@ -424,13 +498,13 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
     final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
     final sugestao = _sugestaoSelecionada;
     final numeroDias = _numeroDias;
-    final numeroDiasResumoEleitoral = numeroDias != null && numeroDias > 0
+    final numeroDiasResumoManual = numeroDias != null && numeroDias > 0
         ? numeroDias
         : null;
-    final showResumoEleitoral =
-        _isAfastamentoEleitoral &&
+    final showResumoManual =
+        _usesManualDayEntry &&
         _dataInicial != null &&
-        numeroDiasResumoEleitoral != null &&
+        numeroDiasResumoManual != null &&
         _eleitoralValidationMessage == null;
     final formError = _submitError ?? _eleitoralValidationMessage;
     final showElectionLeaveNotice =
@@ -514,7 +588,7 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
                     icon: Icons.calendar_today_rounded,
                     onTap: _isSubmitting ? null : _selecionarData,
                   ),
-                  if (_isAfastamentoEleitoral) ...[
+                  if (_usesManualDayEntry) ...[
                     const SizedBox(height: 12),
                     _NumeroDiasField(
                       controller: _numeroDiasController,
@@ -549,12 +623,12 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
                       ),
                     ),
                   ],
-                  if (showResumoEleitoral) ...[
+                  if (showResumoManual) ...[
                     const SizedBox(height: 12),
                     _ResumoMarcacao(
                       tipo: widget.concessao.tipo.label,
                       dataInicial: _dateFormat.format(_dataInicial!),
-                      numeroDias: numeroDiasResumoEleitoral,
+                      numeroDias: numeroDiasResumoManual,
                     ),
                   ],
                   if (sugestao != null && _dataInicial != null) ...[
@@ -644,7 +718,7 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
         _sugestoesError = null;
         _submitError = null;
       });
-      if (!_isAfastamentoEleitoral) {
+      if (!_usesManualDayEntry) {
         await _buscarSugestoes(selected);
       }
     }
@@ -691,7 +765,7 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
 
   Future<void> _enviar() async {
     final dataInicial = _dataInicial;
-    final numeroDias = _isAfastamentoEleitoral
+    final numeroDias = _usesManualDayEntry
         ? _numeroDias
         : _sugestaoSelecionada?.numeroDias;
     if (dataInicial == null || numeroDias == null || numeroDias <= 0) return;

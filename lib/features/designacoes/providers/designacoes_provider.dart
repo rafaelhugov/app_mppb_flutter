@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +14,7 @@ class DesignacoesState {
   final bool isLoading;
   final bool isRefreshing;
   final String? errorMessage;
+  final Set<int> novasDesignacoesIds;
 
   const DesignacoesState({
     this.tipoUsuario = 'INDEFINIDO',
@@ -19,6 +22,7 @@ class DesignacoesState {
     this.isLoading = false,
     this.isRefreshing = false,
     this.errorMessage,
+    this.novasDesignacoesIds = const {},
   });
 
   DesignacoesState copyWith({
@@ -27,6 +31,7 @@ class DesignacoesState {
     bool? isLoading,
     bool? isRefreshing,
     String? errorMessage,
+    Set<int>? novasDesignacoesIds,
   }) {
     return DesignacoesState(
       tipoUsuario: tipoUsuario ?? this.tipoUsuario,
@@ -34,6 +39,7 @@ class DesignacoesState {
       isLoading: isLoading ?? this.isLoading,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       errorMessage: errorMessage,
+      novasDesignacoesIds: novasDesignacoesIds ?? this.novasDesignacoesIds,
     );
   }
 }
@@ -85,7 +91,8 @@ class DesignacoesNotifier extends Notifier<DesignacoesState> {
           .read(designacoesRepositoryProvider)
           .buscarAtivas(token: token);
       _cache = response;
-      _aplicar(response);
+      final novasIds = await _novasDesignacoes(response.designacoes);
+      _aplicar(response, novasIds: novasIds);
     } on DioException {
       _erro();
     } catch (_) {
@@ -93,13 +100,14 @@ class DesignacoesNotifier extends Notifier<DesignacoesState> {
     }
   }
 
-  void _aplicar(DesignacoesAtivasResponse response) {
+  void _aplicar(DesignacoesAtivasResponse response, {Set<int>? novasIds}) {
     state = state.copyWith(
       tipoUsuario: response.tipoUsuario,
       designacoes: response.designacoes,
       isLoading: false,
       isRefreshing: false,
       errorMessage: null,
+      novasDesignacoesIds: novasIds,
     );
   }
 
@@ -129,6 +137,56 @@ class DesignacoesNotifier extends Notifier<DesignacoesState> {
     }
 
     return null;
+  }
+
+  Future<Set<int>> _novasDesignacoes(List<DesignacaoAtiva> designacoes) async {
+    final storage = ref.read(secureStorageProvider);
+    final key = await _seenStorageKey();
+    final currentIds = designacoes.map((item) => item.id).toSet();
+    final stored = await storage.read(key: key);
+
+    if (stored == null || stored.trim().isEmpty) {
+      await storage.write(key: key, value: jsonEncode(currentIds.toList()));
+      return const {};
+    }
+
+    try {
+      final decoded = jsonDecode(stored);
+      if (decoded is List) {
+        final seenIds = decoded
+            .map((item) => int.tryParse(item.toString()))
+            .whereType<int>()
+            .toSet();
+        return currentIds.difference(seenIds);
+      }
+    } catch (_) {
+      await storage.delete(key: key);
+    }
+
+    await storage.write(key: key, value: jsonEncode(currentIds.toList()));
+    return const {};
+  }
+
+  Future<void> marcarAtuaisComoVistas() async {
+    if (state.designacoes.isEmpty) {
+      return;
+    }
+
+    final ids = state.designacoes.map((item) => item.id).toList()..sort();
+    await ref
+        .read(secureStorageProvider)
+        .write(key: await _seenStorageKey(), value: jsonEncode(ids));
+  }
+
+  Future<String> _seenStorageKey() async {
+    final storage = ref.read(secureStorageProvider);
+    final username = (await storage.read(
+      key: 'auth_username',
+    ))?.trim().toLowerCase();
+    final suffix = username == null || username.isEmpty
+        ? 'usuario'
+        : username.replaceAll(RegExp(r'[^a-z0-9_.-]'), '_');
+    return 'designacoes_seen_ids_v1_$suffix';
   }
 }
 

@@ -5,10 +5,13 @@ import 'package:intl/intl.dart';
 import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
+import '../../models/status_solicitacao_concessao.dart';
+import '../../models/tipo_solicitacao_concessao.dart';
 import 'concessao_afastamento_theme.dart';
 
 class ConcessaoAfastamentoDetailsSheet extends StatelessWidget {
   final ConcessaoAfastamento concessao;
+  final bool isMembro;
   final Future<List<OperacaoSolicitacaoConcessao>> Function(
     SolicitacaoConcessao solicitacao,
   )?
@@ -24,6 +27,7 @@ class ConcessaoAfastamentoDetailsSheet extends StatelessWidget {
   const ConcessaoAfastamentoDetailsSheet({
     super.key,
     required this.concessao,
+    required this.isMembro,
     this.onBuscarOperacoes,
     this.onExecutarOperacao,
   });
@@ -31,6 +35,11 @@ class ConcessaoAfastamentoDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy');
+    final gozos = concessao.solicitacoes.where((item) => item.isGozo).toList();
+    final movimentacoes = concessao.solicitacoes
+        .where((item) => item.isMovimentacao)
+        .toList();
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.88;
 
     return Container(
       decoration: const BoxDecoration(
@@ -39,163 +48,347 @@ class ConcessaoAfastamentoDetailsSheet extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD7DEDA),
-                    borderRadius: BorderRadius.circular(999),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD7DEDA),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 22),
-              Text(
-                concessao.titulo,
-                style: const TextStyle(
-                  color: ConcessaoAfastamentoColors.ink,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                const SizedBox(height: 22),
+                Text(
+                  concessao.titulo,
+                  style: const TextStyle(
+                    color: ConcessaoAfastamentoColors.ink,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFE9EDF0)),
-                ),
-                child: Column(
-                  children: [
-                    _DetailLine(
-                      label: 'Dias concedidos',
-                      value: '${concessao.diasConcedidos}',
-                    ),
-                    _DetailLine(
-                      label: 'Saldo restante',
-                      value: '${concessao.saldoRestante} dias',
-                    ),
-                    if (concessao.inicioPeriodoAquisitivo != null &&
-                        concessao.finalPeriodoAquisitivo != null)
-                      _DetailLine(
-                        label: 'Período aquisitivo',
-                        value:
-                            '${dateFormat.format(concessao.inicioPeriodoAquisitivo!)} a ${dateFormat.format(concessao.finalPeriodoAquisitivo!)}',
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Solicitações vinculadas',
-                style: TextStyle(
-                  color: ConcessaoAfastamentoColors.ink,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (concessao.solicitacoes.isEmpty)
+                const SizedBox(height: 16),
                 Container(
-                  width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: const Color(0xFFE9EDF0)),
                   ),
-                  child: const Text(
-                    'Nenhum período de gozo programado',
-                    style: TextStyle(color: ConcessaoAfastamentoColors.muted),
-                  ),
-                )
-              else
-                ...concessao.solicitacoes.map(
-                  (solicitacao) => Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE9EDF0)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: solicitacao.status.color,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
+                  child: Column(
+                    children: [
+                      _DetailLine(
+                        label: 'Dias concedidos',
+                        value: '${concessao.diasConcedidos}',
+                      ),
+                      _DetailLine(
+                        label: 'Saldo restante',
+                        value: '${concessao.saldoRestante} dias',
+                      ),
+                      if (concessao.inicioPeriodoAquisitivo != null &&
+                          concessao.finalPeriodoAquisitivo != null)
+                        _DetailLine(
+                          label: 'Período aquisitivo',
+                          value:
+                              '${dateFormat.format(concessao.inicioPeriodoAquisitivo!)} a ${dateFormat.format(concessao.finalPeriodoAquisitivo!)}',
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                solicitacao.tipo.label,
-                                style: const TextStyle(
-                                  color: ConcessaoAfastamentoColors.ink,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                '${dateFormat.format(solicitacao.inicio)} a ${dateFormat.format(solicitacao.fim)}',
-                                style: const TextStyle(
-                                  color: ConcessaoAfastamentoColors.muted,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 6,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  _StatusPill(
-                                    label: solicitacao.status.label,
-                                    color: solicitacao.status.color,
-                                  ),
-                                  Text(
-                                    '${solicitacao.diasCalculados} dia(s)',
-                                    style: const TextStyle(
-                                      color: ConcessaoAfastamentoColors.ink,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              _SolicitacaoActions(
-                                solicitacao: solicitacao,
-                                onBuscarOperacoes: onBuscarOperacoes,
-                                onExecutarOperacao: onExecutarOperacao,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-            ],
+                const SizedBox(height: 18),
+                _SolicitacoesSection(
+                  title: 'Gozos programados',
+                  emptyMessage: 'Nenhum período de gozo programado',
+                  solicitacoes: gozos,
+                  isMembro: isMembro,
+                  dateFormat: dateFormat,
+                  onBuscarOperacoes: onBuscarOperacoes,
+                  onExecutarOperacao: onExecutarOperacao,
+                ),
+                const SizedBox(height: 16),
+                _SolicitacoesSection(
+                  title: 'Movimentações e pendências',
+                  emptyMessage: 'Nenhuma movimentação registrada',
+                  solicitacoes: movimentacoes,
+                  isMembro: isMembro,
+                  dateFormat: dateFormat,
+                  onBuscarOperacoes: onBuscarOperacoes,
+                  onExecutarOperacao: onExecutarOperacao,
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _SolicitacoesSection extends StatelessWidget {
+  final String title;
+  final String emptyMessage;
+  final List<SolicitacaoConcessao> solicitacoes;
+  final bool isMembro;
+  final DateFormat dateFormat;
+  final Future<List<OperacaoSolicitacaoConcessao>> Function(
+    SolicitacaoConcessao solicitacao,
+  )?
+  onBuscarOperacoes;
+  final Future<void> Function(
+    SolicitacaoConcessao solicitacao,
+    OperacaoSolicitacaoConcessao operacao, {
+    DateTime? data,
+    DateTime? dataFim,
+  })?
+  onExecutarOperacao;
+
+  const _SolicitacoesSection({
+    required this.title,
+    required this.emptyMessage,
+    required this.solicitacoes,
+    required this.isMembro,
+    required this.dateFormat,
+    required this.onBuscarOperacoes,
+    required this.onExecutarOperacao,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: ConcessaoAfastamentoColors.ink,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (solicitacoes.isEmpty)
+          _EmptySolicitacoesBox(message: emptyMessage)
+        else
+          ...solicitacoes.map(
+            (solicitacao) => _SolicitacaoTile(
+              solicitacao: solicitacao,
+              isMembro: isMembro,
+              dateFormat: dateFormat,
+              onBuscarOperacoes: onBuscarOperacoes,
+              onExecutarOperacao: onExecutarOperacao,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _EmptySolicitacoesBox extends StatelessWidget {
+  final String message;
+
+  const _EmptySolicitacoesBox({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE9EDF0)),
+      ),
+      child: Text(
+        message,
+        style: const TextStyle(color: ConcessaoAfastamentoColors.muted),
+      ),
+    );
+  }
+}
+
+class _SolicitacaoTile extends StatelessWidget {
+  final SolicitacaoConcessao solicitacao;
+  final bool isMembro;
+  final DateFormat dateFormat;
+  final Future<List<OperacaoSolicitacaoConcessao>> Function(
+    SolicitacaoConcessao solicitacao,
+  )?
+  onBuscarOperacoes;
+  final Future<void> Function(
+    SolicitacaoConcessao solicitacao,
+    OperacaoSolicitacaoConcessao operacao, {
+    DateTime? data,
+    DateTime? dataFim,
+  })?
+  onExecutarOperacao;
+
+  const _SolicitacaoTile({
+    required this.solicitacao,
+    required this.isMembro,
+    required this.dateFormat,
+    required this.onBuscarOperacoes,
+    required this.onExecutarOperacao,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dias = solicitacao.diasCalculados ?? solicitacao.diasInformados;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE9EDF0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 4,
+            height: 58,
+            decoration: BoxDecoration(
+              color: solicitacao.status.color,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  solicitacao.tipo.label,
+                  style: const TextStyle(
+                    color: ConcessaoAfastamentoColors.ink,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  _periodDescription(solicitacao, dateFormat),
+                  style: const TextStyle(
+                    color: ConcessaoAfastamentoColors.muted,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _StatusPill(
+                      label: solicitacao.status.label,
+                      color: solicitacao.status.color,
+                      foreground: solicitacao.status.foreground,
+                    ),
+                    if (dias != null && dias > 0)
+                      Text(
+                        solicitacao.possuiDiasParaRetorno
+                            ? '$dias dia(s) solicitados para retorno'
+                            : '$dias dia(s)',
+                        style: const TextStyle(
+                          color: ConcessaoAfastamentoColors.ink,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  _statusContext(solicitacao, isMembro),
+                  style: const TextStyle(
+                    color: ConcessaoAfastamentoColors.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                _SolicitacaoActions(
+                  solicitacao: solicitacao,
+                  onBuscarOperacoes: onBuscarOperacoes,
+                  onExecutarOperacao: onExecutarOperacao,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _periodDescription(
+    SolicitacaoConcessao solicitacao,
+    DateFormat dateFormat,
+  ) {
+    final inicio = solicitacao.inicio;
+    final fim = solicitacao.fim;
+    if (inicio != null && fim != null) {
+      return '${dateFormat.format(inicio)} a ${dateFormat.format(fim)}';
+    }
+
+    switch (solicitacao.tipo) {
+      case TipoSolicitacaoConcessao.interrupcao:
+        return fim == null
+            ? 'Interrupção registrada'
+            : 'Interrupção a partir de ${dateFormat.format(fim)}';
+      case TipoSolicitacaoConcessao.suspensaoTotal:
+        return 'Suspensão integral do gozo';
+      case TipoSolicitacaoConcessao.suspensaoParcial:
+        return 'Suspensão parcial do gozo';
+      case TipoSolicitacaoConcessao.adiamentoSineDie:
+        return 'Adiamento sem nova data definida';
+      case TipoSolicitacaoConcessao.indenizacao:
+      case TipoSolicitacaoConcessao.conversao:
+        return 'Movimentação registrada';
+      case TipoSolicitacaoConcessao.gozo:
+      case TipoSolicitacaoConcessao.gozoColetivo:
+      case TipoSolicitacaoConcessao.antecipacao:
+      case TipoSolicitacaoConcessao.adiamento:
+      case TipoSolicitacaoConcessao.desconhecido:
+        return 'Período não informado';
+    }
+  }
+
+  String _statusContext(SolicitacaoConcessao solicitacao, bool isMembro) {
+    switch (solicitacao.status) {
+      case StatusSolicitacaoConcessao.pendente:
+        return isMembro
+            ? 'Aguardando análise do DRH'
+            : 'Aguardando confirmação do chefe imediato';
+      case StatusSolicitacaoConcessao.confirmado:
+        return isMembro
+            ? 'Aguardando análise do 2º Subprocurador-Geral'
+            : 'Aguardando análise pelo fluxo de recursos humanos';
+      case StatusSolicitacaoConcessao.deferido:
+        return isMembro
+            ? 'Deferida pelo 2º Subprocurador-Geral'
+            : 'Solicitação deferida';
+      case StatusSolicitacaoConcessao.homologado:
+      case StatusSolicitacaoConcessao.migrado:
+        return 'Analisada pelo DHR/Secretário-Geral';
+      case StatusSolicitacaoConcessao.cancelado:
+        return 'Desistência do solicitante';
+      case StatusSolicitacaoConcessao.negado:
+      case StatusSolicitacaoConcessao.indeferido:
+        return isMembro
+            ? 'Indeferida pelo 2º Subprocurador-Geral'
+            : 'Solicitação indeferida';
+      case StatusSolicitacaoConcessao.desconhecido:
+        return 'Situação não informada';
+    }
   }
 }
 
@@ -364,16 +557,28 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
   }
 
   Future<void> _handleAlterarData(bool podeAdiar, bool podeAntecipar) async {
+    final inicio = widget.solicitacao.inicio;
+    if (inicio == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Esta solicitação não possui data inicial para alterar.',
+          ),
+        ),
+      );
+      return;
+    }
+
     final data = await _showDateOperationSheet(
       title: 'Alterar data',
       dateLabel: 'Nova data inicial',
-      initialDate: widget.solicitacao.inicio,
+      initialDate: inicio,
       rejectWeekendStart: true,
     );
     if (data == null) return;
 
     final novaData = normalizarData(data);
-    final dataAtual = normalizarData(widget.solicitacao.inicio);
+    final dataAtual = normalizarData(inicio);
     if (novaData.isAtSameMomentAs(dataAtual)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -656,8 +861,13 @@ class _OperationChip extends StatelessWidget {
 class _StatusPill extends StatelessWidget {
   final String label;
   final Color color;
+  final Color foreground;
 
-  const _StatusPill({required this.label, required this.color});
+  const _StatusPill({
+    required this.label,
+    required this.color,
+    required this.foreground,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -667,13 +877,18 @@ class _StatusPill extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          height: 1,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 220),
+        child: Text(
+          label,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: foreground,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            height: 1.05,
+          ),
         ),
       ),
     );

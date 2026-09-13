@@ -10,13 +10,32 @@ import '../../concessao_afastamento/ui/widgets/concessao_afastamento_theme.dart'
 import '../models/designacao_ativa.dart';
 import '../providers/designacoes_provider.dart';
 
-class DesignacoesPage extends ConsumerWidget {
+class DesignacoesPage extends ConsumerStatefulWidget {
   const DesignacoesPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DesignacoesPage> createState() => _DesignacoesPageState();
+}
+
+class _DesignacoesPageState extends ConsumerState<DesignacoesPage> {
+  String? _lastMarkedSignature;
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(designacoesProvider);
     final notifier = ref.read(designacoesProvider.notifier);
+    if (state.novasDesignacoesIds.isNotEmpty) {
+      final signature = state.novasDesignacoesIds.toList()..sort();
+      final signatureText = signature.join(',');
+      if (_lastMarkedSignature != signatureText) {
+        _lastMarkedSignature = signatureText;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future<void>.delayed(const Duration(milliseconds: 1200), () {
+            notifier.marcarAtuaisComoVistas();
+          });
+        });
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
@@ -26,6 +45,7 @@ class DesignacoesPage extends ConsumerWidget {
           Expanded(
             child: _DesignacoesList(
               designacoes: state.designacoes,
+              novasDesignacoesIds: state.novasDesignacoesIds,
               isLoading: state.isLoading,
               errorMessage: state.errorMessage,
               onRetry: () => notifier.carregar(forceRefresh: true),
@@ -54,6 +74,7 @@ class _Header extends StatelessWidget {
 
 class _DesignacoesList extends StatelessWidget {
   final List<DesignacaoAtiva> designacoes;
+  final Set<int> novasDesignacoesIds;
   final bool isLoading;
   final String? errorMessage;
   final VoidCallback onRetry;
@@ -61,6 +82,7 @@ class _DesignacoesList extends StatelessWidget {
 
   const _DesignacoesList({
     required this.designacoes,
+    required this.novasDesignacoesIds,
     required this.isLoading,
     this.errorMessage,
     required this.onRetry,
@@ -132,12 +154,18 @@ class _DesignacoesList extends StatelessWidget {
                                 ),
                             itemBuilder: (context, index) => DesignacaoCard(
                               designacao: entry.value[index],
+                              isNew: novasDesignacoesIds.contains(
+                                entry.value[index].id,
+                              ),
                               compact: true,
                             ),
                           )
                         else
                           ...entry.value.map(
-                            (item) => DesignacaoCard(designacao: item),
+                            (item) => DesignacaoCard(
+                              designacao: item,
+                              isNew: novasDesignacoesIds.contains(item.id),
+                            ),
                           ),
                         const SizedBox(height: 8),
                       ],
@@ -203,11 +231,13 @@ class _SectionTitle extends StatelessWidget {
 
 class DesignacaoCard extends StatelessWidget {
   final DesignacaoAtiva designacao;
+  final bool isNew;
   final bool compact;
 
   const DesignacaoCard({
     super.key,
     required this.designacao,
+    this.isNew = false,
     this.compact = false,
   });
 
@@ -226,12 +256,14 @@ class DesignacaoCard extends StatelessWidget {
         child: _DesignacaoSolidContainer(
           category: category,
           compact: compact,
+          isNew: isNew,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _DesignacaoCardTopBar(
                 category: category,
                 label: designacao.tipoDescricao,
+                isNew: isNew,
               ),
               const SizedBox(height: 12),
               _DesignacaoIdentity(
@@ -310,11 +342,13 @@ class _DesignacaoSolidContainer extends StatelessWidget {
   final _DesignacaoCategoryStyle category;
   final Widget child;
   final bool compact;
+  final bool isNew;
 
   const _DesignacaoSolidContainer({
     required this.category,
     required this.child,
     this.compact = false,
+    this.isNew = false,
   });
 
   @override
@@ -322,14 +356,17 @@ class _DesignacaoSolidContainer extends StatelessWidget {
     return Container(
       constraints: BoxConstraints(minHeight: compact ? 156 : 168),
       decoration: BoxDecoration(
-        color: category.surface,
+        color: isNew ? const Color(0xFFEFF6FF) : category.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: category.border),
-        boxShadow: const [
+        border: Border.all(
+          color: isNew ? const Color(0xFF2563EB) : category.border,
+          width: isNew ? 1.2 : 1,
+        ),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x10101828),
-            blurRadius: 18,
-            offset: Offset(0, 8),
+            color: isNew ? const Color(0x242563EB) : const Color(0x10101828),
+            blurRadius: isNew ? 22 : 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -345,6 +382,16 @@ class _DesignacaoSolidContainer extends StatelessWidget {
               size: compact ? 116 : 132,
             ),
           ),
+          if (isNew)
+            const Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: ColoredBox(
+                color: Color(0xFF2563EB),
+                child: SizedBox(width: 5),
+              ),
+            ),
           Padding(padding: EdgeInsets.all(compact ? 12 : 14), child: child),
         ],
       ),
@@ -355,8 +402,13 @@ class _DesignacaoSolidContainer extends StatelessWidget {
 class _DesignacaoCardTopBar extends StatelessWidget {
   final _DesignacaoCategoryStyle category;
   final String label;
+  final bool isNew;
 
-  const _DesignacaoCardTopBar({required this.category, required this.label});
+  const _DesignacaoCardTopBar({
+    required this.category,
+    required this.label,
+    this.isNew = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -400,6 +452,24 @@ class _DesignacaoCardTopBar extends StatelessWidget {
               ),
             ),
           ),
+          if (isNew)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                'NOVA',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
         ],
       ),
     );

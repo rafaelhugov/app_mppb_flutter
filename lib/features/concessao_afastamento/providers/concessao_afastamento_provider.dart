@@ -348,7 +348,7 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
       ...?_solicitacoesCriadasLocalmente[concessaoId],
     ].where((item) => item.id != solicitacao.id).toList();
     solicitacoes.add(solicitacao);
-    solicitacoes.sort((a, b) => a.inicio.compareTo(b.inicio));
+    _ordenarSolicitacoes(solicitacoes);
     _solicitacoesCriadasLocalmente[concessaoId] = solicitacoes;
   }
 
@@ -367,8 +367,8 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
           .toList();
       if (pendentes.isEmpty) return concessao;
 
-      final solicitacoes = [...concessao.solicitacoes, ...pendentes]
-        ..sort((a, b) => a.inicio.compareTo(b.inicio));
+      final solicitacoes = [...concessao.solicitacoes, ...pendentes];
+      _ordenarSolicitacoes(solicitacoes);
 
       return _copyConcessao(concessao, solicitacoes: solicitacoes);
     }).toList();
@@ -422,7 +422,8 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
       final solicitacoes = [
         ...concessao.solicitacoes.where((item) => item.id != solicitacao.id),
         solicitacao,
-      ]..sort((a, b) => a.inicio.compareTo(b.inicio));
+      ];
+      _ordenarSolicitacoes(solicitacoes);
 
       return _copyConcessao(concessao, solicitacoes: solicitacoes);
     }).toList();
@@ -451,6 +452,21 @@ class ConcessaoAfastamentoNotifier extends Notifier<ConcessaoAfastamentoState> {
       finalPeriodoAquisitivo: concessao.finalPeriodoAquisitivo,
       solicitacoes: solicitacoes,
     );
+  }
+
+  void _ordenarSolicitacoes(List<SolicitacaoConcessao> solicitacoes) {
+    solicitacoes.sort((a, b) {
+      if (a.isGozo != b.isGozo) return a.isGozo ? -1 : 1;
+
+      final dataA = a.inicio ?? a.fim;
+      final dataB = b.inicio ?? b.fim;
+      if (dataA != null && dataB != null) {
+        return dataA.compareTo(dataB);
+      }
+      if (dataA != null) return -1;
+      if (dataB != null) return 1;
+      return a.id.compareTo(b.id);
+    });
   }
 
   void _tratarErroConcessoes(dynamic e, [StackTrace? stack]) {

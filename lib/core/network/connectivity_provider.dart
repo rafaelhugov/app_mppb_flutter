@@ -10,6 +10,7 @@ class ConnectivityNotifier extends Notifier<bool> {
     'API_URL',
     defaultValue: 'https://aplicativo-api.mppb.mp.br',
   );
+  static const _probePath = '/api/public/health';
 
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _subscription;
@@ -45,8 +46,8 @@ class ConnectivityNotifier extends Notifier<bool> {
     final currentCheck = ++_checkGeneration;
     final result =
         connectivityResult ?? await _connectivity.checkConnectivity();
-    final hasNetwork = result.any((item) => item != ConnectivityResult.none);
-    final hasInternet = hasNetwork && await _hasInternetAccess();
+    final hasNetwork = await _hasNetworkConnection(result);
+    final hasInternet = hasNetwork && await _hasInternetAccessWithRetry();
     if (currentCheck == _checkGeneration) {
       state = hasInternet;
       _syncOfflineRetry();
@@ -65,18 +66,55 @@ class ConnectivityNotifier extends Notifier<bool> {
     });
   }
 
+  Future<bool> _hasNetworkConnection(List<ConnectivityResult> initial) async {
+    if (_containsNetwork(initial)) {
+      return true;
+    }
+
+    for (final delay in const [
+      Duration(milliseconds: 500),
+      Duration(milliseconds: 900),
+    ]) {
+      await Future<void>.delayed(delay);
+      final result = await _connectivity.checkConnectivity();
+      if (_containsNetwork(result)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool _containsNetwork(List<ConnectivityResult> result) {
+    return result.any((item) => item != ConnectivityResult.none);
+  }
+
+  Future<bool> _hasInternetAccessWithRetry() async {
+    const attempts = 3;
+    for (var attempt = 0; attempt < attempts; attempt++) {
+      if (await _hasInternetAccess()) {
+        return true;
+      }
+      if (attempt < attempts - 1) {
+        await Future<void>.delayed(Duration(milliseconds: 450 * (attempt + 1)));
+      }
+    }
+    return false;
+  }
+
   Future<bool> _hasInternetAccess() async {
     final dio = Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 4),
         receiveTimeout: const Duration(seconds: 4),
+        validateStatus: (status) => status != null && status < 500,
       ),
     );
     Uri? probeUri;
 
     try {
       final baseUri = Uri.parse(_apiUrl);
-      probeUri = baseUri.replace(path: '/api/public/noticias');
+      probeUri = baseUri.replace(path: _probePath, query: null);
 
       final response = await dio.get(probeUri.toString());
       return response.statusCode != null &&

@@ -16,6 +16,13 @@ class ConcessaoAfastamentoColors {
   static const ink = Color(0xFF202322);
   static const muted = Color(0xFF697370);
   static const brand = Color(0xFF202322);
+
+  static const statusPendente = Color(0xFFFDE047);
+  static const statusConfirmada = Color(0xFFF97316);
+  static const statusDeferida = Color(0xFF00A86B);
+  static const statusIndeferida = Color(0xFFE5252A);
+  static const statusCancelada = Color(0xFFE5E7EB);
+  static const statusAnalisada = Color(0xFF2563EB);
 }
 
 extension TipoConcessaoColor on TipoConcessao {
@@ -60,18 +67,60 @@ extension StatusSolicitacaoColor on StatusSolicitacaoConcessao {
   Color get color {
     switch (this) {
       case StatusSolicitacaoConcessao.deferido:
-      case StatusSolicitacaoConcessao.homologado:
-      case StatusSolicitacaoConcessao.confirmado:
-      case StatusSolicitacaoConcessao.migrado:
-        return const Color(0xFF00A86B);
+        return ConcessaoAfastamentoColors.statusDeferida;
       case StatusSolicitacaoConcessao.pendente:
-        return const Color(0xFFF97316);
+        return ConcessaoAfastamentoColors.statusPendente;
+      case StatusSolicitacaoConcessao.confirmado:
+        return ConcessaoAfastamentoColors.statusConfirmada;
       case StatusSolicitacaoConcessao.cancelado:
+        return ConcessaoAfastamentoColors.statusCancelada;
+      case StatusSolicitacaoConcessao.homologado:
+      case StatusSolicitacaoConcessao.migrado:
+        return ConcessaoAfastamentoColors.statusAnalisada;
       case StatusSolicitacaoConcessao.negado:
       case StatusSolicitacaoConcessao.indeferido:
-        return const Color(0xFFD62828);
+        return ConcessaoAfastamentoColors.statusIndeferida;
       case StatusSolicitacaoConcessao.desconhecido:
         return ConcessaoAfastamentoColors.outros;
     }
   }
+
+  Color get foreground {
+    switch (this) {
+      case StatusSolicitacaoConcessao.pendente:
+      case StatusSolicitacaoConcessao.cancelado:
+        return ConcessaoAfastamentoColors.ink;
+      case StatusSolicitacaoConcessao.deferido:
+      case StatusSolicitacaoConcessao.homologado:
+      case StatusSolicitacaoConcessao.confirmado:
+      case StatusSolicitacaoConcessao.migrado:
+      case StatusSolicitacaoConcessao.negado:
+      case StatusSolicitacaoConcessao.indeferido:
+      case StatusSolicitacaoConcessao.desconhecido:
+        return Colors.white;
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case StatusSolicitacaoConcessao.pendente:
+        return 'A ser confirmada pelo chefe imediato (servidores) ou DRH (férias de escala coletiva de membro)';
+      case StatusSolicitacaoConcessao.confirmado:
+        return 'A ser analisada pelo 2º Subprocurador Geral';
+      case StatusSolicitacaoConcessao.deferido:
+        return 'Deferida pelo 2º Subprocurador Geral';
+      case StatusSolicitacaoConcessao.indeferido:
+      case StatusSolicitacaoConcessao.negado:
+        return 'Indeferida pelo 2º Subprocurador Geral';
+      case StatusSolicitacaoConcessao.cancelado:
+        return 'Desistência do solicitante';
+      case StatusSolicitacaoConcessao.homologado:
+      case StatusSolicitacaoConcessao.migrado:
+        return 'Analisada pelo DHR/Secretário Geral';
+      case StatusSolicitacaoConcessao.desconhecido:
+        return 'Situação não informada';
+    }
+  }
+
+  bool get isInLegend => this != StatusSolicitacaoConcessao.desconhecido;
 }

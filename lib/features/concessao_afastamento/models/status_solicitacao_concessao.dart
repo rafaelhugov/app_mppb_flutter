@@ -33,6 +33,10 @@ enum StatusSolicitacaoConcessao {
       case 'homologada':
       case 'h':
         return StatusSolicitacaoConcessao.homologado;
+      case 'analisado':
+      case 'analisada':
+      case 'a':
+        return StatusSolicitacaoConcessao.homologado;
       case 'deferido':
       case 'deferida':
       case 'd':
@@ -54,19 +58,19 @@ enum StatusSolicitacaoConcessao {
       case StatusSolicitacaoConcessao.pendente:
         return 'Pendente';
       case StatusSolicitacaoConcessao.cancelado:
-        return 'Cancelado';
+        return 'Cancelada';
       case StatusSolicitacaoConcessao.confirmado:
-        return 'Confirmado';
+        return 'Confirmada pelo chefe imediato ou DRH';
       case StatusSolicitacaoConcessao.negado:
-        return 'Negado';
+        return 'Indeferida';
       case StatusSolicitacaoConcessao.homologado:
-        return 'Homologado';
+        return 'Analisada';
       case StatusSolicitacaoConcessao.deferido:
-        return 'Deferido';
+        return 'Deferida';
       case StatusSolicitacaoConcessao.indeferido:
-        return 'Indeferido';
+        return 'Indeferida';
       case StatusSolicitacaoConcessao.migrado:
-        return 'Migrado';
+        return 'Analisada';
       case StatusSolicitacaoConcessao.desconhecido:
         return 'Situação não informada';
     }

@@ -11,6 +11,7 @@ import 'concessao_afastamento_theme.dart';
 
 class ConcessoesVigentesList extends StatelessWidget {
   final List<ConcessaoAfastamento> concessoes;
+  final bool isMembro;
   final bool isLoading;
   final String? errorMessage;
   final VoidCallback onRetry;
@@ -41,6 +42,7 @@ class ConcessoesVigentesList extends StatelessWidget {
   const ConcessoesVigentesList({
     super.key,
     required this.concessoes,
+    required this.isMembro,
     required this.isLoading,
     this.errorMessage,
     required this.onRetry,
@@ -86,8 +88,10 @@ class ConcessoesVigentesList extends StatelessWidget {
                 constraints: BoxConstraints(
                   maxWidth: MainLayout.contentMaxWidth(context),
                 ),
-                child: responsive.usesWideLayout
-                    ? GridView.builder(
+                child: Column(
+                  children: [
+                    if (responsive.usesWideLayout)
+                      GridView.builder(
                         padding: EdgeInsets.zero,
                         itemCount: concessoes.length,
                         shrinkWrap: true,
@@ -101,17 +105,20 @@ class ConcessoesVigentesList extends StatelessWidget {
                         itemBuilder: (context, index) =>
                             ConcessaoAfastamentoCard(
                               concessao: concessoes[index],
+                              isMembro: isMembro,
                               onSolicitar: onSolicitar,
                               onBuscarSugestoes: onBuscarSugestoes,
                               onBuscarOperacoes: onBuscarOperacoes,
                               onExecutarOperacao: onExecutarOperacao,
                             ),
                       )
-                    : Column(
+                    else
+                      Column(
                         children: concessoes
                             .map(
                               (concessao) => ConcessaoAfastamentoCard(
                                 concessao: concessao,
+                                isMembro: isMembro,
                                 onSolicitar: onSolicitar,
                                 onBuscarSugestoes: onBuscarSugestoes,
                                 onBuscarOperacoes: onBuscarOperacoes,
@@ -120,6 +127,8 @@ class ConcessoesVigentesList extends StatelessWidget {
                             )
                             .toList(),
                       ),
+                  ],
+                ),
               ),
             ),
         ],

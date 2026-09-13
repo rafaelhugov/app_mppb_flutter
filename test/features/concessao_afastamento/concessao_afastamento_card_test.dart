@@ -130,6 +130,7 @@ void main() {
                 diasConcedidos: 30,
                 saldoRestante: 30,
               ),
+              isMembro: false,
               onBuscarSugestoes: (_, dataInicial) async {
                 final isPrimeiraData =
                     dataInicial.year == primeiraData.year &&
@@ -187,6 +188,7 @@ void main() {
                 periodo: 3,
                 anoReferencia: 2024,
               ),
+              isMembro: false,
               onBuscarSugestoes: (concessao, dataInicial) async {
                 fail('Afastamento eleitoral nao deve buscar intervalos.');
               },
@@ -232,6 +234,7 @@ void main() {
               periodo: 3,
               anoReferencia: 2024,
             ),
+            isMembro: false,
             onSolicitar: (concessao, dataInicial, numeroDias) async {
               numeroDiasEnviado = numeroDias;
             },
@@ -269,6 +272,7 @@ void main() {
               periodo: 3,
               anoReferencia: 2024,
             ),
+            isMembro: false,
             onSolicitar: (concessao, dataInicial, numeroDias) async {
               throw DioException(
                 requestOptions: RequestOptions(path: '/solicitacoes'),
@@ -315,12 +319,18 @@ void main() {
                 ),
               ],
             ),
+            isMembro: false,
             onBuscarOperacoes: (_) async => [
               OperacaoSolicitacaoConcessao.adiar,
               OperacaoSolicitacaoConcessao.antecipar,
             ],
             onExecutarOperacao:
-                (_, __, {DateTime? data, DateTime? dataFim}) async {},
+                (
+                  solicitacao,
+                  operacao, {
+                  DateTime? data,
+                  DateTime? dataFim,
+                }) async {},
           ),
         ),
       );
@@ -329,6 +339,60 @@ void main() {
       expect(find.text('Alterar data'), findsOneWidget);
       expect(find.text('Adiar'), findsNothing);
       expect(find.text('Antecipar'), findsNothing);
+    });
+
+    testWidgets('separa movimentacoes e mostra dias solicitados para retorno', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          ConcessaoAfastamentoDetailsSheet(
+            concessao: ConcessaoAfastamento(
+              id: 468153,
+              tipo: TipoConcessao.ferias,
+              diasConcedidos: 30,
+              saldoRestante: 0,
+              periodo: 1,
+              anoReferencia: 2025,
+              solicitacoes: [
+                SolicitacaoConcessao(
+                  id: 506100,
+                  tipo: TipoSolicitacaoConcessao.gozo,
+                  inicio: DateTime(2026, 9, 5),
+                  fim: DateTime(2026, 9, 16),
+                  status: StatusSolicitacaoConcessao.deferido,
+                ),
+                SolicitacaoConcessao(
+                  id: 506839,
+                  tipo: TipoSolicitacaoConcessao.interrupcao,
+                  fim: DateTime(2026, 9, 16),
+                  status: StatusSolicitacaoConcessao.confirmado,
+                  diasInformados: 12,
+                ),
+                const SolicitacaoConcessao(
+                  id: 506840,
+                  tipo: TipoSolicitacaoConcessao.suspensaoTotal,
+                  status: StatusSolicitacaoConcessao.confirmado,
+                  diasInformados: 20,
+                ),
+              ],
+            ),
+            isMembro: true,
+          ),
+        ),
+      );
+
+      expect(find.text('Gozos programados'), findsOneWidget);
+      expect(find.text('Movimentações e pendências'), findsOneWidget);
+      expect(find.text('05/09/2026 a 16/09/2026'), findsOneWidget);
+      expect(find.text('Interrupção a partir de 16/09/2026'), findsOneWidget);
+      expect(find.text('Suspensão integral do gozo'), findsOneWidget);
+      expect(find.text('12 dia(s) solicitados para retorno'), findsOneWidget);
+      expect(find.text('20 dia(s) solicitados para retorno'), findsOneWidget);
+      expect(
+        find.text('Aguardando análise do 2º Subprocurador-Geral'),
+        findsNWidgets(2),
+      );
     });
 
     testWidgets('desabilita confirmacao para data inicial em final de semana', (
@@ -352,12 +416,18 @@ void main() {
                 ),
               ],
             ),
+            isMembro: false,
             onBuscarOperacoes: (_) async => [
               OperacaoSolicitacaoConcessao.adiar,
               OperacaoSolicitacaoConcessao.antecipar,
             ],
             onExecutarOperacao:
-                (_, __, {DateTime? data, DateTime? dataFim}) async {},
+                (
+                  solicitacao,
+                  operacao, {
+                  DateTime? data,
+                  DateTime? dataFim,
+                }) async {},
           ),
         ),
       );
@@ -392,6 +462,7 @@ Widget _wrap(Widget child) {
 Widget _card(ConcessaoAfastamento concessao) {
   return ConcessaoAfastamentoCard(
     concessao: concessao,
+    isMembro: false,
     onSolicitar: (concessao, dataInicial, numeroDias) async {},
   );
 }

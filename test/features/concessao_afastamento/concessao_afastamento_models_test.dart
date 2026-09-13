@@ -95,6 +95,26 @@ void main() {
       expect(solicitacao.possuiDivergenciaDias, isTrue);
     });
 
+    test('aceita movimentacao sem periodo completo vinda da view', () {
+      final solicitacao = SolicitacaoConcessao.fromJson({
+        'id': 506839,
+        'tipo': 'Interrupção',
+        'inicio': null,
+        'fim': '2026-09-16',
+        'status': 'P',
+        'diasInformados': 12,
+      });
+
+      expect(solicitacao.tipo, TipoSolicitacaoConcessao.interrupcao);
+      expect(solicitacao.inicio, isNull);
+      expect(solicitacao.fim, DateTime(2026, 9, 16));
+      expect(solicitacao.isMovimentacao, isTrue);
+      expect(solicitacao.isGozo, isFalse);
+      expect(solicitacao.diasCalculados, isNull);
+      expect(solicitacao.possuiDiasParaRetorno, isTrue);
+      expect(solicitacao.possuiDivergenciaDias, isFalse);
+    });
+
     test('parseia sugestao no contrato real da API RH', () {
       final sugestao = SugestaoDataFinal.fromJson({
         'numeroDias': 10,

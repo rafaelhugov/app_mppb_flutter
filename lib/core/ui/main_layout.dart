@@ -80,12 +80,24 @@ class MainLayout extends ConsumerStatefulWidget {
 }
 
 class _MainLayoutState extends ConsumerState<MainLayout>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   bool _isNavVisible = true;
+  late final AnimationController _crestIntroController;
+  bool _showCrestIntro = false;
+  bool _hasPlayedAuthenticatedIntro = false;
 
   @override
   void initState() {
     super.initState();
+    _crestIntroController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 1150),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed && mounted) {
+            setState(() => _showCrestIntro = false);
+          }
+        });
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -97,7 +109,29 @@ class _MainLayoutState extends ConsumerState<MainLayout>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _crestIntroController.dispose();
     super.dispose();
+  }
+
+  void _maybeStartCrestIntro({
+    required bool isAuthenticated,
+    required String location,
+  }) {
+    if (!isAuthenticated) {
+      _hasPlayedAuthenticatedIntro = false;
+      return;
+    }
+
+    if (_hasPlayedAuthenticatedIntro || location != '/restrito') {
+      return;
+    }
+
+    _hasPlayedAuthenticatedIntro = true;
+    _showCrestIntro = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _crestIntroController.forward(from: 0);
+    });
   }
 
   @override
@@ -686,6 +720,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
       }
     }
 
+    _maybeStartCrestIntro(isAuthenticated: isAuthenticated, location: location);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -695,46 +731,128 @@ class _MainLayoutState extends ConsumerState<MainLayout>
           context.go(homeRoute);
         }
       },
-      child: Scaffold(
-        extendBodyBehindAppBar: false,
-        extendBody: !isDockHidden,
-        appBar: isHiddenPage
-            ? null
-            : PreferredSize(
-                preferredSize: Size.fromHeight(
-                  MppbAppBar.heightForContext(context, isAuthenticated),
-                ),
-                child: const MppbAppBar(),
-              ),
-        body: NotificationListener<ScrollNotification>(
-          onNotification: _handleScrollNotification,
-          child: widget.child,
-        ),
-        bottomNavigationBar: isDockHidden
-            ? null
-            : IgnorePointer(
-                ignoring: !_isNavVisible,
-                child: AnimatedSlide(
-                  duration: const Duration(milliseconds: 380),
-                  curve: Curves.easeInOutCubic,
-                  offset: _isNavVisible ? Offset.zero : const Offset(0, 1.18),
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 280),
-                    curve: Curves.easeInOutCubic,
-                    opacity: _isNavVisible ? 1 : 0,
-                    child: _buildBottomNavBar(
-                      context: context,
-                      isAuthenticated: isAuthenticated,
-                      isOnline: isOnline,
-                      selectedIndex: selectedIndex,
-                      extraIcon: icon4,
-                      extraLabel: label4,
-                      extraRoute: route4,
-                      isHome: isHome,
+      child: Stack(
+        children: [
+          Scaffold(
+            extendBodyBehindAppBar: false,
+            extendBody: !isDockHidden,
+            appBar: isHiddenPage
+                ? null
+                : PreferredSize(
+                    preferredSize: Size.fromHeight(
+                      MppbAppBar.heightForContext(context, isAuthenticated),
+                    ),
+                    child: MppbAppBar(showLeadingCrest: !_showCrestIntro),
+                  ),
+            body: NotificationListener<ScrollNotification>(
+              onNotification: _handleScrollNotification,
+              child: widget.child,
+            ),
+            bottomNavigationBar: isDockHidden
+                ? null
+                : IgnorePointer(
+                    ignoring: !_isNavVisible,
+                    child: AnimatedSlide(
+                      duration: const Duration(milliseconds: 380),
+                      curve: Curves.easeInOutCubic,
+                      offset: _isNavVisible
+                          ? Offset.zero
+                          : const Offset(0, 1.18),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeInOutCubic,
+                        opacity: _isNavVisible ? 1 : 0,
+                        child: _buildBottomNavBar(
+                          context: context,
+                          isAuthenticated: isAuthenticated,
+                          isOnline: isOnline,
+                          selectedIndex: selectedIndex,
+                          extraIcon: icon4,
+                          extraLabel: label4,
+                          extraRoute: route4,
+                          isHome: isHome,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+          ),
+          if (_showCrestIntro && !isHiddenPage)
+            _CrestIntroOverlay(controller: _crestIntroController),
+        ],
+      ),
+    );
+  }
+}
+
+class _CrestIntroOverlay extends StatelessWidget {
+  const _CrestIntroOverlay({required this.controller});
+
+  final Animation<double> controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = MppbResponsive.of(context);
+    final targetSize = metrics.isTablet ? 34.0 : 30.0;
+    final startSize = metrics.isTablet ? 116.0 : 104.0;
+    final toolbarHeight = MppbAppBar.heightForContext(context, true);
+    final safeTop = MediaQuery.paddingOf(context).top;
+    final targetX = (metrics.isTablet ? 24.0 : 14.0) + (targetSize / 2);
+    final targetY = safeTop + (toolbarHeight / 2);
+
+    return IgnorePointer(
+      child: Material(
+        color: Colors.transparent,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final startX = constraints.maxWidth / 2;
+            final startY = constraints.maxHeight / 2;
+
+            return AnimatedBuilder(
+              animation: controller,
+              builder: (context, child) {
+                final value = controller.value;
+                final move = Curves.easeInOutCubic.transform(
+                  ((value - 0.22) / 0.78).clamp(0.0, 1.0),
+                );
+                final intro = Curves.easeOutBack.transform(
+                  (value / 0.24).clamp(0.0, 1.0),
+                );
+                final x = lerpDouble(startX, targetX, move)!;
+                final y = lerpDouble(startY, targetY, move)!;
+                final size = lerpDouble(startSize, targetSize, move)! * intro;
+                final scrimOpacity = (1 - move) * 0.92;
+                final crestOpacity = value < 0.94
+                    ? 1.0
+                    : 1 - ((value - 0.94) / 0.06).clamp(0.0, 1.0);
+
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: ColoredBox(
+                        color: const Color(
+                          0xFFF7F8F6,
+                        ).withValues(alpha: scrimOpacity),
+                      ),
+                    ),
+                    Positioned(
+                      left: x - (size / 2),
+                      top: y - (size / 2),
+                      width: size,
+                      height: size,
+                      child: Opacity(
+                        opacity: crestOpacity,
+                        child: Image.asset(
+                          'assets/images/brasao_mppb_sem_fundo.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

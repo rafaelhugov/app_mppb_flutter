@@ -33,7 +33,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
     return isAuthenticated ? 54 : 46;
   }
 
-  const MppbAppBar({super.key});
+  final bool showLeadingCrest;
+
+  const MppbAppBar({super.key, this.showLeadingCrest = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,10 +71,14 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
           padding: EdgeInsets.only(left: metrics.isTablet ? 24 : 14),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Image.asset(
-              'assets/images/brasao_mppb_sem_fundo.png',
-              height: metrics.isTablet ? 34 : 30,
-              fit: BoxFit.contain,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: showLeadingCrest ? 1 : 0,
+              child: Image.asset(
+                'assets/images/brasao_mppb_sem_fundo.png',
+                height: metrics.isTablet ? 34 : 30,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ),
@@ -328,15 +334,19 @@ class _NotificationBellState extends State<_NotificationBell>
     with SingleTickerProviderStateMixin {
   late final AnimationController _attentionController;
   Timer? _attentionTimer;
-  int _lastAnimatedCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _attentionController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
+    _attentionController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 860),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            _attentionController.value = 0;
+          }
+        });
     _startAttentionIfNeeded();
   }
 
@@ -356,18 +366,28 @@ class _NotificationBellState extends State<_NotificationBell>
   }
 
   void _startAttentionIfNeeded() {
-    if (widget.count <= 0 || widget.count == _lastAnimatedCount) {
-      if (widget.count <= 0) {
-        _lastAnimatedCount = 0;
-        _stopAttention();
-      }
+    if (widget.count <= 0) {
+      _stopAttention();
       return;
     }
 
-    _lastAnimatedCount = widget.count;
+    if (_attentionTimer != null) {
+      return;
+    }
+
     _attentionTimer?.cancel();
-    _attentionController.repeat(reverse: true);
-    _attentionTimer = Timer(const Duration(seconds: 5), _stopAttention);
+    _playAttention();
+    _attentionTimer = Timer.periodic(
+      const Duration(seconds: 4),
+      (_) => _playAttention(),
+    );
+  }
+
+  void _playAttention() {
+    if (!mounted || widget.count <= 0 || _attentionController.isAnimating) {
+      return;
+    }
+    _attentionController.forward(from: 0);
   }
 
   void _stopAttention() {
@@ -384,23 +404,33 @@ class _NotificationBellState extends State<_NotificationBell>
     return AnimatedBuilder(
       animation: _attentionController,
       builder: (context, child) {
-        final attention = widget.count > 0 && _attentionController.isAnimating;
+        final attention = widget.count > 0 && _attentionController.value > 0;
+        final progress = Curves.easeOutCubic.transform(
+          _attentionController.value,
+        );
+        final settle = 1 - progress;
         final shake = attention
-            ? math.sin(_attentionController.value * math.pi * 2)
-            : 0;
+            ? math.sin(_attentionController.value * math.pi * 5) * settle
+            : 0.0;
+        final bellScale = attention
+            ? 1.0 + (math.sin(_attentionController.value * math.pi) * 0.13)
+            : 1.0;
         final badgeScale = attention
-            ? 1.0 + (_attentionController.value * 0.18)
+            ? 1.0 + (math.sin(_attentionController.value * math.pi) * 0.18)
             : 1.0;
 
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            Transform.rotate(
-              angle: shake * 0.13,
-              child: const Icon(
-                Icons.notifications,
-                color: Color(0xFF202322),
-                size: 22,
+            Transform.scale(
+              scale: bellScale,
+              child: Transform.rotate(
+                angle: shake * 0.18,
+                child: const Icon(
+                  Icons.notifications,
+                  color: Color(0xFF202322),
+                  size: 22,
+                ),
               ),
             ),
             if (widget.count > 0)

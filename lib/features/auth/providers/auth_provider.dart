@@ -34,15 +34,21 @@ class AuthState {
     bool? justLoggedIn,
     String? tempUsername,
     String? tempPassword,
+    bool clearToken = false,
+    bool clearTempCredentials = false,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       errorMessage: errorMessage,
-      token: token ?? this.token,
+      token: clearToken ? null : token ?? this.token,
       justLoggedIn: justLoggedIn ?? this.justLoggedIn,
-      tempUsername: tempUsername ?? this.tempUsername,
-      tempPassword: tempPassword ?? this.tempPassword,
+      tempUsername: clearTempCredentials
+          ? null
+          : tempUsername ?? this.tempUsername,
+      tempPassword: clearTempCredentials
+          ? null
+          : tempPassword ?? this.tempPassword,
     );
   }
 }
@@ -132,6 +138,7 @@ class AuthNotifier extends Notifier<AuthState> {
         justLoggedIn: offerBiometrics,
         tempUsername: offerBiometrics ? username : null,
         tempPassword: offerBiometrics ? password : null,
+        clearTempCredentials: !offerBiometrics,
       );
       await _registrarDispositivoAutenticado(token);
       return true;
@@ -185,11 +192,7 @@ class AuthNotifier extends Notifier<AuthState> {
       await secureStorage.write(key: 'biometrics_asked', value: 'true');
     }
     // Remove as temps após salvar
-    state = state.copyWith(
-      justLoggedIn: false,
-      tempUsername: null,
-      tempPassword: null,
-    );
+    state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
   }
 
   Future<void> _limparDadosLocaisSeTrocarUsuario(
@@ -200,9 +203,12 @@ class AuthNotifier extends Notifier<AuthState> {
     final savedUsername = await secureStorage.read(key: 'saved_username');
 
     await secureStorage.delete(key: 'carteira_cache_data');
+    await secureStorage.delete(key: 'perfil_cache_data');
 
     if (currentUsername != null && currentUsername != username) {
       await secureStorage.delete(key: 'auth_token');
+      await secureStorage.delete(key: 'carteira_cache_username');
+      await secureStorage.delete(key: 'perfil_cache_username');
     }
 
     if (savedUsername != null && savedUsername != username) {
@@ -216,11 +222,21 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> dismissBiometricPrompt() async {
     final secureStorage = ref.read(secureStorageProvider);
     await secureStorage.write(key: 'biometrics_asked', value: 'true');
-    state = state.copyWith(
-      justLoggedIn: false,
-      tempUsername: null,
-      tempPassword: null,
-    );
+    state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
+  }
+
+  Future<void> offerBiometricSetupOnNextLogin() async {
+    final secureStorage = ref.read(secureStorageProvider);
+    await secureStorage.delete(key: 'biometrics_asked');
+  }
+
+  Future<void> disableBiometricLogin() async {
+    final secureStorage = ref.read(secureStorageProvider);
+    await secureStorage.delete(key: 'saved_username');
+    await secureStorage.delete(key: 'saved_password');
+    await secureStorage.delete(key: 'biometrics_enabled');
+    await secureStorage.write(key: 'biometrics_asked', value: 'true');
+    state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
   }
 
   Future<bool> loginWithSavedCredentials() async {
@@ -244,6 +260,9 @@ class AuthNotifier extends Notifier<AuthState> {
     await secureStorage.delete(key: 'auth_token');
     await secureStorage.delete(key: 'auth_username');
     await secureStorage.delete(key: 'carteira_cache_data');
+    await secureStorage.delete(key: 'carteira_cache_username');
+    await secureStorage.delete(key: 'perfil_cache_data');
+    await secureStorage.delete(key: 'perfil_cache_username');
 
     state = AuthState(); // Reset state
   }

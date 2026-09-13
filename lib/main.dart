@@ -10,6 +10,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'core/notifications/push_notification_service.dart';
 import 'core/notifications/push_navigation_service.dart';
 import 'core/router/app_router.dart';
+import 'core/session/session_reset_provider.dart';
 import 'firebase_options.dart';
 
 class AppScrollBehavior extends MaterialScrollBehavior {
@@ -42,6 +43,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    ref.watch(sessionResetProvider);
     ref.watch(pushNavigationServiceProvider);
 
     return MaterialApp.router(

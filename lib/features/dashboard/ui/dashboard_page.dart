@@ -66,8 +66,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       ref.read(noticiaProvider.notifier).fetchNoticias();
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkBiometricSetup();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _checkBiometricSetup();
     });
   }
 
@@ -79,18 +79,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     final asked = await secureStorage.read(key: 'biometrics_asked');
     if (asked == 'true') return;
 
-    final localAuth = LocalAuthentication();
-    final bool isSupported;
-    try {
-      isSupported = await localAuth.isDeviceSupported();
-    } on MissingPluginException {
-      await ref.read(authProvider.notifier).dismissBiometricPrompt();
-      return;
-    } catch (_) {
-      await ref.read(authProvider.notifier).dismissBiometricPrompt();
-      return;
-    }
-
+    final isSupported = await _deviceSupportsBiometrics();
     if (!isSupported) {
       await ref.read(authProvider.notifier).dismissBiometricPrompt();
       return;
@@ -106,6 +95,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
     if (result == true) {
       final bool authenticated;
+      final localAuth = LocalAuthentication();
       try {
         authenticated = await localAuth.authenticate(
           localizedReason: 'Confirme sua identidade para habilitar a biometria',
@@ -127,6 +117,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       }
     } else {
       await ref.read(authProvider.notifier).dismissBiometricPrompt();
+    }
+  }
+
+  Future<bool> _deviceSupportsBiometrics() async {
+    final localAuth = LocalAuthentication();
+    try {
+      return await localAuth.isDeviceSupported();
+    } on MissingPluginException {
+      return false;
+    } catch (_) {
+      return false;
     }
   }
 

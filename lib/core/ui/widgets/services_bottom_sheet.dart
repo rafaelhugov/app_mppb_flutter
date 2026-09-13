@@ -136,6 +136,16 @@ class ServicesBottomSheet {
                                   (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
+                                Icons.account_circle_rounded,
+                                'Perfil',
+                                '/perfil',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
                                 Icons.record_voice_over,
                                 'Ouvidoria',
                                 '/ouvidoria',
@@ -218,11 +228,7 @@ class ServicesBottomSheet {
               Positioned(
                 right: -10,
                 bottom: -12,
-                child: Icon(
-                  icon,
-                  color: const Color(0x1A343A40),
-                  size: 52,
-                ),
+                child: Icon(icon, color: const Color(0x1A343A40), size: 52),
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 8, top: 10, right: 8),

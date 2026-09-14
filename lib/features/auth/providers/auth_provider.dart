@@ -230,10 +230,85 @@ class AuthNotifier extends Notifier<AuthState> {
     await secureStorage.delete(key: 'biometrics_asked');
   }
 
+  Future<bool> hasAvailableBiometricCredentials() async {
+    final secureStorage = ref.read(secureStorageProvider);
+    final currentUsername = await secureStorage.read(key: 'auth_username');
+    if (currentUsername == null || currentUsername.trim().isEmpty) {
+      return false;
+    }
+
+    if (state.tempUsername == currentUsername &&
+        state.tempPassword != null &&
+        state.tempPassword!.isNotEmpty) {
+      return true;
+    }
+
+    final savedUsername = await secureStorage.read(key: 'saved_username');
+    final savedPassword = await secureStorage.read(key: 'saved_password');
+    return savedUsername == currentUsername &&
+        savedPassword != null &&
+        savedPassword.isNotEmpty;
+  }
+
+  Future<bool> enableBiometricLoginFromAvailableCredentials() async {
+    final secureStorage = ref.read(secureStorageProvider);
+    final currentUsername = await secureStorage.read(key: 'auth_username');
+    if (currentUsername == null || currentUsername.trim().isEmpty) {
+      return false;
+    }
+
+    String? username;
+    String? password;
+    if (state.tempUsername == currentUsername && state.tempPassword != null) {
+      username = state.tempUsername;
+      password = state.tempPassword;
+    } else {
+      final savedUsername = await secureStorage.read(key: 'saved_username');
+      final savedPassword = await secureStorage.read(key: 'saved_password');
+      if (savedUsername == currentUsername && savedPassword != null) {
+        username = savedUsername;
+        password = savedPassword;
+      }
+    }
+
+    if (username == null || password == null || password.isEmpty) {
+      return false;
+    }
+
+    await secureStorage.write(key: 'saved_username', value: username);
+    await secureStorage.write(key: 'saved_password', value: password);
+    await secureStorage.write(key: 'biometrics_enabled', value: 'true');
+    await secureStorage.write(key: 'biometrics_asked', value: 'true');
+    state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
+    return true;
+  }
+
+  Future<bool> enableBiometricLoginForCurrentUser(String password) async {
+    final secureStorage = ref.read(secureStorageProvider);
+    final username = await secureStorage.read(key: 'auth_username');
+    if (username == null || username.trim().isEmpty || password.isEmpty) {
+      return false;
+    }
+
+    final authenticated = await login(
+      username,
+      password,
+      offerBiometrics: false,
+    );
+    if (!authenticated) {
+      return false;
+    }
+
+    await secureStorage.write(key: 'saved_username', value: username);
+    await secureStorage.write(key: 'saved_password', value: password);
+    await secureStorage.write(key: 'biometrics_enabled', value: 'true');
+    await secureStorage.write(key: 'biometrics_asked', value: 'true');
+    state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
+    return true;
+  }
+
   Future<void> disableBiometricLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
-    await secureStorage.delete(key: 'saved_username');
-    await secureStorage.delete(key: 'saved_password');
     await secureStorage.delete(key: 'biometrics_enabled');
     await secureStorage.write(key: 'biometrics_asked', value: 'true');
     state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);

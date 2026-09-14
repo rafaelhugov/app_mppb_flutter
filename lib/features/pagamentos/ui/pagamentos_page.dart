@@ -7,6 +7,7 @@ import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/pagamentos_provider.dart';
 import '../models/pagamento_model.dart';
 import '../../../shared/providers/privacy_provider.dart';
+import '../../../shared/widgets/privacy_blur_text.dart';
 import '../../../shared/widgets/privacy_toggle_button.dart';
 
 class PagamentosPage extends ConsumerStatefulWidget {
@@ -541,20 +542,18 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
               Expanded(
                 child: _buildResumoMetricCard(
                   label: 'Bruto',
-                  value: isPrivacyEnabled
-                      ? '••••••'
-                      : formatadorMoeda.format(dados.totalBruto),
+                  value: formatadorMoeda.format(dados.totalBruto),
                   color: const Color(0xFFD62828),
+                  isPrivacyEnabled: isPrivacyEnabled,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _buildResumoMetricCard(
                   label: 'Líquido',
-                  value: isPrivacyEnabled
-                      ? '••••••'
-                      : formatadorMoeda.format(dados.totalLiquido),
+                  value: formatadorMoeda.format(dados.totalLiquido),
                   color: const Color(0xFF00A86B),
+                  isPrivacyEnabled: isPrivacyEnabled,
                 ),
               ),
             ],
@@ -568,6 +567,7 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
     required String label,
     required String value,
     required Color color,
+    required bool isPrivacyEnabled,
   }) {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -600,8 +600,9 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
+                PrivacyBlurText(
+                  text: value,
+                  enabled: isPrivacyEnabled,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -867,10 +868,9 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      isPrivacyEnabled
-                          ? '••••••'
-                          : formatadorMoeda.format(pag.vlBruto ?? 0),
+                    PrivacyBlurText(
+                      text: formatadorMoeda.format(pag.vlBruto ?? 0),
+                      enabled: isPrivacyEnabled,
                       style: const TextStyle(
                         color: Color(0xFFD62828),
                         fontSize: 15,
@@ -910,10 +910,9 @@ class _PagamentosPageState extends ConsumerState<PagamentosPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      isPrivacyEnabled
-                          ? '••••••'
-                          : formatadorMoeda.format(pag.vlLiquido ?? 0),
+                    PrivacyBlurText(
+                      text: formatadorMoeda.format(pag.vlLiquido ?? 0),
+                      enabled: isPrivacyEnabled,
                       style: const TextStyle(
                         color: Color(0xFF00A86B),
                         fontSize: 15,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/ui/responsive_layout.dart';
 import '../../../../shared/providers/privacy_provider.dart';
+import '../../../../shared/widgets/privacy_blur_text.dart';
 import '../../models/contra_cheque.dart';
 
 class ContrachequeLancamentos extends StatelessWidget {
@@ -29,11 +30,8 @@ class ContrachequeLancamentos extends StatelessWidget {
     final vantagensGroup = vantagens.isNotEmpty
         ? _LancamentoGroup(
             titulo: 'Vantagens',
-            icon: Icons.trending_up,
-            colorTitle: const Color(0xFF00A86B),
             colorBgHeader: const Color(0xFF00A86B),
             colorBorderHeader: const Color(0xFF00A86B),
-            colorIconBg: const Color(0xFFFFFFFF).withValues(alpha: 0.22),
             lancamentos: vantagens,
             totalVantagens: totalVantagens,
           )
@@ -42,11 +40,8 @@ class ContrachequeLancamentos extends StatelessWidget {
     final descontosGroup = descontos.isNotEmpty
         ? _LancamentoGroup(
             titulo: 'Descontos',
-            icon: Icons.trending_down,
-            colorTitle: const Color(0xFFD62828),
             colorBgHeader: const Color(0xFFD62828),
             colorBorderHeader: const Color(0xFFD62828),
-            colorIconBg: const Color(0xFFFFFFFF).withValues(alpha: 0.22),
             lancamentos: descontos,
             totalVantagens: totalVantagens,
           )
@@ -103,21 +98,15 @@ class ContrachequeLancamentos extends StatelessWidget {
 
 class _LancamentoGroup extends StatelessWidget {
   final String titulo;
-  final IconData icon;
-  final Color colorTitle;
   final Color colorBgHeader;
   final Color colorBorderHeader;
-  final Color colorIconBg;
   final List<LancamentoContracheque> lancamentos;
   final double totalVantagens;
 
   const _LancamentoGroup({
     required this.titulo,
-    required this.icon,
-    required this.colorTitle,
     required this.colorBgHeader,
     required this.colorBorderHeader,
-    required this.colorIconBg,
     required this.lancamentos,
     required this.totalVantagens,
   });
@@ -152,36 +141,29 @@ class _LancamentoGroup extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${lancamentos.length} lançamento${lancamentos.length != 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        color: Color(0xE6FFFFFF),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                      const SizedBox(height: 3),
+                      Text(
+                        '${lancamentos.length} lançamento${lancamentos.length != 1 ? 's' : ''}',
+                        style: const TextStyle(
+                          color: Color(0xE6FFFFFF),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: colorIconBg,
-                    borderRadius: BorderRadius.circular(10),
+                    ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
               ],
             ),
@@ -227,9 +209,7 @@ class _LancamentoItem extends ConsumerWidget {
       symbol: 'R\$',
     );
     final formattedValue = currencyFormatter.format(lancamento.valor);
-    final displayedValue = isPrivacyEnabled
-        ? '••••••'
-        : (isVantagem ? formattedValue : '- $formattedValue');
+    final displayedValue = isVantagem ? formattedValue : '- $formattedValue';
 
     double percent = 0;
     if (totalVantagens > 0) {
@@ -258,6 +238,8 @@ class _LancamentoItem extends ConsumerWidget {
               children: [
                 Text(
                   lancamento.descricao,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF202322),
                     fontSize: 12,
@@ -281,8 +263,9 @@ class _LancamentoItem extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                displayedValue,
+              PrivacyBlurText(
+                text: displayedValue,
+                enabled: isPrivacyEnabled,
                 style: TextStyle(
                   color: colorTrend,
                   fontSize: 12,
@@ -293,14 +276,9 @@ class _LancamentoItem extends ConsumerWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    isVantagem ? Icons.arrow_upward : Icons.arrow_downward,
-                    size: 10,
-                    color: colorTrend,
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    isPrivacyEnabled ? '•••' : '$percentStr%',
+                  PrivacyBlurText(
+                    text: '$percentStr%',
+                    enabled: isPrivacyEnabled,
                     style: TextStyle(
                       color: colorTrend,
                       fontSize: 10,

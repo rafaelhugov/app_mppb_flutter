@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/providers/privacy_provider.dart';
+import '../../../../shared/widgets/privacy_blur_text.dart';
 import '../../../../shared/widgets/privacy_toggle_button.dart';
 
 class GraficoContracheque extends ConsumerStatefulWidget {
@@ -239,10 +240,9 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  isPrivacyEnabled
-                      ? '••••••'
-                      : formatter.format(widget.totalVantagens),
+                PrivacyBlurText(
+                  text: formatter.format(widget.totalVantagens),
+                  enabled: isPrivacyEnabled,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -299,8 +299,9 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  isPrivacyEnabled ? '••••••' : formatter.format(value),
+                PrivacyBlurText(
+                  text: formatter.format(value),
+                  enabled: isPrivacyEnabled,
                   style: const TextStyle(
                     color: Color(0xFF202322),
                     fontSize: 13,
@@ -308,8 +309,9 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  isPrivacyEnabled ? '•••' : '$percent% do total',
+                PrivacyBlurText(
+                  text: '$percent% do total',
+                  enabled: isPrivacyEnabled,
                   style: const TextStyle(
                     color: Color(0xFF7A8587),
                     fontSize: 10,

@@ -240,6 +240,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
       case 'Cart.':
       case 'Notíc.':
       case 'Diár.':
+      case 'Perfil':
         return 11;
       case 'Início':
       case 'Afast.':
@@ -707,6 +708,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         label4 = 'Diár.';
         icon4 = Icons.description_rounded;
         route4 = '/diario_oficial';
+      } else if (location == '/perfil') {
+        label4 = 'Perfil';
+        icon4 = Icons.account_circle_rounded;
+        route4 = '/perfil';
       }
     } else {
       if (location == '/ouvidoria') {

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../../core/network/connectivity_provider.dart';
+import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../models/certidao_extrajudicial.dart';
@@ -81,13 +82,9 @@ class _CertidaoExtrajudicialPageState
                           ? _buildEmissaoForm(state)
                           : _buildValidacaoForm(state),
                     ),
-                    if (state.errorMessage != null) ...[
-                      const SizedBox(height: 14),
-                      _buildError(state.errorMessage!),
-                    ],
                     if (state.certidao != null && _tabIndex == 1) ...[
                       const SizedBox(height: 14),
-                      _buildResultadoValidacao(state.certidao!),
+                      _buildResultadoValidacao(state.certidao!, state),
                     ],
                     SizedBox(height: MainLayout.contentBottomPadding(context)),
                   ],
@@ -211,11 +208,12 @@ class _CertidaoExtrajudicialPageState
           ),
           const SizedBox(height: 18),
           _buildPrimaryButton(
-            label: state.isPdfLoading ? 'Emitindo...' : 'Emitir PDF',
+            label: 'Emitir PDF',
             color: _tipoDocumento == 'F'
                 ? const Color(0xFFD62828)
                 : const Color(0xFF2563EB),
             onTap: state.isPdfLoading ? null : _emitirPdf,
+            isLoading: state.isPdfLoading,
           ),
         ],
       ),
@@ -245,9 +243,10 @@ class _CertidaoExtrajudicialPageState
           ),
           const SizedBox(height: 18),
           _buildPrimaryButton(
-            label: state.isLoading ? 'Consultando...' : 'Validar certidão',
+            label: 'Validar certidão',
             color: const Color(0xFF00A86B),
             onTap: state.isLoading ? null : _consultarCodigo,
+            isLoading: state.isLoading,
           ),
         ],
       ),
@@ -405,10 +404,13 @@ class _CertidaoExtrajudicialPageState
     required String label,
     required Color color,
     required VoidCallback? onTap,
+    bool isLoading = false,
   }) {
     return Center(
-      child: SizedBox(
-        width: 190,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        width: isLoading ? 48 : 190,
         height: 40,
         child: FilledButton(
           onPressed: onTap,
@@ -417,41 +419,40 @@ class _CertidaoExtrajudicialPageState
             foregroundColor: Colors.white,
             disabledBackgroundColor: color.withAlpha(100),
             elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(isLoading ? 20 : 999),
             ),
             textStyle: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
           ),
-          child: Text(label),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: isLoading
+                ? const SizedBox(
+                    key: ValueKey('loading'),
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(label, key: const ValueKey('label')),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildError(String message) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0x14D62828),
-        border: Border.all(color: const Color(0x33D62828)),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        message,
-        style: const TextStyle(
-          color: Color(0xFFD62828),
-          fontSize: 13,
-          height: 1.35,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResultadoValidacao(CertidaoExtrajudicial certidao) {
+  Widget _buildResultadoValidacao(
+    CertidaoExtrajudicial certidao,
+    CertidaoExtrajudicialState state,
+  ) {
     return _buildPanel(
       key: const ValueKey('resultado'),
       children: [
@@ -501,7 +502,10 @@ class _CertidaoExtrajudicialPageState
           _buildPrimaryButton(
             label: 'Abrir PDF',
             color: const Color(0xFF2563EB),
-            onTap: () => _baixarPdfPorCodigo(certidao.codigoVerificador!),
+            onTap: state.isPdfLoading
+                ? null
+                : () => _baixarPdfPorCodigo(certidao.codigoVerificador!),
+            isLoading: state.isPdfLoading,
           ),
         ],
       ],
@@ -568,6 +572,10 @@ class _CertidaoExtrajudicialPageState
         );
     if (bytes != null && mounted) {
       _mostrarPdf(bytes, 'certidao-extrajudicial.pdf');
+      return;
+    }
+    if (mounted) {
+      _mostrarErroCertidao();
     }
   }
 
@@ -576,6 +584,12 @@ class _CertidaoExtrajudicialPageState
     await ref
         .read(certidaoExtrajudicialProvider.notifier)
         .consultarCodigo(_codigoController.text);
+    if (mounted) {
+      _mostrarErroCertidao(
+        titulo: 'Certidão não encontrada',
+        mensagemPadrao: 'Não localizamos uma certidão com esse código.',
+      );
+    }
   }
 
   Future<void> _baixarPdfPorCodigo(String codigo) async {
@@ -584,7 +598,27 @@ class _CertidaoExtrajudicialPageState
         .baixarPdfPorCodigo(codigo);
     if (bytes != null && mounted) {
       _mostrarPdf(bytes, 'certidao-extrajudicial-$codigo.pdf');
+      return;
     }
+    if (mounted) {
+      _mostrarErroCertidao();
+    }
+  }
+
+  void _mostrarErroCertidao({
+    String titulo = 'Não foi possível concluir',
+    String mensagemPadrao = 'Tente novamente em instantes.',
+  }) {
+    final mensagem = ref
+        .read(certidaoExtrajudicialProvider)
+        .errorMessage
+        ?.trim();
+    if (mensagem == null || mensagem.isEmpty) return;
+    AppFeedback.showError(
+      context,
+      mensagem == 'Informação não encontrada' ? mensagemPadrao : mensagem,
+      title: titulo,
+    );
   }
 
   void _mostrarPdf(Uint8List bytes, String fileName) {

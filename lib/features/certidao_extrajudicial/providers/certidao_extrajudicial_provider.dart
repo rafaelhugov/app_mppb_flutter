@@ -27,13 +27,14 @@ class CertidaoExtrajudicialState {
     String? errorMessage,
     CertidaoExtrajudicial? certidao,
     Uint8List? pdfBytes,
+    bool clearCertidao = false,
     bool clearPdf = false,
   }) {
     return CertidaoExtrajudicialState(
       isLoading: isLoading ?? this.isLoading,
       isPdfLoading: isPdfLoading ?? this.isPdfLoading,
       errorMessage: errorMessage,
-      certidao: certidao ?? this.certidao,
+      certidao: clearCertidao ? null : certidao ?? this.certidao,
       pdfBytes: clearPdf ? null : pdfBytes ?? this.pdfBytes,
     );
   }
@@ -82,7 +83,11 @@ class CertidaoExtrajudicialNotifier
   }
 
   Future<void> consultarCodigo(String codigo) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      clearCertidao: true,
+    );
 
     try {
       final dio = ref.read(dioProvider);
@@ -95,7 +100,11 @@ class CertidaoExtrajudicialNotifier
         certidao: CertidaoExtrajudicial.fromJson(response.data ?? const {}),
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: _formatError(e));
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: _formatError(e),
+        clearCertidao: true,
+      );
     }
   }
 

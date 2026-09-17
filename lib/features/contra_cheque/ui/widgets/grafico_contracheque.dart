@@ -63,14 +63,15 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
     );
     final isPrivacyEnabled = ref.watch(privacyProvider);
 
-    int percentDescontos = 0;
+    double percentDescontos = 0;
     if (widget.totalVantagens > 0) {
       percentDescontos = ((widget.totalDescontos / widget.totalVantagens) * 100)
-          .round();
+          .clamp(0, 100);
     }
-    final int percentLiquido = widget.totalVantagens <= 0
-        ? 100
+    final double percentLiquido = widget.totalVantagens <= 0
+        ? 0
         : 100 - percentDescontos;
+    final salarioLiquido = widget.totalVantagens - widget.totalDescontos;
 
     return Container(
       decoration: BoxDecoration(
@@ -95,6 +96,7 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
             currencyFormatter,
             percentDescontos,
             percentLiquido,
+            salarioLiquido,
             isPrivacyEnabled,
           ),
         ],
@@ -146,8 +148,9 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
 
   Widget _buildChartRow(
     NumberFormat formatter,
-    int pDescontos,
-    int pLiquido,
+    double pDescontos,
+    double pLiquido,
+    double salarioLiquido,
     bool isPrivacyEnabled,
   ) {
     return LayoutBuilder(
@@ -161,7 +164,7 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
                 Expanded(
                   child: _buildLegendCard(
                     'Líquido',
-                    widget.salarioLiquido,
+                    salarioLiquido,
                     pLiquido,
                     const Color(0xFF00A86B),
                     formatter,
@@ -231,7 +234,7 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'VANTAGENS',
+                  'BRUTO',
                   style: TextStyle(
                     color: Color(0xFF7A8587),
                     fontSize: 9,
@@ -241,7 +244,7 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
                 ),
                 const SizedBox(height: 4),
                 PrivacyBlurText(
-                  text: formatter.format(widget.totalVantagens),
+                  text: _formatarMoeda(formatter, widget.totalVantagens),
                   enabled: isPrivacyEnabled,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -263,7 +266,7 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
   Widget _buildLegendCard(
     String label,
     double value,
-    int percent,
+    double percent,
     Color borderColor,
     NumberFormat formatter,
     bool isPrivacyEnabled,
@@ -300,7 +303,7 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
                 ),
                 const SizedBox(height: 4),
                 PrivacyBlurText(
-                  text: formatter.format(value),
+                  text: _formatarMoeda(formatter, value),
                   enabled: isPrivacyEnabled,
                   style: const TextStyle(
                     color: Color(0xFF202322),
@@ -310,7 +313,8 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
                 ),
                 const SizedBox(height: 3),
                 PrivacyBlurText(
-                  text: '$percent% do total',
+                  text:
+                      '${NumberFormat('0.0', 'pt_BR').format(percent)}% do bruto',
                   enabled: isPrivacyEnabled,
                   style: const TextStyle(
                     color: Color(0xFF7A8587),
@@ -324,6 +328,10 @@ class _GraficoContrachequeState extends ConsumerState<GraficoContracheque>
         ],
       ),
     );
+  }
+
+  String _formatarMoeda(NumberFormat formatter, double value) {
+    return formatter.format(value).replaceAll('\u00A0', ' ');
   }
 }
 

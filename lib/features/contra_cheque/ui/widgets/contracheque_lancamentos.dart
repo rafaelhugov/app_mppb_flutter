@@ -208,14 +208,16 @@ class _LancamentoItem extends ConsumerWidget {
       locale: 'pt_BR',
       symbol: 'R\$',
     );
-    final formattedValue = currencyFormatter.format(lancamento.valor);
+    final formattedValue = currencyFormatter
+        .format(lancamento.valor)
+        .replaceAll('\u00A0', ' ');
     final displayedValue = isVantagem ? formattedValue : '- $formattedValue';
 
     double percent = 0;
     if (totalVantagens > 0) {
       percent = (lancamento.valor / totalVantagens) * 100;
     }
-    final String percentStr = percent.toStringAsFixed(1);
+    final String percentStr = NumberFormat('0.0', 'pt_BR').format(percent);
 
     final Color colorTrend = isVantagem
         ? const Color(0xFF00A86B)
@@ -237,7 +239,7 @@ class _LancamentoItem extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  lancamento.descricao,
+                  _normalizarDescricao(lancamento.descricao),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -277,7 +279,7 @@ class _LancamentoItem extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   PrivacyBlurText(
-                    text: '$percentStr%',
+                    text: '$percentStr% do bruto',
                     enabled: isPrivacyEnabled,
                     style: TextStyle(
                       color: colorTrend,
@@ -293,4 +295,25 @@ class _LancamentoItem extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _normalizarDescricao(String descricao) {
+  final texto = descricao.trim().replaceAll(RegExp(r'\s+'), ' ');
+  if (texto.isEmpty) return texto;
+
+  const nomesPadronizados = <String, String>{
+    'AUXILIO ALIMENTACAO': 'Auxílio-alimentação',
+    'AUXILIO-ALIMENTACAO': 'Auxílio-alimentação',
+    'AUXILIO SAUDE': 'Auxílio-saúde',
+    'AUXILIO-SAUDE': 'Auxílio-saúde',
+    'CONSIGNACAO': 'Consignação',
+    'IMPOSTO DE RENDA': 'Imposto de renda',
+    'PENSAO ALIMENTICIA': 'Pensão alimentícia',
+    'PLANO DE SAUDE': 'Plano de saúde',
+    'PREVIDENCIA': 'Previdência',
+    'SUBSIDIO': 'Subsídio',
+    'VENCIMENTO': 'Vencimento',
+  };
+
+  return nomesPadronizados[texto.toUpperCase()] ?? texto;
 }

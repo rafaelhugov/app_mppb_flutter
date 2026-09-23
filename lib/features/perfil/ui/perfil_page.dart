@@ -434,7 +434,7 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF7F8F6),
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0x33FFFFFF)),
+        border: Border.all(color: Colors.white, width: 1.2),
       ),
       clipBehavior: Clip.antiAlias,
       child: url == null || url!.trim().isEmpty
@@ -648,39 +648,61 @@ class _SecuritySection extends StatelessWidget {
                     const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        onPressed: supportsBiometrics && !isLoading
-                            ? (enabled ? onDisable : onEnable)
-                            : null,
-                        icon: isLoading
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFFD62828),
-                                ),
-                              )
-                            : Icon(
-                                enabled
-                                    ? Icons.lock_open_rounded
-                                    : Icons.fingerprint_rounded,
-                                size: 18,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 240),
+                        curve: Curves.easeOutCubic,
+                        width: isLoading ? 48 : null,
+                        height: 40,
+                        child: OutlinedButton(
+                          onPressed: supportsBiometrics && !isLoading
+                              ? (enabled ? onDisable : onEnable)
+                              : null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFD62828),
+                            side: const BorderSide(color: Color(0xFFD62828)),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isLoading ? 0 : 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                isLoading ? 20 : 12,
                               ),
-                        label: Text(
-                          enabled
-                              ? 'Desativar biometria'
-                              : 'Habilitar biometria',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFD62828),
-                          side: const BorderSide(color: Color(0xFFD62828)),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            child: isLoading
+                                ? const SizedBox(
+                                    key: ValueKey('loading'),
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFFD62828),
+                                    ),
+                                  )
+                                : Row(
+                                    key: const ValueKey('label'),
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        enabled
+                                            ? Icons.lock_open_rounded
+                                            : Icons.fingerprint_rounded,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        enabled
+                                            ? 'Desativar biometria'
+                                            : 'Habilitar biometria',
+                                      ),
+                                    ],
+                                  ),
                           ),
                         ),
                       ),

@@ -210,6 +210,23 @@ void main() {
     ]);
   });
 
+  test('operacoes aceita CANCELAR retornado pelo mpvirtual homologacao', () async {
+    adapter.enqueueJson({
+      'operacoes': ['CANCELAR'],
+    });
+
+    final operacoes = await repository.buscarOperacoesSolicitacao(
+      token: 'token',
+      solicitacaoId: 506839,
+    );
+
+    expect(
+      adapter.last.uri.path,
+      '/api/recursos-humanos/solicitacoes/506839/operacoes',
+    );
+    expect(operacoes, [OperacaoSolicitacaoConcessao.cancelar]);
+  });
+
   test('adiamento envia data no contrato da api', () async {
     adapter.enqueueJson({'ok': true});
 
@@ -245,6 +262,24 @@ void main() {
     );
     expect(adapter.last.method, 'POST');
     expect(adapter.last.body, {'dataAntecipacao': '03/08/2027'});
+    expect(adapter.last.responseType, ResponseType.plain);
+  });
+
+  test('cancelamento usa endpoint generico sem corpo', () async {
+    adapter.enqueueJson({'ok': true});
+
+    await repository.executarOperacaoSolicitacao(
+      token: 'token',
+      solicitacaoId: 506,
+      operacao: OperacaoSolicitacaoConcessao.cancelar,
+    );
+
+    expect(
+      adapter.last.uri.path,
+      '/api/recursos-humanos/solicitacoes/506/cancelamentos',
+    );
+    expect(adapter.last.method, 'POST');
+    expect(adapter.last.body, isNull);
     expect(adapter.last.responseType, ResponseType.plain);
   });
 

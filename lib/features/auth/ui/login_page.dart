@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../../core/storage/secure_storage.dart';
+import '../../../core/ui/app_feedback.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -79,21 +80,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
     } on MissingPluginException {
       if (mounted && showFailureSnack) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Biometria não disponível nesta plataforma.'),
-            backgroundColor: Colors.red,
-          ),
+        AppFeedback.showError(
+          context,
+          'Biometria não disponível nesta plataforma.',
         );
       }
       return;
     } catch (_) {
       if (mounted && showFailureSnack) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível autenticar por biometria.'),
-            backgroundColor: Colors.red,
-          ),
+        AppFeedback.showError(
+          context,
+          'Não foi possível autenticar por biometria.',
         );
       }
       return;
@@ -104,13 +101,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           .read(authProvider.notifier)
           .loginWithSavedCredentials();
       if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Falha ao autenticar credenciais salvas. Faça login com senha.',
-            ),
-            backgroundColor: Colors.red,
-          ),
+        AppFeedback.showError(
+          context,
+          'Falha ao autenticar credenciais salvas. Faça login com senha.',
         );
       }
     }

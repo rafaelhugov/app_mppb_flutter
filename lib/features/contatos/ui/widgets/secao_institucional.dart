@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../../core/ui/app_feedback.dart';
 import '../../dados/dados_institucionais.dart';
 import '../../servicos/servico_links_externos.dart';
 import 'secao_fale_com_mppb.dart';
@@ -185,10 +186,9 @@ class SecaoInstitucional extends StatelessWidget {
       await action();
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível abrir o link no momento.'),
-          ),
+        AppFeedback.showError(
+          context,
+          'Não foi possível abrir o link no momento.',
         );
       }
     }

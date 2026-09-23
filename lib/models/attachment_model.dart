@@ -1,5 +1,3 @@
-import 'dart:io';
-
 class AttachmentModel {
   final String path;
   final String name;
@@ -13,7 +11,9 @@ class AttachmentModel {
 
   String get formattedSize {
     if (sizeInBytes < 1024) return '$sizeInBytes B';
-    if (sizeInBytes < 1024 * 1024) return '${(sizeInBytes / 1024).toStringAsFixed(1)} KB';
+    if (sizeInBytes < 1024 * 1024) {
+      return '${(sizeInBytes / 1024).toStringAsFixed(1)} KB';
+    }
     return '${(sizeInBytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 }

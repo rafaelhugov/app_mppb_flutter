@@ -12,6 +12,31 @@ echo "========================================="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+AMBIENTE="${1:-homolog}"
+API_URL_ARGUMENTO="${2:-}"
+
+case "$AMBIENTE" in
+  homolog|homologacao)
+    FLAVOR="homolog"
+    DEFAULT_API_URL="https://aplicativo-mppb-homolog.mppb.mp.br"
+    FIREBASE_ANDROID_APP_ID="1:205396983225:android:a7dce4ef0ae72c9e788a68"
+    AAB_LABEL="Homolog"
+    ;;
+  producao|prod)
+    FLAVOR="producao"
+    DEFAULT_API_URL="https://aplicativo-api.mppb.mp.br"
+    FIREBASE_ANDROID_APP_ID="1:205396983225:android:44dd38aa9f796d5f788a68"
+    AAB_LABEL="Producao"
+    ;;
+  *)
+    echo "❌ Ambiente inválido: $AMBIENTE"
+    echo "Use: homolog ou producao"
+    exit 1
+    ;;
+esac
+
+API_URL="${API_URL_ARGUMENTO:-${API_URL:-$DEFAULT_API_URL}}"
+
 PUBSPEC_VERSION="$(grep '^version: ' pubspec.yaml | awk '{print $2}')"
 
 if [ -z "$PUBSPEC_VERSION" ]; then
@@ -38,22 +63,31 @@ echo "✅ Versão atualizada no pubspec.yaml: $PUBSPEC_VERSION -> $NEW_VERSION"
 # Atualiza as variáveis para os próximos passos
 BUILD_NUMBER=$NEW_BUILD_NUMBER
 VERSION_CLEAN="${NEW_VERSION/+/_}"
-NEW_AAB_NAME="MPPB+_v${VERSION_CLEAN}.aab"
-OUTPUT_DIR="build/app/outputs/bundle/release"
+NEW_AAB_NAME="MPPB+_${AAB_LABEL}_v${VERSION_CLEAN}.aab"
+OUTPUT_DIR="build/app/outputs/bundle/${FLAVOR}Release"
+FLAVOR_AAB="$OUTPUT_DIR/app-${FLAVOR}-release.aab"
 
+echo "Ambiente: $FLAVOR"
+echo "API_URL: $API_URL"
 echo "Versão: $BUILD_NAME"
 echo "Build: $BUILD_NUMBER"
 echo "Arquivo final: $NEW_AAB_NAME"
 echo ""
 
 mkdir -p "$OUTPUT_DIR"
-rm -f "$OUTPUT_DIR"/MPPB+_v*.aab "$OUTPUT_DIR"/app-release.aab "$OUTPUT_DIR"/app-release.aab.sha1
+rm -f "$OUTPUT_DIR"/MPPB+_"$AAB_LABEL"_v*.aab "$FLAVOR_AAB" "$FLAVOR_AAB.sha1"
 
 flutter clean
-flutter build appbundle --release --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER"
+flutter build appbundle \
+  --release \
+  --flavor "$FLAVOR" \
+  --dart-define=API_URL="$API_URL" \
+  --dart-define=FIREBASE_ANDROID_APP_ID="$FIREBASE_ANDROID_APP_ID" \
+  --build-name="$BUILD_NAME" \
+  --build-number="$BUILD_NUMBER"
 
-mv "$OUTPUT_DIR/app-release.aab" "$OUTPUT_DIR/$NEW_AAB_NAME"
-rm -f "$OUTPUT_DIR/app-release.aab.sha1"
+mv "$FLAVOR_AAB" "$OUTPUT_DIR/$NEW_AAB_NAME"
+rm -f "$FLAVOR_AAB.sha1"
 
 echo ""
 echo "✅ App Bundle (AAB) gerado com sucesso!"

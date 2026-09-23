@@ -1268,7 +1268,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                         ),
                       ),
                     ),
-                    const Spacer(),
+                    if (cardHeight == null)
+                      SizedBox(height: compactLandscape ? 16 : 22)
+                    else
+                      const Spacer(),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -1545,6 +1548,7 @@ class _TypewriterNameText extends StatefulWidget {
 class _TypewriterNameTextState extends State<_TypewriterNameText>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  Timer? _cursorHideTimer;
   bool _showCursor = true;
 
   @override
@@ -1556,7 +1560,8 @@ class _TypewriterNameTextState extends State<_TypewriterNameText>
           setState(() => _showCursor = true);
         }
         if (status == AnimationStatus.completed) {
-          Future<void>.delayed(const Duration(milliseconds: 520), () {
+          _cursorHideTimer?.cancel();
+          _cursorHideTimer = Timer(const Duration(milliseconds: 520), () {
             if (mounted && _controller.status == AnimationStatus.completed) {
               setState(() => _showCursor = false);
             }
@@ -1587,6 +1592,7 @@ class _TypewriterNameTextState extends State<_TypewriterNameText>
 
   @override
   void dispose() {
+    _cursorHideTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -1594,6 +1600,7 @@ class _TypewriterNameTextState extends State<_TypewriterNameText>
   void _startTyping() {
     final runeCount = widget.text.runes.length;
     final durationMs = (runeCount * 38).clamp(420, 1400);
+    _cursorHideTimer?.cancel();
     _controller.duration = Duration(milliseconds: durationMs);
     _showCursor = true;
     _controller.forward(from: 0);

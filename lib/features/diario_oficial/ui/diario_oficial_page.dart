@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
@@ -401,10 +402,9 @@ class _DiarioCard extends StatelessWidget {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível abrir o PDF do Diário Oficial.'),
-          ),
+        AppFeedback.showError(
+          context,
+          'Não foi possível abrir o PDF do Diário Oficial.',
         );
       }
     }

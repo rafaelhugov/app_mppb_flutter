@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/ui/app_feedback.dart';
 import '../../dados/dados_institucionais.dart';
 import '../../servicos/servico_links_externos.dart';
 
@@ -226,10 +227,9 @@ class SecaoLocalizacaoMppb extends StatelessWidget {
       await action();
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível abrir o link no momento.'),
-          ),
+        AppFeedback.showError(
+          context,
+          'Não foi possível abrir o link no momento.',
         );
       }
     }

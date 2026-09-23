@@ -12,6 +12,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:local_auth/local_auth.dart';
+import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/carteira_provider.dart';
@@ -904,10 +905,9 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
     bool isOffline,
   ) async {
     if (isOffline) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Exportação em PDF disponível apenas online.'),
-        ),
+      AppFeedback.showWarning(
+        context,
+        'Exportação em PDF disponível apenas online.',
       );
       return;
     }
@@ -926,9 +926,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
       await Printing.sharePdf(bytes: pdfBytes, filename: nomeArquivo);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não foi possível gerar o PDF: $e')),
-      );
+      AppFeedback.showError(context, 'Não foi possível gerar o PDF: $e');
     } finally {
       if (mounted) {
         setState(() => _isExportingPdf = false);

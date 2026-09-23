@@ -14,6 +14,7 @@ cd "$SCRIPT_DIR"
 
 AMBIENTE="${1:-homolog}"
 API_URL_ARGUMENTO="${2:-}"
+ADI_REGISTRATION_TOKEN="${3:-${ADI_REGISTRATION_TOKEN:-}}"
 
 case "$AMBIENTE" in
   homolog|homologacao)
@@ -36,6 +37,14 @@ case "$AMBIENTE" in
 esac
 
 API_URL="${API_URL_ARGUMENTO:-${API_URL:-$DEFAULT_API_URL}}"
+ADI_REGISTRATION_FILE="android/app/src/main/assets/adi-registration.properties"
+
+cleanup_adi_registration() {
+  if [ -n "$ADI_REGISTRATION_TOKEN" ] && [ -f "$ADI_REGISTRATION_FILE" ]; then
+    rm -f "$ADI_REGISTRATION_FILE"
+  fi
+}
+trap cleanup_adi_registration EXIT
 
 PUBSPEC_VERSION="$(grep '^version: ' pubspec.yaml | awk '{print $2}')"
 
@@ -69,6 +78,9 @@ FLAVOR_APK="$OUTPUT_DIR/app-${FLAVOR}-release.apk"
 
 echo "Ambiente: $FLAVOR"
 echo "API_URL: $API_URL"
+if [ -n "$ADI_REGISTRATION_TOKEN" ]; then
+  echo "Verificação Play Console: token ADI será incluído no APK"
+fi
 echo "Versão: $BUILD_NAME"
 echo "Build: $BUILD_NUMBER"
 echo "Arquivo final: $NEW_APK_NAME"
@@ -76,6 +88,11 @@ echo ""
 
 mkdir -p "$OUTPUT_DIR"
 rm -f "$OUTPUT_DIR"/MPPB+_"$APK_LABEL"_v*.apk "$FLAVOR_APK" "$FLAVOR_APK.sha1"
+
+if [ -n "$ADI_REGISTRATION_TOKEN" ]; then
+  mkdir -p "$(dirname "$ADI_REGISTRATION_FILE")"
+  printf '%s' "$ADI_REGISTRATION_TOKEN" > "$ADI_REGISTRATION_FILE"
+fi
 
 flutter build apk \
   --release \

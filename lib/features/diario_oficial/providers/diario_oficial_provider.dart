@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../models/diario_oficial.dart';
@@ -23,11 +22,10 @@ class DiarioOficialState {
     return diarios.where((d) {
       if (d.dataPublicacao == null) return false;
       return d.dataPublicacao!.year == selectedDate!.year &&
-             d.dataPublicacao!.month == selectedDate!.month &&
-             d.dataPublicacao!.day == selectedDate!.day;
+          d.dataPublicacao!.month == selectedDate!.month &&
+          d.dataPublicacao!.day == selectedDate!.day;
     }).toList();
   }
-
 
   int get totalPages {
     final total = filteredDiarios.length;
@@ -80,19 +78,19 @@ class DiarioOficialNotifier extends Notifier<DiarioOficialState> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        final diariosList = data.map((item) => DiarioOficial.fromJson(item)).toList();
+        final diariosList = data
+            .map((item) => DiarioOficial.fromJson(item))
+            .toList();
 
-        state = state.copyWith(
-          isLoading: false,
-          diarios: diariosList,
-        );
+        state = state.copyWith(isLoading: false, diarios: diariosList);
       } else {
         throw Exception('Status code: ${response.statusCode}');
       }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Não foi possível carregar os diários oficiais. Verifique sua conexão.',
+        errorMessage:
+            'Não foi possível carregar os diários oficiais. Verifique sua conexão.',
       );
     }
   }
@@ -104,10 +102,15 @@ class DiarioOficialNotifier extends Notifier<DiarioOficialState> {
   }
 
   void setFilterDate(DateTime? date) {
-    state = state.copyWith(selectedDate: date, clearDate: date == null, currentPage: 1);
+    state = state.copyWith(
+      selectedDate: date,
+      clearDate: date == null,
+      currentPage: 1,
+    );
   }
 }
 
-final diarioOficialProvider = NotifierProvider<DiarioOficialNotifier, DiarioOficialState>(() {
-  return DiarioOficialNotifier();
-});
+final diarioOficialProvider =
+    NotifierProvider<DiarioOficialNotifier, DiarioOficialState>(() {
+      return DiarioOficialNotifier();
+    });

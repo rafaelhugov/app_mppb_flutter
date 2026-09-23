@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
@@ -559,12 +560,9 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
   Future<void> _handleAlterarData(bool podeAdiar, bool podeAntecipar) async {
     final inicio = widget.solicitacao.inicio;
     if (inicio == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Esta solicitação não possui data inicial para alterar.',
-          ),
-        ),
+      AppFeedback.showWarning(
+        context,
+        'Esta solicitação não possui data inicial para alterar.',
       );
       return;
     }
@@ -581,9 +579,7 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
     final dataAtual = normalizarData(inicio);
     if (novaData.isAtSameMomentAs(dataAtual)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informe uma data diferente da atual.')),
-      );
+      AppFeedback.showWarning(context, 'Informe uma data diferente da atual.');
       return;
     }
 
@@ -596,12 +592,9 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
 
     if (!operacaoDisponivel) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${operacao.label} não está disponível para este gozo.',
-          ),
-        ),
+      AppFeedback.showWarning(
+        context,
+        '${operacao.label} não está disponível para este gozo.',
       );
       return;
     }
@@ -706,21 +699,22 @@ class _SolicitacaoActionsState extends State<_SolicitacaoActions> {
     if (execute == null) return;
 
     setState(() => _isExecuting = true);
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Processando alteração...')),
+    final feedback = AppFeedback.showLoading(
+      context,
+      title: 'Processando alteração',
+      message: 'Aguarde enquanto salvamos sua solicitação.',
     );
     try {
       await execute(widget.solicitacao, operacao, data: data, dataFim: dataFim);
+      feedback.dismiss();
       if (!mounted) return;
+      AppFeedback.showSuccess(context, operacao.successMessage);
       Navigator.of(context, rootNavigator: true).pop();
-      messenger.showSnackBar(SnackBar(content: Text(operacao.successMessage)));
     } catch (e) {
+      feedback.dismiss();
       if (!mounted) return;
       setState(() => _isExecuting = false);
-      messenger.showSnackBar(
-        SnackBar(content: Text(_operationErrorMessage(e))),
-      );
+      AppFeedback.showError(context, _operationErrorMessage(e));
     }
   }
 

@@ -174,7 +174,7 @@ void main() {
     testWidgets(
       'afastamento eleitoral informa numero de dias sem buscar intervalos',
       (tester) async {
-        final dataInicial = DateTime.now().add(const Duration(days: 1));
+        final dataInicial = _proximaDataComDiaSemana(DateTime.monday);
         int? numeroDiasEnviado;
 
         await tester.pumpWidget(

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
+import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../providers/contra_cheque_provider.dart';
@@ -205,9 +206,7 @@ class ContraChequePage extends ConsumerWidget {
     String fileName,
   ) async {
     if (linkPdf == null || linkPdf.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Link do PDF indisponível.')),
-      );
+      AppFeedback.showWarning(context, 'Link do PDF indisponível.');
       return;
     }
 

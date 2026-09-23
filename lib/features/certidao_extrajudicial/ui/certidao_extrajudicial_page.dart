@@ -234,6 +234,10 @@ class _CertidaoExtrajudicialPageState
             controller: _codigoController,
             label: 'Código verificador',
             textCapitalization: TextCapitalization.characters,
+            borderColor: _codigoValidadoComSucesso(state)
+                ? const Color(0xFF00A86B)
+                : null,
+            onChanged: (_) => setState(() {}),
             validator: (value) {
               if ((value ?? '').trim().isEmpty) {
                 return 'Informe o código verificador.';
@@ -363,12 +367,16 @@ class _CertidaoExtrajudicialPageState
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
+    Color? borderColor,
   }) {
+    final activeBorderColor = borderColor ?? const Color(0xFFD62828);
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
       validator: validator,
+      onChanged: onChanged,
       inputFormatters: [
         ...?inputFormatters,
         if (inputFormatters == null && keyboardType == TextInputType.number)
@@ -390,11 +398,11 @@ class _CertidaoExtrajudicialPageState
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFE9EDF0)),
+          borderSide: BorderSide(color: borderColor ?? const Color(0xFFE9EDF0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFFD62828), width: 1.2),
+          borderSide: BorderSide(color: activeBorderColor, width: 1.2),
         ),
       ),
     );
@@ -619,6 +627,13 @@ class _CertidaoExtrajudicialPageState
       mensagem == 'Informação não encontrada' ? mensagemPadrao : mensagem,
       title: titulo,
     );
+  }
+
+  bool _codigoValidadoComSucesso(CertidaoExtrajudicialState state) {
+    final codigoValidado = state.certidao?.codigoVerificador?.trim();
+    if (codigoValidado == null || codigoValidado.isEmpty) return false;
+    return _codigoController.text.trim().toLowerCase() ==
+        codigoValidado.toLowerCase();
   }
 
   void _mostrarPdf(Uint8List bytes, String fileName) {

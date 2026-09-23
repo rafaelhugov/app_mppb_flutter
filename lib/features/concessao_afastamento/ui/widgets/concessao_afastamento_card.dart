@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
@@ -771,15 +772,19 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
     if (dataInicial == null || numeroDias == null || numeroDias <= 0) return;
 
     setState(() => _isSubmitting = true);
-    final messenger = ScaffoldMessenger.of(context);
+    final feedback = AppFeedback.showLoading(
+      context,
+      title: 'Enviando solicitação',
+      message: 'Aguarde enquanto registramos o gozo.',
+    );
     try {
       await widget.onSubmit(widget.concessao, dataInicial, numeroDias);
+      feedback.dismiss();
       if (!mounted) return;
+      AppFeedback.showSuccess(context, 'Solicitação de gozo enviada.');
       Navigator.of(context).pop();
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Solicitação de gozo enviada.')),
-      );
     } catch (e) {
+      feedback.dismiss();
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;

@@ -47,3 +47,13 @@ app.*.map.json
 # Google Play package ownership verification
 /upload_certificate.pem
 /android/app/src/main/assets/adi-registration.properties
+
+# Signing and local credentials
+/android/key.properties
+/android/app/*.keystore
+/android/app/*.jks
+/android/app/*.p12
+*.pem
+*.p8
+*.mobileprovision
+*.cer

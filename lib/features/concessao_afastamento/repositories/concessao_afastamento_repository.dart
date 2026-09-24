@@ -24,9 +24,8 @@ class ConcessaoAfastamentoRepository {
   }) async {
     final response = await dio.get(
       '/api/recursos-humanos/minhas-concessoes-folga',
-      queryParameters: {'token': token},
       options: Options(
-        headers: {'Authorization': 'Token $token'},
+        headers: {'Authorization': 'Bearer $token'},
         extra: {'skipAuthLogout': true},
       ),
     );
@@ -56,7 +55,7 @@ class ConcessaoAfastamentoRepository {
     int? mes,
     int? ano,
   }) async {
-    final query = <String, dynamic>{'token': token};
+    final query = <String, dynamic>{};
     if (mes != null) query['mes'] = mes;
     if (ano != null) query['ano'] = ano;
 
@@ -64,7 +63,7 @@ class ConcessaoAfastamentoRepository {
       '/api/recursos-humanos/minhas-ausencias',
       queryParameters: query,
       options: Options(
-        headers: {'Authorization': 'Token $token'},
+        headers: {'Authorization': 'Bearer $token'},
         extra: {'skipAuthLogout': true},
       ),
     );
@@ -99,10 +98,9 @@ class ConcessaoAfastamentoRepository {
     try {
       final response = await dio.post(
         '/api/recursos-humanos/concessoes/$concessaoId/solicitacoes',
-        queryParameters: {'token': token},
         data: body,
         options: Options(
-          headers: {'Authorization': 'Token $token'},
+          headers: {'Authorization': 'Bearer $token'},
           extra: {'skipAuthLogout': true},
           responseType: ResponseType.plain,
         ),
@@ -194,12 +192,9 @@ class ConcessaoAfastamentoRepository {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final response = await dio.get(
       '/api/recursos-humanos/concessoes/$concessaoId/sugestoes-datas-finais',
-      queryParameters: {
-        'token': token,
-        'dataInicial': dateFormat.format(dataInicial),
-      },
+      queryParameters: {'dataInicial': dateFormat.format(dataInicial)},
       options: Options(
-        headers: {'Authorization': 'Token $token'},
+        headers: {'Authorization': 'Bearer $token'},
         extra: {'skipAuthLogout': true},
       ),
     );
@@ -230,9 +225,8 @@ class ConcessaoAfastamentoRepository {
   }) async {
     final response = await dio.get(
       '/api/recursos-humanos/solicitacoes/$solicitacaoId/operacoes',
-      queryParameters: {'token': token},
       options: Options(
-        headers: {'Authorization': 'Token $token'},
+        headers: {'Authorization': 'Bearer $token'},
         extra: {'skipAuthLogout': true},
       ),
     );
@@ -296,10 +290,9 @@ class ConcessaoAfastamentoRepository {
     try {
       final response = await dio.post(
         '/api/recursos-humanos/solicitacoes/$solicitacaoId/$endpoint',
-        queryParameters: {'token': token},
         data: body,
         options: Options(
-          headers: {'Authorization': 'Token $token'},
+          headers: {'Authorization': 'Bearer $token'},
           extra: {'skipAuthLogout': true},
           responseType: ResponseType.plain,
         ),

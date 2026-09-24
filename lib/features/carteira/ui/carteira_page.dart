@@ -15,6 +15,7 @@ import 'package:local_auth/local_auth.dart';
 import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/carteira_provider.dart';
 import '../models/usuario_carteira.dart';
 
@@ -525,6 +526,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
                             borderRadius: BorderRadius.circular(6),
                             child: CachedNetworkImage(
                               imageUrl: usuario.foto!,
+                              httpHeaders: _authHeaders(),
                               fit: BoxFit.cover,
                               errorWidget: (context, url, error) => const Icon(
                                 Icons.person,
@@ -864,6 +866,14 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
       placeholder: (context, url) => fallback,
       errorWidget: (context, url, error) => fallback,
     );
+  }
+
+  Map<String, String>? _authHeaders() {
+    final token = ref.read(authProvider).token;
+    if (token == null || token.trim().isEmpty) {
+      return null;
+    }
+    return {'Authorization': 'Bearer ${token.trim()}'};
   }
 
   Widget _buildBackItem(

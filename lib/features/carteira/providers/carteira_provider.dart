@@ -64,7 +64,7 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
       // 1. Tentar buscar da API (Online) passando o token via Query Parameter
       final response = await dio.get(
         '/carteiras-funcionais/dados',
-        queryParameters: {'token': token},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.statusCode == 200) {
@@ -72,7 +72,7 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
 
         // Injetar URL da foto assim como no Vue
         responseData['foto'] =
-            '${dio.options.baseUrl}/carteiras-funcionais/foto?token=$token';
+            '${dio.options.baseUrl}/carteiras-funcionais/foto';
         responseData['assinaturaPgjBlackUrl'] = _assinaturaPgjBlackUrl;
         responseData['assinaturaPgjWhiteUrl'] = _assinaturaPgjWhiteUrl;
 

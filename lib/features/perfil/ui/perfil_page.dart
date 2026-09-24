@@ -220,6 +220,7 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(perfilProvider);
+    final authState = ref.watch(authProvider);
     final perfil = state.data;
 
     return Scaffold(
@@ -246,7 +247,11 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _Header(perfil: perfil, isLoading: state.isLoading),
+                        _Header(
+                          perfil: perfil,
+                          isLoading: state.isLoading,
+                          authToken: authState.token,
+                        ),
                         const SizedBox(height: 18),
                         if (state.errorMessage != null)
                           _InlineMessage(message: state.errorMessage!),
@@ -350,8 +355,13 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
 class _Header extends StatelessWidget {
   final PerfilUsuario? perfil;
   final bool isLoading;
+  final String? authToken;
 
-  const _Header({required this.perfil, required this.isLoading});
+  const _Header({
+    required this.perfil,
+    required this.isLoading,
+    required this.authToken,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -373,7 +383,11 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Avatar(url: perfil?.fotoUrl, initials: initials),
+          _Avatar(
+            url: perfil?.fotoUrl,
+            initials: initials,
+            authToken: authToken,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -423,8 +437,13 @@ class _Header extends StatelessWidget {
 class _Avatar extends StatelessWidget {
   final String? url;
   final String initials;
+  final String? authToken;
 
-  const _Avatar({required this.url, required this.initials});
+  const _Avatar({
+    required this.url,
+    required this.initials,
+    required this.authToken,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -450,6 +469,9 @@ class _Avatar extends StatelessWidget {
             )
           : Image.network(
               url!,
+              headers: authToken == null || authToken!.trim().isEmpty
+                  ? null
+                  : {'Authorization': 'Bearer ${authToken!.trim()}'},
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Center(
                 child: Text(

@@ -29,7 +29,8 @@ class ContraChequeState {
     return ContraChequeState(
       isLoading: isLoading ?? this.isLoading,
       competencias: competencias ?? this.competencias,
-      competenciaSelecionada: competenciaSelecionada ?? this.competenciaSelecionada,
+      competenciaSelecionada:
+          competenciaSelecionada ?? this.competenciaSelecionada,
       contrachequeAtual: contrachequeAtual ?? this.contrachequeAtual,
       errorMessage: errorMessage,
     );
@@ -53,35 +54,31 @@ class ContraChequeNotifier extends Notifier<ContraChequeState> {
     try {
       final dio = ref.read(dioProvider);
       final token = ref.read(authProvider).token ?? '';
-      
+
       final response = await dio.get(
         '/contracheques/competencias',
-        queryParameters: {'token': token},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      
+
       final List<dynamic> data = response.data;
-      final comps = data.map((e) => Competencia(
-        mes: e['mes'] as int,
-        ano: e['ano'] as int,
-      )).toList();
-      
+      final comps = data
+          .map((e) => Competencia(mes: e['mes'] as int, ano: e['ano'] as int))
+          .toList();
+
       // Ordenar decrescente
       comps.sort((a, b) {
         if (a.ano != b.ano) return b.ano.compareTo(a.ano);
         return b.mes.compareTo(a.mes);
       });
-      
-      state = state.copyWith(
-        competencias: comps,
-        isLoading: false,
-      );
-      
+
+      state = state.copyWith(competencias: comps, isLoading: false);
+
       if (comps.isNotEmpty) {
         await buscarContracheque(comps.first);
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404 || e.response?.statusCode == 400) {
-         state = state.copyWith(
+        state = state.copyWith(
           isLoading: false,
           errorMessage: 'Nenhum contracheque disponível.',
         );
@@ -100,28 +97,37 @@ class ContraChequeNotifier extends Notifier<ContraChequeState> {
   }
 
   Future<void> buscarContracheque(Competencia comp) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, competenciaSelecionada: comp);
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      competenciaSelecionada: comp,
+    );
     try {
       final dio = ref.read(dioProvider);
       final token = ref.read(authProvider).token ?? '';
-      
+
       final response = await dio.get(
         '/contracheques/${comp.mes}/${comp.ano}',
-        queryParameters: {'token': token},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      
+
       final data = response.data;
-      
+
       final String baseUrl = dio.options.baseUrl;
-      final String pdfUrl = '$baseUrl/contracheques/${comp.mes}/${comp.ano}/pdf?token=$token';
+      final String pdfUrl =
+          '$baseUrl/contracheques/${comp.mes}/${comp.ano}/pdf';
 
       final List<dynamic> lancs = data['lancamentos'] ?? [];
-      final List<LancamentoContracheque> parsedLancamentos = lancs.map((l) => LancamentoContracheque(
-        codigo: l['codigo']?.toString() ?? '',
-        descricao: l['descricao'] ?? '',
-        valor: (l['valor'] as num?)?.toDouble() ?? 0.0,
-        tipo: l['tipo'] ?? 'V',
-      )).toList();
+      final List<LancamentoContracheque> parsedLancamentos = lancs
+          .map(
+            (l) => LancamentoContracheque(
+              codigo: l['codigo']?.toString() ?? '',
+              descricao: l['descricao'] ?? '',
+              valor: (l['valor'] as num?)?.toDouble() ?? 0.0,
+              tipo: l['tipo'] ?? 'V',
+            ),
+          )
+          .toList();
 
       final cheque = ContraCheque(
         id: '${comp.mes}_${comp.ano}',
@@ -133,24 +139,21 @@ class ContraChequeNotifier extends Notifier<ContraChequeState> {
         lancamentos: parsedLancamentos,
         linkPdf: pdfUrl,
       );
-      
-      state = state.copyWith(
-        contrachequeAtual: cheque,
-        isLoading: false,
-      );
+
+      state = state.copyWith(contrachequeAtual: cheque, isLoading: false);
     } on DioException catch (e) {
-       if (e.response?.statusCode == 404) {
-          state = state.copyWith(
-            isLoading: false,
-            contrachequeAtual: null,
-            errorMessage: 'Nenhum contracheque encontrado para esta competência.',
-          );
-       } else {
-          state = state.copyWith(
-            isLoading: false,
-            errorMessage: 'Erro ao carregar contracheque: ${e.message}',
-          );
-       }
+      if (e.response?.statusCode == 404) {
+        state = state.copyWith(
+          isLoading: false,
+          contrachequeAtual: null,
+          errorMessage: 'Nenhum contracheque encontrado para esta competência.',
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Erro ao carregar contracheque: ${e.message}',
+        );
+      }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -160,22 +163,29 @@ class ContraChequeNotifier extends Notifier<ContraChequeState> {
   }
 
   void selecionarMesAnterior() {
-    if (state.competenciaSelecionada == null || state.competencias.isEmpty) return;
-    final currentIndex = state.competencias.indexOf(state.competenciaSelecionada!);
+    if (state.competenciaSelecionada == null || state.competencias.isEmpty)
+      return;
+    final currentIndex = state.competencias.indexOf(
+      state.competenciaSelecionada!,
+    );
     if (currentIndex < state.competencias.length - 1) {
       buscarContracheque(state.competencias[currentIndex + 1]);
     }
   }
 
   void selecionarProximoMes() {
-    if (state.competenciaSelecionada == null || state.competencias.isEmpty) return;
-    final currentIndex = state.competencias.indexOf(state.competenciaSelecionada!);
+    if (state.competenciaSelecionada == null || state.competencias.isEmpty)
+      return;
+    final currentIndex = state.competencias.indexOf(
+      state.competenciaSelecionada!,
+    );
     if (currentIndex > 0) {
       buscarContracheque(state.competencias[currentIndex - 1]);
     }
   }
 }
 
-final contraChequeProvider = NotifierProvider<ContraChequeNotifier, ContraChequeState>(() {
-  return ContraChequeNotifier();
-});
+final contraChequeProvider =
+    NotifierProvider<ContraChequeNotifier, ContraChequeState>(() {
+      return ContraChequeNotifier();
+    });

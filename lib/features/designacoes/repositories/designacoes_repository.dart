@@ -9,12 +9,13 @@ class DesignacoesRepository {
 
   const DesignacoesRepository(this.dio);
 
-  Future<DesignacoesAtivasResponse> buscarAtivas({required String token}) async {
+  Future<DesignacoesAtivasResponse> buscarAtivas({
+    required String token,
+  }) async {
     final response = await dio.get(
       '/api/designacoes/ativas',
-      queryParameters: {'token': token},
       options: Options(
-        headers: {'Authorization': 'Token $token'},
+        headers: {'Authorization': 'Bearer $token'},
         extra: {'skipAuthLogout': true},
       ),
     );

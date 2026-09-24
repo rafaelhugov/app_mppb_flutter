@@ -61,7 +61,9 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
 
       final response = await dio.get(
         '/pagamentos/exercicios',
-        queryParameters: token != null ? {'token': token} : null,
+        options: token != null
+            ? Options(headers: {'Authorization': 'Bearer $token'})
+            : null,
       );
 
       if (response.statusCode == 200) {
@@ -106,7 +108,9 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
 
       final response = await dio.get(
         '/pagamentos/${state.exercicioAtual}',
-        queryParameters: token != null ? {'token': token} : null,
+        options: token != null
+            ? Options(headers: {'Authorization': 'Bearer $token'})
+            : null,
       );
 
       if (response.statusCode == 204) {

@@ -42,7 +42,9 @@ void main() {
       adapter.last.uri.path,
       '/api/recursos-humanos/concessoes/123/sugestoes-datas-finais',
     );
+    expect(adapter.last.uri.queryParameters.containsKey('token'), isFalse);
     expect(adapter.last.uri.queryParameters['dataInicial'], '10/01/2027');
+    expect(adapter.last.headers['Authorization'], 'Bearer token');
     expect(sugestoes, hasLength(2));
     expect(sugestoes.first.dataInicialFormatada, '10/01/2027');
     expect(sugestoes.first.dataFinalFormatada, '19/01/2027');
@@ -151,6 +153,8 @@ void main() {
         adapter.last.uri.path,
         '/api/recursos-humanos/concessoes/987/solicitacoes',
       );
+      expect(adapter.last.uri.queryParameters.containsKey('token'), isFalse);
+      expect(adapter.last.headers['Authorization'], 'Bearer token');
       expect(adapter.last.method, 'POST');
       expect(adapter.last.body, {
         'dataInicial': '10/01/2027',
@@ -210,22 +214,25 @@ void main() {
     ]);
   });
 
-  test('operacoes aceita CANCELAR retornado pelo mpvirtual homologacao', () async {
-    adapter.enqueueJson({
-      'operacoes': ['CANCELAR'],
-    });
+  test(
+    'operacoes aceita CANCELAR retornado pelo mpvirtual homologacao',
+    () async {
+      adapter.enqueueJson({
+        'operacoes': ['CANCELAR'],
+      });
 
-    final operacoes = await repository.buscarOperacoesSolicitacao(
-      token: 'token',
-      solicitacaoId: 506839,
-    );
+      final operacoes = await repository.buscarOperacoesSolicitacao(
+        token: 'token',
+        solicitacaoId: 506839,
+      );
 
-    expect(
-      adapter.last.uri.path,
-      '/api/recursos-humanos/solicitacoes/506839/operacoes',
-    );
-    expect(operacoes, [OperacaoSolicitacaoConcessao.cancelar]);
-  });
+      expect(
+        adapter.last.uri.path,
+        '/api/recursos-humanos/solicitacoes/506839/operacoes',
+      );
+      expect(operacoes, [OperacaoSolicitacaoConcessao.cancelar]);
+    },
+  );
 
   test('adiamento envia data no contrato da api', () async {
     adapter.enqueueJson({'ok': true});
@@ -314,12 +321,14 @@ class _CapturedRequest {
   final String method;
   final dynamic body;
   final ResponseType? responseType;
+  final Map<String, dynamic> headers;
 
   const _CapturedRequest({
     required this.uri,
     required this.method,
     required this.body,
     required this.responseType,
+    required this.headers,
   });
 }
 
@@ -342,6 +351,7 @@ class _FakeAdapter implements HttpClientAdapter {
       method: options.method,
       body: options.data,
       responseType: options.responseType,
+      headers: options.headers,
     );
     final data = _responses.isEmpty ? null : _responses.removeAt(0);
     return ResponseBody.fromString(

@@ -10,6 +10,16 @@ Escopo: `app_mppb_flutter`.
 
 O app nao apresenta regressao local conhecida de token em URL, senha persistida para biometria ou cleartext em release Android. A suite local passou, incluindo `flutter analyze`, `flutter test` e build `homologDebug`.
 
+## Interpretacao correta da biometria
+
+O ciclo S5 **nao implementou login biometrico seguro final**. O fechamento local confirma somente:
+
+- remocao/desativacao do fluxo inseguro baseado em `saved_password`;
+- impedimento de nova persistencia recuperavel da senha institucional;
+- teste/gate contra regressao.
+
+O novo mecanismo biometrico seguro permanece como **evolucao funcional futura** e deve usar credencial de dispositivo propria, separada da senha, revogavel e validada pelo backend/auth-api para criar uma nova sessao.
+
 ## Evidencias
 
 | Item | Evidencia | Resultado |
@@ -39,6 +49,7 @@ O app nao apresenta regressao local conhecida de token em URL, senha persistida 
 | Biometria segura futura sem credencial revogavel | Media | Definir contrato backend antes de reabilitar |
 | Cache local de dados sensiveis sem teste dinamico | Media | Testar aparelho e definir retencao/limpeza |
 | iOS sem evidencia | Media | Executar suite iOS |
+| SAST dedicado ausente | Media/Alta | Integrar ferramenta institucional; scripts locais nao substituem SAST |
 | Aviso futuro de Kotlin Gradle Plugin | Baixa/Media | Planejar atualizacao de `firebase_core` e `share_plus` |
 
 ## Conclusao

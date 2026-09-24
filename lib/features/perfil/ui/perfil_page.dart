@@ -40,56 +40,11 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
   }
 
   Future<void> _enableBiometricsNow() async {
-    final confirmed = await _showBiometricDecisionDialog();
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _isBiometricActionLoading = true);
-
-    final authNotifier = ref.read(authProvider.notifier);
-    final hasCredentials = await authNotifier
-        .hasAvailableBiometricCredentials();
-    var enabled = false;
-
-    if (!hasCredentials) {
-      setState(() => _isBiometricActionLoading = false);
-      final password = await _showPasswordFallbackDialog();
-      if (password == null || password.isEmpty || !mounted) return;
-
-      setState(() => _isBiometricActionLoading = true);
-      enabled = await authNotifier.enableBiometricLoginForCurrentUser(password);
-    } else {
-      final authenticated = await _authenticateWithBiometrics(
-        'Confirme sua identidade para habilitar a biometria',
-      );
-
-      if (!authenticated) {
-        if (mounted) {
-          setState(() => _isBiometricActionLoading = false);
-          await _showFeedbackDialog(
-            type: _ProfileFeedbackType.warning,
-            title: 'Biometria não confirmada',
-            message:
-                'Não foi possível confirmar sua identidade neste aparelho.',
-          );
-        }
-        return;
-      }
-
-      enabled = await authNotifier
-          .enableBiometricLoginFromAvailableCredentials();
-    }
-
-    await ref.read(perfilProvider.notifier).refreshBiometrics();
-
-    if (!mounted) return;
-
-    setState(() => _isBiometricActionLoading = false);
     await _showFeedbackDialog(
-      type: enabled ? _ProfileFeedbackType.success : _ProfileFeedbackType.error,
-      title: enabled ? 'Biometria habilitada' : 'Não foi possível habilitar',
-      message: enabled
-          ? 'Seu próximo acesso poderá ser feito com biometria.'
-          : 'Confira sua senha e tente habilitar novamente.',
+      type: _ProfileFeedbackType.warning,
+      title: 'Biometria indisponível',
+      message:
+          'A biometria será reativada após a criação de uma credencial segura separada da senha.',
     );
   }
 
@@ -658,7 +613,7 @@ class _SecuritySection extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       supportsBiometrics
-                          ? 'Controle o acesso biométrico desta conta.'
+                          ? 'A biometria depende de uma credencial segura separada da senha.'
                           : 'Este aparelho não informou biometria disponível.',
                       style: const TextStyle(
                         color: Color(0xFF697370),

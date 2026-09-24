@@ -163,8 +163,9 @@ class ContraChequeNotifier extends Notifier<ContraChequeState> {
   }
 
   void selecionarMesAnterior() {
-    if (state.competenciaSelecionada == null || state.competencias.isEmpty)
+    if (state.competenciaSelecionada == null || state.competencias.isEmpty) {
       return;
+    }
     final currentIndex = state.competencias.indexOf(
       state.competenciaSelecionada!,
     );
@@ -174,8 +175,9 @@ class ContraChequeNotifier extends Notifier<ContraChequeState> {
   }
 
   void selecionarProximoMes() {
-    if (state.competenciaSelecionada == null || state.competencias.isEmpty)
+    if (state.competenciaSelecionada == null || state.competencias.isEmpty) {
       return;
+    }
     final currentIndex = state.competencias.indexOf(
       state.competenciaSelecionada!,
     );

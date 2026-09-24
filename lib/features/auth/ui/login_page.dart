@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/services.dart';
-import 'package:local_auth/local_auth.dart';
 import '../../../core/storage/secure_storage.dart';
-import '../../../core/ui/app_feedback.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -20,7 +17,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _senhaController = TextEditingController();
   bool _biometricsEnabled = false;
   bool _obscurePassword = true;
-  bool _autoBiometricPrompted = false;
 
   @override
   void initState() {
@@ -39,71 +35,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       await secureStorage.delete(key: 'biometrics_enabled');
       await secureStorage.write(key: 'biometrics_asked', value: 'true');
     }
-    final localAuth = LocalAuthentication();
-    final bool deviceSupported;
-    try {
-      deviceSupported = await localAuth.isDeviceSupported();
-    } on MissingPluginException {
-      if (mounted) setState(() => _biometricsEnabled = false);
-      return;
-    } catch (_) {
-      if (mounted) setState(() => _biometricsEnabled = false);
-      return;
-    }
-    final canUseBiometrics = deviceSupported && false;
-
-    if (canUseBiometrics && mounted) {
-      setState(() => _biometricsEnabled = true);
-
-      if (!_autoBiometricPrompted) {
-        _autoBiometricPrompted = true;
-        await Future<void>.delayed(const Duration(milliseconds: 350));
-        if (mounted) {
-          await _doBiometricLogin(showFailureSnack: false);
-        }
-      }
-    } else if (mounted) {
+    if (mounted) {
       setState(() => _biometricsEnabled = false);
-    }
-  }
-
-  Future<void> _doBiometricLogin({bool showFailureSnack = true}) async {
-    final localAuth = LocalAuthentication();
-    final bool authenticated;
-    try {
-      authenticated = await localAuth.authenticate(
-        localizedReason: 'Acesse o aplicativo com sua biometria',
-        biometricOnly: false,
-        persistAcrossBackgrounding: true,
-      );
-    } on MissingPluginException {
-      if (mounted && showFailureSnack) {
-        AppFeedback.showError(
-          context,
-          'Biometria não disponível nesta plataforma.',
-        );
-      }
-      return;
-    } catch (_) {
-      if (mounted && showFailureSnack) {
-        AppFeedback.showError(
-          context,
-          'Não foi possível autenticar por biometria.',
-        );
-      }
-      return;
-    }
-
-    if (authenticated) {
-      final success = await ref
-          .read(authProvider.notifier)
-          .loginWithSavedCredentials();
-      if (!success && mounted) {
-        AppFeedback.showError(
-          context,
-          'Falha ao autenticar credenciais salvas. Faça login com senha.',
-        );
-      }
     }
   }
 
@@ -345,9 +278,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 width: double.infinity,
                                 height: 46,
                                 child: OutlinedButton.icon(
-                                  onPressed: authState.isLoading
-                                      ? null
-                                      : _doBiometricLogin,
+                                  onPressed: null,
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: const Color(0xFF202322),
                                     side: const BorderSide(

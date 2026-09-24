@@ -21,7 +21,7 @@ while IFS= read -r file; do
   esac
 done < <(git ls-files)
 
-if git grep -I -n -E -e '-----BEGIN (RSA |EC |DSA |OPENSSH |PRIVATE )?KEY-----|private_key|client_email.*gserviceaccount|storePassword[[:space:]]*=[[:space:]]*["'\''][^"'\'']+["'\'']|keyPassword[[:space:]]*=[[:space:]]*["'\''][^"'\'']+["'\'']' -- ':!seguranca/**' ':!test/**'; then
+if git grep -I -n -E -e '-----BEGIN (RSA |EC |DSA |OPENSSH |PRIVATE )?KEY-----|private_key|client_email.*gserviceaccount|storePassword[[:space:]]*=[[:space:]]*["'\''][^"'\'']+["'\'']|keyPassword[[:space:]]*=[[:space:]]*["'\''][^"'\'']+["'\'']' -- ':!seguranca/**' ':!scripts/security/**' ':!test/**'; then
   report "padrao de segredo encontrado em arquivo versionado"
 fi
 

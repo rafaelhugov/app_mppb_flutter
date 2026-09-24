@@ -1,0 +1,80 @@
+stages:
+  - analyze
+  - test
+  - security
+  - build
+  - evidence
+
+default:
+  image: ghcr.io/cirruslabs/flutter:stable
+  cache:
+    key: "$CI_COMMIT_REF_SLUG-flutter"
+    paths:
+      - .pub-cache/
+      - .dart_tool/
+
+variables:
+  PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: "$CI_COMMIT_BRANCH"
+
+analyze:flutter:
+  stage: analyze
+  script:
+    - flutter pub get
+    - flutter analyze
+
+test:flutter:
+  stage: test
+  script:
+    - flutter pub get
+    - flutter test
+
+security:secrets:
+  stage: security
+  script:
+    - bash scripts/security/secret_scan.sh
+
+security:regression:
+  stage: security
+  script:
+    - bash scripts/security/security_regression.sh
+
+security:android:
+  stage: security
+  script:
+    - flutter pub get
+    - flutter test test/security
+
+build:android-debug:
+  stage: build
+  needs:
+    - analyze:flutter
+    - test:flutter
+    - security:secrets
+    - security:regression
+    - security:android
+  script:
+    - flutter pub get
+    - flutter build apk --debug --flavor homolog -t lib/main.dart
+  artifacts:
+    name: "app-mppb-debug-$CI_COMMIT_REF_SLUG"
+    paths:
+      - build/app/outputs/flutter-apk/app-homolog-debug.apk
+    expire_in: 1 week
+
+evidence:dependencies:
+  stage: evidence
+  needs:
+    - build:android-debug
+  script:
+    - mkdir -p build/security
+    - dart pub deps --json > build/security/dart-deps.json
+  artifacts:
+    when: always
+    paths:
+      - build/security/dart-deps.json
+    expire_in: 1 month

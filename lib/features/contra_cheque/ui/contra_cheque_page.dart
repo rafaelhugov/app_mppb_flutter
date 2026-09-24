@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/contra_cheque_provider.dart';
 import 'widgets/competencia_selector.dart';
 import 'widgets/grafico_contracheque.dart';
@@ -58,7 +59,11 @@ class ContraChequePage extends ConsumerWidget {
                       )
                     : state.errorMessage != null
                     ? _buildError(state.errorMessage!, ref)
-                    : _buildContent(state, context),
+                    : _buildContent(
+                        state,
+                        context,
+                        ref.watch(authProvider).token,
+                      ),
               ),
             ),
             SliverToBoxAdapter(
@@ -70,7 +75,11 @@ class ContraChequePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(ContraChequeState state, BuildContext context) {
+  Widget _buildContent(
+    ContraChequeState state,
+    BuildContext context,
+    String? authToken,
+  ) {
     final responsive = MppbResponsive.of(context);
     final contentMaxWidth = responsive.usesWideLayout
         ? 980.0
@@ -141,6 +150,7 @@ class ContraChequePage extends ConsumerWidget {
                 context,
                 cheque.linkPdf,
                 'contracheque-${cheque.mes}-${cheque.ano}.pdf',
+                authToken,
               ),
               icon: const Icon(Icons.file_download, size: 18),
               label: const Text('BAIXAR PDF'),
@@ -204,6 +214,7 @@ class ContraChequePage extends ConsumerWidget {
     BuildContext context,
     String? linkPdf,
     String fileName,
+    String? authToken,
   ) async {
     if (linkPdf == null || linkPdf.isEmpty) {
       AppFeedback.showWarning(context, 'Link do PDF indisponível.');
@@ -214,7 +225,12 @@ class ContraChequePage extends ConsumerWidget {
     final pdfFuture = Dio()
         .getUri<List<int>>(
           url,
-          options: Options(responseType: ResponseType.bytes),
+          options: Options(
+            responseType: ResponseType.bytes,
+            headers: authToken == null || authToken.trim().isEmpty
+                ? null
+                : {'Authorization': 'Bearer ${authToken.trim()}'},
+          ),
         )
         .then((response) => Uint8List.fromList(response.data ?? const []));
 

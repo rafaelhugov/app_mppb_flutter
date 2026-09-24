@@ -14,7 +14,6 @@ class AuthState {
   // Para sabermos se o usuário acabou de logar e precisamos oferecer biometria
   final bool justLoggedIn;
   final String? tempUsername;
-  final String? tempPassword;
 
   AuthState({
     this.isLoading = false,
@@ -23,7 +22,6 @@ class AuthState {
     this.token,
     this.justLoggedIn = false,
     this.tempUsername,
-    this.tempPassword,
   });
 
   AuthState copyWith({
@@ -33,7 +31,6 @@ class AuthState {
     String? token,
     bool? justLoggedIn,
     String? tempUsername,
-    String? tempPassword,
     bool clearToken = false,
     bool clearTempCredentials = false,
   }) {
@@ -46,9 +43,6 @@ class AuthState {
       tempUsername: clearTempCredentials
           ? null
           : tempUsername ?? this.tempUsername,
-      tempPassword: clearTempCredentials
-          ? null
-          : tempPassword ?? this.tempPassword,
     );
   }
 }
@@ -63,6 +57,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _checkInitialAuth() async {
     final secureStorage = ref.read(secureStorageProvider);
+    await _migrarSenhaBiometricaLegada(secureStorage);
     final token = await secureStorage.read(key: 'auth_token');
 
     if (token != null && token.isNotEmpty) {
@@ -135,9 +130,8 @@ class AuthNotifier extends Notifier<AuthState> {
         isLoading: false,
         isAuthenticated: true,
         token: token,
-        justLoggedIn: offerBiometrics,
+        justLoggedIn: false,
         tempUsername: offerBiometrics ? username : null,
-        tempPassword: offerBiometrics ? password : null,
         clearTempCredentials: !offerBiometrics,
       );
       await _registrarDispositivoAutenticado(token);
@@ -179,19 +173,8 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> enableBiometricLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
-    if (state.tempUsername != null && state.tempPassword != null) {
-      await secureStorage.write(
-        key: 'saved_username',
-        value: state.tempUsername!,
-      );
-      await secureStorage.write(
-        key: 'saved_password',
-        value: state.tempPassword!,
-      );
-      await secureStorage.write(key: 'biometrics_enabled', value: 'true');
-      await secureStorage.write(key: 'biometrics_asked', value: 'true');
-    }
-    // Remove as temps após salvar
+    await _migrarSenhaBiometricaLegada(secureStorage);
+    await secureStorage.write(key: 'biometrics_asked', value: 'true');
     state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
   }
 
@@ -201,6 +184,7 @@ class AuthNotifier extends Notifier<AuthState> {
   ) async {
     final currentUsername = await secureStorage.read(key: 'auth_username');
     final savedUsername = await secureStorage.read(key: 'saved_username');
+    await _migrarSenhaBiometricaLegada(secureStorage);
 
     await secureStorage.delete(key: 'carteira_cache_data');
     await secureStorage.delete(key: 'perfil_cache_data');
@@ -209,11 +193,13 @@ class AuthNotifier extends Notifier<AuthState> {
       await secureStorage.delete(key: 'auth_token');
       await secureStorage.delete(key: 'carteira_cache_username');
       await secureStorage.delete(key: 'perfil_cache_username');
+      await secureStorage.delete(key: 'saved_username');
+      await secureStorage.delete(key: 'biometrics_enabled');
+      await secureStorage.delete(key: 'biometrics_asked');
     }
 
     if (savedUsername != null && savedUsername != username) {
       await secureStorage.delete(key: 'saved_username');
-      await secureStorage.delete(key: 'saved_password');
       await secureStorage.delete(key: 'biometrics_enabled');
       await secureStorage.delete(key: 'biometrics_asked');
     }
@@ -232,83 +218,30 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<bool> hasAvailableBiometricCredentials() async {
     final secureStorage = ref.read(secureStorageProvider);
-    final currentUsername = await secureStorage.read(key: 'auth_username');
-    if (currentUsername == null || currentUsername.trim().isEmpty) {
-      return false;
-    }
-
-    if (state.tempUsername == currentUsername &&
-        state.tempPassword != null &&
-        state.tempPassword!.isNotEmpty) {
-      return true;
-    }
-
-    final savedUsername = await secureStorage.read(key: 'saved_username');
-    final savedPassword = await secureStorage.read(key: 'saved_password');
-    return savedUsername == currentUsername &&
-        savedPassword != null &&
-        savedPassword.isNotEmpty;
+    await _migrarSenhaBiometricaLegada(secureStorage);
+    return false;
   }
 
   Future<bool> enableBiometricLoginFromAvailableCredentials() async {
     final secureStorage = ref.read(secureStorageProvider);
-    final currentUsername = await secureStorage.read(key: 'auth_username');
-    if (currentUsername == null || currentUsername.trim().isEmpty) {
-      return false;
-    }
-
-    String? username;
-    String? password;
-    if (state.tempUsername == currentUsername && state.tempPassword != null) {
-      username = state.tempUsername;
-      password = state.tempPassword;
-    } else {
-      final savedUsername = await secureStorage.read(key: 'saved_username');
-      final savedPassword = await secureStorage.read(key: 'saved_password');
-      if (savedUsername == currentUsername && savedPassword != null) {
-        username = savedUsername;
-        password = savedPassword;
-      }
-    }
-
-    if (username == null || password == null || password.isEmpty) {
-      return false;
-    }
-
-    await secureStorage.write(key: 'saved_username', value: username);
-    await secureStorage.write(key: 'saved_password', value: password);
-    await secureStorage.write(key: 'biometrics_enabled', value: 'true');
+    await _migrarSenhaBiometricaLegada(secureStorage);
     await secureStorage.write(key: 'biometrics_asked', value: 'true');
     state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
-    return true;
+    return false;
   }
 
   Future<bool> enableBiometricLoginForCurrentUser(String password) async {
     final secureStorage = ref.read(secureStorageProvider);
-    final username = await secureStorage.read(key: 'auth_username');
-    if (username == null || username.trim().isEmpty || password.isEmpty) {
-      return false;
-    }
-
-    final authenticated = await login(
-      username,
-      password,
-      offerBiometrics: false,
-    );
-    if (!authenticated) {
-      return false;
-    }
-
-    await secureStorage.write(key: 'saved_username', value: username);
-    await secureStorage.write(key: 'saved_password', value: password);
-    await secureStorage.write(key: 'biometrics_enabled', value: 'true');
+    await _migrarSenhaBiometricaLegada(secureStorage);
     await secureStorage.write(key: 'biometrics_asked', value: 'true');
     state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
-    return true;
+    return false;
   }
 
   Future<void> disableBiometricLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
+    await secureStorage.delete(key: 'saved_password');
+    await secureStorage.delete(key: 'saved_username');
     await secureStorage.delete(key: 'biometrics_enabled');
     await secureStorage.write(key: 'biometrics_asked', value: 'true');
     state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
@@ -316,12 +249,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<bool> loginWithSavedCredentials() async {
     final secureStorage = ref.read(secureStorageProvider);
-    final savedUsername = await secureStorage.read(key: 'saved_username');
-    final savedPassword = await secureStorage.read(key: 'saved_password');
-
-    if (savedUsername != null && savedPassword != null) {
-      return login(savedUsername, savedPassword, offerBiometrics: false);
-    }
+    await _migrarSenhaBiometricaLegada(secureStorage);
     return false;
   }
 
@@ -340,6 +268,19 @@ class AuthNotifier extends Notifier<AuthState> {
     await secureStorage.delete(key: 'perfil_cache_username');
 
     state = AuthState(); // Reset state
+  }
+
+  Future<void> _migrarSenhaBiometricaLegada(
+    FlutterSecureStorage secureStorage,
+  ) async {
+    final savedPassword = await secureStorage.read(key: 'saved_password');
+    if (savedPassword == null) {
+      return;
+    }
+    await secureStorage.delete(key: 'saved_password');
+    await secureStorage.delete(key: 'saved_username');
+    await secureStorage.delete(key: 'biometrics_enabled');
+    await secureStorage.write(key: 'biometrics_asked', value: 'true');
   }
 
   Future<void> _registrarDispositivoAutenticado(String token) async {

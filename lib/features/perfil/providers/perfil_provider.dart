@@ -105,11 +105,16 @@ class PerfilNotifier extends Notifier<PerfilState> {
   Future<void> _carregarEstadoBiometria() async {
     final storage = ref.read(secureStorageProvider);
     final enabled = await storage.read(key: 'biometrics_enabled');
-    final savedUsername = await storage.read(key: 'saved_username');
     final savedPassword = await storage.read(key: 'saved_password');
+    if (savedPassword != null) {
+      await storage.delete(key: 'saved_password');
+      await storage.delete(key: 'saved_username');
+      await storage.delete(key: 'biometrics_enabled');
+      await storage.write(key: 'biometrics_asked', value: 'true');
+    }
     state = state.copyWith(
-      biometricsEnabled: enabled == 'true',
-      canUseBiometrics: savedUsername != null && savedPassword != null,
+      biometricsEnabled: savedPassword == null && enabled == 'true' && false,
+      canUseBiometrics: false,
     );
   }
 

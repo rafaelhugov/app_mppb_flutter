@@ -32,9 +32,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _checkBiometricLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
-    final isEnabled = await secureStorage.read(key: 'biometrics_enabled');
-    final savedUsername = await secureStorage.read(key: 'saved_username');
     final savedPassword = await secureStorage.read(key: 'saved_password');
+    if (savedPassword != null) {
+      await secureStorage.delete(key: 'saved_password');
+      await secureStorage.delete(key: 'saved_username');
+      await secureStorage.delete(key: 'biometrics_enabled');
+      await secureStorage.write(key: 'biometrics_asked', value: 'true');
+    }
     final localAuth = LocalAuthentication();
     final bool deviceSupported;
     try {
@@ -46,13 +50,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (mounted) setState(() => _biometricsEnabled = false);
       return;
     }
-    final canUseBiometrics =
-        deviceSupported &&
-        isEnabled == 'true' &&
-        savedUsername != null &&
-        savedUsername.trim().isNotEmpty &&
-        savedPassword != null &&
-        savedPassword.isNotEmpty;
+    final canUseBiometrics = deviceSupported && false;
 
     if (canUseBiometrics && mounted) {
       setState(() => _biometricsEnabled = true);

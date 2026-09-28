@@ -92,9 +92,9 @@ void main() {
       final bytes = await container
           .read(certidaoExtrajudicialProvider.notifier)
           .emitirPdf(
-            tipoDocumento: 'CPF',
+            tipoDocumento: 'F',
             documento: '123.456.789-00',
-            nome: 'A',
+            nome: 'Pessoa Teste',
           );
 
       expect(bytes, [1, 2, 3]);

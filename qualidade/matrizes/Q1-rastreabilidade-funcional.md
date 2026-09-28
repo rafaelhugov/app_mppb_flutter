@@ -41,3 +41,17 @@ Gate Q2 final:
 - `flutter test`: passou, 143/143.
 - `flutter test --coverage`: passou, 143/143, LCOV 32,61%.
 - Backend `mobile-service`: scans, testes Maven e package passaram.
+
+## Atualizacao Q3 - 2026-09-28
+
+Contratos Flutter x Backend inventariados e rastreados em:
+- `qualidade/inventarios/Q3-inventario-contratos.md`
+- `qualidade/matrizes/Q3-matriz-contratos.md`
+- `qualidade/matrizes/Q3-rastreabilidade-contratos.md`
+
+Gate Q3 final:
+- `flutter analyze`: passou.
+- `flutter test`: passou, 154/154.
+- `flutter test --coverage`: passou, 154/154, LCOV 34,43%.
+- Backend `mobile-service`: scans, testes Maven e package passaram.
+- Runtime Android: Home carregou; queda posterior do emulador classificada como falha nativa/emulador grafico (`bad color buffer handle`, exit 139).

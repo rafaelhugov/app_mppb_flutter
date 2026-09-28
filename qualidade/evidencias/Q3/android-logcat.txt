@@ -1,0 +1,29 @@
+Logcat limpo antes do smoke com `adb logcat -c`.
+
+A coleta posterior com `adb logcat -d -t 400` nao foi concluida porque o emulador ficou offline e encerrou antes da leitura:
+
+```text
+adb: device offline
+List of devices attached
+<sem dispositivos>
+```
+
+Evidencia complementar capturada do processo do emulador:
+
+```text
+INFO | Boot completed in 27350 ms
+ERROR | bad color buffer handle 291
+exit code 139
+```
+
+Evidencia complementar capturada do `flutter run`:
+
+```text
+Using the Impeller rendering backend (OpenGLES).
+Skipped frames during startup.
+FlutterSecureStorage: Algorithm changed detected.
+FlutterSecureStorage: migration completed successfully.
+Lost connection to device.
+```
+
+Nao houve evidencia observada de FATAL EXCEPTION, AndroidRuntime, SIGSEGV logado pelo app, TypeError, erro de parsing JSON ou PlatformException antes da perda do emulador.

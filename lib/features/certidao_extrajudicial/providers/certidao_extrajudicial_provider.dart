@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -139,6 +140,9 @@ class CertidaoExtrajudicialNotifier
   String _formatError(Object error) {
     if (error is DioException) {
       final data = error.response?.data;
+      if (data is List<int> && data.isNotEmpty) {
+        return utf8.decode(data, allowMalformed: true).trim();
+      }
       if (data is List && data.isNotEmpty) {
         return data.join('\n');
       }

@@ -1,0 +1,4 @@
+Found 3 connected devices:
+  sdk gphone16k x86 64 (mobile) • emulator-5554 • android-x64    • Android 17 (API 37) (emulator)
+  Linux (desktop)               • linux         • linux-x64      • Linux
+  Chrome (web)                  • chrome        • web-javascript • Google Chrome

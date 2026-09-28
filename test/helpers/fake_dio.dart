@@ -17,8 +17,19 @@ class FakeDioResponse {
   final int statusCode;
   final Object? body;
   final Map<String, List<String>> headers;
+  final DioExceptionType? exceptionType;
 
-  const FakeDioResponse(this.statusCode, this.body, {this.headers = const {}});
+  const FakeDioResponse(
+    this.statusCode,
+    this.body, {
+    this.headers = const {},
+    this.exceptionType,
+  });
+
+  const FakeDioResponse.exception(this.exceptionType)
+    : statusCode = 0,
+      body = null,
+      headers = const {};
 }
 
 class FakeDioRequest {
@@ -71,6 +82,9 @@ class FakeDioAdapter implements HttpClientAdapter {
         'Rota fake nao configurada: ${options.path}',
         404,
       );
+    }
+    if (response.exceptionType != null) {
+      throw DioException(requestOptions: options, type: response.exceptionType!);
     }
 
     final body = response.body;

@@ -1,0 +1,13 @@
+Q4 Android smoke log - 2026-09-28
+
+Resumo da execucao:
+- Flutter instalou e iniciou o APK homolog debug no dispositivo emulator-5554.
+- Linha observada: Using the Impeller rendering backend (OpenGLES).
+- VM Service ficou disponivel durante a execucao.
+- Foram observados avisos de frames pulados no emulador headless, sem crash do app.
+- Nenhum FATAL EXCEPTION, AndroidRuntime ou SIGSEGV associado ao app homolog foi observado na amostra coletada.
+- Durante o encerramento do emulador, houve aviso nativo: bad color buffer handle 193.
+
+Classificacao:
+- App: OK no smoke inicial.
+- Emulador: aviso de shutdown, sem evidencia de regressao funcional do app.

@@ -21,3 +21,23 @@
 | RF-017 | mesmos de RF-016 | `POST /api/recursos-humanos/*` operacoes | mesmos de RF-016 | mesmos de RF-016 | Idempotencia/duplo clique/concorrencia, contratos negativos | Q2/Q3/Q4/Q5/Q6/Q7/Q12 |
 | RF-018 | notificacoes core Flutter | `/api/notificacoes/dispositivos*` | `DispositivoNotificacaoController`, FCM services/schedulers | ampla base Flutter/backend | Sem teste device/FCM real, resiliencia externa | Q2/Q3/Q4/Q5/Q7/Q12 |
 | RF-019 | `main_layout.dart`, `services_bottom_sheet.dart`, rotas | N/A | N/A | layout, contatos, push navigation | E2E navegacao, acessibilidade e matriz de resolucoes | Q2/Q5/Q9/Q11 |
+
+## Atualizacao Q2 - 2026-09-28
+
+| RF | Status Q2 | Evidencia |
+| --- | --- | --- |
+| RF-003 | Cobertura de provider adicionada | `test/features/diario_oficial/diario_oficial_provider_test.dart` |
+| RF-006/RF-007 | Cobertura de provider adicionada | `test/features/certidao_extrajudicial/certidao_extrajudicial_provider_test.dart` |
+| RF-008 | Cobertura de formatadores adicionada | `test/features/ouvidoria/ouvidoria_formatters_test.dart` |
+| RF-010 | Cobertura de auth provider adicionada | `test/features/auth/auth_provider_test.dart` |
+| RF-011 | Cobertura de perfil provider adicionada | `test/features/perfil/perfil_provider_test.dart` |
+| RF-012 | Cobertura de carteira provider/cache adicionada | `test/features/carteira/carteira_provider_test.dart` |
+| RF-013 | Cobertura de modelo de contracheque adicionada | `test/features/contra_cheque/contracheque_model_test.dart` |
+| RF-014 | Cobertura de pagamentos provider adicionada | `test/features/pagamentos/pagamentos_provider_test.dart` |
+| RF-016/RF-017 | Regressao Q2-T01 corrigida | `test/features/concessao_afastamento/concessao_afastamento_card_test.dart` |
+
+Gate Q2 final:
+- `flutter analyze`: passou.
+- `flutter test`: passou, 143/143.
+- `flutter test --coverage`: passou, 143/143, LCOV 32,61%.
+- Backend `mobile-service`: scans, testes Maven e package passaram.

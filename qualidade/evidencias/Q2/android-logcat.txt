@@ -1,0 +1,16 @@
+Comando: adb logcat -d -t 300
+Data: 2026-09-28
+
+Resumo da coleta:
+- Coleta executada com emulator-5554 ativo.
+- sys.boot_completed retornou 1.
+- O trecho coletado trouxe ruido de sistema/emulador, incluindo SettingsToPropertiesMapper, Wi-Fi, SatelliteController e skia AGTM parsing failed.
+- Nao foi observado novo crash do aplicativo MPPB+ no trecho final coletado apos a retomada do Pixel_9.
+
+Trechos representativos:
+09-28 12:23:47.110 E SettingsToPropertiesMapper: failed to connect to aconfigd_system socket
+09-28 12:23:58.622 I BugleConnectivity: New default data network: wifi
+09-28 12:24:00.043 W skia: AGTM parsing failed flags.readFromStream(s) at 159
+09-28 12:24:01.623 I AdbWifiNetworkMonitor: Wi-Fi network available
+09-28 12:24:05.820 I adbd: exec logcat '-d' '-t' '300'
+

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/notifications/device_registration_provider.dart';
 import '../../../core/storage/secure_storage.dart';
 
+final authDioProvider = Provider<Dio>((ref) => Dio());
+
 // Definimos o estado da autenticação
 class AuthState {
   final bool isLoading;
@@ -76,7 +78,7 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       // Cria uma instância de Dio específica para Auth,
       // pois não precisamos dos interceptors normais de requisição autenticada
-      final authDio = Dio();
+      final authDio = ref.read(authDioProvider);
 
       final response = await authDio.post(
         'https://auth-api.mppb.mp.br/acesso/autoriza',

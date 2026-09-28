@@ -220,7 +220,7 @@ void main() {
     testWidgets('afastamento eleitoral bloqueia periodo com final de semana', (
       tester,
     ) async {
-      final sexta = _proximaDataComDiaSemana(DateTime.friday);
+      final segunda = _proximaDataComDiaSemana(DateTime.monday);
       int? numeroDiasEnviado;
 
       await tester.pumpWidget(
@@ -229,8 +229,8 @@ void main() {
             concessao: const ConcessaoAfastamento(
               id: 9,
               tipo: TipoConcessao.licencaEleitoral,
-              diasConcedidos: 5,
-              saldoRestante: 5,
+              diasConcedidos: 10,
+              saldoRestante: 10,
               periodo: 3,
               anoReferencia: 2024,
             ),
@@ -244,8 +244,8 @@ void main() {
 
       await tester.tap(find.text('Marcar gozo'));
       await tester.pumpAndSettle();
-      await _selecionarDataInicial(tester, sexta);
-      await tester.enterText(find.byType(TextField), '2');
+      await _selecionarDataInicial(tester, segunda);
+      await tester.enterText(find.byType(TextField), '6');
       await tester.pumpAndSettle();
 
       expect(find.textContaining('inclui sábado'), findsOneWidget);

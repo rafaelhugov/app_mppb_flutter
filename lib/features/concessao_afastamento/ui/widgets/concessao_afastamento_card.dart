@@ -695,20 +695,28 @@ class _MarcacaoGozoSheetState extends State<_MarcacaoGozoSheet> {
 
   Future<void> _selecionarData() async {
     final today = DateTime.now();
-    final initialDate = _dataInicial ?? today.add(const Duration(days: 1));
+    final firstDate = DateTime(today.year, today.month, today.day);
+    final lastDate = DateTime(today.year + 3);
+    final selectableDayPredicate = _isAfastamentoEleitoral
+        ? (DateTime date) => _blockedElectionLeaveDay(date) == null
+        : null;
+    final initialDate = _initialSelectableDate(
+      preferredDate: _dataInicial ?? today.add(const Duration(days: 1)),
+      firstDate: firstDate,
+      lastDate: lastDate,
+      selectableDayPredicate: selectableDayPredicate,
+    );
     final selected = await showDatePicker(
       context: context,
       initialDate: initialDate,
-      firstDate: DateTime(today.year, today.month, today.day),
-      lastDate: DateTime(today.year + 3),
+      firstDate: firstDate,
+      lastDate: lastDate,
       initialEntryMode: DatePickerEntryMode.calendarOnly,
       locale: const Locale('pt', 'BR'),
       helpText: 'Data inicial',
       cancelText: 'CANCELAR',
       confirmText: 'OK',
-      selectableDayPredicate: _isAfastamentoEleitoral
-          ? (date) => _blockedElectionLeaveDay(date) == null
-          : null,
+      selectableDayPredicate: selectableDayPredicate,
       builder: _concessaoDatePickerTheme,
     );
     if (selected != null) {
@@ -1333,6 +1341,40 @@ class _SheetTile extends StatelessWidget {
       ),
     );
   }
+}
+
+DateTime _initialSelectableDate({
+  required DateTime preferredDate,
+  required DateTime firstDate,
+  required DateTime lastDate,
+  required bool Function(DateTime date)? selectableDayPredicate,
+}) {
+  var candidate = _dateOnly(preferredDate);
+  final minDate = _dateOnly(firstDate);
+  final maxDate = _dateOnly(lastDate);
+  if (candidate.isBefore(minDate)) candidate = minDate;
+  if (candidate.isAfter(maxDate)) candidate = maxDate;
+  if (selectableDayPredicate == null || selectableDayPredicate(candidate)) {
+    return candidate;
+  }
+
+  for (
+    var next = candidate.add(const Duration(days: 1));
+    !next.isAfter(maxDate);
+    next = next.add(const Duration(days: 1))
+  ) {
+    if (selectableDayPredicate(next)) return next;
+  }
+
+  for (
+    var previous = candidate.subtract(const Duration(days: 1));
+    !previous.isBefore(minDate);
+    previous = previous.subtract(const Duration(days: 1))
+  ) {
+    if (selectableDayPredicate(previous)) return previous;
+  }
+
+  return candidate;
 }
 
 String? _blockedElectionLeaveDay(DateTime date) {

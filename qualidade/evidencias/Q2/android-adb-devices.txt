@@ -1,0 +1,6 @@
+Comando: adb devices
+Data: 2026-09-28
+
+List of devices attached
+emulator-5554	device
+

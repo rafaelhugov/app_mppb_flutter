@@ -64,8 +64,10 @@ class PerfilNotifier extends Notifier<PerfilState> {
 
   Future<void> carregar({bool forceRefresh = false}) async {
     await _carregarEstadoBiometria();
+    if (!ref.mounted) return;
 
     final token = await _tokenAtual();
+    if (!ref.mounted) return;
     if (token == null) {
       await _loadFromCache('Não foi possível carregar seu perfil.');
       return;
@@ -86,7 +88,9 @@ class PerfilNotifier extends Notifier<PerfilState> {
       final perfil = await ref
           .read(perfilRepositoryProvider)
           .buscarPerfil(token: token);
+      if (!ref.mounted) return;
       await _salvarCache(perfil);
+      if (!ref.mounted) return;
       state = state.copyWith(
         data: perfil,
         isLoading: false,
@@ -94,8 +98,10 @@ class PerfilNotifier extends Notifier<PerfilState> {
         errorMessage: null,
       );
     } on DioException {
+      if (!ref.mounted) return;
       await _loadFromCache('Não foi possível atualizar seu perfil.');
     } catch (_) {
+      if (!ref.mounted) return;
       await _loadFromCache('Não foi possível carregar seu perfil.');
     }
   }
@@ -103,15 +109,18 @@ class PerfilNotifier extends Notifier<PerfilState> {
   Future<void> refreshBiometrics() => _carregarEstadoBiometria();
 
   Future<void> _carregarEstadoBiometria() async {
+    if (!ref.mounted) return;
     final storage = ref.read(secureStorageProvider);
     final enabled = await storage.read(key: 'biometrics_enabled');
     final savedPassword = await storage.read(key: 'saved_password');
+    if (!ref.mounted) return;
     if (savedPassword != null) {
       await storage.delete(key: 'saved_password');
       await storage.delete(key: 'saved_username');
       await storage.delete(key: 'biometrics_enabled');
       await storage.write(key: 'biometrics_asked', value: 'true');
     }
+    if (!ref.mounted) return;
     state = state.copyWith(
       biometricsEnabled: savedPassword == null && enabled == 'true' && false,
       canUseBiometrics: false,
@@ -119,26 +128,32 @@ class PerfilNotifier extends Notifier<PerfilState> {
   }
 
   Future<void> _salvarCache(PerfilUsuario perfil) async {
+    if (!ref.mounted) return;
     final storage = ref.read(secureStorageProvider);
     final username = await storage.read(key: 'auth_username');
+    if (!ref.mounted) return;
     await storage.write(key: _cacheKey, value: jsonEncode(perfil.toJson()));
     if (username != null && username.trim().isNotEmpty) {
+      if (!ref.mounted) return;
       await storage.write(key: _cacheUsernameKey, value: username);
     }
   }
 
   Future<void> _loadFromCache(String fallbackMessage) async {
+    if (!ref.mounted) return;
     try {
       final storage = ref.read(secureStorageProvider);
       final currentUsername = await storage.read(key: 'auth_username');
       final cachedUsername = await storage.read(key: _cacheUsernameKey);
       final cachedStr = await storage.read(key: _cacheKey);
+      if (!ref.mounted) return;
 
       if (currentUsername != null &&
           cachedUsername != null &&
           currentUsername != cachedUsername) {
         await storage.delete(key: _cacheKey);
         await storage.delete(key: _cacheUsernameKey);
+        if (!ref.mounted) return;
         state = state.copyWith(
           isLoading: false,
           isRefreshing: false,
@@ -160,6 +175,7 @@ class PerfilNotifier extends Notifier<PerfilState> {
       // Mantem a mensagem padrao abaixo.
     }
 
+    if (!ref.mounted) return;
     state = state.copyWith(
       isLoading: false,
       isRefreshing: false,
@@ -169,6 +185,7 @@ class PerfilNotifier extends Notifier<PerfilState> {
 
   Future<String?> _tokenAtual() async {
     for (var attempt = 0; attempt < 6; attempt++) {
+      if (!ref.mounted) return null;
       final stateToken = ref.read(authProvider).token;
       if (stateToken != null && stateToken.trim().isNotEmpty) {
         return stateToken;
@@ -177,11 +194,14 @@ class PerfilNotifier extends Notifier<PerfilState> {
       final storedToken = await ref
           .read(secureStorageProvider)
           .read(key: 'auth_token');
+      if (!ref.mounted) return null;
       if (storedToken != null && storedToken.trim().isNotEmpty) {
         return storedToken;
       }
 
-      await Future<void>.delayed(const Duration(milliseconds: 250));
+      if (attempt < 5) {
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
     }
 
     return null;

@@ -303,6 +303,7 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
             vertical: 8,
           ),
           child: GridView.builder(
+            key: const Key('lista-noticias'),
             padding: EdgeInsets.zero,
             itemCount: gridNews.length,
             shrinkWrap: true,

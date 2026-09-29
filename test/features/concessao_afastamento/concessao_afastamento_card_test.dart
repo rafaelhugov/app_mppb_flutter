@@ -115,7 +115,7 @@ void main() {
       'descarta sugestao anterior ao mudar dataInicial e envia numeroDias da sugestao escolhida',
       (tester) async {
         final dateFormat = DateFormat('dd/MM/yyyy');
-        final primeiraData = DateTime.now().add(const Duration(days: 1));
+        final primeiraData = DateTime.now().add(const Duration(days: 2));
         final segundaData = primeiraData.add(const Duration(days: 1));
         final primeiraFinal = primeiraData.add(const Duration(days: 9));
         final segundaFinal = segundaData.add(const Duration(days: 14));
@@ -158,7 +158,11 @@ void main() {
         await _selecionarDataInicial(tester, primeiraData);
         expect(find.text(dateFormat.format(primeiraFinal)), findsOneWidget);
 
-        await _selecionarDataInicial(tester, segundaData);
+        await _selecionarDataInicial(
+          tester,
+          segundaData,
+          visibleFrom: primeiraData,
+        );
         expect(find.text(dateFormat.format(primeiraFinal)), findsNothing);
         expect(find.text(dateFormat.format(segundaFinal)), findsOneWidget);
 
@@ -467,9 +471,21 @@ Widget _card(ConcessaoAfastamento concessao) {
   );
 }
 
-Future<void> _selecionarDataInicial(WidgetTester tester, DateTime data) async {
+Future<void> _selecionarDataInicial(
+  WidgetTester tester,
+  DateTime data, {
+  DateTime? visibleFrom,
+}) async {
   await tester.tap(find.text('Data inicial'));
   await tester.pumpAndSettle();
+  final initialVisible = visibleFrom ?? DateTime.now();
+  var visibleMonth = DateTime(initialVisible.year, initialVisible.month);
+  final targetMonth = DateTime(data.year, data.month);
+  while (visibleMonth.isBefore(targetMonth)) {
+    await tester.tap(find.byIcon(Icons.chevron_right).last);
+    await tester.pumpAndSettle();
+    visibleMonth = DateTime(visibleMonth.year, visibleMonth.month + 1);
+  }
   await tester.tap(find.text('${data.day}').last);
   await tester.tap(find.text('OK'));
   await tester.pumpAndSettle();

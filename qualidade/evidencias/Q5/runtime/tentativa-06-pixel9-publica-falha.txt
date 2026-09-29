@@ -1,0 +1,17 @@
+Q5-R01 tentativa 06 - Pixel_9 jornada publica completa
+Data: 2026-09-29
+
+Logcat bruto nao recuperado: o device saiu de ADB durante a execucao/finalizacao.
+
+Sintomas observados:
+- `flutter test integration_test/q5_public_e2e_test.dart ...`
+- app iniciou e o teste entrou em `Q5-E2E-PUB-01 jornadas publicas seguras em Android`;
+- apos aproximadamente 39s o teste foi encerrado como `did not complete`;
+- cleanup falhou com `adb: device offline` ao executar uninstall;
+- `adb devices` subsequente ficou vazio;
+- `adb get-state` retornou `error: no devices/emulators found`;
+- processo do emulador Pixel_9 nao permaneceu listado.
+
+Classificacao:
+- BLOQUEIO INFRAESTRUTURAL ANDROID/ADB.
+- Sem evidencia recuperada de FATAL EXCEPTION do App MPPB.

@@ -1,0 +1,17 @@
+Q5 Android logcat - resumo tecnico
+Data: 2026-09-29
+
+Arquivos brutos preservados:
+- android-logcat-primeira-execucao.txt
+- android-logcat-falha-contatos.txt
+
+Eventos relevantes:
+- Primeira execucao bloqueada por dialogo nativo de permissao de notificacao antes de a arvore Flutter esperada ficar acessivel.
+- A flag de teste Q5_E2E_DISABLE_FCM foi criada para permitir E2E publico sem inicializar FCM.
+- Tentativas seguintes avancaram para Home publica/Contatos, mas o emulador/ADB ficou instavel.
+- Foram observados sintomas ambientais: processo do emulator com exit 139, adb device not found e adb device offline.
+- Nao foi identificada evidencia conclusiva de FATAL EXCEPTION da aplicacao nas evidencias coletadas.
+
+Conclusao:
+- Falha classificada como bloqueio ambiental/flakiness de runtime Android, nao como aprovacao E2E e nao como falha funcional comprovada da jornada publica.
+

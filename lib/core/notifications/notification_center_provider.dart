@@ -81,6 +81,7 @@ class NotificationCenterNotifier extends Notifier<NotificationCenterState> {
   Future<void> _loadReadKeys() async {
     final storage = ref.read(secureStorageProvider);
     final text = await storage.read(key: _readKeysStorageKey);
+    if (!ref.mounted) return;
     if (text == null || text.trim().isEmpty) {
       state = state.copyWith(isLoading: false);
       return;

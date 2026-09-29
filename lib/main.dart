@@ -24,7 +24,8 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (PushNotificationService.isSupportedPlatform) {
+  const disableFcmForE2E = bool.fromEnvironment('Q5_E2E_DISABLE_FCM');
+  if (PushNotificationService.isSupportedPlatform && !disableFcmForE2E) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
@@ -37,6 +38,8 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
+const _disableFcmForE2E = bool.fromEnvironment('Q5_E2E_DISABLE_FCM');
+
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
@@ -44,7 +47,9 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     ref.watch(sessionResetProvider);
-    ref.watch(pushNavigationServiceProvider);
+    if (!_disableFcmForE2E) {
+      ref.watch(pushNavigationServiceProvider);
+    }
 
     return MaterialApp.router(
       title: 'MPPB App',

@@ -82,6 +82,7 @@ class NoticiaNotifier extends Notifier<NoticiaState> {
       final dio = ref.read(dioProvider);
       final response = await dio.get('/api/public/noticias');
 
+      if (!ref.mounted) return;
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         final noticiasList = data
@@ -93,6 +94,7 @@ class NoticiaNotifier extends Notifier<NoticiaState> {
         throw Exception('Status code: ${response.statusCode}');
       }
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Erro ao carregar notícias: $e',

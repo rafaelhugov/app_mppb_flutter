@@ -126,6 +126,7 @@ class PublicDashboardPage extends ConsumerWidget {
                               'Extrajudicial',
                               Icons.verified_outlined,
                               '/certidao-extrajudicial',
+                              key: const ValueKey('q5-public-service-certidao'),
                               backgroundIcon: true,
                             ),
                             _buildSmallCard(
@@ -134,6 +135,7 @@ class PublicDashboardPage extends ConsumerWidget {
                               'Atos e editais',
                               Icons.description,
                               '/diario_oficial',
+                              key: const ValueKey('q5-public-service-diario'),
                               backgroundIcon: true,
                             ),
                             _buildSmallCard(
@@ -142,6 +144,7 @@ class PublicDashboardPage extends ConsumerWidget {
                               'Fique por dentro',
                               Icons.newspaper,
                               '/noticias',
+                              key: const ValueKey('q5-public-service-noticias'),
                               backgroundIcon: true,
                             ),
                             _buildSmallCard(
@@ -150,6 +153,9 @@ class PublicDashboardPage extends ConsumerWidget {
                               'Manifestações',
                               Icons.record_voice_over,
                               '/ouvidoria',
+                              key: const ValueKey(
+                                'q5-public-service-ouvidoria',
+                              ),
                               backgroundIcon: true,
                             ),
                             _buildSmallCard(
@@ -158,6 +164,9 @@ class PublicDashboardPage extends ConsumerWidget {
                               'Andamentos',
                               Icons.manage_search,
                               '/processos',
+                              key: const ValueKey(
+                                'q5-public-service-processos',
+                              ),
                               backgroundIcon: true,
                             ),
                             _buildSmallCard(
@@ -166,6 +175,7 @@ class PublicDashboardPage extends ConsumerWidget {
                               'Atendimento',
                               Icons.contact_support_outlined,
                               '/contatos',
+                              key: const ValueKey('q5-public-service-contatos'),
                               backgroundIcon: true,
                             ),
                           ],
@@ -249,6 +259,7 @@ class PublicDashboardPage extends ConsumerWidget {
     String subtitle,
     IconData icon,
     String route, {
+    Key? key,
     bool backgroundIcon = false,
   }) {
     final responsive = MppbResponsive.of(context);
@@ -256,6 +267,7 @@ class PublicDashboardPage extends ConsumerWidget {
     final isTabletLandscape = isTablet && responsive.isLandscape;
 
     return InkWell(
+      key: key,
       onTap: () => context.go(route),
       borderRadius: BorderRadius.circular(16),
       child: Container(

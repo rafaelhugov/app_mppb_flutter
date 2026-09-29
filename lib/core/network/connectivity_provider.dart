@@ -48,6 +48,7 @@ class ConnectivityNotifier extends Notifier<bool> {
         connectivityResult ?? await _connectivity.checkConnectivity();
     final hasNetwork = await _hasNetworkConnection(result);
     final hasInternet = hasNetwork && await _hasInternetAccessWithRetry();
+    if (!ref.mounted) return;
     if (currentCheck == _checkGeneration) {
       state = hasInternet;
       _syncOfflineRetry();

@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_mppb_flutter/core/network/api_client.dart';
+import 'package:app_mppb_flutter/core/storage/secure_storage.dart';
 import 'package:app_mppb_flutter/core/notifications/device_registration_provider.dart';
 import 'package:app_mppb_flutter/core/notifications/device_registration_repository.dart';
 import 'package:app_mppb_flutter/core/notifications/push_notification_service.dart';
@@ -266,6 +267,31 @@ void main() {
 
       // Não deve lançar StateError ("ref after dispose" ou "setState on disposed")
       await expectLater(futureCarregar, completes);
+    });
+
+    test('Q6-T05: AuthNotifier lida com dispose durante _checkInitialAuth sem erro pos-dispose (BUG-Q6-004)', () async {
+      final storage = _ControlledAsyncSecureStorage();
+      final container = ProviderContainer(
+        overrides: [
+          secureStorageProvider.overrideWithValue(storage),
+          devicePlatformResolverProvider.overrideWithValue(const _UnsupportedPlatformResolver()),
+        ],
+      );
+
+      // Inicia AuthNotifier e seu _checkInitialAuth() assíncrono
+      container.read(authProvider);
+
+      // Descarrega / descarta o container antes da liberação da leitura assíncrona do storage
+      container.dispose();
+
+      // Libera a leitura assíncrona com token válido
+      storage.readTokenCompleter.complete('jwt-saved-token');
+
+      // Aguarda ciclo de microtasks para permitir a resolução de _checkInitialAuth
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      // Se a guarda !ref.mounted estivesse ausente, lançaria Ref._throwIfInvalidUsage
     });
 
     // -------------------------------------------------------------------------
@@ -567,5 +593,25 @@ class _FakePushNavigationDelegate implements PushNavigationDelegate {
   @override
   void go(String route) {
     routes.add(route);
+  }
+}
+
+class _ControlledAsyncSecureStorage extends FlutterSecureStorage {
+  final Completer<String?> readTokenCompleter = Completer<String?>();
+
+  @override
+  Future<String?> read({
+    required String key,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    WindowsOptions? wOptions,
+    AppleOptions? iOptions,
+    AppleOptions? mOptions,
+  }) async {
+    if (key == 'auth_token') {
+      return readTokenCompleter.future;
+    }
+    return null;
   }
 }

@@ -43,18 +43,19 @@ Foram mapeadas e classificadas **28 operações** em `qualidade/inventarios/Q6-i
 
 ## 3. Síntese dos Testes por Módulo
 
-### A. Flutter (`q6_flutter_concurrency_test.dart`) — 11/11 PASS (100%)
+### A. Flutter (`q6_flutter_concurrency_test.dart`) — 12/12 PASS (100%)
 1. **Q6-T02 (Duplo Toque Login)**: Disparo do login bloqueia imediatamente segundos envios enquanto `isLoading == true`. Exatamente 1 chamada HTTP efetuada.
 2. **Q6-T02/T11 (Identificador FCM)**: Chamadas consecutivas de registro preservam o mesmo `UUIDv4` estável de instalação.
 3. **Q6-T03 (Chamadas Simultâneas)**: Duas requisições paralelas de carteira convergem sem duplicação de dados.
 4. **Q6-T04 (Respostas Fora de Ordem)**: Resposta tardia de exercício anterior (2024) não sobrescreve o exercício mais recente selecionado pelo usuário (2023).
-5. **Q6-T05 (Dispose em Request)**: Descarte de container com request de perfil em trânsito não lança erro pós-dispose (`ref.mounted`).
-6. **Q6-T06 (Logout em Request)**: Resposta autenticada que chega após logout não polui nem restaura a sessão no estado público.
-7. **Q6-T07 (Troca de Usuário)**: Logout purga chaves de cache no storage seguro, garantindo isolamento entre usuário A e B.
-8. **Q6-T11 (Deduplicação Push)**: Eventos idênticos de abertura de push com mesmo `messageKey` disparam apenas uma ação de navegação.
-9. **Q6-T12 (Downloads PDF)**: Duas solicitações paralelas de PDF recebem buffers íntegros e idênticos sem corrupção.
-10. **Q6-T13 (Filtros Rápidos)**: Digitação rápida concorrente converge para o último termo digitado.
-11. **Q6-T16 (Concorrência de Leitura)**: Múltiplas leituras paralelas preservam cabeçalhos e dados isolados.
+5. **Q6-T05 (Dispose em Request de Perfil)**: Descarte de container com request de perfil em trânsito não lança erro pós-dispose (`ref.mounted`).
+6. **Q6-T05 (Dispose em AuthNotifier)**: Descarte de container com leitura assíncrona de storage em `_checkInitialAuth` em trânsito não lança `Ref._throwIfInvalidUsage` (`ref.mounted`, BUG-Q6-004).
+7. **Q6-T06 (Logout em Request)**: Resposta autenticada que chega após logout não polui nem restaura a sessão no estado público.
+8. **Q6-T07 (Troca de Usuário)**: Logout purga chaves de cache no storage seguro, garantindo isolamento entre usuário A e B.
+9. **Q6-T11 (Deduplicação Push)**: Eventos idênticos de abertura de push com mesmo `messageKey` disparam apenas uma ação de navegação.
+10. **Q6-T12 (Downloads PDF)**: Duas solicitações paralelas de PDF recebem buffers íntegros e idênticos sem corrupção.
+11. **Q6-T13 (Filtros Rápidos)**: Digitação rápida concorrente converge para o último termo digitado.
+12. **Q6-T16 (Concorrência de Leitura)**: Múltiplas leituras paralelas preservam cabeçalhos e dados isolados.
 
 ### B. Backend (`Q6ConcorrenciaIntegridadeTest.java`) — 6/6 PASS (100%)
 1. **Q6-T08/T09 (Registro Concorrente)**: 4 threads concorrentes registrando o mesmo token/identificador convergem atomicamente para 1 registro ativo no banco.

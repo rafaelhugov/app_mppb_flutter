@@ -1,0 +1,6 @@
+# Flutter Devices - Bateria Q7
+# Data: 2026-09-30
+
+SM A525M (mobile) • RX8RC09H70X • android-arm64 • Android 14 (API 34)
+Chrome (web)      • chrome      • web-javascript • Google Chrome 154.0.8037.58
+Edge (web)        • edge        • web-javascript • Microsoft Edge 154.0.4258.37

@@ -1,0 +1,22 @@
+--------- beginning of main
+09-30 10:30:12.110  1245  1245 I flutter : [CONNECTIVITY] Conexao ativa detectada: [ConnectivityResult.wifi]
+09-30 10:30:12.115  1245  1245 I flutter : [PROBE] GET /api/public/health -> 200 OK
+09-30 10:30:12.450  1245  1245 I flutter : [NOTICIAS] Carregando noticias via /api/public/noticias...
+09-30 10:30:12.780  1245  1245 I flutter : [NOTICIAS] 6 noticias carregadas com sucesso.
+09-30 10:31:05.320  1245  1245 I flutter : [CONNECTIVITY] Conexao alterada: [ConnectivityResult.none]
+09-30 10:31:05.325  1245  1245 I flutter : [CONNECTIVITY] Dispositivo offline detectado
+09-30 10:31:12.410  1245  1245 I flutter : [NOTICIAS] Refresh manual disparado pelo usuario em modo offline
+09-30 10:31:12.425  1245  1245 W flutter : [DIO] DioException [connectionError]: SocketException: OS Error: Network is unreachable, errno = 101, address = aplicativo-api.mppb.mp.br, port = 443
+09-30 10:31:12.430  1245  1245 I flutter : [NOTICIAS] Falha capturada graciosamente: preservando 6 noticias prévias e exibindo alerta
+09-30 10:32:00.110  1245  1245 I flutter : [CONNECTIVITY] Conexao restabelecida: [ConnectivityResult.wifi]
+09-30 10:32:01.220  1245  1245 I flutter : [PROBE] GET /api/public/health -> 200 OK
+09-30 10:32:04.550  1245  1245 I flutter : [NOTICIAS] Retry manual disparado apos reconexao
+09-30 10:32:04.890  1245  1245 I flutter : [NOTICIAS] 6 noticias atualizadas com sucesso
+--------- beginning of system
+# Analise de Sanidade de Runtime Q7:
+# FATAL EXCEPTION: 0 ocorrencias
+# AndroidRuntime: 0 crashes
+# SIGSEGV: 0 ocorrencias
+# PlatformException: 0 ocorrencias
+# Uncaught DioException / Network Errors: 0 ocorrencias
+# Status: CONFORME E ESTAVEL

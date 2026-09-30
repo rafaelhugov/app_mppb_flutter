@@ -48,14 +48,17 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
   }
 
   Future<void> fetchCarteira() async {
+    if (!ref.mounted) return;
     state = state.copyWith(isLoading: true, errorMessage: null);
 
+    if (!ref.mounted) return;
     final dio = ref.read(dioProvider);
     final secureStorage = ref.read(secureStorageProvider);
 
     try {
       final token = await secureStorage.read(key: 'auth_token');
       final username = await secureStorage.read(key: 'auth_username');
+      if (!ref.mounted) return;
       if (token == null || token.trim().isEmpty) {
         await _loadFromCache('Não foi possível carregar a carteira funcional.');
         return;
@@ -93,6 +96,7 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
           await secureStorage.write(key: _cacheUsernameKey, value: username);
         }
 
+        if (!ref.mounted) return;
         state = CarteiraState(
           isLoading: false,
           data: carteira,
@@ -106,6 +110,7 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
         );
       }
     } on DioException catch (e) {
+      if (!ref.mounted) return;
       // Se for erro de rede ou timeout, tentar buscar do cache offline
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
@@ -116,38 +121,46 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
         await _loadFromCache(_mensagemErroCarteira(e.response?.statusCode));
       }
     } catch (e) {
+      if (!ref.mounted) return;
       // Erro genérico
       await _loadFromCache('Não foi possível carregar a carteira funcional.');
     }
   }
 
   Future<void> _loadFromCache(String fallbackMessage) async {
+    if (!ref.mounted) return;
     try {
       final secureStorage = ref.read(secureStorageProvider);
       final currentUsername = await secureStorage.read(key: 'auth_username');
       final cachedUsername = await secureStorage.read(key: _cacheUsernameKey);
       final cachedStr = await secureStorage.read(key: _cacheKey);
 
+      if (!ref.mounted) return;
+
       if (currentUsername != null &&
           cachedUsername != null &&
           currentUsername != cachedUsername) {
         await secureStorage.delete(key: _cacheKey);
         await secureStorage.delete(key: _cacheUsernameKey);
+        if (!ref.mounted) return;
         state = CarteiraState(isLoading: false, errorMessage: fallbackMessage);
         return;
       }
 
       if (cachedStr != null && cachedStr.isNotEmpty) {
         final carteira = UsuarioCarteira.fromJson(jsonDecode(cachedStr));
+        if (!ref.mounted) return;
         state = CarteiraState(
           isLoading: false,
           data: carteira,
           isOffline: true,
         );
       } else {
+        if (!ref.mounted) return;
         state = state.copyWith(isLoading: false, errorMessage: fallbackMessage);
       }
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage:

@@ -76,9 +76,11 @@ class NoticiaNotifier extends Notifier<NoticiaState> {
   }
 
   Future<void> fetchNoticias() async {
+    if (!ref.mounted) return;
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
+      if (!ref.mounted) return;
       final dio = ref.read(dioProvider);
       final response = await dio.get('/api/public/noticias');
 

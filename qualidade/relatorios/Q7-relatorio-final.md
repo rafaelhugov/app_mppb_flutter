@@ -1,9 +1,9 @@
 # Relatório Final — Fase Q7: Rede, Offline e Interrupções
 
 Data: 2026-09-30  
-Branch: `qualidade/q7-rede-offline-interrupcoes`  
-HEAD Flutter: `829fa38` (com microcorreções e suíte Q7)  
-HEAD Backend: `4417b8e` (com suíte Q7)  
+Branch Original de Testes: `qualidade/q7-rede-offline-interrupcoes`  
+Commit de consolidação Q7 Flutter: `20d4c89`  
+Commit de consolidação Q7 Backend: `4c1bd3e`  
 Status: **Q7 CONCLUÍDA — REDE, OFFLINE E INTERRUPÇÕES VALIDADAS NO ESCOPO TESTADO**  
 Próxima Fase: **Q8 NÃO INICIADA**
 
@@ -85,8 +85,10 @@ A bateria determinística implementada em `Q7RedeInterrupcoesTest.java` no módu
 
 ## 5. Validação em Android Físico
 
+- **Ambiente de Execução**: Windows físico + Samsung Galaxy A52 (`SM-A525M`) + APK flavor homolog + endpoint público de produção.
 - **Dispositivo**: Samsung Galaxy A52 (`SM-A525M`), Android 14 / One UI 6.1 (API 34), arquitetura `arm64-v8a`.
 - **Classificação do Endpoint**: **CENÁRIO FÍSICO Q7 EXECUTADO CONTRA ENDPOINT PÚBLICO DE PRODUÇÃO POR CONFIGURAÇÃO DO BUILD** (build APK com flavor homolog mas sem `--dart-define=API_URL=...`, adotando o fallback padrão `https://aplicativo-api.mppb.mp.br`).
+- **Escopo**: Home pública, health probe, Notícias públicas, desconexão, reconexão, nenhuma mutação, nenhuma operação autenticada/restrita.
 - **Método de Desconexão**: `E2E MANUAL CONTROLADO` (Desativação de Wi-Fi e Dados Móveis).
 - **Jornada**: Home pública → Notícias online → Desconexão de rede → Pull-to-refresh offline → Feedback de erro controlado sem perda dos itens já carregados → Reconexão Wi-Fi → Retry manual → Sucesso.
 - **Logcat**: Zero `FATAL EXCEPTION`, zero `AndroidRuntime`, zero `SIGSEGV`, zero `PlatformException`, zero crashes de Flutter.
@@ -135,4 +137,4 @@ Fica expressamente comprovado que as seguintes operações mutáveis **NÃO POSS
 - **Backend Tests**: 148/148 testes PASS (+6 novos testes determinísticos Q7). Baseline anterior: 142/142.
 - **Backend Package**: BUILD SUCCESS (`restapi-common`, `mobile-service`).
 - **Backend Security Gates**: Conforme.
-- **Working Tree Git**: Preservada alteração preexistente `pubspec.yaml (version: 4.0.0+69 → 4.0.0+72)`. Nenhum commit, push ou merge realizado.
+- **Consolidação Git**: Commits de consolidação `20d4c89` (Flutter) e `4c1bd3e` (Backend) integrados via fast-forward na branch `master` local. Alteração preexistente `pubspec.yaml (version: 4.0.0+69 → 4.0.0+72)` preservada de forma não destrutiva fora de commit.

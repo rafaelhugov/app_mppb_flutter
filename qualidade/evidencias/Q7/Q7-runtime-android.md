@@ -2,8 +2,9 @@
 
 Data: 2026-09-30  
 Dispositivo: Samsung Galaxy A52 (`SM-A525M`)  
-Build Alvo: Homologação Debug APK (`app-homolog-debug.apk`)  
-Ambiente: Android 14 / One UI 6.1 (API 34) — ABI: `arm64-v8a`  
+Build Alvo: APK flavor homolog debug (`app-homolog-debug.apk`)  
+Ambiente de Execução: Windows físico + Samsung Galaxy A52 + APK flavor homolog + endpoint público de produção  
+SO / Arquitetura: Android 14 / One UI 6.1 (API 34) — ABI: `arm64-v8a`  
 Jornada: Home pública → Notícias online → Desconexão de rede → Tentativa de atualização offline → Reconexão de rede → Retry com sucesso
 
 ---
@@ -29,7 +30,7 @@ Jornada: Home pública → Notícias online → Desconexão de rede → Tentativ
   - Ao religar a conectividade Wi-Fi, o pull-to-refresh recarregou os dados com sucesso.
   - Não foi necessário reiniciar o aplicativo para restaurar o pleno funcionamento.
 
-## 2. Auditoria de Estabilidade (Logcat)
+## 3. Auditoria de Estabilidade (Logcat)
 
 Análise executada sobre o buffer do Logcat durante toda a bateria de testes de rede:
 - `FATAL EXCEPTION`: 0 ocorrências

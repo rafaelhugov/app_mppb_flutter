@@ -67,6 +67,7 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
       );
 
       if (response.statusCode == 200) {
+        if (!ref.mounted) return;
         final List<dynamic> list = response.data;
         final anos = list.map((e) => e as int).toList();
 
@@ -77,20 +78,25 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
             limparDados: true,
           );
         } else {
+          final anoSelecionado = anos.contains(state.exercicioAtual)
+              ? state.exercicioAtual
+              : anos.first;
           state = state.copyWith(
             isLoadingAnos: false,
             anosDisponiveis: anos,
-            exercicioAtual: anos.first, // Seleciona o mais recente
+            exercicioAtual: anoSelecionado,
           );
           fetchPagamentos(); // Busca do ano recém selecionado
         }
       } else {
+        if (!ref.mounted) return;
         state = state.copyWith(
           isLoadingAnos: false,
           errorMessage: 'Erro ao carregar anos disponíveis',
         );
       }
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoadingAnos: false,
         errorMessage: 'Falha ao buscar exercícios. Verifique a internet.',
@@ -99,6 +105,7 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
   }
 
   Future<void> fetchPagamentos() async {
+    final exercicioRequisitado = state.exercicioAtual;
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
@@ -107,11 +114,15 @@ class PagamentosNotifier extends Notifier<PagamentosState> {
       final token = await secureStorage.read(key: 'auth_token');
 
       final response = await dio.get(
-        '/pagamentos/${state.exercicioAtual}',
+        '/pagamentos/$exercicioRequisitado',
         options: token != null
             ? Options(headers: {'Authorization': 'Bearer $token'})
             : null,
       );
+
+      if (!ref.mounted || state.exercicioAtual != exercicioRequisitado) {
+        return;
+      }
 
       if (response.statusCode == 204) {
         state = state.copyWith(

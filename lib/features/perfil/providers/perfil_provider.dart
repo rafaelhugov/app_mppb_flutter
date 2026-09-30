@@ -55,7 +55,11 @@ class PerfilNotifier extends Notifier<PerfilState> {
     ref.listen(authProvider, (previous, next) {
       if (previous?.token != next.token) {
         _ultimoToken = next.token;
-        Future.microtask(() => carregar(forceRefresh: true));
+        if (next.token == null) {
+          state = const PerfilState();
+        } else {
+          Future.microtask(() => carregar(forceRefresh: true));
+        }
       }
     });
     Future.microtask(carregar);
@@ -89,6 +93,8 @@ class PerfilNotifier extends Notifier<PerfilState> {
           .read(perfilRepositoryProvider)
           .buscarPerfil(token: token);
       if (!ref.mounted) return;
+      final currentToken = await _tokenAtual();
+      if (currentToken == null || currentToken != token) return;
       await _salvarCache(perfil);
       if (!ref.mounted) return;
       state = state.copyWith(

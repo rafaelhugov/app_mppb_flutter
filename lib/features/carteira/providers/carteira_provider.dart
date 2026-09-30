@@ -67,6 +67,12 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
+      if (!ref.mounted) return;
+      final currentToken = await secureStorage.read(key: 'auth_token');
+      if (currentToken == null || currentToken != token) {
+        return;
+      }
+
       if (response.statusCode == 200) {
         final responseData = response.data as Map<String, dynamic>;
 

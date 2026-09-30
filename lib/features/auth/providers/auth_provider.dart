@@ -60,7 +60,9 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> _checkInitialAuth() async {
     final secureStorage = ref.read(secureStorageProvider);
     await _migrarSenhaBiometricaLegada(secureStorage);
+    if (!ref.mounted) return;
     final token = await secureStorage.read(key: 'auth_token');
+    if (!ref.mounted) return;
 
     if (token != null && token.isNotEmpty) {
       state = state.copyWith(isAuthenticated: true, token: token);
@@ -73,6 +75,9 @@ class AuthNotifier extends Notifier<AuthState> {
     String password, {
     bool offerBiometrics = true,
   }) async {
+    if (state.isLoading) {
+      return false;
+    }
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {

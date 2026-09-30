@@ -478,7 +478,8 @@ Future<void> _selecionarDataInicial(
 }) async {
   await tester.tap(find.text('Data inicial'));
   await tester.pumpAndSettle();
-  final initialVisible = visibleFrom ?? DateTime.now();
+  final initialVisible =
+      visibleFrom ?? DateTime.now().add(const Duration(days: 1));
   var visibleMonth = DateTime(initialVisible.year, initialVisible.month);
   final targetMonth = DateTime(data.year, data.month);
   while (visibleMonth.isBefore(targetMonth)) {

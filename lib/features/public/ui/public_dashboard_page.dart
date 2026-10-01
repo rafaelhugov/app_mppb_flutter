@@ -89,12 +89,14 @@ class PublicDashboardPage extends ConsumerWidget {
                               size: isTablet ? 23 : 21,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              'Serviços ao Cidadão',
-                              style: TextStyle(
-                                color: const Color(0xFF202322),
-                                fontSize: isTablet ? 24 : 22,
-                                fontWeight: FontWeight.w800,
+                            Flexible(
+                              child: Text(
+                                'Serviços ao Cidadão',
+                                style: TextStyle(
+                                  color: const Color(0xFF202322),
+                                  fontSize: isTablet ? 24 : 22,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ],
@@ -183,23 +185,31 @@ class PublicDashboardPage extends ConsumerWidget {
 
                         SizedBox(height: isTablet ? 44 : 48),
 
-                        Row(
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
-                            Icon(
-                              Icons.newspaper_rounded,
-                              color: const Color(0xFFD62828),
-                              size: isTablet ? 23 : 21,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.newspaper_rounded,
+                                  color: const Color(0xFFD62828),
+                                  size: isTablet ? 23 : 21,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Notícias',
+                                  style: TextStyle(
+                                    color: const Color(0xFF202322),
+                                    fontSize: isTablet ? 22 : 20,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Notícias',
-                              style: TextStyle(
-                                color: const Color(0xFF202322),
-                                fontSize: isTablet ? 22 : 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const Spacer(),
                             FilledButton(
                               onPressed: () => context.go('/noticias'),
                               style: FilledButton.styleFrom(
@@ -266,49 +276,54 @@ class PublicDashboardPage extends ConsumerWidget {
     final isTablet = responsive.isTablet;
     final isTabletLandscape = isTablet && responsive.isLandscape;
 
-    return InkWell(
-      key: key,
-      onTap: () => context.go(route),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: const Color(0xFFE9EDF0)),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x10101828),
-              blurRadius: 16,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              if (backgroundIcon)
-                Positioned(
-                  right: isTablet && responsive.isLandscape
-                      ? -20
-                      : isTablet
-                      ? -12
-                      : -22,
-                  bottom: isTablet && responsive.isLandscape
-                      ? -28
-                      : isTablet
-                      ? -24
-                      : -30,
-                  child: Icon(
-                    icon,
-                    color: const Color(0x18343A40),
-                    size: isTablet && responsive.isLandscape
-                        ? 92
+    return Semantics(
+      button: true,
+      label: '$title, $subtitle',
+      child: InkWell(
+        key: key,
+        onTap: () => context.go(route),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE9EDF0)),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x10101828),
+                blurRadius: 16,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                if (backgroundIcon)
+                  Positioned(
+                    right: isTablet && responsive.isLandscape
+                        ? -20
                         : isTablet
-                        ? 112
-                        : 122,
+                        ? -12
+                        : -22,
+                    bottom: isTablet && responsive.isLandscape
+                        ? -28
+                        : isTablet
+                        ? -24
+                        : -30,
+                    child: ExcludeSemantics(
+                      child: Icon(
+                        icon,
+                        color: const Color(0x18343A40),
+                        size: isTablet && responsive.isLandscape
+                            ? 92
+                            : isTablet
+                            ? 112
+                            : 122,
+                      ),
+                    ),
                   ),
-                ),
               Padding(
                 padding: EdgeInsets.all(
                   isTabletLandscape
@@ -362,8 +377,9 @@ class PublicDashboardPage extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSmallCardText(
     BuildContext context,

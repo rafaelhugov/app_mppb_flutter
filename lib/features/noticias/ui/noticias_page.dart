@@ -551,6 +551,7 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         IconButton(
+          tooltip: 'Página anterior',
           icon: const Icon(Icons.chevron_left),
           color: currentPage > 1
               ? const Color(0xFFD62828)
@@ -559,6 +560,7 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
         ),
         ...pages,
         IconButton(
+          tooltip: 'Próxima página',
           icon: const Icon(Icons.chevron_right),
           color: currentPage < totalPages
               ? const Color(0xFFD62828)
@@ -760,6 +762,7 @@ class NewsDetailSheet extends StatelessWidget {
                       ),
                       const Spacer(),
                       IconButton(
+                        tooltip: 'Fechar',
                         visualDensity: VisualDensity.compact,
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(
@@ -1043,6 +1046,7 @@ class _NewsImageViewerSheet extends StatelessWidget {
                         ),
                       ),
                       IconButton(
+                        tooltip: 'Fechar',
                         visualDensity: VisualDensity.compact,
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(

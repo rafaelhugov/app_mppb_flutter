@@ -442,8 +442,10 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
-            width: isLoading ? 48 : 220,
-            height: 42,
+            constraints: BoxConstraints(
+              minWidth: isLoading ? 48 : 220,
+              minHeight: 48,
+            ),
             child: ElevatedButton(
               onPressed: isLoading ? null : _buscar,
               style: ButtonStyle(
@@ -460,7 +462,7 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
                 ),
                 shape: WidgetStateProperty.all(
                   RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(isLoading ? 21 : 14),
+                    borderRadius: BorderRadius.circular(isLoading ? 24 : 14),
                   ),
                 ),
               ),
@@ -474,6 +476,7 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
                         child: CircularProgressIndicator(
                           color: Colors.white,
                           strokeWidth: 2.2,
+                          semanticsLabel: 'Pesquisando processos',
                         ),
                       )
                     : const Row(
@@ -483,11 +486,14 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
                         children: [
                           Icon(Icons.search, size: 18),
                           SizedBox(width: 9),
-                          Text(
-                            'Pesquisar processo',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
+                          Flexible(
+                            child: Text(
+                              'Pesquisar processo',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -523,22 +529,20 @@ class _ConsultaProcessosPageState extends ConsumerState<ConsultaProcessosPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
             children: [
-              Flexible(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF202322),
-                  ),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF202322),
                 ),
               ),
-              const SizedBox(width: 8),
               if (trailing != null)
                 trailing
               else if (subtitle != null)
@@ -1127,6 +1131,7 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Fechar',
                     icon: const Icon(Icons.close, color: Color(0xFF697370)),
                     onPressed: () => Navigator.of(context).pop(),
                     padding: EdgeInsets.zero,
@@ -1223,6 +1228,7 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                                       right: 4,
                                       top: 4,
                                       child: IconButton(
+                                        tooltip: 'Recarregar captcha',
                                         icon: const Icon(
                                           Icons.refresh,
                                           color: _processBlue,

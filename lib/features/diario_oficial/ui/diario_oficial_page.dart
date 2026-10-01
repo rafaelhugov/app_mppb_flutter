@@ -323,6 +323,7 @@ class DiarioOficialPage extends ConsumerWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         IconButton(
+          tooltip: 'Página anterior',
           icon: const Icon(Icons.chevron_left, size: 20),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -333,6 +334,7 @@ class DiarioOficialPage extends ConsumerWidget {
         ),
         ...pages,
         IconButton(
+          tooltip: 'Próxima página',
           icon: const Icon(Icons.chevron_right, size: 20),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -658,6 +660,7 @@ class _DiarioPdfSheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Fechar',
                     visualDensity: VisualDensity.compact,
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(

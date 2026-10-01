@@ -249,6 +249,35 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     }
   }
 
+  String _getAccessibleLabelFor(String label) {
+    switch (label) {
+      case 'Contr.':
+        return 'Contracheque';
+      case 'Cart.':
+        return 'Carteira Funcional';
+      case 'Proc.':
+        return 'Processos';
+      case 'Diár.':
+        return 'Diário Oficial';
+      case 'Afast.':
+        return 'Concessão de Afastamento';
+      case 'Pagam.':
+        return 'Pagamentos';
+      case 'Desig.':
+        return 'Designações';
+      case 'Notíc.':
+        return 'Notícias';
+      case 'Ouvid.':
+        return 'Ouvidoria';
+      case 'Início':
+        return 'Início';
+      case 'Perfil':
+        return 'Meu Perfil';
+      default:
+        return label;
+    }
+  }
+
   Widget _buildNavItem(
     int index,
     IconData icon,
@@ -257,6 +286,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     VoidCallback onTap,
   ) {
     final isSelected = index == selectedIndex;
+    final accessibleLabel = _getAccessibleLabelFor(label);
     final metrics = MppbResponsive.of(context);
     final itemHeight = metrics.isTablet ? 42.0 : 40.0;
     final iconSize = metrics.isTablet ? 18.0 : 17.0;
@@ -268,9 +298,13 @@ class _MainLayoutState extends ConsumerState<MainLayout>
 
     return Flexible(
       flex: _getFlexForLabel(label),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: accessibleLabel,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
         child: Center(
           child: Material(
             color: Colors.transparent,
@@ -331,8 +365,9 @@ class _MainLayoutState extends ConsumerState<MainLayout>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildMoreButton(VoidCallback onTap, bool isHome) {
     return AnimatedContainer(
@@ -355,20 +390,27 @@ class _MainLayoutState extends ConsumerState<MainLayout>
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
             scale: isHome ? 0.85 : 1.0,
-            child: GestureDetector(
-              onTap: isHome ? null : onTap,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF202322),
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0x26FFFFFF)),
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Color(0xFFF7F8F6),
-                  size: 26,
+            child: Semantics(
+              button: true,
+              label: 'Mais serviços',
+              child: Tooltip(
+                message: 'Mais serviços',
+                child: GestureDetector(
+                  onTap: isHome ? null : onTap,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF202322),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: const Color(0x26FFFFFF)),
+                    ),
+                    child: const Icon(
+                      Icons.add_rounded,
+                      color: Color(0xFFF7F8F6),
+                      size: 26,
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -280,6 +280,7 @@ class ContraChequePage extends ConsumerWidget {
                         ),
                       ),
                       IconButton(
+                        tooltip: 'Fechar',
                         visualDensity: VisualDensity.compact,
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(

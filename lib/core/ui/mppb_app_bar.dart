@@ -116,6 +116,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
             onPressed: () => context.go('/perfil'),
           ),
           IconButton(
+            tooltip: notificationItems.isEmpty
+                ? 'Notificações'
+                : 'Notificações (${notificationItems.length} novas)',
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
             icon: _NotificationBell(count: notificationItems.length),
@@ -132,6 +135,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
             },
           ),
           IconButton(
+            tooltip: 'Sair da conta',
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
             icon: Icon(
@@ -180,15 +184,17 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
             SizedBox(
               width: metrics.isTablet ? 32 : 28,
               height: metrics.isTablet ? 32 : 28,
-              child: Image.asset(
-                'assets/images/brasao_mppb_sem_fundo.png',
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stack) => const Text(
-                  'M',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                    color: Color(0xFF202322),
+              child: ExcludeSemantics(
+                child: Image.asset(
+                  'assets/images/brasao_mppb_sem_fundo.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stack) => const Text(
+                    'M',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: Color(0xFF202322),
+                    ),
                   ),
                 ),
               ),
@@ -210,6 +216,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
+          tooltip: notificationItems.isEmpty
+              ? 'Notificações'
+              : 'Notificações (${notificationItems.length} novas)',
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
           icon: _NotificationBell(count: notificationItems.length),
@@ -356,9 +365,12 @@ class _HomeTapTarget extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: () => context.go('/'),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-            child: child,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              child: child,
+            ),
           ),
         ),
       ),

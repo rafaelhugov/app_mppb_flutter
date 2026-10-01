@@ -20,12 +20,14 @@ class SecaoSigaMppb extends StatelessWidget {
               size: 20,
             ),
             SizedBox(width: 8),
-            Text(
-              'Redes sociais',
-              style: TextStyle(
-                color: Color(0xFF202322),
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
+            Flexible(
+              child: Text(
+                'Redes sociais',
+                style: TextStyle(
+                  color: Color(0xFF202322),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],

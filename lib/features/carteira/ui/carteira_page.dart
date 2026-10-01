@@ -250,27 +250,33 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
                       icon: Icons.badge_rounded,
                     ),
                     const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: _flipCard,
-                      child: AnimatedBuilder(
-                        animation: _animation,
-                        builder: (context, child) {
-                          final transform = Matrix4.identity()
-                            ..setEntry(3, 2, 0.001)
-                            ..rotateY(_animation.value * pi);
+                    Semantics(
+                      button: true,
+                      label: _isFront
+                          ? 'Virar para o verso da carteira funcional'
+                          : 'Virar para a frente da carteira funcional',
+                      child: GestureDetector(
+                        onTap: _flipCard,
+                        child: AnimatedBuilder(
+                          animation: _animation,
+                          builder: (context, child) {
+                            final transform = Matrix4.identity()
+                              ..setEntry(3, 2, 0.001)
+                              ..rotateY(_animation.value * pi);
 
-                          return Transform(
-                            transform: transform,
-                            alignment: Alignment.center,
-                            child: _animation.value < 0.5
-                                ? _buildFront(state.data!, state.isOffline)
-                                : Transform(
-                                    transform: Matrix4.identity()..rotateY(pi),
-                                    alignment: Alignment.center,
-                                    child: _buildBack(state.data!),
-                                  ),
-                          );
-                        },
+                            return Transform(
+                              transform: transform,
+                              alignment: Alignment.center,
+                              child: _animation.value < 0.5
+                                  ? _buildFront(state.data!, state.isOffline)
+                                  : Transform(
+                                      transform: Matrix4.identity()..rotateY(pi),
+                                      alignment: Alignment.center,
+                                      child: _buildBack(state.data!),
+                                    ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -779,16 +785,20 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
 
                   // QR Code
                   Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: QrImageView(
-                        data: qrData,
-                        version: QrVersions.auto,
-                        size: 90.0,
+                    child: Semantics(
+                      label:
+                          'Código QR para validação da carteira funcional por leitor externo',
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: QrImageView(
+                          data: qrData,
+                          version: QrVersions.auto,
+                          size: 90.0,
+                        ),
                       ),
                     ),
                   ),

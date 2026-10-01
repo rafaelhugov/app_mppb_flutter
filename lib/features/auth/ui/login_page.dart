@@ -70,6 +70,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         elevation: 0,
         foregroundColor: const Color(0xFF202322),
         leading: IconButton(
+          tooltip: 'Voltar',
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () {
             if (context.canPop()) {
@@ -113,16 +114,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Image.asset(
-                              'assets/images/brasao_mppb_sem_fundo.png',
-                              width: 68,
-                              height: 68,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(
-                                    Icons.shield,
-                                    color: Color(0xFFD62828),
-                                    size: 62,
-                                  ),
+                            ExcludeSemantics(
+                              child: Image.asset(
+                                'assets/images/brasao_mppb_sem_fundo.png',
+                                width: 68,
+                                height: 68,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                      Icons.shield,
+                                      color: Color(0xFFD62828),
+                                      size: 62,
+                                    ),
+                              ),
                             ),
                             const SizedBox(height: 14),
 
@@ -276,7 +279,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             if (_biometricsEnabled) ...[
                               SizedBox(
                                 width: double.infinity,
-                                height: 46,
+                                height: 48,
                                 child: OutlinedButton.icon(
                                   onPressed: null,
                                   style: OutlinedButton.styleFrom(
@@ -306,7 +309,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
                             SizedBox(
                               width: double.infinity,
-                              height: 46,
+                              height: 48,
                               child: ElevatedButton(
                                 onPressed: authState.isLoading
                                     ? null
@@ -322,6 +325,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 child: authState.isLoading
                                     ? const CircularProgressIndicator(
                                         color: Colors.white,
+                                        semanticsLabel: 'Carregando autenticação',
                                       )
                                     : const Text(
                                         'ACESSAR',
@@ -336,7 +340,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             const SizedBox(height: 10),
                             SizedBox(
                               width: double.infinity,
-                              height: 42,
+                              height: 48,
                               child: OutlinedButton(
                                 onPressed: authState.isLoading
                                     ? null
@@ -361,24 +365,41 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             if (authState.errorMessage != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 24.0),
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0x14D62828),
-                                    border: Border.all(
-                                      color: const Color(0x33D62828),
+                                child: Semantics(
+                                  liveRegion: true,
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0x14D62828),
+                                      border: Border.all(
+                                        color: const Color(0x33D62828),
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
                                     ),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Text(
-                                    authState.errorMessage!,
-                                    style: const TextStyle(
-                                      color: Color(0xFFD62828),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline_rounded,
+                                          color: Color(0xFFD62828),
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            authState.errorMessage!,
+                                            style: const TextStyle(
+                                              color: Color(0xFFD62828),
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),

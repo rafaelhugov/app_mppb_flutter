@@ -96,6 +96,7 @@ class StepAnexos extends ConsumerWidget {
                 ),
                 subtitle: Text(file.formattedSize),
                 trailing: IconButton(
+                  tooltip: 'Remover anexo',
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => notifier.removeAttachment(file),
                 ),

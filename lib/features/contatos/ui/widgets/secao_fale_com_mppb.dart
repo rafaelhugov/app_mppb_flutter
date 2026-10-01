@@ -20,12 +20,14 @@ class SecaoFaleComMppb extends StatelessWidget {
               size: 21,
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Ouvidoria',
-              style: TextStyle(
-                color: Color(0xFF202322),
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
+            const Flexible(
+              child: Text(
+                'Ouvidoria',
+                style: TextStyle(
+                  color: Color(0xFF202322),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],

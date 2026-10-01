@@ -689,6 +689,7 @@ class _CertidaoExtrajudicialPageState
                       ),
                     ),
                     IconButton(
+                      tooltip: 'Fechar',
                       visualDensity: VisualDensity.compact,
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(

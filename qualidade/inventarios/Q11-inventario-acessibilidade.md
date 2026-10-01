@@ -33,6 +33,6 @@ Dispositivo Físico de Referência: Samsung Galaxy A52 (SM-A525M, Android 14 / O
 ## 2. Totais do Inventário
 - **Total de Telas/Componentes Mapeados**: 17 componentes centrais.
 - **Classificação por Nível de Evidência**:
-  - `TESTADO` (coberto diretamente por teste widget automatizado / guideline na Q11): 9 componentes.
-  - `INSPECIONADO` (verificado estruturalmente no código com padrões compartilhados validados): 8 componentes.
+  - `TESTADO` (coberto diretamente por teste widget automatizado / guideline na Q11): 10 componentes.
+  - `INSPECIONADO` (verificado estruturalmente no código com padrões compartilhados validados): 7 componentes.
   - `NÃO AFERIDO`: 0 componentes no escopo da baseline móvel.

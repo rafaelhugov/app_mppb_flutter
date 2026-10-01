@@ -21,17 +21,18 @@ A fase **Q11 — Acessibilidade** teve como objetivo central responder à quest�
 ## 2. Inventário de Componentes e Telas
 
 Foram mapeadas **17 telas e componentes centrais**, categorizados estritamente por nível de evidência:
-- **9 Componentes com Nível `TESTADO`** (exercitados diretamente por testes automatizados e guidelines):
-  - `MppbAppBar` (Pública e Autenticada);
+- **10 Componentes com Nível `TESTADO`** (exercitados diretamente por testes automatizados e guidelines):
+  - `MppbAppBar (Pública)`;
+  - `MppbAppBar (Autenticada)`;
   - `MainLayout` (Dock inferior);
   - `PublicDashboardPage` (Home Pública);
   - `LoginPage`;
   - `NoticiasPage`;
   - `DiarioOficialPage`;
   - `ConsultaProcessosPage`;
-  - `CarteiraPage`;
+  - `CarteiraPage` (Funcional);
   - `ContraChequePage`.
-- **8 Componentes com Nível `INSPECIONADO`** (auditados estaticamente no código com reutilização de componentes base validados):
+- **7 Componentes com Nível `INSPECIONADO`** (auditados estaticamente no código com reutilização de componentes base validados):
   - `NewsDetailSheet` / Modais;
   - `ContatosPage` e seções;
   - `CertidaoExtrajudicialPage`;

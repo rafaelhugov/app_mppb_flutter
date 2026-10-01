@@ -1,0 +1,151 @@
+{
+    "metrics": {
+        "iterations": {
+            "count": 32862,
+            "rate": 821.3899850170188
+        },
+        "http_reqs": {
+            "count": 131448,
+            "rate": 3285.5599400680753
+        },
+        "http_req_blocked": {
+            "med": 0,
+            "max": 60.4634,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.004872328981802684,
+            "min": 0
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "checks": {
+            "passes": 131448,
+            "fails": 0,
+            "value": 1
+        },
+        "data_received": {
+            "count": 234230937,
+            "rate": 5854632.883967875
+        },
+        "iteration_duration": {
+            "max": 168.5302,
+            "p(90)": 23.83819,
+            "p(95)": 25.1015,
+            "avg": 22.824253122147322,
+            "min": 20.2509,
+            "med": 22.1658
+        },
+        "http_req_sending": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.01360139903231694,
+            "min": 0,
+            "med": 0,
+            "max": 11.1037
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(95)": 1.1336,
+            "avg": 0.4958465393159221,
+            "min": 0,
+            "med": 0.3847,
+            "max": 130.5424,
+            "p(90)": 0.8108
+        },
+        "http_req_waiting": {
+            "p(95)": 0.9985,
+            "avg": 0.40290287566184657,
+            "min": 0,
+            "med": 0.331,
+            "max": 67.4119,
+            "p(90)": 0.7057
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 49
+        },
+        "http_req_receiving": {
+            "max": 88.6609,
+            "p(90)": 0.3776,
+            "p(95)": 0.5107,
+            "avg": 0.07934226462175195,
+            "min": 0,
+            "med": 0
+        },
+        "vus_max": {
+            "value": 50,
+            "min": 50,
+            "max": 50
+        },
+        "http_req_connecting": {
+            "avg": 0.00032137194936400715,
+            "min": 0,
+            "med": 0,
+            "max": 4.2488,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 131448,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "data_sent": {
+            "count": 15149382,
+            "rate": 378660.7830928457
+        },
+        "http_req_duration": {
+            "avg": 0.4958465393159221,
+            "min": 0,
+            "med": 0.3847,
+            "max": 130.5424,
+            "p(90)": 0.8108,
+            "p(95)": 1.1336
+        }
+    },
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "health 200": {
+                    "id": "8e4f90a842a57472549a6b2cf699032d",
+                    "passes": 32862,
+                    "fails": 0,
+                    "name": "health 200",
+                    "path": "::health 200"
+                },
+                "noticias 200": {
+                    "name": "noticias 200",
+                    "path": "::noticias 200",
+                    "id": "1505ed5a2167a81e33c0eed8f3bf6291",
+                    "passes": 32862,
+                    "fails": 0
+                },
+                "perfil 200": {
+                    "name": "perfil 200",
+                    "path": "::perfil 200",
+                    "id": "7e2cba1191d025b2130caf7b36c4ee42",
+                    "passes": 32862,
+                    "fails": 0
+                },
+                "pagamentos 200": {
+                    "path": "::pagamentos 200",
+                    "id": "334d8a37bb05b96441e53d1885a534c4",
+                    "passes": 32862,
+                    "fails": 0,
+                    "name": "pagamentos 200"
+                }
+            },
+        "name": "",
+        "path": ""
+    }
+}

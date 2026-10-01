@@ -1,0 +1,68 @@
+{
+    "deviceId":  "RX8RC09H70X",
+    "model":  "Samsung Galaxy A52 (SM-A525M)",
+    "androidVersion":  "14 (API 34)",
+    "package":  "br.mp.mppbapp.app.homolog",
+    "buildMode":  "PROFILE",
+    "apiUrl":  "https://aplicativo-mppb-homolog.mppb.mp.br",
+    "coldStartMs":  [
+                        1970,
+                        1981,
+                        1897,
+                        1939,
+                        1897
+                    ],
+    "coldStartMedianMs":  1939,
+    "warmStartMs":  [
+                        139,
+                        124,
+                        93,
+                        107,
+                        92
+                    ],
+    "warmStartMedianMs":  107,
+    "temporalMemory":  {
+                           "M0_baselineMb":  203.06,
+                           "M1_5ciclosMb":  212.69,
+                           "M2_10ciclosMb":  210.91,
+                           "M3_15ciclosMb":  208.13,
+                           "M4_idleMb":  208.13,
+                           "deltaTotalMb":  5.07,
+                           "trend":  "ESTABILIZADO / SEM TENDENCIA LINEAR DE LEAK"
+                       },
+    "cpuSeries":  {
+                      "idleInicial":  "10001 u0_a362      10 -10  75G 212M 100M S 90.3   3.8   0:14.94 br.mp.mppbapp.app.homolog 10585 shell        20   0 2.1G 2.9M 2.2M S  0.0   0.0   0:00.02 grep mppbapp 10581 shell        20   0 2.0G 2.1M 1.4M S  0.0   0.0   0:00.01 sh -c top -b -n 1 | grep mppbapp",
+                      "scrollSamples":  [
+                                            "10001 u0_a362      10 -10  75G 216M 102M S 74.1   3.9   0:16.56 br.mp.mppbapp.app.homolog",
+                                            "10607 shell        20   0 2.0G 2.9M 2.1M S  0.0   0.0   0:00.02 grep mppbapp",
+                                            "10604 shell        20   0 2.0G 2.1M 1.4M S  0.0   0.0   0:00.02 sh -c top -b -n 1 | grep mppbapp",
+                                            "10001 u0_a362      10 -10  75G 220M 102M S 73.3   4.0   0:18.04 br.mp.mppbapp.app.homolog",
+                                            "10626 shell        20   0 2.0G 2.9M 2.1M S  0.0   0.0   0:00.02 grep mppbapp",
+                                            "10623 shell        20   0 2.0G 2.1M 1.4M S  0.0   0.0   0:00.01 sh -c top -b -n 1 | grep mppbapp",
+                                            "10001 u0_a362      10 -10  75G 216M 102M S 63.3   3.9   0:19.43 br.mp.mppbapp.app.homolog",
+                                            "10652 shell        20   0 2.1G 2.9M 2.1M S  0.0   0.0   0:00.01 grep mppbapp",
+                                            "10649 shell        20   0 2.0G 2.0M 1.4M S  0.0   0.0   0:00.01 sh -c top -b -n 1 | grep mppbapp",
+                                            "10001 u0_a362      10 -10  75G 218M 103M S 61.2   3.9   0:20.99 br.mp.mppbapp.app.homolog",
+                                            "10683 shell        20   0 2.1G 2.9M 2.1M S  0.0   0.0   0:00.02 grep mppbapp",
+                                            "10679 shell        20   0 2.0G 2.1M 1.4M S  0.0   0.0   0:00.01 sh -c top -b -n 1 | grep mppbapp"
+                                        ],
+                      "navegacao":  "10001 u0_a362      10 -10  75G 226M 106M S 86.6   4.1   0:39.27 br.mp.mppbapp.app.homolog 11039 shell        20   0 2.0G 2.9M 2.1M S  0.0   0.0   0:00.02 grep mppbapp 11035 shell        20   0 2.0G 2.1M 1.4M S  0.0   0.0   0:00.01 sh -c top -b -n 1 | grep mppbapp",
+                      "idleFinal":  "10001 u0_a362      10 -10  75G 223M 106M S 74.1   4.0   1:20.81 br.mp.mppbapp.app.homolog 11460 shell        20   0 2.1G 2.9M 2.2M S  0.0   0.0   0:00.01 grep mppbapp 11457 shell        20   0 2.0G 2.1M 1.4M S  0.0   0.0   0:00.03 sh -c top -b -n 1 | grep mppbapp"
+                  },
+    "frameTiming":  {
+                        "tool":  "SurfaceFlinger SurfaceView BLAST Latency (Hardware Presentation Timestamps)",
+                        "scenario":  "Home -> scroll -> Noticias -> scroll continuo -> voltar",
+                        "displayRefreshRateHz":  90,
+                        "displayRefreshPeriodMs":  11.11,
+                        "totalFramesAnalyzed":  125,
+                        "medianFrameDurationMs":  11.11,
+                        "p90FrameDurationMs":  11.18,
+                        "p95FrameDurationMs":  11.19,
+                        "maxFrameDurationMs":  11.4,
+                        "jank60Frames":  0,
+                        "jank60Percent":  0.0,
+                        "jank90Frames":  56,
+                        "jank90Percent":  44.8,
+                        "conclusion":  "SEM JANK RELEVANTE OBSERVADO (100% dos frames abaixo do orcamento de 16.67ms/60fps; maxima duracao de 11.40ms)"
+                    }
+}

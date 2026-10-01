@@ -1,0 +1,11 @@
+{
+    "nonHeapUsedMb":  28,
+    "activeThreads":  1,
+    "totalThreadsJvm":  18,
+    "heapMaxMb":  3888,
+    "poolSize":  3,
+    "totalErrors":  0,
+    "peakThreadsJvm":  18,
+    "totalRequestsServed":  2,
+    "heapUsedMb":  30
+}

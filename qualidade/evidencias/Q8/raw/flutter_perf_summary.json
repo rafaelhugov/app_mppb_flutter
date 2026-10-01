@@ -1,0 +1,25 @@
+{
+    "memBaselineMb":  0.12,
+    "coldStartMedianMs":  6299,
+    "coldStartMs":  [
+                        4621,
+                        0,
+                        7836,
+                        6535,
+                        6299
+                    ],
+    "package":  "br.mp.mppbapp.app.homolog",
+    "memAfterNavMb":  0.12,
+    "androidVersion":  "14 (API 34)",
+    "warmStartMs":  [
+                        359,
+                        144,
+                        117,
+                        106,
+                        123
+                    ],
+    "cpuSnapshot":  "13942 u0_a362      10 -10  75G 490M 201M R 95.0   8.9   1:01.26 br.mp.mppbapp.app.homolog",
+    "model":  "Samsung Galaxy A52 (SM-A525M)",
+    "warmStartMedianMs":  123,
+    "deviceId":  "RX8RC09H70X"
+}

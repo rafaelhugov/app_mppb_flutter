@@ -64,7 +64,11 @@ Foram mapeadas **17 telas e componentes centrais**, categorizados estritamente p
   1. `font_scale = 1.1` original registrado via ADB;
   2. Ajustado para `1.3`;
   3. App homolog reaberto e fluxo mínimo percorrido na tela física: `Home` → `Notícias` → `Home` → `Login` → `Processos`;
-  4. Inspeção visual confirmou zero overflow, zero corte de texto e controles plenamente acionáveis (evidências: `q11_home_scale13.png`, `q11_noticias_scale13.png`, `q11_login_scale13.png`, `q11_processos_scale13.png`);
+  4. Inspeção visual confirmou zero overflow, zero corte de texto e controles plenamente acionáveis. Evidências visuais do runtime Android em font_scale=1.3 versionadas junto aos artefatos canônicos da Q11:
+     - [q11-home-font-scale-1.3.png](../evidencias/Q11/android/q11-home-font-scale-1.3.png)
+     - [q11-noticias-font-scale-1.3.png](../evidencias/Q11/android/q11-noticias-font-scale-1.3.png)
+     - [q11-login-font-scale-1.3.png](../evidencias/Q11/android/q11-login-font-scale-1.3.png)
+     - [q11-processos-font-scale-1.3.png](../evidencias/Q11/android/q11-processos-font-scale-1.3.png)
   5. Escala de fonte **obrigatoriamente restaurada para 1.1** e confirmada via `adb shell settings get system font_scale`.
 
 ### 4.2 Q11-C20 — Display Size / Density (PARCIAL)

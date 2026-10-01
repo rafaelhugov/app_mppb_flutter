@@ -34,11 +34,13 @@ adb shell wm density
    adb shell monkey -p br.mp.mppbapp.app.homolog -c android.intent.category.LAUNCHER 1
    ```
 4. **Execução do Fluxo Mínimo de Navegação**:
-   - `Home Pública`: renderização íntegra da grade de serviços e cabeçalho "Notícias" adaptado com `Wrap` (evidência: `q11_home_scale13.png`);
-   - `Notícias`: navegação para lista de notícias e inspeção de botões de paginação e cards (evidência: `q11_noticias_scale13.png`);
+   - `Home Pública`: renderização íntegra da grade de serviços e cabeçalho "Notícias" adaptado com `Wrap` (evidência: [q11-home-font-scale-1.3.png](android/q11-home-font-scale-1.3.png));
+   - `Notícias`: navegação para lista de notícias e inspeção de botões de paginação e cards (evidência: [q11-noticias-font-scale-1.3.png](android/q11-noticias-font-scale-1.3.png));
    - `Retorno à Home`: transição limpa via keyevent 4;
-   - `Login`: abertura da tela de acesso restrito através do botão "Entrar" na AppBar; campos "Usuário", "Senha" e botões com layout íntegro sem truncamento (evidência: `q11_login_scale13.png`);
-   - `Consulta Processual`: abertura do formulário de processos com cabeçalho adaptado e captcha (evidência: `q11_processos_scale13.png`).
+   - `Login`: abertura da tela de acesso restrito através do botão "Entrar" na AppBar; campos "Usuário", "Senha" e botões com layout íntegro sem truncamento (evidência: [q11-login-font-scale-1.3.png](android/q11-login-font-scale-1.3.png));
+   - `Consulta Processual`: abertura do formulário de processos com cabeçalho adaptado e captcha (evidência: [q11-processos-font-scale-1.3.png](android/q11-processos-font-scale-1.3.png)).
+
+   Evidências visuais do runtime Android em font_scale=1.3 versionadas junto aos artefatos canônicos da Q11.
 5. **Inspeção Visual**:
    - Nenhum `RenderFlex overflow` visível;
    - Nenhum clipping de texto ou títulos;

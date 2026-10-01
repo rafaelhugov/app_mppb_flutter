@@ -27,8 +27,8 @@ A tabela abaixo conecta os achados e garantias consolidados desde a fase de cont
 
 | Store / Componente | Cenário de Validação Q10 | Validação Relacionada | Status Q10 |
 |---|---|---|---|
-| `FlutterSecureStorage` | Q10-T01, Q10-T02, Q10-T03, Q10-T04, Q10-T05 | Q6 (sanitização de senha) / Q7 (cache offline) | **PASSOU (T01/T02/T04/T05) / PARCIAL (T03 valores)** |
-| `DeviceRegistrationStore` (FCM) | Q10-T01, Q10-T02, Q10-T15 | Q4 (integração de push) | **PASSOU** |
+| `FlutterSecureStorage` | Q10-T01, Q10-T02, Q10-T03, Q10-T04, Q10-T05 | Q6 (sanitização de senha) / Q7 (cache offline) | **PASSOU (T01/T02/T04) / PARCIAL (T03 valores, T05 payload)** |
+| `DeviceRegistrationStore` (FCM) | Q10-T01, Q10-T02, Q10-T15 | Q4 (integração de push) | **PASSOU (T01/T02) / PARCIAL (T15 valor)** |
 | `FlutterCacheManager` / Imagens | Q10-T01, Q10-T02, Q10-T03 | Q7 (cache de rede) | **PASSOU** |
 | In-memory PDF / Printing | Q10-T14 | Q5 (visualização de relatórios/diário) | **PASSOU** |
 | Sandbox Isolation (Flavors) | Q10-T09 | Q9 (compatibilidade e distribuição) | **PASSOU** |

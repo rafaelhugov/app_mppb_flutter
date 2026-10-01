@@ -2,26 +2,30 @@
 
 **Ciclo de Qualidade, Confiabilidade e Prontidão do App MPPB**  
 **Data:** 01/10/2026  
-**Repositório Flutter:** `app_mppb_flutter` | Branch: `qualidade/q10-instalacao-atualizacao-migracao` (base `8fcb889`)  
+**Repositório Flutter:** `app_mppb_flutter` | Branch: `master` (HEAD consolidado)  
 **Repositório Backend:** `spring-boot/restapi` | Branch: `master` (HEAD `508a1fc`, working tree limpo)  
 **Hardware de Teste Físico:** Samsung Galaxy A52 (`SM-A525M`, Android 14 / One UI 6.1, Kernel 4.14, API 34)  
 **Endpoint Validado:** `https://aplicativo-mppb-homolog.mppb.mp.br` (`--dart-define=API_URL`)  
-**Pendência Remota Registrada:** Publicação remota de Q8/Q9 no GitLab pendente por indisponibilidade de infraestrutura (HTTP 504 Gateway Timeout).
+**Pendência Remota Registrada:** Publicação remota de Q8/Q9/Q10 no GitLab pendente por indisponibilidade de infraestrutura (HTTP 504 Gateway Timeout).
 
 ---
 
 ## 1. Resumo Executivo
 
 A fase **Q10 — Instalação, Atualização e Migração** comprovou experimentalmente a robustez do ciclo de vida de instalação, atualização e manipulação de estado local do aplicativo MPPB. Utilizando o dispositivo físico Samsung Galaxy A52 (Android 14 real), foi executado com sucesso o fluxo completo de:
-1. **Instalação limpa (+72)**: app abriu em cold start limpo, sem sessões fantasmas ou erros no KeyStore;
+1. **Instalação limpa (+72)**: app abriu em cold start limpo (5989ms), sem sessões fantasmas ou erros no KeyStore;
 2. **Atualização in-place (+69 → +72)**: aplicada via `adb install -r`, com aceitação imediata pelo Package Manager e confirmação de `versionCode=72`;
 3. **Rejeição de downgrade**: tentativa de instalar v69 sobre v72 rejeitada pelo sistema operacional com `INSTALL_FAILED_VERSION_DOWNGRADE`;
 4. **Limpeza de dados (`pm clear`)**: sandbox resetado para 59 bytes com reabertura equivalente ao first run;
 5. **Reinstalação (uninstall + install)**: descarte completo de sandbox e reconstrução limpa do estado.
 
-Paralelamente, a persistência foi auditada com estrito rigor metodológico: o mecanismo `FlutterSecureStorage` permaneceu plenamente operacional após o upgrade e os arquivos do sandbox permaneceram presentes. Chaves funcionais que dependem de sessão autenticada foram rigorosamente classificadas como container preservado, com valores específicos não aferidos por limitação de massa de teste (não uso de credenciais institucionais reais).
-
-A compilação do APK debug homolog foi concluída com sucesso. A geração do AppBundle (AAB) release de homologação não foi validada nesta estação por ausência legítima das chaves institucionais privadas de assinatura (`android/key.properties`), sendo classificada como pendência de prontidão (`RISCO-Q10-001`).
+Paralelamente, a persistência e a lógica de ciclo de sessão foram auditadas com estrito rigor metodológico:
+- O mecanismo `FlutterSecureStorage` permaneceu plenamente operacional após o upgrade e os arquivos do sandbox permaneceram presentes;
+- O ciclo de sessão (leitura inicial de token e expurgo de caches no logout) foi **validado deterministicamente em storage controlado** através dos testes existentes `test/features/auth/auth_provider_test.dart` (*sessao existente autentica usuario com token salvo* e *logout limpa sessao e caches do usuario*);
+- A resiliência de cache para Perfil e Carteira foi confirmada estruturalmente em código (`try-catch` com fallbacks amigáveis), mas sem teste determinístico dedicado exercitando payload incompatível ou corrompido, sendo classificada como `PARCIAL`;
+- Os contêineres e arquivos FCM permaneceram presentes no upgrade, porém a identidade do valor específico do UUID não foi extraída e comparada no device físico, sendo classificada como `PARCIAL`;
+- Chaves funcionais que dependem de sessão institucional real no dispositivo foram classificadas como container preservado, com valores específicos não aferidos por limitação de massa de teste;
+- A geração do AppBundle (AAB) release de homologação não foi validada nesta estação por ausência legítima das chaves institucionais privadas de assinatura (`android/key.properties`), sendo classificada como pendência de prontidão (`RISCO-Q10-001`).
 
 A plataforma iOS foi auditada estaticamente, sendo seu runtime classificado estritamente como **BLOQUEADO POR LIMITAÇÃO DE AMBIENTE** devido à ausência de ambiente macOS/Xcode na estação de testes. Identificou-se que o projeto iOS ainda utiliza o bundle identifier de template (`com.example.appMppbFlutter`), gerando o risco `RISCO-Q10-002` e ensejando correção histórica documental da fase Q9.
 
@@ -35,7 +39,7 @@ A suíte completa de 187 testes automatizados, os security gates canônicos e a 
 |---|---|---|---|---|
 | **Android KeyStore** | Chaves RSA/AES (`FlutterSecureStoragePluginKeyOAEP`) | Sim | **MECANISMO/CONTAINER PRESERVADO NO UPDATE** (Storage permaneceu operacional) | Chaves apagadas no uninstall ou recicladas no clear data |
 | **FlutterSecureStorage** | `auth_token`, `auth_username`, flags, caches | Sim | **MECANISMO PRESERVADO / VALOR ESPECÍFICO NÃO AFERIDO** (Sem login real) | Totalmente expurgado; reiniciado estéril no first-run |
-| **Identificador FCM** | `fcm_device_installation_id` | Sim | **MECANISMO/CONTAINER PRESERVADO NO UPDATE** | Expurgo comprovado no clear data; novo UUIDv4 gerado |
+| **Identificador FCM** | `fcm_device_installation_id` | Sim | **MECANISMO/CONTAINER PRESERVADO / VALOR ESPECÍFICO NÃO COMPARADO** | Expurgo comprovado no clear data; novo UUIDv4 gerado |
 | **Senha Legada** | `saved_password` | Não | **REGRA DE CÓDIGO VALIDADA / NÃO EXERCITADA COM VALOR REAL** | Removido |
 | **SharedPreferences Nativo** | `com.google.android.gms.appid.xml` (FCM) | Sim | **CONTAINER PRESERVADO** (Arquivo de 416 bytes presente pós-update) | Removido |
 | **Files Sandbox** | `files/Manrope_*.ttf`, `flutter_callback_cache.json` | Sim | **CONTAINER PRESERVADO** (Arquivos presentes pós-update) | Removido |
@@ -52,8 +56,8 @@ A suíte completa de 187 testes automatizados, os security gates canônicos e a 
 | **Q10-T01** | Instalação limpa no Android físico (v72) | Instalação via ADB completada; app inicializou em cold start (5989ms) com KeyStore configurado e Home pública funcional; zero crashes. | **PASSOU** |
 | **Q10-T02** | Atualização +69 → +72 in-place | Base v69 instalada e atualizada via `adb install -r` com o APK candidato v72. `dumpsys` confirmou `versionCode=72`; inicialização íntegra sem exceções. | **PASSOU** |
 | **Q10-T03** | Persistência pós-update | Mecanismo/storage e arquivos no sandbox permaneceram presentes após o upgrade; valores funcionais específicos classificados como não aferidos por ausência de login real. | **PARCIAL** |
-| **Q10-T04** | Logout e ciclo de sessão pós-update | `AuthNotifier` lê token de forma determinística na inicialização; rotina `_migrarSenhaBiometricaLegada` sanitiza dados antigos sem falha. | **PASSOU** |
-| **Q10-T05** | Atualização com dados incompatíveis | Parsers JSON em `carteira_provider` e `perfil_provider` possuem blocos `try-catch` com fallback amigável; sem exceções fatais. | **PASSOU** |
+| **Q10-T04** | Ciclo de sessão pós-upgrade | **Ciclo de sessão validado deterministicamente em storage controlado:** leitura e inicialização com token comprovada em `test/features/auth/auth_provider_test.dart` (*sessao existente autentica usuario com token salvo*) e expurgo de sessão/caches no logout (*logout limpa sessao e caches do usuario*). Sessão autenticada real no device físico não aferida. | **PASSOU** |
+| **Q10-T05** | Atualização com dados incompatíveis | Validação estrutural de tratamento de erro (blocos `try-catch` e fallbacks amigáveis em `carteira_provider` e `perfil_provider`) comprovada em código; execução específica com payload incompatível ou corrompido não exercitada em teste determinístico dedicado. | **PARCIAL** |
 | **Q10-T06** | Downgrade de versão (+72 → +69) | Package Manager rejeitou instalação padrão com `INSTALL_FAILED_VERSION_DOWNGRADE`. Downgrade funcionou com a flag de desenvolvimento forçada `-d`. | **PASSOU** |
 | **Q10-T07** | Reinstalação (Uninstall + Install) | `adb uninstall` apagou o pacote e arquivos privados; reinstalação iniciou do zero perfeitamente. | **PASSOU** |
 | **Q10-T08** | Limpeza de dados (Clear Data) | `adb shell pm clear` limpou sandbox para 59 bytes; reabertura solicitou permissões de sistema de novo (equivalente ao first run). | **PASSOU** |
@@ -63,7 +67,7 @@ A suíte completa de 187 testes automatizados, os security gates canônicos e a 
 | **Q10-T12** | Compatibilidade de APIs Android | Validado no runtime real Android 14 (API 34). Outras APIs (24 a 36) mantidas como conformidade estática. | **PARCIAL** |
 | **Q10-T13** | Migração de banco de dados | App não implementa SQLite local ou schema persistente relacional próprio. | **N/A** |
 | **Q10-T14** | Arquivos temporários e PDFs | PDFs são mantidos em memória RAM (`Uint8List`) e despachados via intent de compartilhamento do SO; sem resíduos em disco. | **PASSOU** |
-| **Q10-T15** | Identificador de instalação FCM | `fcm_device_installation_id` e preferences permaneceram presentes no upgrade in-place e são recriados (UUIDv4) após clear data ou reinstalação. | **PASSOU** |
+| **Q10-T15** | Comportamento do identificador de instalação FCM | Containers e preferências FCM permaneceram presentes no upgrade in-place; mecanismo de geração UUIDv4 confirmado em código; identidade lógica do valor específico do `fcm_device_installation_id` não comparada antes/depois no device físico. | **PARCIAL** |
 | **Q10-iOS** | Runtime de Instalação e Update iOS | Host Windows 11 sem macOS/Xcode. Auditoria estática realizada (`Info.plist`, `project.pbxproj`). | **BLOQUEADO** |
 
 ---
@@ -74,13 +78,13 @@ A suíte completa de 187 testes automatizados, os security gates canônicos e a 
 ======================================================================
   RESUMO DA MATRIZ Q10 — INSTALAÇÃO, ATUALIZAÇÃO E MIGRAÇÃO
 ======================================================================
-  [PASSOU]     11 cenários ( 68,8%)
-  [PARCIAL]     3 cenários ( 18,8%)
-  [BLOQUEADO]   1 cenário  (  6,2%)
-  [N/A]         1 cenário  (  6,2%)
-  [FALHOU]      0 cenários (  0,0%)
+  [PASSOU]      9 cenários ( 56,25%)
+  [PARCIAL]     5 cenários ( 31,25%)
+  [BLOQUEADO]   1 cenário  (  6,25%)
+  [N/A]         1 cenário  (  6,25%)
+  [FALHOU]      0 cenários (  0,00%)
 ======================================================================
-  TOTAL        16 cenários (100,0%)
+  TOTAL        16 cenários (100,00%)
 ======================================================================
 ```
 
@@ -113,8 +117,10 @@ A suíte completa de 187 testes automatizados, os security gates canônicos e a 
 
 ## 7. Declaração Formal de Encerramento
 
-**Q10 DEFINITIVAMENTE ENCERRADA E CONSISTENTE**
+**Q10 DEFINITIVAMENTE ENCERRADA E DOCUMENTALMENTE CONSISTENTE**
 
 **Q10 CONCLUÍDA — INSTALAÇÃO, ATUALIZAÇÃO E MIGRAÇÃO VALIDADAS NO ESCOPO TESTADO**
 
 **Q11 NÃO INICIADA**
+
+**BASE PRONTA PARA Q11**

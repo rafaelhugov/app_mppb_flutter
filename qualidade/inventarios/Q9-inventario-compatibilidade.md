@@ -74,7 +74,8 @@ O Flutter compila por padrão para as seguintes ABIs em Android:
 ## 4. Especificações Técnicas iOS
 
 ### 4.1 Deployment Target e Identificadores
-- **Bundle Identifier:** `br.mp.mppbapp.app`
+- **Bundle Identifier:** `com.example.appMppbFlutter`
+> **CORREÇÃO DOCUMENTAL IDENTIFICADA DURANTE Q10:** O projeto iOS ainda utiliza o bundle identifier de template (`com.example.appMppbFlutter`), necessitando atribuição institucional prévia à distribuição App Store.
 - **Bundle Display Name:** `MPPB+`
 - **Deployment Target (`IPHONEOS_DEPLOYMENT_TARGET`):** `13.0` (configurado em iOS 13.0; a compatibilidade real depende das versões de iOS suportadas por cada modelo físico; runtime iOS não aferido na Q9).
 - **Scene Delegate:** Suportado (`UIWindowSceneSessionRoleApplication`)

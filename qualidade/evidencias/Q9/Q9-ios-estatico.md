@@ -18,7 +18,8 @@
 A análise estática do arquivo `ios/Runner.xcodeproj/project.pbxproj` confirmou:
 - **`IPHONEOS_DEPLOYMENT_TARGET`:** `13.0` (configurado de forma idêntica em `Debug`, `Release` e `Profile`).
 - **Compatibilidade do SO:** Deployment target configurado em iOS 13.0. A compatibilidade real depende das versões de iOS suportadas por cada modelo de dispositivo Apple; o runtime iOS não foi aferido na fase Q9.
-- **Bundle Identifier:** `br.mp.mppbapp.app`
+- **Bundle Identifier:** `com.example.appMppbFlutter`
+> **CORREÇÃO DOCUMENTAL IDENTIFICADA DURANTE Q10:** O projeto iOS (`ios/Runner.xcodeproj/project.pbxproj`) ainda utiliza o bundle identifier de template (`com.example.appMppbFlutter`). A referência anterior a `br.mp.mppbapp.app` no ecossistema iOS era inexata e foi corrigida historicamente sem alteração de código.
 - **Assinatura de Código:** Configurada para assinatura de desenvolvimento padrão do Flutter (`CODE_SIGN_STYLE = Automatic`).
 
 ---

@@ -1,6 +1,6 @@
 # Q14 — Matriz de Rastreabilidade UAT
 
-**Data da Auditoria:** 02/10/2026  
+**Data da Auditoria:** 02/10/2026 (Atualizado em 03/10/2026)  
 **Ciclo:** Qualidade, Confiabilidade e Prontidão do App MPPB  
 **Fase:** Q14 — User Acceptance Testing (UAT) e Aceite Final  
 **Escopo:** Mapeamento Requisitos (Q1) → Jornadas (Q14-J) → Cenários UAT (Q14-U) → Evidências → Resultados → Apontamentos
@@ -19,7 +19,7 @@
 | **RF-006** | Certidão extrajudicial (emissão) | Q14-J07 | Q14-U07 | `android/q14-certidao.png` | **APROVADO COM RESSALVA** | Formulário e validação local aferidos; emissão real omitida por integridade |
 | **RF-007** | Certidão extrajudicial (código/validação) | Q14-J07 | Q14-U07 | `android/q14-certidao.png` | **APROVADO COM RESSALVA** | Aba Validar presente e alternável |
 | **RF-008** | Ouvidoria (manifestações públicas) | Q14-J08 | Q14-U08 | `android/q14-ouvidoria.png` | **APROVADO COM RESSALVA** | Interface de 5 passos e validação local aferidas; submissão real omitida por segurança |
-| **RF-009** | Contatos e atendimento institucional | Q14-J06 | Q14-U06 | `android/q14-contatos.png` | **APROVADO** | Telefones, endereços, horários e ouvidoria exibidos |
+| **RF-009** | Contatos e atendimento institucional | Q14-J06 | Q14-U06 | `android/q14-contatos.png` | **APROVADO COM RESSALVA** | Presença visual de botões e canais aferida; handoffs para discador/mapa não executados por indisponibilidade física de conexão do aparelho |
 | **RF-010** | Autenticação institucional e sessão | Q14-J09 / Q14-J10 | Q14-U09 / Q14-U10 | `android/q14-login.png` | **BLOQUEADO** | OBS-Q14-001 (Ausência de credencial institucional autorizada) |
 | **RF-011** | Perfil funcional do servidor | Q14-J11 | Q14-U11 | EVIDÊNCIA HERDADA | **BLOQUEADO** | OBS-Q14-001 |
 | **RF-012** | Carteira funcional digital | Q14-J12 | Q14-U12 | EVIDÊNCIA HERDADA | **BLOQUEADO** | OBS-Q14-001 |
@@ -36,9 +36,9 @@
 ## 2. Análise de Cobertura de Requisitos
 
 - **Total de Requisitos Auditados:** 19 (RF-001 a RF-019)
-- **Requisitos do Escopo Público:** 9 requisitos (RF-001, RF-002, RF-003, RF-004, RF-005, RF-006, RF-007, RF-008, RF-009, RF-019)
-  - Aprovados sem ressalva: 5 (RF-001, RF-002, RF-003, RF-009, RF-019)
-  - Aprovados com ressalva: 4 (RF-004, RF-005, RF-006, RF-007, RF-008 — ressalvas operacionais de integridade sem falha técnica)
+- **Requisitos do Escopo Público:** 10 requisitos (RF-001, RF-002, RF-003, RF-004, RF-005, RF-006, RF-007, RF-008, RF-009, RF-019)
+  - Aprovados sem ressalva: 4 (RF-001, RF-002, RF-003, RF-019)
+  - Aprovados com ressalva: 6 (RF-004, RF-005, RF-006, RF-007, RF-008, RF-009 — ressalvas operacionais sem falha de código)
   - Reprovados: 0
 - **Requisitos do Escopo Autenticado:** 9 requisitos (RF-010, RF-011, RF-012, RF-013, RF-014, RF-015, RF-016, RF-017, RF-018)
   - Bloqueados: 9 (100% dos autenticados, decorrente estritamente de `OBS-Q14-001`)

@@ -1,6 +1,6 @@
 # Q14 — Evidências de Execução: Escopo Público (8 Jornadas)
 
-**Data da Execução:** 02/10/2026  
+**Data da Execução:** 02/10/2026 (Atualizado em 03/10/2026)  
 **Ciclo:** Qualidade, Confiabilidade e Prontidão do App MPPB  
 **Fase:** Q14 — User Acceptance Testing (UAT) e Aceite Final  
 **Dispositivo:** Samsung Galaxy A52 (`SM-A525M`, Android 14 / API 34, Serial `RX8RC09H70X`)  
@@ -17,7 +17,7 @@
 | **Q14-U03** | Q14-J03 | Notícias (Listagem, Leitura e Retorno) | `android/q14-noticias.png`, `android/q14-noticia-detalhe.png` | **APROVADO** | Nenhuma. Listagem dinâmica da API com categorias, modal de leitura com fotos e retorno limpo. |
 | **Q14-U04** | Q14-J04 | Diário Oficial (Edições e Visualizador PDF) | `android/q14-diario.png`, `android/q14-diario-loaded.png` | **APROVADO** | Nenhuma. Edições listadas com destaque para Última Edição (Nº 3160); renderização completa do documento PDF no visualizador in-app sem travamentos. |
 | **Q14-U05** | Q14-J05 | Consulta Processual (Campos e Filtros) | `android/q14-processos.png` | **APROVADO COM RESSALVA** | Interface, filtros e validação de submissão aferidos; consulta com processo conhecido e resultado positivo não aferida por ausência de massa UAT autorizada. |
-| **Q14-U06** | Q14-J06 | Contatos e Canais de Atendimento | `android/q14-contatos.png` | **APROVADO** | Nenhuma. Telefones institucionais com ação de discagem, endereço com mapa, horário de atendimento (7h às 13h) e Ouvidoria. |
+| **Q14-U06** | Q14-J06 | Contatos e Canais de Atendimento | `android/q14-contatos.png` | **APROVADO COM RESSALVA** | Presença visual e renderização dos botões 'Ligar' e 'Mapa', telefone, endereço, horários e ouvidoria aferidas na tela física; handoff para discador externo e mapa não executados nesta rodada residual por indisponibilidade momentânea de conexão física do aparelho no host. Nenhuma chamada ou navegação real foi iniciada. |
 | **Q14-U07** | Q14-J07 | Certidão Extrajudicial (Emissão e Validação) | `android/q14-certidao.png` | **APROVADO COM RESSALVA** | Interface e validações locais aferidas (mensagens visuais de CPF/Nome obrigatórios); emissão/validação positiva contra registro real não executadas nesta bateria técnica. |
 | **Q14-U08** | Q14-J08 | Registro de Manifestação na Ouvidoria | `android/q14-ouvidoria.png` | **APROVADO COM RESSALVA** | Interface, fluxo de identificação em 5 passos (Identif., Classif., Relato, Anexos, Revisão), alternância de denúncia anônima e validação de formulário aferidos; submissão e geração de protocolo oficial deliberadamente omitidas por segurança operacional. |
 
@@ -79,8 +79,12 @@
   - Endereço da sede (Rua Rodrigues de Aquino, s/n, Centro, João Pessoa/PB) com botão "Mapa";
   - Horário oficial de atendimento nas Promotorias de Justiça: "7h às 13h";
   - Canal de Ouvidoria com telefone institucional `(83) 2107-6150`.
+- **Ressalva Metodológica:**
+  - A presença visual e correta renderização dos botões "Ligar" e "Mapa", do telefone oficial, do endereço da sede, dos horários e da Ouvidoria foram plenamente aferidas na tela física do Galaxy A52 ([q14-contatos.png](file:///c:/Users/rafae/projetosMPPB/app_mppb_flutter/qualidade/evidencias/Q14/android/q14-contatos.png));
+  - Os handoffs para acionamento do discador externo (`tel:(83)2107-6000`) e do aplicativo de mapas (`https://www.google.com/maps/search/...`) não foram executados nesta rodada residual por indisponibilidade momentânea de conexão física do aparelho no host. Nenhuma chamada ou navegação real foi iniciada;
+  - Em conformidade com a regra canônica de que a presença visual isolada dos botões não sustenta aprovação irrestrita, o cenário é classificado formalmente como **APROVADO COM RESSALVA**.
 - **Evidência:** Registrada em `qualidade/evidencias/Q14/android/q14-contatos.png`.
-- **Resultado:** **APROVADO**.
+- **Resultado:** **APROVADO COM RESSALVA**.
 
 ### 2.7 Q14-U07 — Certidão Extrajudicial
 - **Execução:** Acesso ao módulo de emissão/validação de certidão negativa e teste de validação de formulário.

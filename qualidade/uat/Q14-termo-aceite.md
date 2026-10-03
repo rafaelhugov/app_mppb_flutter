@@ -7,25 +7,42 @@
 
 ---
 
-## 1. Escopo Avaliado (18 Jornadas Canônicas)
+## 1. Escopo Previsto para Avaliação no Aceite Final
 
-O processo de Aceite Final compreendeu a validação do produto nas seguintes dimensões:
-- **Jornadas Públicas (Cidadão — 8 Jornadas):**
-  - Q14-J01: Inicialização, Splash e Primeira Abertura sem travamentos
-  - Q14-J02: Navegação na Home Pública e Serviços ao Cidadão
-  - Q14-J03: Consulta, Listagem e Leitura de Notícias com abertura em modal e retorno limpo
-  - Q14-J04: Acesso ao Diário Oficial com edições recentes e visualização in-app de PDF
-  - Q14-J05: Consulta Pública de Processos com campos e filtros orientativos
-  - Q14-J06: Consulta de Canais de Atendimento e Contatos oficiais (Sede, Promotorias, Ouvidoria)
-  - Q14-J07: Solicitação e Validação de Certidão Extrajudicial (CPF/CNPJ)
-  - Q14-J08: Registro de Manifestação na Ouvidoria em 5 etapas e regras de obrigatoriedade
-- **Jornadas Autenticadas (Membro / Servidor — 10 Jornadas):**
-  - Q14-J09 a Q14-J18: Módulos restritos (Login, Home Restrita, Perfil, Carteira Funcional Digital, Contracheques, Informações de Pagamentos, Designações Ativas, Consulta de Concessões/Folgas, Solicitação de Concessões/Folgas e Notificações Push FCM), sujeitos a credencial autorizada de homologação.
-- **Conformidade Técnica e Segurança:**
+O presente termo contempla o escopo previsto para avaliação pelo responsável institucional.
+
+O Pré-UAT técnico já executado não substitui a validação negocial pelo usuário responsável.
+
+### 1.1 Escopo Técnico Previamente Aferido (Pré-UAT Técnico)
+As seguintes dimensões foram previamente aferidas em bancada técnica e dispositivo físico (Samsung Galaxy A52, Android 14):
+- **Jornadas Públicas (8 Jornadas):**
+  - Q14-J01: Inicialização, Splash e Primeira Abertura sem travamentos (Aprovado)
+  - Q14-J02: Navegação na Home Pública e Serviços ao Cidadão (Aprovado)
+  - Q14-J03: Consulta, Listagem e Leitura de Notícias (Aprovado)
+  - Q14-J04: Acesso ao Diário Oficial com edições e visualização in-app de PDF (Aprovado)
+  - Q14-J05: Consulta Pública de Processos com campos e filtros (Aprovado com Ressalva)
+  - Q14-J06: Consulta de Canais de Atendimento e Contatos oficiais (Aprovado com Ressalva)
+  - Q14-J07: Solicitação e Validação de Certidão Extrajudicial (Aprovado com Ressalva)
+  - Q14-J08: Registro de Manifestação na Ouvidoria em 5 etapas e regras de validação (Aprovado com Ressalva)
+- **Conformidade Técnica e Gates de Regressão:**
   - 242/242 testes Flutter e análise estática com 0 issues;
-  - 169/169 testes Backend e build Maven limpo;
-  - Varredura de segredos e regressão de segurança verdes;
-  - Estabilidade operacional comprovada em aparelho físico Samsung Galaxy A52 (Android 14).
+  - 169/169 testes Backend e empacotamento Maven limpo;
+  - Varredura de segredos e regressão de segurança verdes.
+
+### 1.2 Escopo a ser Executado pelo Avaliador Humano (Aceite Negocial)
+As seguintes jornadas compõem o escopo de homologação funcional pelo usuário de negócio designado pelo órgão:
+- **Jornadas Autenticadas (10 Jornadas — PENDENTES DE EXECUÇÃO COM CREDENCIAL UAT AUTORIZADA):**
+  - Q14-J09: Acesso Restrito / Autenticação Institucional (Login)
+  - Q14-J10: Home Autenticada, Dashboard Restrito e Logout Seguro
+  - Q14-J11: Consulta e Visualização do Perfil Funcional
+  - Q14-J12: Visualização e Validação da Carteira Funcional Digital
+  - Q14-J13: Consulta de Contracheques e Exportação PDF
+  - Q14-J14: Consulta de Informações de Pagamentos
+  - Q14-J15: Consulta de Designações Funcionais Ativas
+  - Q14-J16: Consulta de Concessões de Folga e Ausências
+  - Q14-J17: Operações de Solicitação de Concessões/Folgas
+  - Q14-J18: Diagnóstico e Registro de Notificações Push (FCM)
+- **Avaliação Negocial Global:** Avaliação da usabilidade, clareza dos textos, precisão dos dados institucionais e conformidade com as regras de negócio do MPPB.
 
 ---
 

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/notifications/device_registration_provider.dart';
 import '../../../core/storage/secure_storage.dart';
 
@@ -86,7 +87,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final authDio = ref.read(authDioProvider);
 
       final response = await authDio.post(
-        'https://auth-api.mppb.mp.br/acesso/autoriza',
+        authLoginUrl,
         data: {
           'login': username,
           'senha': password,

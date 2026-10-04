@@ -100,6 +100,7 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
         ComboItem(id: 2, descricao: 'Ouvidoria das Mulheres'),
       ];
       final municipios = await _repository.fetchMunicipios();
+      if (!ref.mounted) return;
 
       state = state.copyWith(
         tipos: tipos,
@@ -108,6 +109,7 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
         isLoading: false,
       );
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Erro ao carregar dados iniciais.',
@@ -130,8 +132,10 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
     );
     try {
       final assuntos = await _repository.fetchAssuntos(materiaId);
+      if (!ref.mounted) return;
       state = state.copyWith(assuntos: assuntos, isLoading: false);
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Erro ao carregar assuntos.',
@@ -152,8 +156,10 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
     );
     try {
       final bairros = await _repository.fetchBairros(municipioId);
+      if (!ref.mounted) return;
       state = state.copyWith(bairros: bairros, isLoading: false);
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Erro ao carregar bairros.',
@@ -165,9 +171,11 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final captchaData = await _captchaService.fetchCaptcha();
+      if (!ref.mounted) return;
       state.requestModel.captchaId = captchaData.captchaId;
       state = state.copyWith(captchaData: captchaData, isLoading: false);
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Erro ao carregar Captcha.',
@@ -300,14 +308,17 @@ class OuvidoriaNotifier extends Notifier<OuvidoriaState> {
       final protocolo = await _uploadService.enviarManifestacao(
         requestModel: state.requestModel,
         onProgress: (sent, total) {
+          if (!ref.mounted) return;
           if (total > 0) {
             state = state.copyWith(uploadProgress: sent / total);
           }
         },
       );
+      if (!ref.mounted) return protocolo;
       state = state.copyWith(isSubmitting: false);
       return protocolo;
     } catch (e) {
+      if (!ref.mounted) return null;
       state = state.copyWith(isSubmitting: false, errorMessage: e.toString());
       return null;
     }

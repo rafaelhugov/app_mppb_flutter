@@ -25,8 +25,8 @@ As seguintes dimensões foram previamente aferidas em bancada técnica e disposi
   - Q14-J07: Solicitação e Validação de Certidão Extrajudicial (Aprovado com Ressalva)
   - Q14-J08: Registro de Manifestação na Ouvidoria em 5 etapas e regras de validação (Aprovado com Ressalva)
 - **Conformidade Técnica e Gates de Regressão:**
-  - 242/242 testes Flutter e análise estática com 0 issues;
-  - 169/169 testes Backend e empacotamento Maven limpo;
+  - 244/244 testes Flutter e análise estática com 0 issues;
+  - 202/202 testes Backend e empacotamento Maven limpo;
   - Varredura de segredos e regressão de segurança verdes.
 
 ### 1.2 Escopo a ser Executado pelo Avaliador Humano (Aceite Negocial)

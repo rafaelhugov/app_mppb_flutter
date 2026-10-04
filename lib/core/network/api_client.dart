@@ -3,12 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../storage/secure_storage.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
+const String defaultApiUrl = 'https://aplicativo-api.mppb.mp.br';
+const String defaultAuthBaseUrl = 'https://auth-api.mppb.mp.br';
+
+const String authBaseUrl = String.fromEnvironment(
+  'AUTH_BASE_URL',
+  defaultValue: defaultAuthBaseUrl,
+);
+
+String get authLoginUrl {
+  final base = authBaseUrl.endsWith('/')
+      ? authBaseUrl.substring(0, authBaseUrl.length - 1)
+      : authBaseUrl;
+  return '$base/acesso/autoriza';
+}
+
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
       baseUrl: const String.fromEnvironment(
         'API_URL',
-        defaultValue: 'https://aplicativo-api.mppb.mp.br',
+        defaultValue: defaultApiUrl,
       ),
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),

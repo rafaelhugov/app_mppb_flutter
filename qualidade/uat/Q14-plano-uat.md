@@ -74,7 +74,7 @@ Estabelecer a estratégia, os critérios e os procedimentos formais para a valid
 
 1. APK de homologação instalado com sucesso no dispositivo físico autorizado.
 2. Endpoint canônico de homologação ativo e responsivo (`https://aplicativo-mppb-homolog.mppb.mp.br`).
-3. Gates técnicos de segurança e regressão devidamente aprovados (Flutter analyze 0, 242/242 testes Flutter, 169/169 testes Backend).
+3. Gates técnicos de segurança e regressão devidamente aprovados (Flutter analyze 0, 244/244 testes Flutter, 202/202 testes Backend).
 4. Dispositivo com carga de bateria superior a 20% e tela calibrada.
 
 ---

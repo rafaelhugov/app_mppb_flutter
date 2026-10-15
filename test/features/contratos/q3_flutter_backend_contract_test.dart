@@ -32,38 +32,37 @@ void main() {
       });
     });
 
-    test('Auth envia POST JSON para auth-api e interpreta token', () async {
-      final requests = <FakeDioRequest>[];
-      final dio = dioComRotas({
-        'https://auth-api.mppb.mp.br/acesso/autoriza': const FakeDioResponse(
-          200,
-          {'token': 'jwt-q3'},
-        ),
-      }, requests: requests);
-      final container = _container(authDio: dio);
-      addTearDown(container.dispose);
+    test(
+      'Auth envia POST JSON para o gateway mobile e interpreta token',
+      () async {
+        final requests = <FakeDioRequest>[];
+        final dio = dioComRotas({
+          '$defaultApiUrl/acesso/autoriza': const FakeDioResponse(200, {
+            'token': 'jwt-q3',
+          }),
+        }, requests: requests);
+        final container = _container(authDio: dio);
+        addTearDown(container.dispose);
 
-      final result = await container
-          .read(authProvider.notifier)
-          .login('usuario.q3', 'senha', offerBiometrics: false);
+        final result = await container
+            .read(authProvider.notifier)
+            .login('usuario.q3', 'senha', offerBiometrics: false);
 
-      expect(result, isTrue);
-      expect(requests.single.method, 'POST');
-      expect(
-        requests.single.path,
-        'https://auth-api.mppb.mp.br/acesso/autoriza',
-      );
-      expect(
-        requests.single.headers['Content-Type'],
-        contains('application/json'),
-      );
-      expect(requests.single.data, {
-        'login': 'usuario.q3',
-        'senha': 'senha',
-        'siglaSistema': 'ANDROID',
-      });
-      expect(container.read(authProvider).token, 'jwt-q3');
-    });
+        expect(result, isTrue);
+        expect(requests.single.method, 'POST');
+        expect(requests.single.path, '$defaultApiUrl/acesso/autoriza');
+        expect(
+          requests.single.headers['Content-Type'],
+          contains('application/json'),
+        );
+        expect(requests.single.data, {
+          'login': 'usuario.q3',
+          'senha': 'senha',
+          'siglaSistema': 'ANDROID',
+        });
+        expect(container.read(authProvider).token, 'jwt-q3');
+      },
+    );
 
     test(
       'Perfil envia Bearer para /api/perfil/dados e interpreta foto',

@@ -89,7 +89,10 @@ void main() {
         expect(requests.single.headers['Authorization'], 'Bearer token-q3');
         expect(requests.single.extra['skipAuthLogout'], isTrue);
         expect(perfil.matricula, '123');
-        expect(perfil.fotoUrl, 'https://api.test/carteiras-funcionais/foto');
+        expect(
+          perfil.fotoUrl,
+          startsWith('https://api.test/carteiras-funcionais/foto?v='),
+        );
       },
     );
 
@@ -117,7 +120,10 @@ void main() {
       expect(requests.single.path, '/carteiras-funcionais/dados');
       expect(requests.single.headers['Authorization'], 'Bearer token-q3');
       expect(state.data?.matricula, '456');
-      expect(state.data?.foto, 'https://api.test/carteiras-funcionais/foto');
+      expect(
+        state.data?.foto,
+        startsWith('https://api.test/carteiras-funcionais/foto?v='),
+      );
     });
 
     test('Contracheque usa competencias, mes/ano e PDF compatíveis', () async {

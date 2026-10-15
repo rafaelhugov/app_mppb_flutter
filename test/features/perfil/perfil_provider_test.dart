@@ -46,7 +46,10 @@ void main() {
       expect(state.errorMessage, isNull);
       expect(state.data?.nome, 'Pessoa Teste');
       expect(state.data?.matricula, '123');
-      expect(state.data?.fotoUrl, 'https://api.test/carteiras-funcionais/foto');
+      expect(
+        state.data?.fotoUrl,
+        startsWith('https://api.test/carteiras-funcionais/foto?v='),
+      );
       expect(await storage.read(key: 'perfil_cache_username'), 'usuario.atual');
       expect(
         await storage.read(key: 'perfil_cache_data'),

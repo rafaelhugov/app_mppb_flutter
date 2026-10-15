@@ -19,9 +19,11 @@ class PerfilRepository {
     );
 
     final data = response.data as Map<String, dynamic>? ?? {};
-    return PerfilUsuario.fromJson(
-      data,
-    ).copyWith(fotoUrl: '${dio.options.baseUrl}/carteiras-funcionais/foto');
+    final fotoCacheVersion = DateTime.now().microsecondsSinceEpoch;
+    return PerfilUsuario.fromJson(data).copyWith(
+      fotoUrl:
+          '${dio.options.baseUrl}/carteiras-funcionais/foto?v=$fotoCacheVersion',
+    );
   }
 }
 

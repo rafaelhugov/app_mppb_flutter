@@ -79,9 +79,11 @@ class CarteiraNotifier extends Notifier<CarteiraState> {
       if (response.statusCode == 200) {
         final responseData = response.data as Map<String, dynamic>;
 
-        // Injetar URL da foto assim como no Vue
+        final fotoCacheVersion = DateTime.now().microsecondsSinceEpoch;
+
+        // A versão evita cache cruzado sem expor login ou token na URL.
         responseData['foto'] =
-            '${dio.options.baseUrl}/carteiras-funcionais/foto';
+            '${dio.options.baseUrl}/carteiras-funcionais/foto?v=$fotoCacheVersion';
         responseData['assinaturaPgjBlackUrl'] = _assinaturaPgjBlackUrl;
         responseData['assinaturaPgjWhiteUrl'] = _assinaturaPgjWhiteUrl;
 

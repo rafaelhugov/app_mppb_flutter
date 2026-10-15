@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -11,6 +13,7 @@ import 'core/notifications/push_notification_service.dart';
 import 'core/notifications/push_navigation_service.dart';
 import 'core/router/app_router.dart';
 import 'core/session/session_reset_provider.dart';
+import 'features/auth/providers/auth_provider.dart';
 import 'firebase_options.dart';
 
 class AppScrollBehavior extends MaterialScrollBehavior {
@@ -24,15 +27,6 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const disableFcmForE2E = bool.fromEnvironment('Q5_E2E_DISABLE_FCM');
-  if (PushNotificationService.isSupportedPlatform && !disableFcmForE2E) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    await PushNotificationService.instance.initialize();
-  } else if (kDebugMode) {
-    debugPrint('Firebase/FCM desabilitado nesta plataforma.');
-  }
   await initializeDateFormatting('pt_BR', null);
 
   runApp(const ProviderScope(child: MyApp()));
@@ -40,14 +34,57 @@ void main() async {
 
 const _disableFcmForE2E = bool.fromEnvironment('Q5_E2E_DISABLE_FCM');
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  bool _fcmReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_initializeFirebaseAndPush());
+    });
+  }
+
+  Future<void> _initializeFirebaseAndPush() async {
+    if (_disableFcmForE2E || !PushNotificationService.isSupportedPlatform) {
+      if (kDebugMode) {
+        debugPrint('Firebase/FCM desabilitado nesta plataforma.');
+      }
+      return;
+    }
+
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ).timeout(const Duration(seconds: 4));
+      }
+      if (!mounted) return;
+      setState(() => _fcmReady = true);
+      await PushNotificationService.instance.initialize();
+      if (!mounted) return;
+      await ref.read(authProvider.notifier).refreshPushRegistration();
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          'FCM indisponível; aplicativo seguirá sem notificações: $error',
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     ref.watch(sessionResetProvider);
-    if (!_disableFcmForE2E) {
+    if (_fcmReady) {
       ref.watch(pushNavigationServiceProvider);
     }
 

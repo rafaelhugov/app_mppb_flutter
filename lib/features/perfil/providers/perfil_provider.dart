@@ -118,6 +118,7 @@ class PerfilNotifier extends Notifier<PerfilState> {
     if (!ref.mounted) return;
     final storage = ref.read(secureStorageProvider);
     final enabled = await storage.read(key: 'biometrics_enabled');
+    final credential = await storage.read(key: 'biometric_device_credential');
     final savedPassword = await storage.read(key: 'saved_password');
     if (!ref.mounted) return;
     if (savedPassword != null) {
@@ -125,11 +126,15 @@ class PerfilNotifier extends Notifier<PerfilState> {
       await storage.delete(key: 'saved_username');
       await storage.delete(key: 'biometrics_enabled');
       await storage.write(key: 'biometrics_asked', value: 'true');
+      await storage.delete(key: biometricPromptStorageKey);
     }
     if (!ref.mounted) return;
     state = state.copyWith(
-      biometricsEnabled: savedPassword == null && enabled == 'true' && false,
-      canUseBiometrics: false,
+      biometricsEnabled:
+          savedPassword == null &&
+          enabled == 'true' &&
+          credential?.isNotEmpty == true,
+      canUseBiometrics: credential?.isNotEmpty == true,
     );
   }
 

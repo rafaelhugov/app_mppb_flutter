@@ -15,6 +15,7 @@ cd "$SCRIPT_DIR"
 AMBIENTE="${1:-homolog}"
 API_URL_ARGUMENTO="${2:-}"
 ADI_REGISTRATION_TOKEN="${3:-${ADI_REGISTRATION_TOKEN:-}}"
+AUTH_BASE_URL_ARGUMENTO="${4:-}"
 
 case "$AMBIENTE" in
   homolog|homologacao)
@@ -37,6 +38,7 @@ case "$AMBIENTE" in
 esac
 
 API_URL="${API_URL_ARGUMENTO:-${API_URL:-$DEFAULT_API_URL}}"
+AUTH_BASE_URL="${AUTH_BASE_URL_ARGUMENTO:-${AUTH_BASE_URL:-$API_URL}}"
 ADI_REGISTRATION_FILE="android/app/src/main/assets/adi-registration.properties"
 
 cleanup_adi_registration() {
@@ -78,6 +80,7 @@ FLAVOR_APK="$OUTPUT_DIR/app-${FLAVOR}-release.apk"
 
 echo "Ambiente: $FLAVOR"
 echo "API_URL: $API_URL"
+echo "AUTH_BASE_URL: $AUTH_BASE_URL"
 if [ -n "$ADI_REGISTRATION_TOKEN" ]; then
   echo "Verificação Play Console: token ADI será incluído no APK"
 fi
@@ -98,6 +101,7 @@ flutter build apk \
   --release \
   --flavor "$FLAVOR" \
   --dart-define=API_URL="$API_URL" \
+  --dart-define=AUTH_BASE_URL="$AUTH_BASE_URL" \
   --dart-define=FIREBASE_ANDROID_APP_ID="$FIREBASE_ANDROID_APP_ID" \
   --build-name="$BUILD_NAME" \
   --build-number="$BUILD_NUMBER"

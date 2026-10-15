@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../providers/auth_provider.dart';
 
@@ -33,10 +34,43 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       await secureStorage.delete(key: 'saved_password');
       await secureStorage.delete(key: 'saved_username');
       await secureStorage.delete(key: 'biometrics_enabled');
-      await secureStorage.write(key: 'biometrics_asked', value: 'true');
+      await secureStorage.delete(key: biometricPromptStorageKey);
+    }
+    final enabled = await secureStorage.read(key: 'biometrics_enabled');
+    final credential = await secureStorage.read(
+      key: 'biometric_device_credential',
+    );
+    var supported = false;
+    try {
+      final localAuth = LocalAuthentication();
+      supported =
+          await localAuth.isDeviceSupported() &&
+          await localAuth.canCheckBiometrics;
+    } catch (_) {
+      supported = false;
     }
     if (mounted) {
-      setState(() => _biometricsEnabled = false);
+      setState(
+        () => _biometricsEnabled =
+            supported && enabled == 'true' && credential?.isNotEmpty == true,
+      );
+    }
+  }
+
+  Future<void> _fazerLoginBiometrico() async {
+    try {
+      final authenticated = await LocalAuthentication().authenticate(
+        localizedReason: 'Confirme sua identidade para acessar o MPPB+',
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
+      );
+      if (!authenticated || !mounted) return;
+      await ref.read(authProvider.notifier).loginWithSavedCredentials();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível validar a biometria.')),
+      );
     }
   }
 
@@ -281,7 +315,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 width: double.infinity,
                                 height: 48,
                                 child: OutlinedButton.icon(
-                                  onPressed: null,
+                                  onPressed: authState.isLoading
+                                      ? null
+                                      : _fazerLoginBiometrico,
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: const Color(0xFF202322),
                                     side: const BorderSide(
@@ -325,7 +361,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 child: authState.isLoading
                                     ? const CircularProgressIndicator(
                                         color: Colors.white,
-                                        semanticsLabel: 'Carregando autenticação',
+                                        semanticsLabel:
+                                            'Carregando autenticação',
                                       )
                                     : const Text(
                                         'ACESSAR',

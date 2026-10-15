@@ -76,7 +76,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     if (!authState.justLoggedIn) return;
 
     final secureStorage = ref.read(secureStorageProvider);
-    final asked = await secureStorage.read(key: 'biometrics_asked');
+    final asked = await secureStorage.read(key: biometricPromptStorageKey);
     if (asked == 'true') return;
 
     final isSupported = await _deviceSupportsBiometrics();
@@ -99,7 +99,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       try {
         authenticated = await localAuth.authenticate(
           localizedReason: 'Confirme sua identidade para habilitar a biometria',
-          biometricOnly: false,
+          biometricOnly: true,
           persistAcrossBackgrounding: true,
         );
       } on MissingPluginException {
@@ -111,7 +111,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       }
 
       if (authenticated) {
-        await ref.read(authProvider.notifier).enableBiometricLogin();
+        final enabled = await ref
+            .read(authProvider.notifier)
+            .enableBiometricLogin();
+        if (!enabled) {
+          await ref.read(authProvider.notifier).dismissBiometricPrompt();
+        }
       } else {
         await ref.read(authProvider.notifier).dismissBiometricPrompt();
       }
@@ -123,7 +128,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
   Future<bool> _deviceSupportsBiometrics() async {
     final localAuth = LocalAuthentication();
     try {
-      return await localAuth.isDeviceSupported();
+      return await localAuth.isDeviceSupported() &&
+          await localAuth.canCheckBiometrics;
     } on MissingPluginException {
       return false;
     } catch (_) {

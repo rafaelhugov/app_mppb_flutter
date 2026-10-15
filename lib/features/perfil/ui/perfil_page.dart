@@ -40,11 +40,33 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
   }
 
   Future<void> _enableBiometricsNow() async {
+    setState(() => _isBiometricActionLoading = true);
+    final authenticated = await _authenticateWithBiometrics(
+      'Confirme sua identidade para habilitar a biometria',
+    );
+    if (!mounted) return;
+    if (!authenticated) {
+      setState(() => _isBiometricActionLoading = false);
+      await _showFeedbackDialog(
+        type: _ProfileFeedbackType.warning,
+        title: 'Biometria não confirmada',
+        message: 'Não foi possível confirmar sua identidade neste aparelho.',
+      );
+      return;
+    }
+
+    final enabled = await ref
+        .read(authProvider.notifier)
+        .enableBiometricLogin();
+    await ref.read(perfilProvider.notifier).refreshBiometrics();
+    if (!mounted) return;
+    setState(() => _isBiometricActionLoading = false);
     await _showFeedbackDialog(
-      type: _ProfileFeedbackType.warning,
-      title: 'Biometria indisponível',
-      message:
-          'A biometria será reativada após a criação de uma credencial segura separada da senha.',
+      type: enabled ? _ProfileFeedbackType.success : _ProfileFeedbackType.error,
+      title: enabled ? 'Biometria habilitada' : 'Não foi possível habilitar',
+      message: enabled
+          ? 'O aparelho recebeu uma credencial revogável, separada da sua senha.'
+          : 'Não foi possível registrar a credencial segura no servidor.',
     );
   }
 
@@ -81,7 +103,7 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     try {
       return await localAuth.authenticate(
         localizedReason: reason,
-        biometricOnly: false,
+        biometricOnly: true,
         persistAcrossBackgrounding: true,
       );
     } catch (_) {
@@ -565,7 +587,7 @@ class _SecuritySection extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       supportsBiometrics
-                          ? 'A biometria depende de uma credencial segura separada da senha.'
+                          ? 'A biometria usa uma credencial revogável e não armazena sua senha.'
                           : 'Este aparelho não informou biometria disponível.',
                       style: const TextStyle(
                         color: Color(0xFF697370),

@@ -12,48 +12,54 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Configuração de Autenticação Segura (Q14-R03-R02)', () {
-    test('resolucao correta de authBaseUrl e authLoginUrl conforme ambiente', () {
-      expect(defaultAuthBaseUrl, 'https://auth-api.mppb.mp.br');
+    test(
+      'resolucao correta de authBaseUrl e authLoginUrl conforme ambiente',
+      () {
+        expect(defaultAuthBaseUrl, defaultApiUrl);
 
-      const isOverride = bool.hasEnvironment('AUTH_BASE_URL');
-      if (isOverride) {
-        const expected = String.fromEnvironment('AUTH_BASE_URL');
-        expect(authBaseUrl, expected);
-        expect(authLoginUrl, '$expected/acesso/autoriza');
-      } else {
-        expect(authBaseUrl, defaultAuthBaseUrl);
-        expect(authLoginUrl, 'https://auth-api.mppb.mp.br/acesso/autoriza');
-      }
-    });
+        const isOverride = bool.hasEnvironment('AUTH_BASE_URL');
+        if (isOverride) {
+          const expected = String.fromEnvironment('AUTH_BASE_URL');
+          expect(authBaseUrl, expected);
+          expect(authLoginUrl, '$expected/acesso/autoriza');
+        } else {
+          expect(authBaseUrl, apiBaseUrl);
+          expect(authLoginUrl, '$apiBaseUrl/acesso/autoriza');
+        }
+      },
+    );
 
-    test('login utiliza exatamente a rota parametrizada authLoginUrl', () async {
-      FlutterSecureStorage.setMockInitialValues({});
-      String? requestedPath;
+    test(
+      'login utiliza exatamente a rota parametrizada authLoginUrl',
+      () async {
+        FlutterSecureStorage.setMockInitialValues({});
+        String? requestedPath;
 
-      final adapter = _CapturingAuthAdapter((path) {
-        requestedPath = path;
-      });
+        final adapter = _CapturingAuthAdapter((path) {
+          requestedPath = path;
+        });
 
-      final dio = Dio();
-      dio.httpClientAdapter = adapter;
+        final dio = Dio();
+        dio.httpClientAdapter = adapter;
 
-      final container = ProviderContainer(
-        overrides: [
-          authDioProvider.overrideWithValue(dio),
-          devicePlatformResolverProvider.overrideWithValue(
-            const _UnsupportedPlatformResolver(),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            authDioProvider.overrideWithValue(dio),
+            devicePlatformResolverProvider.overrideWithValue(
+              const _UnsupportedPlatformResolver(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await container
-          .read(authProvider.notifier)
-          .login('test.user', 'test.pass', offerBiometrics: false);
+        await container
+            .read(authProvider.notifier)
+            .login('test.user', 'test.pass', offerBiometrics: false);
 
-      expect(requestedPath, equals(authLoginUrl));
-      expect(requestedPath, contains('/acesso/autoriza'));
-    });
+        expect(requestedPath, equals(authLoginUrl));
+        expect(requestedPath, contains('/acesso/autoriza'));
+      },
+    );
   });
 }
 

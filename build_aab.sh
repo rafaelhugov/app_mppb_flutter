@@ -14,6 +14,7 @@ cd "$SCRIPT_DIR"
 
 AMBIENTE="${1:-homolog}"
 API_URL_ARGUMENTO="${2:-}"
+AUTH_BASE_URL_ARGUMENTO="${3:-}"
 
 case "$AMBIENTE" in
   homolog|homologacao)
@@ -36,6 +37,7 @@ case "$AMBIENTE" in
 esac
 
 API_URL="${API_URL_ARGUMENTO:-${API_URL:-$DEFAULT_API_URL}}"
+AUTH_BASE_URL="${AUTH_BASE_URL_ARGUMENTO:-${AUTH_BASE_URL:-$API_URL}}"
 
 PUBSPEC_VERSION="$(grep '^version: ' pubspec.yaml | awk '{print $2}')"
 
@@ -69,6 +71,7 @@ FLAVOR_AAB="$OUTPUT_DIR/app-${FLAVOR}-release.aab"
 
 echo "Ambiente: $FLAVOR"
 echo "API_URL: $API_URL"
+echo "AUTH_BASE_URL: $AUTH_BASE_URL"
 echo "Versão: $BUILD_NAME"
 echo "Build: $BUILD_NUMBER"
 echo "Arquivo final: $NEW_AAB_NAME"
@@ -82,6 +85,7 @@ flutter build appbundle \
   --release \
   --flavor "$FLAVOR" \
   --dart-define=API_URL="$API_URL" \
+  --dart-define=AUTH_BASE_URL="$AUTH_BASE_URL" \
   --dart-define=FIREBASE_ANDROID_APP_ID="$FIREBASE_ANDROID_APP_ID" \
   --build-name="$BUILD_NAME" \
   --build-number="$BUILD_NUMBER"

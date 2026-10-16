@@ -4,8 +4,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/notifications/device_registration_provider.dart';
 import '../../../core/storage/secure_storage.dart';
+import '../repositories/biometric_auth_repository.dart';
 
 final authDioProvider = Provider<Dio>((ref) => Dio());
+final biometricAuthRepositoryProvider = Provider<BiometricAuthRepository>((
+  ref,
+) {
+  return BiometricAuthRepository(
+    dio: ref.read(authDioProvider),
+    baseUrl: apiBaseUrl,
+  );
+});
+
+const _biometricCredentialKey = 'biometric_device_credential';
+const _biometricUsernameKey = 'biometric_username';
+const biometricPromptStorageKey = 'biometrics_secure_v1_asked';
 
 // Definimos o estado da autenticação
 class AuthState {
@@ -62,6 +75,18 @@ class AuthNotifier extends Notifier<AuthState> {
     final secureStorage = ref.read(secureStorageProvider);
     await _migrarSenhaBiometricaLegada(secureStorage);
     if (!ref.mounted) return;
+    final biometricsEnabled =
+        await secureStorage.read(key: 'biometrics_enabled') == 'true';
+    final biometricCredential = await secureStorage.read(
+      key: _biometricCredentialKey,
+    );
+    if (biometricsEnabled && biometricCredential?.isNotEmpty == true) {
+      await secureStorage.delete(key: 'auth_token');
+      return;
+    }
+    if (biometricsEnabled) {
+      await secureStorage.delete(key: 'biometrics_enabled');
+    }
     final token = await secureStorage.read(key: 'auth_token');
     if (!ref.mounted) return;
 
@@ -138,7 +163,7 @@ class AuthNotifier extends Notifier<AuthState> {
         isLoading: false,
         isAuthenticated: true,
         token: token,
-        justLoggedIn: false,
+        justLoggedIn: offerBiometrics,
         tempUsername: offerBiometrics ? username : null,
         clearTempCredentials: !offerBiometrics,
       );
@@ -179,11 +204,39 @@ class AuthNotifier extends Notifier<AuthState> {
     return 'Falha na conexão com o servidor.';
   }
 
-  Future<void> enableBiometricLogin() async {
+  Future<bool> enableBiometricLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
     await _migrarSenhaBiometricaLegada(secureStorage);
-    await secureStorage.write(key: 'biometrics_asked', value: 'true');
+    final token = state.token ?? await secureStorage.read(key: 'auth_token');
+    final username =
+        state.tempUsername ?? await secureStorage.read(key: 'auth_username');
+    final platform = ref.read(devicePlatformResolverProvider).currentPlatform();
+    if (token == null ||
+        token.isEmpty ||
+        username == null ||
+        platform == null) {
+      return false;
+    }
+    try {
+      final deviceId = await ref
+          .read(deviceRegistrationStoreProvider)
+          .getOrCreateInstallationId();
+      final response = await ref
+          .read(biometricAuthRepositoryProvider)
+          .activate(token: token, deviceId: deviceId, platform: platform);
+      if (response.credential.isEmpty) return false;
+      await secureStorage.write(
+        key: _biometricCredentialKey,
+        value: response.credential,
+      );
+      await secureStorage.write(key: _biometricUsernameKey, value: username);
+      await secureStorage.write(key: 'biometrics_enabled', value: 'true');
+    } on DioException {
+      return false;
+    }
+    await secureStorage.write(key: biometricPromptStorageKey, value: 'true');
     state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
+    return true;
   }
 
   Future<void> _limparDadosLocaisSeTrocarUsuario(
@@ -202,63 +255,139 @@ class AuthNotifier extends Notifier<AuthState> {
       await secureStorage.delete(key: 'carteira_cache_username');
       await secureStorage.delete(key: 'perfil_cache_username');
       await secureStorage.delete(key: 'saved_username');
+      await secureStorage.delete(key: _biometricCredentialKey);
+      await secureStorage.delete(key: _biometricUsernameKey);
       await secureStorage.delete(key: 'biometrics_enabled');
       await secureStorage.delete(key: 'biometrics_asked');
+      await secureStorage.delete(key: biometricPromptStorageKey);
     }
 
     if (savedUsername != null && savedUsername != username) {
       await secureStorage.delete(key: 'saved_username');
+      await secureStorage.delete(key: _biometricCredentialKey);
+      await secureStorage.delete(key: _biometricUsernameKey);
       await secureStorage.delete(key: 'biometrics_enabled');
       await secureStorage.delete(key: 'biometrics_asked');
+      await secureStorage.delete(key: biometricPromptStorageKey);
     }
   }
 
   Future<void> dismissBiometricPrompt() async {
     final secureStorage = ref.read(secureStorageProvider);
-    await secureStorage.write(key: 'biometrics_asked', value: 'true');
+    await secureStorage.write(key: biometricPromptStorageKey, value: 'true');
     state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
   }
 
   Future<void> offerBiometricSetupOnNextLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
-    await secureStorage.delete(key: 'biometrics_asked');
+    await secureStorage.delete(key: biometricPromptStorageKey);
   }
 
   Future<bool> hasAvailableBiometricCredentials() async {
     final secureStorage = ref.read(secureStorageProvider);
     await _migrarSenhaBiometricaLegada(secureStorage);
-    return false;
+    final credential = await secureStorage.read(key: _biometricCredentialKey);
+    return credential != null && credential.isNotEmpty;
   }
 
   Future<bool> enableBiometricLoginFromAvailableCredentials() async {
-    final secureStorage = ref.read(secureStorageProvider);
-    await _migrarSenhaBiometricaLegada(secureStorage);
-    await secureStorage.write(key: 'biometrics_asked', value: 'true');
-    state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
-    return false;
+    return enableBiometricLogin();
   }
 
   Future<bool> enableBiometricLoginForCurrentUser(String password) async {
-    final secureStorage = ref.read(secureStorageProvider);
-    await _migrarSenhaBiometricaLegada(secureStorage);
-    await secureStorage.write(key: 'biometrics_asked', value: 'true');
-    state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
-    return false;
+    return enableBiometricLogin();
   }
 
   Future<void> disableBiometricLogin() async {
     final secureStorage = ref.read(secureStorageProvider);
+    final token = state.token ?? await secureStorage.read(key: 'auth_token');
+    final deviceId = await ref
+        .read(deviceRegistrationStoreProvider)
+        .readInstallationId();
+    if (token != null && deviceId != null) {
+      try {
+        await ref
+            .read(biometricAuthRepositoryProvider)
+            .revoke(token: token, deviceId: deviceId);
+      } on DioException {
+        // A limpeza local não pode depender da disponibilidade da rede.
+      }
+    }
     await secureStorage.delete(key: 'saved_password');
     await secureStorage.delete(key: 'saved_username');
+    await secureStorage.delete(key: _biometricCredentialKey);
+    await secureStorage.delete(key: _biometricUsernameKey);
     await secureStorage.delete(key: 'biometrics_enabled');
-    await secureStorage.write(key: 'biometrics_asked', value: 'true');
+    await secureStorage.write(key: biometricPromptStorageKey, value: 'true');
     state = state.copyWith(justLoggedIn: false, clearTempCredentials: true);
   }
 
   Future<bool> loginWithSavedCredentials() async {
     final secureStorage = ref.read(secureStorageProvider);
     await _migrarSenhaBiometricaLegada(secureStorage);
-    return false;
+    final credential = await secureStorage.read(key: _biometricCredentialKey);
+    final username = await secureStorage.read(key: _biometricUsernameKey);
+    if (credential == null || credential.isEmpty || username == null) {
+      return false;
+    }
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final response = await ref
+          .read(biometricAuthRepositoryProvider)
+          .authenticate(credential: credential);
+      if (response.token.isEmpty) {
+        await _limparCredencialBiometricaLocal(secureStorage);
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Credencial biométrica inválida.',
+        );
+        return false;
+      }
+      await secureStorage.write(key: 'auth_token', value: response.token);
+      await secureStorage.write(key: 'auth_username', value: username);
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        token: response.token,
+        justLoggedIn: false,
+        clearTempCredentials: true,
+      );
+      await _registrarDispositivoAutenticado(response.token);
+      return true;
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      final invalidCredential =
+          statusCode == 400 ||
+          statusCode == 401 ||
+          statusCode == 403 ||
+          statusCode == 404;
+      if (invalidCredential) {
+        await _limparCredencialBiometricaLocal(secureStorage);
+      }
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: invalidCredential
+            ? 'Credencial biométrica expirada ou revogada. Entre com sua senha.'
+            : 'Serviço indisponível. Tente novamente.',
+      );
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Não foi possível concluir o acesso biométrico.',
+      );
+      return false;
+    }
+  }
+
+  Future<void> _limparCredencialBiometricaLocal(
+    FlutterSecureStorage secureStorage,
+  ) async {
+    await secureStorage.delete(key: _biometricCredentialKey);
+    await secureStorage.delete(key: _biometricUsernameKey);
+    await secureStorage.delete(key: 'biometrics_enabled');
+    await secureStorage.delete(key: 'auth_token');
+    await secureStorage.delete(key: biometricPromptStorageKey);
   }
 
   Future<void> logout() async {
@@ -267,6 +396,7 @@ class AuthNotifier extends Notifier<AuthState> {
     await ref
         .read(deviceRegistrationManagerProvider)
         .desativarAntesLogout(token);
+    await disableBiometricLogin();
 
     await secureStorage.delete(key: 'auth_token');
     await secureStorage.delete(key: 'auth_username');
@@ -288,13 +418,20 @@ class AuthNotifier extends Notifier<AuthState> {
     await secureStorage.delete(key: 'saved_password');
     await secureStorage.delete(key: 'saved_username');
     await secureStorage.delete(key: 'biometrics_enabled');
-    await secureStorage.write(key: 'biometrics_asked', value: 'true');
+    await secureStorage.delete(key: 'biometrics_asked');
+    await secureStorage.delete(key: biometricPromptStorageKey);
   }
 
   Future<void> _registrarDispositivoAutenticado(String token) async {
     final manager = ref.read(deviceRegistrationManagerProvider);
     manager.startTokenRefreshListener(() => state.token);
     await manager.registrarSeAutenticado(token);
+  }
+
+  Future<void> refreshPushRegistration() async {
+    final token = state.token;
+    if (token == null || token.isEmpty) return;
+    await _registrarDispositivoAutenticado(token);
   }
 }
 

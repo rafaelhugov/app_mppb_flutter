@@ -100,6 +100,7 @@ class DeviceRegistrationManager {
   final DeviceRegistrationStore store;
   final DevicePlatformResolver platformResolver;
   final DeviceRegistrationDiagnosticsNotifier? diagnostics;
+  final bool requireFirebaseReady;
   final PushTokenProvider Function() _pushTokenProviderFactory;
 
   StreamSubscription<String>? _tokenRefreshSubscription;
@@ -110,6 +111,7 @@ class DeviceRegistrationManager {
     required this.store,
     required this.platformResolver,
     this.diagnostics,
+    this.requireFirebaseReady = false,
     PushTokenProvider? pushTokenProvider,
     PushTokenProvider Function()? pushTokenProviderFactory,
   }) : assert(pushTokenProvider != null || pushTokenProviderFactory != null),
@@ -123,7 +125,8 @@ class DeviceRegistrationManager {
 
   void startTokenRefreshListener(String? Function() authTokenProvider) {
     if (platformResolver.currentPlatform() == null ||
-        !PushNotificationService.isSupportedPlatform) {
+        !PushNotificationService.isSupportedPlatform ||
+        (requireFirebaseReady && !PushNotificationService.isFirebaseReady)) {
       return;
     }
 
@@ -148,7 +151,9 @@ class DeviceRegistrationManager {
     }
 
     final plataforma = platformResolver.currentPlatform();
-    if (plataforma == null || !PushNotificationService.isSupportedPlatform) {
+    if (plataforma == null ||
+        !PushNotificationService.isSupportedPlatform ||
+        (requireFirebaseReady && !PushNotificationService.isFirebaseReady)) {
       _diagnostic(
         const DeviceRegistrationDiagnosticsState(
           step: DeviceRegistrationStep.skipped,
@@ -328,6 +333,7 @@ final deviceRegistrationManagerProvider = Provider<DeviceRegistrationManager>((
     store: ref.read(deviceRegistrationStoreProvider),
     platformResolver: ref.read(devicePlatformResolverProvider),
     diagnostics: ref.read(deviceRegistrationDiagnosticsProvider.notifier),
+    requireFirebaseReady: true,
     pushTokenProviderFactory: () => ref.read(pushTokenProvider),
   );
   ref.onDispose(() {

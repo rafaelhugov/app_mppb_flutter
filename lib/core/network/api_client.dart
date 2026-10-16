@@ -4,11 +4,16 @@ import '../storage/secure_storage.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
 const String defaultApiUrl = 'https://aplicativo-api.mppb.mp.br';
-const String defaultAuthBaseUrl = 'https://auth-api.mppb.mp.br';
+const String defaultAuthBaseUrl = defaultApiUrl;
+
+const String apiBaseUrl = String.fromEnvironment(
+  'API_URL',
+  defaultValue: defaultApiUrl,
+);
 
 const String authBaseUrl = String.fromEnvironment(
   'AUTH_BASE_URL',
-  defaultValue: defaultAuthBaseUrl,
+  defaultValue: apiBaseUrl,
 );
 
 String get authLoginUrl {
@@ -21,10 +26,7 @@ String get authLoginUrl {
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: const String.fromEnvironment(
-        'API_URL',
-        defaultValue: defaultApiUrl,
-      ),
+      baseUrl: apiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
     ),

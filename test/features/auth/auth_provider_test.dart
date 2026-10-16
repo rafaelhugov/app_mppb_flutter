@@ -40,6 +40,25 @@ void main() {
       expect(state.token, 'token-salvo');
     });
 
+    test('credencial biometrica exige nova validacao local ao abrir', () async {
+      FlutterSecureStorage.setMockInitialValues({
+        'auth_token': 'token-salvo',
+        'biometrics_enabled': 'true',
+        'biometric_device_credential': 'BIO1.seletor.segredo',
+      });
+      final container = _container();
+      addTearDown(container.dispose);
+
+      container.read(authProvider);
+      await _pumpMicrotask();
+
+      final storage = const FlutterSecureStorage();
+      final state = container.read(authProvider);
+      expect(state.isAuthenticated, isFalse);
+      expect(state.token, isNull);
+      expect(await storage.read(key: 'auth_token'), isNull);
+    });
+
     test('login valido salva token e usuario atual', () async {
       final dio = _dioResponding(200, {'token': 'token-api'});
       final container = _container(authDio: dio);

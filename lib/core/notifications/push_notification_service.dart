@@ -94,6 +94,8 @@ class PushNotificationService {
     return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
   }
 
+  static bool get isFirebaseReady => Firebase.apps.isNotEmpty;
+
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final StreamController<RemoteMessage> _foregroundMessages =
       StreamController<RemoteMessage>.broadcast();
@@ -102,6 +104,7 @@ class PushNotificationService {
   final StreamController<String> _tokenRefreshes =
       StreamController<String>.broadcast();
   RemoteMessage? _initialMessage;
+  Future<void>? _initialization;
 
   Stream<RemoteMessage> get foregroundMessages => _foregroundMessages.stream;
   Stream<RemoteMessage> get openedMessages => _openedMessages.stream;
@@ -113,17 +116,29 @@ class PushNotificationService {
     return message;
   }
 
-  Future<void> initialize() async {
+  Future<void> initialize() {
+    return _initialization ??= _initialize();
+  }
+
+  Future<void> _initialize() async {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     FirebaseMessaging.onMessage.listen(_foregroundMessages.add);
     FirebaseMessaging.onMessageOpenedApp.listen(_openedMessages.add);
     _messaging.onTokenRefresh.listen(_tokenRefreshes.add);
     await _preparePublicNewsTopic();
 
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _initialMessage = initialMessage;
-      _openedMessages.add(initialMessage);
+    try {
+      final initialMessage = await _messaging.getInitialMessage().timeout(
+        const Duration(seconds: 3),
+      );
+      if (initialMessage != null) {
+        _initialMessage = initialMessage;
+        _openedMessages.add(initialMessage);
+      }
+    } on TimeoutException {
+      if (kDebugMode) {
+        debugPrint('FCM initial message timeout.');
+      }
     }
   }
 
@@ -141,8 +156,8 @@ class PushNotificationService {
 
   Future<void> _preparePublicNewsTopic() async {
     try {
-      await requestPermission();
-      await subscribeToPublicNewsTopic();
+      await requestPermission().timeout(const Duration(seconds: 5));
+      await subscribeToPublicNewsTopic().timeout(const Duration(seconds: 5));
     } catch (e) {
       if (kDebugMode) {
         debugPrint('FCM public topic unavailable.');

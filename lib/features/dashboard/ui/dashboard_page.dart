@@ -79,9 +79,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     final asked = await secureStorage.read(key: biometricPromptStorageKey);
     if (asked == 'true') return;
 
-    final isSupported = await _deviceSupportsBiometrics();
+    final isSupported = await _deviceSupportsLocalAuthentication();
     if (!isSupported) {
-      await ref.read(authProvider.notifier).dismissBiometricPrompt();
+      // A deteccao pode falhar transitoriamente durante a retomada do Android.
+      // Nao grave a recusa: o proximo login deve poder tentar novamente.
       return;
     }
 
@@ -94,19 +95,51 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     );
 
     if (result == true) {
+      // Aguarda o fechamento completo do dialogo Flutter antes de pedir ao
+      // Android que anexe o BiometricPrompt a FragmentActivity.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
       final bool authenticated;
       final localAuth = LocalAuthentication();
       try {
         authenticated = await localAuth.authenticate(
-          localizedReason: 'Confirme sua identidade para habilitar a biometria',
-          biometricOnly: true,
+          localizedReason:
+              'Confirme sua identidade com a segurança do aparelho',
+          biometricOnly: false,
           persistAcrossBackgrounding: true,
         );
       } on MissingPluginException {
-        await ref.read(authProvider.notifier).dismissBiometricPrompt();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'O recurso de biometria não foi carregado. Feche e abra o aplicativo e tente novamente em Perfil.',
+              ),
+            ),
+          );
+        }
         return;
-      } catch (_) {
-        await ref.read(authProvider.notifier).dismissBiometricPrompt();
+      } on LocalAuthException catch (error) {
+        if (mounted) {
+          final message =
+              error.code == LocalAuthExceptionCode.noBiometricsEnrolled
+              ? 'O aparelho não possui biometria cadastrada. Use o PIN, padrão ou senha local, ou configure a biometria nas configurações.'
+              : 'O aparelho não confirmou sua identidade (${error.code.name}). Tente novamente em Perfil.';
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
+        }
+        return;
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Falha ao abrir a segurança local (${error.runtimeType}). Tente novamente em Perfil.',
+              ),
+            ),
+          );
+        }
         return;
       }
 
@@ -114,27 +147,50 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         final enabled = await ref
             .read(authProvider.notifier)
             .enableBiometricLogin();
-        if (!enabled) {
-          await ref.read(authProvider.notifier).dismissBiometricPrompt();
+        if (mounted) {
+          final message = enabled
+              ? 'Acesso seguro habilitado. O próximo login poderá ser confirmado por biometria, PIN, padrão ou senha do aparelho.'
+              : '${ref.read(authProvider.notifier).biometricActivationError ?? 'Não foi possível registrar o acesso seguro no servidor.'} Tente novamente em Perfil.';
+          await _showAccessSetupResult(enabled: enabled, message: message);
         }
       } else {
-        await ref.read(authProvider.notifier).dismissBiometricPrompt();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'A confirmação pelo aparelho falhou ou foi cancelada. Tente novamente em Perfil.',
+              ),
+            ),
+          );
+        }
       }
     } else {
       await ref.read(authProvider.notifier).dismissBiometricPrompt();
     }
   }
 
-  Future<bool> _deviceSupportsBiometrics() async {
+  Future<bool> _deviceSupportsLocalAuthentication() async {
     final localAuth = LocalAuthentication();
     try {
-      return await localAuth.isDeviceSupported() &&
-          await localAuth.canCheckBiometrics;
+      // Inclui biometria, PIN, padrao e senha local configurados no aparelho.
+      return await localAuth.isDeviceSupported();
     } on MissingPluginException {
       return false;
     } catch (_) {
       return false;
     }
+  }
+
+  Future<void> _showAccessSetupResult({
+    required bool enabled,
+    required String message,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) =>
+          _AccessSetupResultDialog(enabled: enabled, message: message),
+    );
   }
 
   @override
@@ -2020,7 +2076,7 @@ class _BiometricPromptDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Habilitar biometria',
+                        'Habilitar acesso seguro',
                         style: TextStyle(
                           color: Color(0xFF202322),
                           fontSize: 18,
@@ -2030,7 +2086,7 @@ class _BiometricPromptDialog extends StatelessWidget {
                       ),
                       SizedBox(height: 6),
                       Text(
-                        'Use biometria ou Face ID para acessar o app sem digitar sua senha nos próximos acessos.',
+                        'Use impressão digital, reconhecimento facial, PIN, padrão ou senha do aparelho nos próximos acessos.',
                         style: TextStyle(
                           color: Color(0xFF697370),
                           fontSize: 13,
@@ -2084,6 +2140,110 @@ class _BiometricPromptDialog extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AccessSetupResultDialog extends StatelessWidget {
+  final bool enabled;
+  final String message;
+
+  const _AccessSetupResultDialog({
+    required this.enabled,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = enabled ? const Color(0xFF00A76F) : const Color(0xFFD62828);
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 360),
+        padding: const EdgeInsets.fromLTRB(24, 26, 24, 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAFAF7),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFE0E5E3)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33101828),
+              blurRadius: 34,
+              offset: Offset(0, 16),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: color.withAlpha(24),
+                shape: BoxShape.circle,
+                border: Border.all(color: color.withAlpha(70)),
+              ),
+              alignment: Alignment.center,
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                child: Icon(
+                  enabled ? Icons.check_rounded : Icons.close_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              enabled
+                  ? 'Acesso seguro habilitado'
+                  : 'Não foi possível habilitar',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF202322),
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF697370),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF202322),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                child: const Text('OK'),
+              ),
             ),
           ],
         ),

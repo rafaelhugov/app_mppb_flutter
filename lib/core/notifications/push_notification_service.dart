@@ -154,6 +154,12 @@ class PushNotificationService {
     return _messaging.subscribeToTopic(publicNewsTopic);
   }
 
+  Future<void> setPublicNewsSubscription(bool enabled) {
+    return enabled
+        ? _messaging.subscribeToTopic(publicNewsTopic)
+        : _messaging.unsubscribeFromTopic(publicNewsTopic);
+  }
+
   Future<void> _preparePublicNewsTopic() async {
     try {
       await requestPermission().timeout(const Duration(seconds: 5));

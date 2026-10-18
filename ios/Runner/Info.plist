@@ -5,7 +5,7 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
-	<string>A biometria é necessária para acessar a Carteira Funcional offline de forma segura.</string>
+	<string>O Face ID pode ser usado para confirmar sua identidade e acessar o MPPB+ com segurança.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

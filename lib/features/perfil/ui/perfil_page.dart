@@ -5,7 +5,9 @@ import 'package:local_auth/local_auth.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/perfil_usuario.dart';
+import '../models/preferencias_notificacao.dart';
 import '../providers/perfil_provider.dart';
+import '../providers/preferencias_notificacao_provider.dart';
 
 class PerfilPage extends ConsumerStatefulWidget {
   const PerfilPage({super.key});
@@ -17,6 +19,7 @@ class PerfilPage extends ConsumerStatefulWidget {
 class _PerfilPageState extends ConsumerState<PerfilPage> {
   bool _supportsBiometrics = false;
   bool _isBiometricActionLoading = false;
+  String? _biometricAuthenticationError;
 
   @override
   void initState() {
@@ -28,9 +31,8 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     final auth = LocalAuthentication();
     try {
       final supported = await auth.isDeviceSupported();
-      final canCheck = await auth.canCheckBiometrics;
       if (mounted) {
-        setState(() => _supportsBiometrics = supported && canCheck);
+        setState(() => _supportsBiometrics = supported);
       }
     } catch (_) {
       if (mounted) {
@@ -41,16 +43,19 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
 
   Future<void> _enableBiometricsNow() async {
     setState(() => _isBiometricActionLoading = true);
+    _biometricAuthenticationError = null;
     final authenticated = await _authenticateWithBiometrics(
-      'Confirme sua identidade para habilitar a biometria',
+      'Confirme sua identidade com a segurança do aparelho',
     );
     if (!mounted) return;
     if (!authenticated) {
       setState(() => _isBiometricActionLoading = false);
       await _showFeedbackDialog(
         type: _ProfileFeedbackType.warning,
-        title: 'Biometria não confirmada',
-        message: 'Não foi possível confirmar sua identidade neste aparelho.',
+        title: 'Identidade não confirmada',
+        message:
+            _biometricAuthenticationError ??
+            'A confirmação pelo aparelho falhou ou foi cancelada. Tente novamente.',
       );
       return;
     }
@@ -61,19 +66,25 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     await ref.read(perfilProvider.notifier).refreshBiometrics();
     if (!mounted) return;
     setState(() => _isBiometricActionLoading = false);
+    final activationError = ref
+        .read(authProvider.notifier)
+        .biometricActivationError;
     await _showFeedbackDialog(
       type: enabled ? _ProfileFeedbackType.success : _ProfileFeedbackType.error,
-      title: enabled ? 'Biometria habilitada' : 'Não foi possível habilitar',
+      title: enabled
+          ? 'Acesso seguro habilitado'
+          : 'Não foi possível habilitar',
       message: enabled
           ? 'O aparelho recebeu uma credencial revogável, separada da sua senha.'
-          : 'Não foi possível registrar a credencial segura no servidor.',
+          : activationError ??
+                'Não foi possível registrar a credencial segura no servidor.',
     );
   }
 
   Future<void> _disableBiometrics() async {
     setState(() => _isBiometricActionLoading = true);
     final authenticated = await _authenticateWithBiometrics(
-      'Confirme sua identidade para desativar a biometria',
+      'Confirme sua identidade para desativar o acesso seguro',
     );
 
     if (!mounted) return;
@@ -81,7 +92,7 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
       setState(() => _isBiometricActionLoading = false);
       await _showFeedbackDialog(
         type: _ProfileFeedbackType.warning,
-        title: 'Biometria não confirmada',
+        title: 'Identidade não confirmada',
         message: 'Não foi possível confirmar sua identidade neste aparelho.',
       );
       return;
@@ -93,7 +104,7 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     setState(() => _isBiometricActionLoading = false);
     await _showFeedbackDialog(
       type: _ProfileFeedbackType.success,
-      title: 'Biometria desativada',
+      title: 'Acesso seguro desativado',
       message: 'O acesso com senha volta a ser necessário no próximo login.',
     );
   }
@@ -103,11 +114,46 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     try {
       return await localAuth.authenticate(
         localizedReason: reason,
-        biometricOnly: true,
+        biometricOnly: false,
         persistAcrossBackgrounding: true,
       );
-    } catch (_) {
+    } on LocalAuthException catch (error) {
+      _biometricAuthenticationError = _localAuthErrorMessage(error);
       return false;
+    } catch (error) {
+      _biometricAuthenticationError =
+          'Falha ao abrir a autenticação local do aparelho (${error.runtimeType}).';
+      return false;
+    }
+  }
+
+  String _localAuthErrorMessage(LocalAuthException error) {
+    switch (error.code) {
+      case LocalAuthExceptionCode.noBiometricsEnrolled:
+        return 'O Android não encontrou biometria cadastrada. Use o PIN, padrão ou senha do aparelho, ou cadastre uma biometria nas configurações.';
+      case LocalAuthExceptionCode.noBiometricHardware:
+        return 'Este aparelho não possui biometria compatível. Configure PIN, padrão ou senha de bloqueio.';
+      case LocalAuthExceptionCode.biometricHardwareTemporarilyUnavailable:
+        return 'O sensor biométrico está temporariamente indisponível. Aguarde e tente novamente.';
+      case LocalAuthExceptionCode.temporaryLockout:
+        return 'A biometria foi bloqueada temporariamente após várias tentativas. Aguarde e tente novamente.';
+      case LocalAuthExceptionCode.biometricLockout:
+        return 'A biometria foi bloqueada pelo Android. Desbloqueie o aparelho com PIN ou senha e tente novamente.';
+      case LocalAuthExceptionCode.authInProgress:
+        return 'Já existe uma confirmação biométrica em andamento. Feche-a e tente novamente.';
+      case LocalAuthExceptionCode.uiUnavailable:
+        return 'O Android não conseguiu abrir a tela de autenticação local. Volte ao perfil e tente novamente.';
+      case LocalAuthExceptionCode.userCanceled:
+      case LocalAuthExceptionCode.systemCanceled:
+      case LocalAuthExceptionCode.timeout:
+        return 'A confirmação biométrica foi cancelada ou expirou. Tente novamente.';
+      case LocalAuthExceptionCode.noCredentialsSet:
+        return 'Configure PIN, padrão, senha ou biometria nas configurações do aparelho.';
+      default:
+        final description = error.description?.trim();
+        return description == null || description.isEmpty
+            ? 'O Android recusou a autenticação biométrica (${error.code.name}).'
+            : 'O Android recusou a autenticação biométrica (${error.code.name}): $description';
     }
   }
 
@@ -146,17 +192,40 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     );
   }
 
+  Future<void> _updateNotificationPreference(
+    PreferenciasNotificacao preferencias,
+  ) async {
+    final saved = await ref
+        .read(preferenciasNotificacaoProvider.notifier)
+        .atualizar(preferencias);
+    if (!mounted) return;
+    final errorMessage = ref.read(preferenciasNotificacaoProvider).errorMessage;
+    await _showFeedbackDialog(
+      type: saved ? _ProfileFeedbackType.success : _ProfileFeedbackType.error,
+      title: saved ? 'Preferência atualizada' : 'Não foi possível salvar',
+      message: saved
+          ? 'Suas preferências de notificação foram salvas e serão aplicadas aos seus aparelhos.'
+          : errorMessage ??
+                'Não foi possível salvar a preferência de notificação.',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(perfilProvider);
     final authState = ref.watch(authProvider);
+    final notificationState = ref.watch(preferenciasNotificacaoProvider);
     final perfil = state.data;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAF7),
       body: RefreshIndicator(
-        onRefresh: () =>
+        onRefresh: () async {
+          await Future.wait([
             ref.read(perfilProvider.notifier).carregar(forceRefresh: true),
+            ref.read(preferenciasNotificacaoProvider.notifier).carregar(),
+          ]);
+        },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -259,6 +328,11 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
                             ],
                           ),
                           const SizedBox(height: 12),
+                          _NotificationPreferencesSection(
+                            state: notificationState,
+                            onChanged: _updateNotificationPreference,
+                          ),
+                          const SizedBox(height: 12),
                           _SecuritySection(
                             supportsBiometrics: _supportsBiometrics,
                             biometricsEnabled: state.biometricsEnabled,
@@ -277,6 +351,124 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NotificationPreferencesSection extends StatelessWidget {
+  final PreferenciasNotificacaoState state;
+  final ValueChanged<PreferenciasNotificacao> onChanged;
+
+  const _NotificationPreferencesSection({
+    required this.state,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final preferencias = state.preferencias;
+    final enabled = !state.isLoading && !state.isSaving;
+    return _Section(
+      title: 'Notificações',
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Text(
+            'Escolha quais avisos deseja receber neste e nos demais aparelhos.',
+            style: TextStyle(
+              color: Color(0xFF697370),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+        ),
+        _NotificationSwitch(
+          icon: Icons.newspaper_rounded,
+          label: 'Notícias',
+          value: preferencias.noticias,
+          enabled: enabled,
+          onChanged: (value) =>
+              onChanged(preferencias.copyWith(noticias: value)),
+        ),
+        _NotificationSwitch(
+          icon: Icons.assignment_ind_rounded,
+          label: 'Designações',
+          value: preferencias.designacoes,
+          enabled: enabled,
+          onChanged: (value) =>
+              onChanged(preferencias.copyWith(designacoes: value)),
+        ),
+        _NotificationSwitch(
+          icon: Icons.receipt_long_rounded,
+          label: 'Contracheques',
+          value: preferencias.contracheques,
+          enabled: enabled,
+          onChanged: (value) =>
+              onChanged(preferencias.copyWith(contracheques: value)),
+        ),
+        _NotificationSwitch(
+          icon: Icons.payments_rounded,
+          label: 'Pagamentos',
+          value: preferencias.pagamentos,
+          enabled: enabled,
+          onChanged: (value) =>
+              onChanged(preferencias.copyWith(pagamentos: value)),
+        ),
+        _NotificationSwitch(
+          icon: Icons.event_busy_rounded,
+          label: 'Afastamentos',
+          value: preferencias.afastamentos,
+          enabled: enabled,
+          isLast: true,
+          onChanged: (value) =>
+              onChanged(preferencias.copyWith(afastamentos: value)),
+        ),
+        if (state.isLoading || state.isSaving)
+          const LinearProgressIndicator(minHeight: 2),
+      ],
+    );
+  }
+}
+
+class _NotificationSwitch extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool value;
+  final bool enabled;
+  final bool isLast;
+  final ValueChanged<bool> onChanged;
+
+  const _NotificationSwitch({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.enabled,
+    required this.onChanged,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SwitchListTile.adaptive(
+          secondary: Icon(icon, color: const Color(0xFF697370), size: 21),
+          title: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF202322),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          value: value,
+          activeTrackColor: const Color(0xFF00A76F),
+          onChanged: enabled ? onChanged : null,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+        if (!isLast) const Divider(height: 1, indent: 52, endIndent: 16),
+      ],
     );
   }
 }
@@ -377,42 +569,54 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
-      height: 72,
+      width: 76,
+      height: 76,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8F6),
+        color: const Color(0xFFF3C96B),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1.2),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x40000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: url == null || url!.trim().isEmpty
-          ? Center(
-              child: Text(
-                initials,
-                style: const TextStyle(
-                  color: Color(0xFF202322),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            )
-          : Image.network(
-              url!,
-              headers: authToken == null || authToken!.trim().isEmpty
-                  ? null
-                  : {'Authorization': 'Bearer ${authToken!.trim()}'},
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Center(
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    color: Color(0xFF202322),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+      child: ClipOval(
+        child: ColoredBox(
+          color: const Color(0xFFF7F8F6),
+          child: url == null || url!.trim().isEmpty
+              ? Center(
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      color: Color(0xFF202322),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                )
+              : Image.network(
+                  url!,
+                  headers: authToken == null || authToken!.trim().isEmpty
+                      ? null
+                      : {'Authorization': 'Bearer ${authToken!.trim()}'},
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Center(
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        color: Color(0xFF202322),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+        ),
+      ),
     );
   }
 }
@@ -576,8 +780,8 @@ class _SecuritySection extends StatelessWidget {
                   children: [
                     Text(
                       enabled
-                          ? 'Biometria habilitada'
-                          : 'Biometria desabilitada',
+                          ? 'Acesso seguro habilitado'
+                          : 'Acesso seguro desabilitado',
                       style: const TextStyle(
                         color: Color(0xFF202322),
                         fontSize: 15,
@@ -587,8 +791,8 @@ class _SecuritySection extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       supportsBiometrics
-                          ? 'A biometria usa uma credencial revogável e não armazena sua senha.'
-                          : 'Este aparelho não informou biometria disponível.',
+                          ? 'O acesso usa a segurança local do aparelho e uma credencial revogável, sem armazenar sua senha institucional.'
+                          : 'Configure biometria, PIN, padrão ou senha de bloqueio no aparelho.',
                       style: const TextStyle(
                         color: Color(0xFF697370),
                         fontSize: 13,
@@ -605,7 +809,10 @@ class _SecuritySection extends StatelessWidget {
                         width: isLoading ? 48 : null,
                         height: 40,
                         child: OutlinedButton(
-                          onPressed: supportsBiometrics && !isLoading
+                          // Permite uma tentativa manual mesmo quando a
+                          // sondagem inicial do Android falhar. O prompt nativo
+                          // continua sendo a autoridade final.
+                          onPressed: !isLoading
                               ? (enabled ? onDisable : onEnable)
                               : null,
                           style: OutlinedButton.styleFrom(
@@ -649,8 +856,8 @@ class _SecuritySection extends StatelessWidget {
                                       const SizedBox(width: 8),
                                       Text(
                                         enabled
-                                            ? 'Desativar biometria'
-                                            : 'Habilitar biometria',
+                                            ? 'Desativar acesso seguro'
+                                            : 'Habilitar acesso seguro',
                                       ),
                                     ],
                                   ),

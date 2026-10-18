@@ -128,6 +128,9 @@ void main() {
       FlutterSecureStorage.setMockInitialValues({
         'auth_token': 'token-salvo',
         'auth_username': 'usuario.teste',
+        'biometrics_enabled': 'true',
+        'biometric_device_credential': 'BIO1.seletor.segredo',
+        'biometric_username': 'usuario.teste',
         'carteira_cache_data': '{}',
         'carteira_cache_username': 'usuario.teste',
         'perfil_cache_data': '{}',
@@ -148,6 +151,16 @@ void main() {
       expect(await storage.read(key: 'auth_username'), isNull);
       expect(await storage.read(key: 'carteira_cache_data'), isNull);
       expect(await storage.read(key: 'perfil_cache_data'), isNull);
+      expect(await storage.read(key: 'biometrics_enabled'), 'true');
+      expect(
+        await storage.read(key: 'biometric_device_credential'),
+        'BIO1.seletor.segredo',
+      );
+      expect(await storage.read(key: 'biometric_username'), 'usuario.teste');
+      expect(
+        await storage.read(key: skipLocalAuthAutoPromptOnceStorageKey),
+        'true',
+      );
     });
   });
 }

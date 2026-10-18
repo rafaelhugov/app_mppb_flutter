@@ -18,7 +18,11 @@ final biometricAuthRepositoryProvider = Provider<BiometricAuthRepository>((
 
 const _biometricCredentialKey = 'biometric_device_credential';
 const _biometricUsernameKey = 'biometric_username';
-const biometricPromptStorageKey = 'biometrics_secure_v1_asked';
+const skipLocalAuthAutoPromptOnceStorageKey =
+    'skip_local_auth_auto_prompt_once';
+// Nova versao do convite: instalacoes que receberam a antiga indisponibilidade
+// devem ter uma nova oportunidade apos a ativacao da credencial revogavel.
+const biometricPromptStorageKey = 'biometrics_secure_v3_asked';
 
 // Definimos o estado da autenticação
 class AuthState {
@@ -65,6 +69,10 @@ class AuthState {
 
 // Criamos o Notifier do Riverpod
 class AuthNotifier extends Notifier<AuthState> {
+  String? _biometricActivationError;
+
+  String? get biometricActivationError => _biometricActivationError;
+
   @override
   AuthState build() {
     _checkInitialAuth();
@@ -205,6 +213,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<bool> enableBiometricLogin() async {
+    _biometricActivationError = null;
     final secureStorage = ref.read(secureStorageProvider);
     await _migrarSenhaBiometricaLegada(secureStorage);
     final token = state.token ?? await secureStorage.read(key: 'auth_token');
@@ -215,6 +224,8 @@ class AuthNotifier extends Notifier<AuthState> {
         token.isEmpty ||
         username == null ||
         platform == null) {
+      _biometricActivationError =
+          'A sessão atual não possui os dados necessários para habilitar a biometria.';
       return false;
     }
     try {
@@ -224,14 +235,26 @@ class AuthNotifier extends Notifier<AuthState> {
       final response = await ref
           .read(biometricAuthRepositoryProvider)
           .activate(token: token, deviceId: deviceId, platform: platform);
-      if (response.credential.isEmpty) return false;
+      if (response.credential.isEmpty) {
+        _biometricActivationError =
+            'O servidor não retornou a credencial biométrica.';
+        return false;
+      }
       await secureStorage.write(
         key: _biometricCredentialKey,
         value: response.credential,
       );
       await secureStorage.write(key: _biometricUsernameKey, value: username);
       await secureStorage.write(key: 'biometrics_enabled', value: 'true');
-    } on DioException {
+    } on DioException catch (error) {
+      final status = error.response?.statusCode;
+      _biometricActivationError = status == null
+          ? 'Não foi possível conectar ao serviço de biometria.'
+          : 'O serviço recusou a habilitação da biometria (HTTP $status).';
+      return false;
+    } catch (_) {
+      _biometricActivationError =
+          'Ocorreu uma falha ao armazenar a credencial biométrica.';
       return false;
     }
     await secureStorage.write(key: biometricPromptStorageKey, value: 'true');
@@ -396,7 +419,6 @@ class AuthNotifier extends Notifier<AuthState> {
     await ref
         .read(deviceRegistrationManagerProvider)
         .desativarAntesLogout(token);
-    await disableBiometricLogin();
 
     await secureStorage.delete(key: 'auth_token');
     await secureStorage.delete(key: 'auth_username');
@@ -404,7 +426,16 @@ class AuthNotifier extends Notifier<AuthState> {
     await secureStorage.delete(key: 'carteira_cache_username');
     await secureStorage.delete(key: 'perfil_cache_data');
     await secureStorage.delete(key: 'perfil_cache_username');
+    // A tela de login aberta por um logout voluntario nao deve autenticar de
+    // novo automaticamente. O botao de acesso seguro continua disponivel.
+    await secureStorage.write(
+      key: skipLocalAuthAutoPromptOnceStorageKey,
+      value: 'true',
+    );
 
+    // Logout encerra somente a sessao atual. A credencial biometrica revogavel
+    // deve permanecer no armazenamento seguro para permitir o proximo acesso.
+    // A revogacao ocorre exclusivamente na acao "Desativar biometria".
     state = AuthState(); // Reset state
   }
 

@@ -93,7 +93,13 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final manager = container.read(deviceRegistrationManagerProvider);
+      final manager = DeviceRegistrationManager(
+        repository: fakeRepo,
+        store: container.read(deviceRegistrationStoreProvider),
+        platformResolver: const _ActivePlatformResolver(),
+        pushTokenProvider: const _StaticPushTokenProvider('fcm-token-q6'),
+      );
+      addTearDown(manager.dispose);
 
       await manager.registrarSeAutenticado('auth-token-q6');
       await manager.registrarSeAutenticado('auth-token-q6');

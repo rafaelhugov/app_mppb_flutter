@@ -17,6 +17,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _usuarioController = TextEditingController();
   final _senhaController = TextEditingController();
   bool _biometricsEnabled = false;
+  bool _biometricPromptRequested = false;
   bool _obscurePassword = true;
 
   @override
@@ -40,28 +41,30 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final credential = await secureStorage.read(
       key: 'biometric_device_credential',
     );
-    var supported = false;
-    try {
-      final localAuth = LocalAuthentication();
-      supported =
-          await localAuth.isDeviceSupported() &&
-          await localAuth.canCheckBiometrics;
-    } catch (_) {
-      supported = false;
+    final skipAutomaticPrompt =
+        await secureStorage.read(key: skipLocalAuthAutoPromptOnceStorageKey) ==
+        'true';
+    if (skipAutomaticPrompt) {
+      await secureStorage.delete(key: skipLocalAuthAutoPromptOnceStorageKey);
     }
-    if (mounted) {
-      setState(
-        () => _biometricsEnabled =
-            supported && enabled == 'true' && credential?.isNotEmpty == true,
-      );
+    if (!mounted) return;
+    final canUseBiometrics =
+        enabled == 'true' && credential?.isNotEmpty == true;
+    setState(() => _biometricsEnabled = canUseBiometrics);
+    if (canUseBiometrics &&
+        !skipAutomaticPrompt &&
+        !_biometricPromptRequested) {
+      _biometricPromptRequested = true;
+      await _fazerLoginBiometrico();
     }
   }
 
   Future<void> _fazerLoginBiometrico() async {
     try {
       final authenticated = await LocalAuthentication().authenticate(
-        localizedReason: 'Confirme sua identidade para acessar o MPPB+',
-        biometricOnly: true,
+        localizedReason:
+            'Confirme sua identidade com a segurança do aparelho para acessar o MPPB+',
+        biometricOnly: false,
         persistAcrossBackgrounding: true,
       );
       if (!authenticated || !mounted) return;
@@ -69,7 +72,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível validar a biometria.')),
+        const SnackBar(
+          content: Text(
+            'Não foi possível confirmar sua identidade pelo aparelho.',
+          ),
+        ),
       );
     }
   }
@@ -337,7 +344,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     color: Color(0xFFD62828),
                                     size: 21,
                                   ),
-                                  label: const Text('Acessar com biometria'),
+                                  label: const Text(
+                                    'Acessar com segurança local',
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 10),

@@ -144,9 +144,12 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
               size: metrics.isTablet ? 24 : 22,
             ),
             onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
+              final authNotifier = ref.read(authProvider.notifier);
+              await authNotifier.logout();
+              final hasBiometricCredential = await authNotifier
+                  .hasAvailableBiometricCredentials();
               if (context.mounted) {
-                context.go('/');
+                context.go(hasBiometricCredential ? '/login' : '/');
               }
             },
           ),

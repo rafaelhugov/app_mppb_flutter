@@ -21,4 +21,22 @@ void main() {
     expect(authProvider, isNot(contains('return login(savedUsername')));
     expect(authProvider, isNot(contains('return login(username')));
   });
+
+  test('acesso seguro aceita autenticacao local configurada no aparelho', () {
+    const files = <String>[
+      'lib/features/auth/ui/login_page.dart',
+      'lib/features/dashboard/ui/dashboard_page.dart',
+      'lib/features/perfil/ui/perfil_page.dart',
+    ];
+
+    for (final path in files) {
+      final source = File(path).readAsStringSync();
+      expect(
+        source,
+        contains('biometricOnly: false'),
+        reason: '$path deve aceitar biometria ou credencial local do aparelho',
+      );
+      expect(source, isNot(contains('biometricOnly: true')));
+    }
+  });
 }

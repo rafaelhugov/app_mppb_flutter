@@ -14,6 +14,7 @@ import 'core/notifications/push_navigation_service.dart';
 import 'core/router/app_router.dart';
 import 'core/session/session_reset_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/perfil/providers/preferencias_notificacao_provider.dart';
 import 'firebase_options.dart';
 
 class AppScrollBehavior extends MaterialScrollBehavior {
@@ -71,6 +72,7 @@ class _MyAppState extends ConsumerState<MyApp> {
       await PushNotificationService.instance.initialize();
       if (!mounted) return;
       await ref.read(authProvider.notifier).refreshPushRegistration();
+      await ref.read(preferenciasNotificacaoProvider.notifier).carregar();
     } catch (error) {
       if (kDebugMode) {
         debugPrint(
@@ -84,6 +86,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     ref.watch(sessionResetProvider);
+    ref.watch(preferenciasNotificacaoProvider);
     if (_fcmReady) {
       ref.watch(pushNavigationServiceProvider);
     }

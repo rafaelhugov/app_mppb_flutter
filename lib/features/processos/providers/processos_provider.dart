@@ -53,6 +53,9 @@ class ConsultaProcessosNotifier extends Notifier<ConsultaProcessosState> {
     if (error is DioException) {
       final statusCode = error.response?.statusCode;
       final responseData = error.response?.data;
+      if (statusCode == 429) {
+        return 'Muitas consultas em sequência. Aguarde um minuto e tente novamente.';
+      }
       if (statusCode == 400 &&
           responseData is String &&
           responseData.isNotEmpty) {
@@ -186,19 +189,28 @@ class ProcessoDetalheParams {
 final processoDetalhesProvider = FutureProvider.autoDispose
     .family<ProcessoDetalhe, ProcessoDetalheParams>((ref, params) async {
       final dio = ref.read(dioProvider);
-      final response = await dio.get(
-        '/api/public/v1/processos/${params.idProcesso}/detalhes',
-        queryParameters: {
-          'captchaToken': params.captchaToken,
-          'captchaValue': params.captchaValue,
-        },
-      );
+      try {
+        final response = await dio.post(
+          '/api/public/v1/processos/${params.idProcesso}/detalhes',
+          data: {
+            'captchaToken': params.captchaToken,
+            'captchaValue': params.captchaValue,
+          },
+        );
 
-      if (response.statusCode == 200) {
-        return ProcessoDetalhe.fromJson(response.data);
-      } else if (response.statusCode == 400) {
-        throw Exception('Código da imagem incorreto ou expirado.');
-      } else {
+        if (response.statusCode == 200) {
+          return ProcessoDetalhe.fromJson(response.data);
+        }
+        throw Exception('Falha ao buscar detalhes.');
+      } on DioException catch (error) {
+        if (error.response?.statusCode == 400) {
+          throw Exception('Código da imagem incorreto ou expirado.');
+        }
+        if (error.response?.statusCode == 429) {
+          throw Exception(
+            'Muitas tentativas em sequência. Aguarde um minuto e tente novamente.',
+          );
+        }
         throw Exception('Falha ao buscar detalhes.');
       }
     });

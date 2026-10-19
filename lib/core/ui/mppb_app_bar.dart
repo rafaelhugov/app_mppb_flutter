@@ -10,6 +10,7 @@ import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
 import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/noticias/utils/noticia_share.dart';
+import '../../features/perfil/providers/preferencias_notificacao_provider.dart';
 import '../notifications/device_registration_diagnostics_provider.dart';
 import '../notifications/device_registration_provider.dart';
 import '../notifications/notification_center_provider.dart';
@@ -48,6 +49,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       final noticiaState = ref.watch(noticiaProvider);
       final designacoesState = ref.watch(designacoesProvider);
       final notificationState = ref.watch(notificationCenterProvider);
+      final notificationPreferences = ref
+          .watch(preferenciasNotificacaoProvider)
+          .preferencias;
       final deviceDiagnostics = ref.watch(
         deviceRegistrationDiagnosticsProvider,
       );
@@ -55,7 +59,12 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         noticias: noticiaState.noticias,
         designacoes: designacoesState.designacoes,
         readKeys: notificationState.readKeys,
-        includeDesignacoes: true,
+        inboxItems: notificationState.inboxItems,
+        includeNoticias: notificationPreferences.noticias,
+        includeDesignacoes: notificationPreferences.designacoes,
+        includeContracheques: notificationPreferences.contracheques,
+        includePagamentos: notificationPreferences.pagamentos,
+        includeAfastamentos: notificationPreferences.afastamentos,
       );
 
       return AppBar(
@@ -91,16 +100,27 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         title: _HomeTapTarget(
           tooltip: 'Ir para início',
-          child: Text(
-            'MPPB+',
-            style: TextStyle(
-              color: const Color(0xFF4C4741),
-              fontSize: metrics.isTablet ? 23 : 20,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0,
-              height: 1.0,
+          child: SizedBox(
+            height: toolbarHeight,
+            child: Center(
+              // O desenho das letras fica visualmente alguns pixels acima do
+              // centro geometrico. Este ajuste alinha o titulo ao brasao e
+              // aos icones de perfil e saida na mesma linha.
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  'MPPB+',
+                  style: TextStyle(
+                    color: const Color(0xFF4C4741),
+                    fontSize: metrics.isTablet ? 23 : 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                    height: 1.0,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
-            overflow: TextOverflow.ellipsis,
           ),
         ),
         actions: [
@@ -123,11 +143,18 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
             padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
             icon: _NotificationBell(count: notificationItems.length),
             onPressed: () {
+              // Abrir o centro equivale a visualizar os avisos pendentes.
+              // A lista atual permanece visivel neste painel, mas o badge
+              // some imediatamente e nao volta quando ele for reaberto.
+              unawaited(
+                ref
+                    .read(notificationCenterProvider.notifier)
+                    .markAllAsRead(notificationItems.map((item) => item.key)),
+              );
               NotificationCenterSheet.show(
                 context,
                 items: notificationItems,
                 onOpenItem: (item) => _openNotificationItem(context, ref, item),
-                onClearAll: () => _clearNotifications(ref, notificationItems),
                 deviceDiagnostics: deviceDiagnostics,
                 onRetryDeviceRegistration: () =>
                     _retryDeviceRegistration(ref, authState.token),
@@ -165,6 +192,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       designacoes: const [],
       readKeys: notificationState.readKeys,
       includeDesignacoes: false,
+      includeContracheques: false,
+      includePagamentos: false,
+      includeAfastamentos: false,
     );
 
     return AppBar(
@@ -226,11 +256,15 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
           padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
           icon: _NotificationBell(count: notificationItems.length),
           onPressed: () {
+            unawaited(
+              ref
+                  .read(notificationCenterProvider.notifier)
+                  .markAllAsRead(notificationItems.map((item) => item.key)),
+            );
             NotificationCenterSheet.show(
               context,
               items: notificationItems,
               onOpenItem: (item) => _openNotificationItem(context, ref, item),
-              onClearAll: () => _clearNotifications(ref, notificationItems),
             );
           },
         ),
@@ -279,18 +313,16 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       case NotificationCenterItemType.designacao:
         context.go('/designacoes');
         return;
+      case NotificationCenterItemType.contracheque:
+        context.go('/contracheque');
+        return;
+      case NotificationCenterItemType.pagamento:
+        context.go('/pagamentos');
+        return;
+      case NotificationCenterItemType.afastamento:
+        context.go('/concessao-afastamento');
+        return;
     }
-  }
-
-  void _clearNotifications(
-    WidgetRef ref,
-    List<NotificationCenterItem> notificationItems,
-  ) {
-    unawaited(
-      ref
-          .read(notificationCenterProvider.notifier)
-          .markAllAsRead(notificationItems.map((item) => item.key)),
-    );
   }
 
   void _retryDeviceRegistration(WidgetRef ref, String? authToken) {

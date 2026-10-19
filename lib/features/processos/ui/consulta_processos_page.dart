@@ -1283,7 +1283,13 @@ class _CaptchaDialogState extends ConsumerState<_CaptchaDialog> {
                                     if (val.isEmpty) return;
                                     Navigator.of(context).pop();
                                     context.push(
-                                      '/processos/${widget.processo.id}/detalhes?captchaToken=$token&captchaValue=$val',
+                                      '/processos/${widget.processo.id}/detalhes',
+                                      extra: ProcessoDetalheParams(
+                                        idProcesso: widget.processo.id
+                                            .toString(),
+                                        captchaToken: token,
+                                        captchaValue: val,
+                                      ),
                                     );
                                   },
                                   child: const Text(

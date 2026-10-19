@@ -12,6 +12,7 @@ import '../../features/diario_oficial/ui/diario_oficial_page.dart';
 import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/processos/ui/consulta_processos_page.dart';
 import '../../features/processos/ui/processo_detalhes_page.dart';
+import '../../features/processos/providers/processos_provider.dart';
 import '../../features/perfil/ui/perfil_page.dart';
 import '../../features/public/ui/public_dashboard_page.dart';
 import '../../features/concessao_afastamento/ui/concessao_afastamento_page.dart';
@@ -162,10 +163,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/processos/:id/detalhes',
             builder: (context, state) {
               final id = state.pathParameters['id']!;
+              final secureParams = state.extra is ProcessoDetalheParams
+                  ? state.extra! as ProcessoDetalheParams
+                  : null;
+              // Compatibilidade temporária com links de versões anteriores.
               final captchaToken =
-                  state.uri.queryParameters['captchaToken'] ?? '';
+                  secureParams?.captchaToken ??
+                  state.uri.queryParameters['captchaToken'] ??
+                  '';
               final captchaValue =
-                  state.uri.queryParameters['captchaValue'] ?? '';
+                  secureParams?.captchaValue ??
+                  state.uri.queryParameters['captchaValue'] ??
+                  '';
               return ProcessoDetalhesPage(
                 idProcesso: id,
                 captchaToken: captchaToken,

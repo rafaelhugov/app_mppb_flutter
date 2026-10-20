@@ -1976,15 +1976,23 @@ class _MiniCardShell extends StatelessWidget {
   }
 }
 
-class _WalletMiniPhoto extends StatelessWidget {
-  const _WalletMiniPhoto({required this.url, required this.isMembro});
+class _WalletMiniPhoto extends ConsumerWidget {
+  const _WalletMiniPhoto({
+    required this.url,
+    required this.isMembro,
+  });
 
   final String? url;
   final bool isMembro;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final photoUrl = url?.trim();
+    final token = ref.watch(authProvider).token;
+    final headers = token != null && token.trim().isNotEmpty
+        ? {'Authorization': 'Bearer ${token.trim()}'}
+        : null;
+
     final fallback = Container(
       color: const Color(0xFFE9EDF0),
       child: const Icon(
@@ -2018,6 +2026,7 @@ class _WalletMiniPhoto extends StatelessWidget {
           ? fallback
           : CachedNetworkImage(
               imageUrl: photoUrl,
+              httpHeaders: headers,
               fit: BoxFit.cover,
               placeholder: (context, url) => fallback,
               errorWidget: (context, url, error) => fallback,

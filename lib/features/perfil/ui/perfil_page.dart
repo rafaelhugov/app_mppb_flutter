@@ -216,19 +216,47 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Sair do aplicativo?'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          'Sair do aplicativo?',
+          style: TextStyle(
+            color: Color(0xFF1D2939),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         content: const Text(
           'Sua sessão será encerrada neste aparelho. Você poderá entrar novamente quando quiser.',
+          style: TextStyle(
+            color: Color(0xFF475467),
+            fontSize: 14,
+            height: 1.4,
+          ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF475467),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             child: const Text('Cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB42318),
+              backgroundColor: const Color(0xFFD62828),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
             ),
             child: const Text('Sair'),
           ),
@@ -1037,16 +1065,22 @@ class _LogoutSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
+        Center(
           child: OutlinedButton.icon(
             onPressed: onLogout,
-            icon: const Icon(Icons.logout_rounded),
+            icon: const Icon(Icons.logout_rounded, size: 18),
             label: const Text('Sair do aplicativo'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFB42318),
-              side: const BorderSide(color: Color(0xFFFDA29B)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              foregroundColor: const Color(0xFFD62828),
+              side: const BorderSide(color: Color(0xFFD62828), width: 1.2),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),

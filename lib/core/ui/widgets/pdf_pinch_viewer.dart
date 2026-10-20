@@ -53,11 +53,13 @@ class _PdfPinchViewerState extends State<PdfPinchViewer> {
                   constrained: false,
                   minScale: 1,
                   maxScale: 5,
-                  alignment: Alignment.topCenter,
+                  // Uma margem horizontal ampla deixa o usuário alcançar
+                  // completamente os dois lados da página após ampliar.
                   boundaryMargin: const EdgeInsets.symmetric(
-                    horizontal: 48,
+                    horizontal: 480,
                     vertical: 72,
                   ),
+                  clipBehavior: Clip.hardEdge,
                   onInteractionUpdate: (_) => _updateZoomState(),
                   onInteractionEnd: (_) => _updateZoomState(),
                   child: SizedBox(

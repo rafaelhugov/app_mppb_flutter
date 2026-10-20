@@ -374,7 +374,7 @@ class _NotificationPreferencesSection extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: Text(
-            'Escolha quais avisos deseja receber neste e nos demais aparelhos.',
+            'Escolha quais avisos deseja receber por push e visualizar na central de notificações.',
             style: TextStyle(
               color: Color(0xFF697370),
               fontSize: 13,

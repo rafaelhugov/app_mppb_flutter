@@ -88,11 +88,8 @@ class AuthNotifier extends Notifier<AuthState> {
     final biometricCredential = await secureStorage.read(
       key: _biometricCredentialKey,
     );
-    if (biometricsEnabled && biometricCredential?.isNotEmpty == true) {
-      await secureStorage.delete(key: 'auth_token');
-      return;
-    }
-    if (biometricsEnabled) {
+    if (biometricsEnabled &&
+        (biometricCredential == null || biometricCredential.isEmpty)) {
       await secureStorage.delete(key: 'biometrics_enabled');
     }
     final token = await secureStorage.read(key: 'auth_token');

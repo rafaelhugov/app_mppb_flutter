@@ -12,6 +12,7 @@ import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
 import '../../features/pagamentos/providers/pagamentos_provider.dart';
 import '../router/app_router.dart';
+import 'notification_center_provider.dart';
 import 'push_notification_service.dart';
 
 const String _designacoesEventType = 'NOVAS_DESIGNACOES';
@@ -105,6 +106,7 @@ class PushNavigationService {
   final Future<void> Function() refreshContracheque;
   final Future<void> Function() refreshPagamentos;
   final Future<void> Function() refreshAfastamentos;
+  final Future<void> Function(RemoteMessage message)? recordNotification;
 
   StreamSubscription<RemoteMessage>? _foregroundSubscription;
   StreamSubscription<RemoteMessage>? _openedSubscription;
@@ -120,6 +122,7 @@ class PushNavigationService {
     required this.refreshContracheque,
     required this.refreshPagamentos,
     required this.refreshAfastamentos,
+    this.recordNotification,
   });
 
   void start() {
@@ -136,15 +139,17 @@ class PushNavigationService {
     }
   }
 
-  Future<void> handleForegroundMessage(RemoteMessage message) {
-    return handleForegroundPayload(
+  Future<void> handleForegroundMessage(RemoteMessage message) async {
+    await recordNotification?.call(message);
+    await handleForegroundPayload(
       gateway.technicalPayload(message),
       messageKey: _messageKey(message),
     );
   }
 
-  Future<void> handleOpenedMessage(RemoteMessage message) {
-    return handleOpenedPayload(
+  Future<void> handleOpenedMessage(RemoteMessage message) async {
+    await recordNotification?.call(message);
+    await handleOpenedPayload(
       gateway.technicalPayload(message),
       messageKey: _messageKey(message),
     );
@@ -421,6 +426,11 @@ final pushNavigationServiceProvider = Provider<PushNavigationService>((ref) {
     },
     refreshAfastamentos: () {
       return ref.read(concessaoAfastamentoProvider.notifier).atualizarTudo();
+    },
+    recordNotification: (message) {
+      return ref
+          .read(notificationCenterProvider.notifier)
+          .recordRemoteMessage(message);
     },
   );
 

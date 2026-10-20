@@ -349,7 +349,7 @@ void main() {
     );
 
     test(
-      'Processos e captcha usam filtros, consulta e detalhes com query',
+      'Processos e captcha usam filtros e detalhes com POST seguro',
       () async {
         final requests = <FakeDioRequest>[];
         final container = _container(
@@ -381,7 +381,7 @@ void main() {
             .carregarFiltros();
         await container
             .read(consultaProcessosProvider.notifier)
-            .buscarProcessos({'idComarca': 1, 'numeroProcesso': '001'});
+            .buscarProcessos({'idComarca': 1, 'numeroProcesso': '0012'});
         final captcha = await container.read(captchaProvider.future);
         final detalhe = await container.read(
           processoDetalhesProvider(
@@ -397,9 +397,11 @@ void main() {
         expect(detalhe.id, 123);
         expect(requests[0].path, '/api/public/v1/processos/filtros');
         expect(requests[1].method, 'POST');
-        expect(requests[1].data, {'idComarca': 1, 'numeroProcesso': '001'});
+        expect(requests[1].data, {'idComarca': 1, 'numeroProcesso': '0012'});
         expect(requests[2].path, '/api/public/v1/captcha');
-        expect(requests[3].queryParameters, {
+        expect(requests[3].method, 'POST');
+        expect(requests[3].queryParameters, isEmpty);
+        expect(requests[3].data, {
           'captchaToken': 'captcha-token',
           'captchaValue': 'abc123',
         });

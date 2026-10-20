@@ -9,7 +9,6 @@ class NotificationCenterSheet {
     BuildContext context, {
     required List<NotificationCenterItem> items,
     required ValueChanged<NotificationCenterItem> onOpenItem,
-    required VoidCallback onClearAll,
     DeviceRegistrationDiagnosticsState? deviceDiagnostics,
     VoidCallback? onRetryDeviceRegistration,
   }) {
@@ -21,10 +20,6 @@ class NotificationCenterSheet {
         return NotificationCenterContent(
           items: items,
           onClose: () => Navigator.pop(ctx),
-          onClearAll: () {
-            onClearAll();
-            Navigator.pop(ctx);
-          },
           onOpenItem: (item) {
             Navigator.pop(ctx);
             onOpenItem(item);
@@ -40,7 +35,6 @@ class NotificationCenterSheet {
 class NotificationCenterContent extends StatefulWidget {
   final List<NotificationCenterItem> items;
   final VoidCallback onClose;
-  final VoidCallback onClearAll;
   final ValueChanged<NotificationCenterItem> onOpenItem;
   final DeviceRegistrationDiagnosticsState? deviceDiagnostics;
   final VoidCallback? onRetryDeviceRegistration;
@@ -49,7 +43,6 @@ class NotificationCenterContent extends StatefulWidget {
     super.key,
     required this.items,
     required this.onClose,
-    required this.onClearAll,
     required this.onOpenItem,
     this.deviceDiagnostics,
     this.onRetryDeviceRegistration,
@@ -65,6 +58,9 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
 
   bool _showAllNews = false;
   bool _showAllDesignations = false;
+  bool _showAllPayslips = false;
+  bool _showAllPayments = false;
+  bool _showAllLeaves = false;
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +76,15 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
         .toList();
     final designationItems = widget.items
         .where((item) => item.type == NotificationCenterItemType.designacao)
+        .toList();
+    final payslipItems = widget.items
+        .where((item) => item.type == NotificationCenterItemType.contracheque)
+        .toList();
+    final paymentItems = widget.items
+        .where((item) => item.type == NotificationCenterItemType.pagamento)
+        .toList();
+    final leaveItems = widget.items
+        .where((item) => item.type == NotificationCenterItemType.afastamento)
         .toList();
 
     return Align(
@@ -132,24 +137,6 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
                             ),
                           ),
                         ),
-                        if (widget.items.isNotEmpty)
-                          TextButton(
-                            onPressed: widget.onClearAll,
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFD62828),
-                              textStyle: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                              minimumSize: const Size(0, 32),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text('Limpar tudo'),
-                          ),
-                        const SizedBox(width: 6),
                         InkWell(
                           onTap: widget.onClose,
                           borderRadius: BorderRadius.circular(8),
@@ -230,6 +217,54 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
                                 setState(
                                   () => _showAllDesignations =
                                       !_showAllDesignations,
+                                );
+                              },
+                              onOpenItem: widget.onOpenItem,
+                            ),
+                          if (payslipItems.isNotEmpty)
+                            _NotificationGroup(
+                              title: 'Contracheques',
+                              count: payslipItems.length,
+                              icon: Icons.receipt_long_rounded,
+                              accentColor: const Color(0xFF7C3AED),
+                              items: payslipItems,
+                              previewLimit: _previewLimit,
+                              showAll: _showAllPayslips,
+                              onToggleShowAll: () {
+                                setState(
+                                  () => _showAllPayslips = !_showAllPayslips,
+                                );
+                              },
+                              onOpenItem: widget.onOpenItem,
+                            ),
+                          if (paymentItems.isNotEmpty)
+                            _NotificationGroup(
+                              title: 'Pagamentos',
+                              count: paymentItems.length,
+                              icon: Icons.payments_rounded,
+                              accentColor: const Color(0xFF047857),
+                              items: paymentItems,
+                              previewLimit: _previewLimit,
+                              showAll: _showAllPayments,
+                              onToggleShowAll: () {
+                                setState(
+                                  () => _showAllPayments = !_showAllPayments,
+                                );
+                              },
+                              onOpenItem: widget.onOpenItem,
+                            ),
+                          if (leaveItems.isNotEmpty)
+                            _NotificationGroup(
+                              title: 'Afastamentos',
+                              count: leaveItems.length,
+                              icon: Icons.event_busy_rounded,
+                              accentColor: const Color(0xFFB45309),
+                              items: leaveItems,
+                              previewLimit: _previewLimit,
+                              showAll: _showAllLeaves,
+                              onToggleShowAll: () {
+                                setState(
+                                  () => _showAllLeaves = !_showAllLeaves,
                                 );
                               },
                               onOpenItem: widget.onOpenItem,

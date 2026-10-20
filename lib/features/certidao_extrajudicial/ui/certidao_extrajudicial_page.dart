@@ -7,6 +7,7 @@ import '../../../core/network/connectivity_provider.dart';
 import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
+import '../../../core/ui/widgets/pdf_pinch_viewer.dart';
 import '../models/certidao_extrajudicial.dart';
 import '../providers/certidao_extrajudicial_provider.dart';
 
@@ -705,14 +706,21 @@ class _CertidaoExtrajudicialPageState
                   padding: EdgeInsets.only(
                     bottom: MediaQuery.paddingOf(context).bottom + 72,
                   ),
-                  child: PdfPreview(
+                  child: PdfPreview.builder(
                     build: (_) async => bytes,
                     canChangeOrientation: false,
                     canChangePageFormat: false,
                     canDebug: false,
                     allowPrinting: false,
                     allowSharing: false,
+                    useActions: false,
                     pdfFileName: fileName,
+                    pagesBuilder: (context, pages) {
+                      return PdfPinchViewer(
+                        pages: pages,
+                        documentLabel: 'certidão extrajudicial',
+                      );
+                    },
                     loadingWidget: const Center(
                       child: CircularProgressIndicator(
                         color: Color(0xFFD62828),

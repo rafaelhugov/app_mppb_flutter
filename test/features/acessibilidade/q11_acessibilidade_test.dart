@@ -14,6 +14,7 @@ import 'package:app_mppb_flutter/features/carteira/models/usuario_carteira.dart'
 import 'package:app_mppb_flutter/features/carteira/providers/carteira_provider.dart';
 import 'package:app_mppb_flutter/features/noticias/providers/noticia_provider.dart';
 import 'package:app_mppb_flutter/features/designacoes/providers/designacoes_provider.dart';
+import 'package:app_mppb_flutter/features/perfil/providers/preferencias_notificacao_provider.dart';
 
 class _MockAuthenticatedNotifier extends AuthNotifier {
   @override
@@ -22,7 +23,8 @@ class _MockAuthenticatedNotifier extends AuthNotifier {
 
 class _MockErrorAuthNotifier extends AuthNotifier {
   @override
-  AuthState build() => AuthState(errorMessage: 'Credenciais inválidas. Tente novamente.');
+  AuthState build() =>
+      AuthState(errorMessage: 'Credenciais inválidas. Tente novamente.');
 }
 
 class _MockNoticiaNotifier extends NoticiaNotifier {
@@ -35,21 +37,31 @@ class _MockDesignacoesNotifier extends DesignacoesNotifier {
   DesignacoesState build() => const DesignacoesState();
 }
 
+class _MockPreferenciasNotificacaoNotifier
+    extends PreferenciasNotificacaoNotifier {
+  @override
+  PreferenciasNotificacaoState build() => const PreferenciasNotificacaoState();
+}
+
 class _MockCarteiraNotifier extends CarteiraNotifier {
   @override
   CarteiraState build() => CarteiraState(
-        isLoading: false,
-        data: UsuarioCarteira(
-          nome: 'Servidor Teste',
-          cargo: 'Analista Ministerial',
-          matricula: '12345',
-          tipoCargo: 'S',
-          cpf: '000.000.000-00',
-        ),
-      );
+    isLoading: false,
+    data: UsuarioCarteira(
+      nome: 'Servidor Teste',
+      cargo: 'Analista Ministerial',
+      matricula: '12345',
+      tipoCargo: 'S',
+      cpf: '000.000.000-00',
+    ),
+  );
 }
 
-Widget _buildTestApp(Widget child, {TextScaler textScaler = const TextScaler.linear(1.0), List<dynamic>? overrides}) {
+Widget _buildTestApp(
+  Widget child, {
+  TextScaler textScaler = const TextScaler.linear(1.0),
+  List<dynamic>? overrides,
+}) {
   return ProviderScope(
     overrides: [
       noticiaProvider.overrideWith(() => _MockNoticiaNotifier()),
@@ -74,42 +86,44 @@ void main() {
   });
 
   group('Q11-T01 — Labels Semânticos e Tooltips em Controles', () {
-    testWidgets('MppbAppBar pública possui tooltips acessíveis em ações e ExcludeSemantics no brasão', (tester) async {
-      await tester.pumpWidget(
-        _buildTestApp(
-          const Scaffold(
-            appBar: MppbAppBar(),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      // Tooltip de Notificações
-      final notifFinder = find.byTooltip('Notificações');
-      expect(notifFinder, findsOneWidget);
-
-      // Botão Entrar legível
-      expect(find.text('Entrar'), findsOneWidget);
-
-      // Brasão decorativo com ExcludeSemantics
-      final imageFinder = find.byType(Image);
-      if (imageFinder.evaluate().isNotEmpty) {
-        final excludeSemanticsFinder = find.ancestor(
-          of: imageFinder.first,
-          matching: find.byType(ExcludeSemantics),
+    testWidgets(
+      'MppbAppBar pública possui tooltips acessíveis em ações e ExcludeSemantics no brasão',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildTestApp(const Scaffold(appBar: MppbAppBar())),
         );
-        expect(excludeSemanticsFinder, findsOneWidget);
-      }
-    });
+        await tester.pump();
 
-    testWidgets('MppbAppBar autenticada possui tooltip Sair da conta', (tester) async {
+        // Tooltip de Notificações
+        final notifFinder = find.byTooltip('Notificações');
+        expect(notifFinder, findsOneWidget);
+
+        // Botão Entrar legível
+        expect(find.text('Entrar'), findsOneWidget);
+
+        // Brasão decorativo com ExcludeSemantics
+        final imageFinder = find.byType(Image);
+        if (imageFinder.evaluate().isNotEmpty) {
+          final excludeSemanticsFinder = find.ancestor(
+            of: imageFinder.first,
+            matching: find.byType(ExcludeSemantics),
+          );
+          expect(excludeSemanticsFinder, findsOneWidget);
+        }
+      },
+    );
+
+    testWidgets('MppbAppBar autenticada possui tooltip Sair da conta', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _buildTestApp(
-          const Scaffold(
-            appBar: MppbAppBar(),
-          ),
+          const Scaffold(appBar: MppbAppBar()),
           overrides: [
             authProvider.overrideWith(() => _MockAuthenticatedNotifier()),
+            preferenciasNotificacaoProvider.overrideWith(
+              () => _MockPreferenciasNotificacaoNotifier(),
+            ),
           ],
         ),
       );
@@ -119,198 +133,282 @@ void main() {
       expect(logoutFinder, findsOneWidget);
     });
 
-    testWidgets('LoginPage possui tooltip no botão voltar e ExcludeSemantics no brasão', (tester) async {
-      await tester.pumpWidget(_buildTestApp(const LoginPage()));
-      await tester.pump();
+    testWidgets(
+      'LoginPage possui tooltip no botão voltar e ExcludeSemantics no brasão',
+      (tester) async {
+        await tester.pumpWidget(_buildTestApp(const LoginPage()));
+        await tester.pump();
 
-      final backButton = find.byTooltip('Voltar');
-      expect(backButton, findsOneWidget);
+        final backButton = find.byTooltip('Voltar');
+        expect(backButton, findsOneWidget);
 
-      // Brasão decorativo
-      final imageFinder = find.byType(Image);
-      if (imageFinder.evaluate().isNotEmpty) {
-        final excludeSemanticsFinder = find.ancestor(
-          of: imageFinder.first,
-          matching: find.byType(ExcludeSemantics),
+        // Brasão decorativo
+        final imageFinder = find.byType(Image);
+        if (imageFinder.evaluate().isNotEmpty) {
+          final excludeSemanticsFinder = find.ancestor(
+            of: imageFinder.first,
+            matching: find.byType(ExcludeSemantics),
+          );
+          expect(excludeSemanticsFinder, findsOneWidget);
+        }
+      },
+    );
+
+    testWidgets(
+      'CarteiraPage possui semântica para flip card e QR Code informativo',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildTestApp(
+            const CarteiraPage(),
+            overrides: [
+              carteiraProvider.overrideWith(() => _MockCarteiraNotifier()),
+            ],
+          ),
         );
-        expect(excludeSemanticsFinder, findsOneWidget);
-      }
-    });
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
-    testWidgets('CarteiraPage possui semântica para flip card e QR Code informativo', (tester) async {
-      await tester.pumpWidget(
-        _buildTestApp(
-          const CarteiraPage(),
-          overrides: [
-            carteiraProvider.overrideWith(() => _MockCarteiraNotifier()),
-          ],
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+        // Semântica de virar cartão
+        final flipSemantics = find.byWidgetPredicate(
+          (w) =>
+              w is Semantics &&
+              (w.properties.label?.contains('Virar para') ?? false),
+        );
+        expect(flipSemantics, findsWidgets);
 
-      // Semântica de virar cartão
-      final flipSemantics = find.byWidgetPredicate((w) =>
-          w is Semantics &&
-          (w.properties.label?.contains('Virar para') ?? false));
-      expect(flipSemantics, findsWidgets);
-
-      // Semântica do QR Code informando propósito sem vazar dados sensíveis
-      final qrSemantics = find.byWidgetPredicate((w) =>
-          w is Semantics &&
-          (w.properties.label?.contains('validação da carteira funcional por leitor externo') ?? false));
-      expect(qrSemantics, findsWidgets);
-    });
+        // Semântica do QR Code informando propósito sem vazar dados sensíveis
+        final qrSemantics = find.byWidgetPredicate(
+          (w) =>
+              w is Semantics &&
+              (w.properties.label?.contains(
+                    'validação da carteira funcional por leitor externo',
+                  ) ??
+                  false),
+        );
+        expect(qrSemantics, findsWidgets);
+      },
+    );
   });
 
   group('Q11-T02 & Q11-T03 — Guidelines Flutter (Touch Target e Labels)', () {
-    testWidgets('LoginPage atende androidTapTargetGuideline e labeledTapTargetGuideline', (tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.625;
-      addTearDown(() => tester.view.reset());
+    testWidgets(
+      'LoginPage atende androidTapTargetGuideline e labeledTapTargetGuideline',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.625;
+        addTearDown(() => tester.view.reset());
 
-      await tester.pumpWidget(_buildTestApp(const LoginPage()));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+        await tester.pumpWidget(_buildTestApp(const LoginPage()));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
 
-      // Guideline de touch target mínimo (48x48dp Android, 44x44pt iOS)
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+        // Guideline de touch target mínimo (48x48dp Android, 44x44pt iOS)
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
 
-      // Guideline de labels semânticos em controles acionáveis
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-    });
+        // Guideline de labels semânticos em controles acionáveis
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      },
+    );
 
-    testWidgets('MppbAppBar atende androidTapTargetGuideline, iOSTapTargetGuideline e labeledTapTargetGuideline', (tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.625;
-      addTearDown(() => tester.view.reset());
+    testWidgets(
+      'MppbAppBar atende androidTapTargetGuideline, iOSTapTargetGuideline e labeledTapTargetGuideline',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.625;
+        addTearDown(() => tester.view.reset());
 
-      await tester.pumpWidget(
-        _buildTestApp(
-          const Scaffold(
-            appBar: MppbAppBar(),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+        await tester.pumpWidget(
+          _buildTestApp(const Scaffold(appBar: MppbAppBar())),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
 
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-    });
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      },
+    );
   });
 
   group('Q11-T04 — Contraste de Texto', () {
-    testWidgets('LoginPage atende textContrastGuideline em seus elementos mensuráveis', (tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.625;
-      addTearDown(() => tester.view.reset());
+    testWidgets(
+      'LoginPage atende textContrastGuideline em seus elementos mensuráveis',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.625;
+        addTearDown(() => tester.view.reset());
 
-      await tester.pumpWidget(_buildTestApp(const LoginPage()));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+        await tester.pumpWidget(_buildTestApp(const LoginPage()));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
 
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
-    });
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      },
+    );
   });
 
   group('Q11-T05 — Text Scaling (1.0, 1.3, 1.5, 2.0)', () {
     final scales = [1.0, 1.3, 1.5, 2.0];
 
     for (final scale in scales) {
-      testWidgets('PublicDashboardPage não apresenta overflow com textScaler $scale', (tester) async {
+      testWidgets(
+        'PublicDashboardPage não apresenta overflow com textScaler $scale',
+        (tester) async {
+          tester.view.physicalSize = const Size(1080, 2400);
+          tester.view.devicePixelRatio = 2.625;
+          addTearDown(() => tester.view.reset());
+
+          await tester.pumpWidget(
+            _buildTestApp(
+              const PublicDashboardPage(),
+              textScaler: TextScaler.linear(scale),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
+
+          expect(tester.takeException(), isNull);
+        },
+      );
+
+      testWidgets('LoginPage não apresenta overflow com textScaler $scale', (
+        tester,
+      ) async {
         tester.view.physicalSize = const Size(1080, 2400);
         tester.view.devicePixelRatio = 2.625;
         addTearDown(() => tester.view.reset());
 
-        await tester.pumpWidget(_buildTestApp(const PublicDashboardPage(), textScaler: TextScaler.linear(scale)));
+        await tester.pumpWidget(
+          _buildTestApp(
+            const LoginPage(),
+            textScaler: TextScaler.linear(scale),
+          ),
+        );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 200));
 
         expect(tester.takeException(), isNull);
       });
 
-      testWidgets('LoginPage não apresenta overflow com textScaler $scale', (tester) async {
-        tester.view.physicalSize = const Size(1080, 2400);
-        tester.view.devicePixelRatio = 2.625;
-        addTearDown(() => tester.view.reset());
+      testWidgets(
+        'ConsultaProcessosPage não apresenta overflow com textScaler $scale',
+        (tester) async {
+          tester.view.physicalSize = const Size(1080, 2400);
+          tester.view.devicePixelRatio = 2.625;
+          addTearDown(() => tester.view.reset());
 
-        await tester.pumpWidget(_buildTestApp(const LoginPage(), textScaler: TextScaler.linear(scale)));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
+          await tester.pumpWidget(
+            _buildTestApp(
+              const ConsultaProcessosPage(),
+              textScaler: TextScaler.linear(scale),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
 
-        expect(tester.takeException(), isNull);
-      });
+          expect(tester.takeException(), isNull);
+        },
+      );
 
-      testWidgets('ConsultaProcessosPage não apresenta overflow com textScaler $scale', (tester) async {
-        tester.view.physicalSize = const Size(1080, 2400);
-        tester.view.devicePixelRatio = 2.625;
-        addTearDown(() => tester.view.reset());
+      testWidgets(
+        'DiarioOficialPage não apresenta overflow com textScaler $scale',
+        (tester) async {
+          tester.view.physicalSize = const Size(1080, 2400);
+          tester.view.devicePixelRatio = 2.625;
+          addTearDown(() => tester.view.reset());
 
-        await tester.pumpWidget(_buildTestApp(const ConsultaProcessosPage(), textScaler: TextScaler.linear(scale)));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
+          await tester.pumpWidget(
+            _buildTestApp(
+              const DiarioOficialPage(),
+              textScaler: TextScaler.linear(scale),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
 
-        expect(tester.takeException(), isNull);
-      });
+          expect(tester.takeException(), isNull);
+        },
+      );
 
-      testWidgets('DiarioOficialPage não apresenta overflow com textScaler $scale', (tester) async {
-        tester.view.physicalSize = const Size(1080, 2400);
-        tester.view.devicePixelRatio = 2.625;
-        addTearDown(() => tester.view.reset());
+      testWidgets(
+        'ContraChequePage não apresenta overflow com textScaler $scale',
+        (tester) async {
+          tester.view.physicalSize = const Size(1080, 2400);
+          tester.view.devicePixelRatio = 2.625;
+          addTearDown(() => tester.view.reset());
 
-        await tester.pumpWidget(_buildTestApp(const DiarioOficialPage(), textScaler: TextScaler.linear(scale)));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
+          await tester.pumpWidget(
+            _buildTestApp(
+              const ContraChequePage(),
+              textScaler: TextScaler.linear(scale),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
 
-        expect(tester.takeException(), isNull);
-      });
-
-      testWidgets('ContraChequePage não apresenta overflow com textScaler $scale', (tester) async {
-        tester.view.physicalSize = const Size(1080, 2400);
-        tester.view.devicePixelRatio = 2.625;
-        addTearDown(() => tester.view.reset());
-
-        await tester.pumpWidget(_buildTestApp(const ContraChequePage(), textScaler: TextScaler.linear(scale)));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(tester.takeException(), isNull);
-      });
+          expect(tester.takeException(), isNull);
+        },
+      );
     }
   });
 
   group('Q11-T10 & Q11-T15 — Formulário de Login e Navegação por Foco', () {
-    testWidgets('Campos de login possuem labels persistentes e foco sequencial correto', (tester) async {
-      await tester.pumpWidget(_buildTestApp(const LoginPage()));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+    testWidgets(
+      'Campos de login possuem labels persistentes e foco sequencial correto',
+      (tester) async {
+        await tester.pumpWidget(_buildTestApp(const LoginPage()));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
 
-      final textFields = find.byType(TextFormField);
-      expect(textFields, findsNWidgets(2));
+        final textFields = find.byType(TextFormField);
+        expect(textFields, findsNWidgets(2));
 
-      final usuarioField = textFields.first;
-      final senhaField = textFields.last;
-      final entrarBtn = find.widgetWithText(ElevatedButton, 'ACESSAR');
+        final usuarioField = textFields.first;
+        final senhaField = textFields.last;
+        final entrarBtn = find.widgetWithText(ElevatedButton, 'ACESSAR');
 
-      expect(usuarioField, findsOneWidget);
-      expect(senhaField, findsOneWidget);
-      expect(entrarBtn, findsOneWidget);
+        expect(usuarioField, findsOneWidget);
+        expect(senhaField, findsOneWidget);
+        expect(entrarBtn, findsOneWidget);
 
-      // Foco inicial
-      await tester.tap(usuarioField);
-      await tester.pump();
-      expect(tester.widget<EditableText>(find.descendant(of: usuarioField, matching: find.byType(EditableText))).focusNode.hasFocus, isTrue);
+        // Foco inicial
+        await tester.tap(usuarioField);
+        await tester.pump();
+        expect(
+          tester
+              .widget<EditableText>(
+                find.descendant(
+                  of: usuarioField,
+                  matching: find.byType(EditableText),
+                ),
+              )
+              .focusNode
+              .hasFocus,
+          isTrue,
+        );
 
-      // Próximo foco para campo senha
-      await tester.testTextInput.receiveAction(TextInputAction.next);
-      await tester.pump();
-      expect(tester.widget<EditableText>(find.descendant(of: senhaField, matching: find.byType(EditableText))).focusNode.hasFocus, isTrue);
-    });
+        // Próximo foco para campo senha
+        await tester.testTextInput.receiveAction(TextInputAction.next);
+        await tester.pump();
+        expect(
+          tester
+              .widget<EditableText>(
+                find.descendant(
+                  of: senhaField,
+                  matching: find.byType(EditableText),
+                ),
+              )
+              .focusNode
+              .hasFocus,
+          isTrue,
+        );
+      },
+    );
 
-    testWidgets('Botão mostrar/ocultar senha possui tooltip dinâmico', (tester) async {
+    testWidgets('Botão mostrar/ocultar senha possui tooltip dinâmico', (
+      tester,
+    ) async {
       await tester.pumpWidget(_buildTestApp(const LoginPage()));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
@@ -327,7 +425,9 @@ void main() {
   });
 
   group('Q11-T11 & Q11-T12 — Feedback de Erro e Loading com Semântica', () {
-    testWidgets('Mensagem de erro de login possui ícone, texto e liveRegion', (tester) async {
+    testWidgets('Mensagem de erro de login possui ícone, texto e liveRegion', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _buildTestApp(
           const LoginPage(),
@@ -343,48 +443,79 @@ void main() {
       final errorIcon = find.byIcon(Icons.error_outline_rounded);
       expect(errorIcon, findsOneWidget);
 
-      final liveRegionSemantics = find.byWidgetPredicate((w) =>
-          w is Semantics && w.properties.liveRegion == true);
+      final liveRegionSemantics = find.byWidgetPredicate(
+        (w) => w is Semantics && w.properties.liveRegion == true,
+      );
       expect(liveRegionSemantics, findsOneWidget);
-      expect(find.text('Credenciais inválidas. Tente novamente.'), findsOneWidget);
+      expect(
+        find.text('Credenciais inválidas. Tente novamente.'),
+        findsOneWidget,
+      );
     });
   });
 
-  group('Q11-T16 / Q11-C30 — Orientação Landscape combinada com Text Scaling 2.0x', () {
-    testWidgets('PublicDashboardPage em landscape com TextScaler 2.0 não apresenta overflow', (tester) async {
-      tester.view.physicalSize = const Size(2400, 1080);
-      tester.view.devicePixelRatio = 2.625;
-      addTearDown(() => tester.view.reset());
+  group(
+    'Q11-T16 / Q11-C30 — Orientação Landscape combinada com Text Scaling 2.0x',
+    () {
+      testWidgets(
+        'PublicDashboardPage em landscape com TextScaler 2.0 não apresenta overflow',
+        (tester) async {
+          tester.view.physicalSize = const Size(2400, 1080);
+          tester.view.devicePixelRatio = 2.625;
+          addTearDown(() => tester.view.reset());
 
-      await tester.pumpWidget(_buildTestApp(const PublicDashboardPage(), textScaler: const TextScaler.linear(2.0)));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+          await tester.pumpWidget(
+            _buildTestApp(
+              const PublicDashboardPage(),
+              textScaler: const TextScaler.linear(2.0),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
 
-      expect(tester.takeException(), isNull);
-    });
+          expect(tester.takeException(), isNull);
+        },
+      );
 
-    testWidgets('LoginPage em landscape com TextScaler 2.0 não apresenta overflow', (tester) async {
-      tester.view.physicalSize = const Size(2400, 1080);
-      tester.view.devicePixelRatio = 2.625;
-      addTearDown(() => tester.view.reset());
+      testWidgets(
+        'LoginPage em landscape com TextScaler 2.0 não apresenta overflow',
+        (tester) async {
+          tester.view.physicalSize = const Size(2400, 1080);
+          tester.view.devicePixelRatio = 2.625;
+          addTearDown(() => tester.view.reset());
 
-      await tester.pumpWidget(_buildTestApp(const LoginPage(), textScaler: const TextScaler.linear(2.0)));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+          await tester.pumpWidget(
+            _buildTestApp(
+              const LoginPage(),
+              textScaler: const TextScaler.linear(2.0),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
 
-      expect(tester.takeException(), isNull);
-    });
+          expect(tester.takeException(), isNull);
+        },
+      );
 
-    testWidgets('ConsultaProcessosPage em landscape com TextScaler 2.0 não apresenta overflow', (tester) async {
-      tester.view.physicalSize = const Size(2400, 1080);
-      tester.view.devicePixelRatio = 2.625;
-      addTearDown(() => tester.view.reset());
+      testWidgets(
+        'ConsultaProcessosPage em landscape com TextScaler 2.0 não apresenta overflow',
+        (tester) async {
+          tester.view.physicalSize = const Size(2400, 1080);
+          tester.view.devicePixelRatio = 2.625;
+          addTearDown(() => tester.view.reset());
 
-      await tester.pumpWidget(_buildTestApp(const ConsultaProcessosPage(), textScaler: const TextScaler.linear(2.0)));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+          await tester.pumpWidget(
+            _buildTestApp(
+              const ConsultaProcessosPage(),
+              textScaler: const TextScaler.linear(2.0),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
 
-      expect(tester.takeException(), isNull);
-    });
-  });
+          expect(tester.takeException(), isNull);
+        },
+      );
+    },
+  );
 }

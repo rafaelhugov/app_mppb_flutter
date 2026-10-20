@@ -10,6 +10,7 @@ import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
+import '../../../core/ui/widgets/pdf_pinch_viewer.dart';
 import '../providers/diario_oficial_provider.dart';
 import '../models/diario_oficial.dart';
 
@@ -728,14 +729,21 @@ class _DiarioPdfSheet extends StatelessWidget {
                   final pdfBytes = snapshot.data!;
                   return Padding(
                     padding: EdgeInsets.only(bottom: bottomInset + 10),
-                    child: PdfPreview(
+                    child: PdfPreview.builder(
                       build: (_) async => pdfBytes,
                       canChangeOrientation: false,
                       canChangePageFormat: false,
                       canDebug: false,
                       allowPrinting: false,
                       allowSharing: false,
+                      useActions: false,
                       pdfFileName: 'diario-oficial-${diario.numeroEdicao}.pdf',
+                      pagesBuilder: (context, pages) {
+                        return PdfPinchViewer(
+                          pages: pages,
+                          documentLabel: 'Diário Oficial',
+                        );
+                      },
                       loadingWidget: const Center(
                         child: CircularProgressIndicator(
                           color: Color(0xFFD62828),

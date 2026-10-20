@@ -11,6 +11,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/notifications/push_notification_service.dart';
 import 'core/notifications/push_navigation_service.dart';
+import 'core/notifications/notification_center_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/session/session_reset_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
@@ -42,15 +43,29 @@ class MyApp extends ConsumerStatefulWidget {
   ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   bool _fcmReady = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_initializeFirebaseAndPush());
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(ref.read(notificationCenterProvider.notifier).reload());
+    }
   }
 
   Future<void> _initializeFirebaseAndPush() async {

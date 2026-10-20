@@ -13,6 +13,7 @@ import 'widgets/competencia_selector.dart';
 import 'widgets/grafico_contracheque.dart';
 import 'widgets/contracheque_lancamentos.dart';
 import '../../../core/ui/widgets/feature_header.dart';
+import '../../../core/ui/widgets/pdf_pinch_viewer.dart';
 
 class ContraChequePage extends ConsumerWidget {
   const ContraChequePage({super.key});
@@ -327,14 +328,21 @@ class ContraChequePage extends ConsumerWidget {
                         children: [
                           Padding(
                             padding: EdgeInsets.only(bottom: bottomInset + 72),
-                            child: PdfPreview(
+                            child: PdfPreview.builder(
                               build: (_) async => pdfBytes,
                               canChangeOrientation: false,
                               canChangePageFormat: false,
                               canDebug: false,
                               allowPrinting: false,
                               allowSharing: false,
+                              useActions: false,
                               pdfFileName: fileName,
+                              pagesBuilder: (context, pages) {
+                                return PdfPinchViewer(
+                                  pages: pages,
+                                  documentLabel: 'contracheque',
+                                );
+                              },
                               loadingWidget: const Center(
                                 child: CircularProgressIndicator(
                                   color: Color(0xFF00A86B),

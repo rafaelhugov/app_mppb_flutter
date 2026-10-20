@@ -21,7 +21,6 @@ void main() {
           body: NotificationCenterContent(
             items: const [item],
             onClose: () {},
-            onClearAll: () {},
             onOpenItem: (value) => openedItem = value,
           ),
         ),
@@ -46,7 +45,6 @@ void main() {
           body: NotificationCenterContent(
             items: const [],
             onClose: () {},
-            onClearAll: () {},
             onOpenItem: (_) {},
           ),
         ),
@@ -75,7 +73,6 @@ void main() {
           body: NotificationCenterContent(
             items: items,
             onClose: () {},
-            onClearAll: () {},
             onOpenItem: (_) {},
           ),
         ),
@@ -94,9 +91,7 @@ void main() {
     expect(find.text('Ver menos'), findsOneWidget);
   });
 
-  testWidgets('executa limpar tudo quando ha notificacoes', (tester) async {
-    var cleared = false;
-
+  testWidgets('exibe as categorias funcionais separadamente', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -108,18 +103,35 @@ void main() {
                 title: 'Nova designação',
                 subtitle: 'Promotoria',
               ),
+              NotificationCenterItem(
+                key: 'push:contracheque-1',
+                type: NotificationCenterItemType.contracheque,
+                title: 'Contracheque disponível',
+                subtitle: 'Competência 09/2026',
+              ),
+              NotificationCenterItem(
+                key: 'push:pagamento-1',
+                type: NotificationCenterItemType.pagamento,
+                title: 'Novo pagamento',
+                subtitle: 'Pagamento disponível',
+              ),
+              NotificationCenterItem(
+                key: 'push:afastamento-1',
+                type: NotificationCenterItemType.afastamento,
+                title: 'Afastamento atualizado',
+                subtitle: 'Solicitação deferida',
+              ),
             ],
             onClose: () {},
-            onClearAll: () => cleared = true,
             onOpenItem: (_) {},
           ),
         ),
       ),
     );
 
-    await tester.tap(find.text('Limpar tudo'));
-    await tester.pump();
-
-    expect(cleared, isTrue);
+    expect(find.text('Designações'), findsOneWidget);
+    expect(find.text('Contracheques'), findsOneWidget);
+    expect(find.text('Pagamentos'), findsOneWidget);
+    expect(find.text('Afastamentos'), findsOneWidget);
   });
 }

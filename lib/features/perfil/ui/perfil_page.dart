@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../core/ui/main_layout.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -210,6 +212,37 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     );
   }
 
+  Future<void> _confirmLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sair do aplicativo?'),
+        content: const Text(
+          'Sua sessão será encerrada neste aparelho. Você poderá entrar novamente quando quiser.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB42318),
+            ),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final authNotifier = ref.read(authProvider.notifier);
+    await authNotifier.logout();
+    final hasBiometricCredential = await authNotifier
+        .hasAvailableBiometricCredentials();
+    if (mounted) context.go(hasBiometricCredential ? '/login' : '/');
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(perfilProvider);
@@ -341,6 +374,8 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
                             onEnable: _enableBiometricsNow,
                             onDisable: _disableBiometrics,
                           ),
+                          const SizedBox(height: 12),
+                          _LogoutSection(onLogout: _confirmLogout),
                         ],
                       ],
                     ),
@@ -374,7 +409,7 @@ class _NotificationPreferencesSection extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: Text(
-            'Escolha quais avisos deseja receber por push e visualizar na central de notificações.',
+            'Defina separadamente os avisos exibidos no aparelho e os mantidos na central de notificações.',
             style: TextStyle(
               color: Color(0xFF697370),
               fontSize: 13,
@@ -383,49 +418,166 @@ class _NotificationPreferencesSection extends StatelessWidget {
             ),
           ),
         ),
-        _NotificationSwitch(
-          icon: Icons.newspaper_rounded,
-          label: 'Notícias',
-          value: preferencias.noticias,
+        _NotificationDeliveryGroup(
+          title: 'Receber por push',
+          icon: Icons.notifications_active_rounded,
+          helper: 'Exibe um alerta no aparelho.',
           enabled: enabled,
-          onChanged: (value) =>
-              onChanged(preferencias.copyWith(noticias: value)),
+          values: [
+            _NotificationOption(
+              Icons.newspaper_rounded,
+              'Notícias',
+              preferencias.pushNoticias,
+              (value) => preferencias.copyWith(pushNoticias: value),
+            ),
+            _NotificationOption(
+              Icons.assignment_ind_rounded,
+              'Designações',
+              preferencias.pushDesignacoes,
+              (value) => preferencias.copyWith(pushDesignacoes: value),
+            ),
+            _NotificationOption(
+              Icons.receipt_long_rounded,
+              'Contracheques',
+              preferencias.pushContracheques,
+              (value) => preferencias.copyWith(pushContracheques: value),
+            ),
+            _NotificationOption(
+              Icons.payments_rounded,
+              'Pagamentos',
+              preferencias.pushPagamentos,
+              (value) => preferencias.copyWith(pushPagamentos: value),
+            ),
+            _NotificationOption(
+              Icons.event_busy_rounded,
+              'Afastamentos',
+              preferencias.pushAfastamentos,
+              (value) => preferencias.copyWith(pushAfastamentos: value),
+            ),
+          ],
+          onChanged: onChanged,
         ),
-        _NotificationSwitch(
-          icon: Icons.assignment_ind_rounded,
-          label: 'Designações',
-          value: preferencias.designacoes,
+        const Divider(height: 20, indent: 16, endIndent: 16),
+        _NotificationDeliveryGroup(
+          title: 'Mostrar na central',
+          icon: Icons.inbox_rounded,
+          helper: 'Mantém o aviso disponível no sino.',
           enabled: enabled,
-          onChanged: (value) =>
-              onChanged(preferencias.copyWith(designacoes: value)),
-        ),
-        _NotificationSwitch(
-          icon: Icons.receipt_long_rounded,
-          label: 'Contracheques',
-          value: preferencias.contracheques,
-          enabled: enabled,
-          onChanged: (value) =>
-              onChanged(preferencias.copyWith(contracheques: value)),
-        ),
-        _NotificationSwitch(
-          icon: Icons.payments_rounded,
-          label: 'Pagamentos',
-          value: preferencias.pagamentos,
-          enabled: enabled,
-          onChanged: (value) =>
-              onChanged(preferencias.copyWith(pagamentos: value)),
-        ),
-        _NotificationSwitch(
-          icon: Icons.event_busy_rounded,
-          label: 'Afastamentos',
-          value: preferencias.afastamentos,
-          enabled: enabled,
+          values: [
+            _NotificationOption(
+              Icons.newspaper_rounded,
+              'Notícias',
+              preferencias.centralNoticias,
+              (value) => preferencias.copyWith(centralNoticias: value),
+            ),
+            _NotificationOption(
+              Icons.assignment_ind_rounded,
+              'Designações',
+              preferencias.centralDesignacoes,
+              (value) => preferencias.copyWith(centralDesignacoes: value),
+            ),
+            _NotificationOption(
+              Icons.receipt_long_rounded,
+              'Contracheques',
+              preferencias.centralContracheques,
+              (value) => preferencias.copyWith(centralContracheques: value),
+            ),
+            _NotificationOption(
+              Icons.payments_rounded,
+              'Pagamentos',
+              preferencias.centralPagamentos,
+              (value) => preferencias.copyWith(centralPagamentos: value),
+            ),
+            _NotificationOption(
+              Icons.event_busy_rounded,
+              'Afastamentos',
+              preferencias.centralAfastamentos,
+              (value) => preferencias.copyWith(centralAfastamentos: value),
+            ),
+          ],
+          onChanged: onChanged,
           isLast: true,
-          onChanged: (value) =>
-              onChanged(preferencias.copyWith(afastamentos: value)),
         ),
         if (state.isLoading || state.isSaving)
           const LinearProgressIndicator(minHeight: 2),
+      ],
+    );
+  }
+}
+
+class _NotificationOption {
+  final IconData icon;
+  final String label;
+  final bool value;
+  final PreferenciasNotificacao Function(bool value) update;
+
+  const _NotificationOption(this.icon, this.label, this.value, this.update);
+}
+
+class _NotificationDeliveryGroup extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final String helper;
+  final bool enabled;
+  final List<_NotificationOption> values;
+  final ValueChanged<PreferenciasNotificacao> onChanged;
+  final bool isLast;
+
+  const _NotificationDeliveryGroup({
+    required this.title,
+    required this.icon,
+    required this.helper,
+    required this.enabled,
+    required this.values,
+    required this.onChanged,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: const Color(0xFF006B4A)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF202322),
+                      ),
+                    ),
+                    Text(
+                      helper,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF697370),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        for (var index = 0; index < values.length; index++)
+          _NotificationSwitch(
+            icon: values[index].icon,
+            label: values[index].label,
+            value: values[index].value,
+            enabled: enabled,
+            isLast: isLast && index == values.length - 1,
+            onChanged: (value) => onChanged(values[index].update(value)),
+          ),
       ],
     );
   }
@@ -870,6 +1022,52 @@ class _SecuritySection extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LogoutSection extends StatelessWidget {
+  final VoidCallback onLogout;
+
+  const _LogoutSection({required this.onLogout});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: onLogout,
+            icon: const Icon(Icons.logout_rounded),
+            label: const Text('Sair do aplicativo'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFB42318),
+              side: const BorderSide(color: Color(0xFFFDA29B)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        FutureBuilder<PackageInfo>(
+          future: PackageInfo.fromPlatform(),
+          builder: (context, snapshot) {
+            final info = snapshot.data;
+            final text = info == null
+                ? 'MPPB+'
+                : 'MPPB+ • versão ${info.version} (${info.buildNumber})';
+            return Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF98A29D),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            );
+          },
         ),
       ],
     );

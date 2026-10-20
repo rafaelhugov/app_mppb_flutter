@@ -70,7 +70,7 @@ class PreferenciasNotificacaoNotifier
           .buscar(token: token);
       if (!ref.mounted) return;
       await _salvarCache(preferencias);
-      await _sincronizarNoticias(preferencias.noticias);
+      await _sincronizarNoticias(preferencias.pushNoticias);
       if (!ref.mounted) return;
       state = state.copyWith(
         preferencias: preferencias,
@@ -96,7 +96,7 @@ class PreferenciasNotificacaoNotifier
           .salvar(token: token, preferencias: preferencias);
       if (!ref.mounted) return false;
       await _salvarCache(salvas);
-      await _sincronizarNoticias(salvas.noticias);
+      await _sincronizarNoticias(salvas.pushNoticias);
       if (!ref.mounted) return false;
       state = state.copyWith(
         preferencias: salvas,
@@ -146,7 +146,7 @@ class PreferenciasNotificacaoNotifier
           final preferencias = PreferenciasNotificacao.fromJson(
             json['preferencias'] as Map<String, dynamic>,
           );
-          await _sincronizarNoticias(preferencias.noticias);
+          await _sincronizarNoticias(preferencias.pushNoticias);
           if (!ref.mounted) return;
           state = state.copyWith(
             preferencias: preferencias,

@@ -60,11 +60,11 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         designacoes: designacoesState.designacoes,
         readKeys: notificationState.readKeys,
         inboxItems: notificationState.inboxItems,
-        includeNoticias: notificationPreferences.noticias,
-        includeDesignacoes: notificationPreferences.designacoes,
-        includeContracheques: notificationPreferences.contracheques,
-        includePagamentos: notificationPreferences.pagamentos,
-        includeAfastamentos: notificationPreferences.afastamentos,
+        includeNoticias: notificationPreferences.centralNoticias,
+        includeDesignacoes: notificationPreferences.centralDesignacoes,
+        includeContracheques: notificationPreferences.centralContracheques,
+        includePagamentos: notificationPreferences.centralPagamentos,
+        includeAfastamentos: notificationPreferences.centralAfastamentos,
       );
 
       return AppBar(
@@ -87,7 +87,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 opacity: showLeadingCrest ? 1 : 0,
                 child: Image.asset(
                   'assets/images/brasao_mppb_sem_fundo.png',
-                  height: metrics.isTablet ? 34 : 30,
+                  height: metrics.isTablet ? 30 : 26,
                   fit: BoxFit.contain,
                 ),
               ),
@@ -100,24 +100,26 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         title: _HomeTapTarget(
           tooltip: 'Ir para início',
-          child: SizedBox(
-            height: toolbarHeight,
-            child: Center(
-              // O desenho das letras fica visualmente alguns pixels acima do
-              // centro geometrico. Este ajuste alinha o titulo ao brasao e
-              // aos icones de perfil e saida na mesma linha.
-              child: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  'MPPB+',
-                  style: TextStyle(
-                    color: const Color(0xFF4C4741),
-                    fontSize: metrics.isTablet ? 23 : 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                    height: 1.0,
+          child: Transform.translate(
+            // Os ícones de ação ocupam mais espaço que o brasão. Este ajuste
+            // mantém a marca alinhada ao centro visual da tela.
+            offset: Offset(metrics.isTablet ? 8 : 10, 0),
+            child: SizedBox(
+              height: toolbarHeight,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    'MPPB+',
+                    style: TextStyle(
+                      color: const Color(0xFF4C4741),
+                      fontSize: metrics.isTablet ? 23 : 20,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                      height: 1.0,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -159,25 +161,6 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 onRetryDeviceRegistration: () =>
                     _retryDeviceRegistration(ref, authState.token),
               );
-            },
-          ),
-          IconButton(
-            tooltip: 'Sair da conta',
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
-            icon: Icon(
-              Icons.logout,
-              color: const Color(0xFF202322),
-              size: metrics.isTablet ? 24 : 22,
-            ),
-            onPressed: () async {
-              final authNotifier = ref.read(authProvider.notifier);
-              await authNotifier.logout();
-              final hasBiometricCredential = await authNotifier
-                  .hasAvailableBiometricCredentials();
-              if (context.mounted) {
-                context.go(hasBiometricCredential ? '/login' : '/');
-              }
             },
           ),
           SizedBox(width: metrics.isTablet ? 12 : 4),

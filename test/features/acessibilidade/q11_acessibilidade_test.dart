@@ -113,7 +113,7 @@ void main() {
       },
     );
 
-    testWidgets('MppbAppBar autenticada possui tooltip Sair da conta', (
+    testWidgets('MppbAppBar autenticada mantém saída apenas no Perfil', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -129,8 +129,7 @@ void main() {
       );
       await tester.pump();
 
-      final logoutFinder = find.byTooltip('Sair da conta');
-      expect(logoutFinder, findsOneWidget);
+      expect(find.byTooltip('Sair da conta'), findsNothing);
     });
 
     testWidgets(

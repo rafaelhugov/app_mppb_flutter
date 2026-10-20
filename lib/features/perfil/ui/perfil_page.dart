@@ -1066,13 +1066,13 @@ class _LogoutSection extends StatelessWidget {
     return Column(
       children: [
         Center(
-          child: OutlinedButton.icon(
+          child: FilledButton.icon(
             onPressed: onLogout,
             icon: const Icon(Icons.logout_rounded, size: 18),
             label: const Text('Sair do aplicativo'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFD62828),
-              side: const BorderSide(color: Color(0xFFD62828), width: 1.2),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFD62828),
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

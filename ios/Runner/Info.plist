@@ -4,8 +4,6 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-	<key>NSFaceIDUsageDescription</key>
-	<string>O Face ID pode ser usado para confirmar sua identidade e acessar o MPPB+ com segurança.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -28,6 +26,18 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>O Face ID pode ser usado para confirmar sua identidade e acessar o MPPB+ com segurança.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>O MPPB+ necessita de acesso à câmera para captura de fotos e documentos nos serviços e manifestações da Ouvidoria.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>O MPPB+ necessita de acesso à galeria de fotos para anexar imagens e documentos nos serviços e manifestações da Ouvidoria.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>O MPPB+ necessita de permissão para salvar comprovantes e certidões na sua galeria.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>O MPPB+ utiliza sua localização para exibir as sedes e promotorias mais próximas de você e indicar a localização em manifestações.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

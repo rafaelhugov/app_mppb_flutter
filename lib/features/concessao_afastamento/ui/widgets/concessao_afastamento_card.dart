@@ -114,12 +114,14 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
                       if (titleDetail.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
-                          titleDetail,
+                          concessao.tipo == TipoConcessao.licencaPremio
+                              ? 'Período: $titleDetail'
+                              : titleDetail,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: ConcessaoAfastamentoColors.ink,
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: FontWeight.w900,
                             height: 1.2,
                           ),
@@ -312,6 +314,8 @@ class _TypeChip extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: textColor,
           fontSize: 11,
@@ -368,6 +372,7 @@ class _PendingReturnNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF7ED),
@@ -375,21 +380,22 @@ class _PendingReturnNotice extends StatelessWidget {
         border: Border.all(color: const Color(0x33F97316)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Icon(
             Icons.pending_actions_rounded,
             size: 15,
             color: ConcessaoAfastamentoColors.statusConfirmada,
           ),
-          const SizedBox(width: 6),
-          Flexible(
+          const SizedBox(width: 8),
+          Expanded(
             child: Text(
-              '$dias dia(s) solicitados para retorno',
+              '$dias dia(s) solicitados para estorno do saldo disponível',
               style: const TextStyle(
                 color: ConcessaoAfastamentoColors.ink,
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
+                height: 1.25,
               ),
             ),
           ),
@@ -1440,14 +1446,14 @@ class _SaldoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFFF1F3F5),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: const Color(0xFFD7DEDA)),
       ),
       child: Text(
-        '$saldo dias',
+        '$saldo ${saldo == 1 ? "dia" : "dias"}',
         style: const TextStyle(
           color: ConcessaoAfastamentoColors.ink,
           fontSize: 11,
@@ -1478,7 +1484,7 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(10),
@@ -1486,22 +1492,29 @@ class _InfoTile extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: labelColor,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: valueColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],

@@ -259,5 +259,41 @@ void main() {
       expect(concessao.tipo, TipoConcessao.licencaPremio);
       expect(concessao.solicitacoes, hasLength(2));
     });
+
+    test('formata titulo de Licença Especial com periodo aquisitivo', () {
+      final concessao = ConcessaoAfastamento.fromJson({
+        'id': 12,
+        'tipo': 'L',
+        'diasConcedidos': 90,
+        'saldoRestante': 90,
+        'inicioPeriodoAquisitivo': '2001-11-12',
+        'finalPeriodoAquisitivo': '2006-11-12',
+        'solicitacoes': [],
+      });
+
+      expect(
+        concessao.titulo,
+        'Licença Especial - 12/11/2001 a 12/11/2006',
+      );
+    });
+
+    test(
+      'formata titulo de Licença Especial a partir de descricaoOriginal quando datas forem nulas',
+      () {
+        final concessao = ConcessaoAfastamento.fromJson({
+          'id': 13,
+          'tipo': 'L',
+          'diasConcedidos': 90,
+          'saldoRestante': 90,
+          'descricao': 'LICENÇA 12/11/2001 - 12/11/2006',
+          'solicitacoes': [],
+        });
+
+        expect(
+          concessao.titulo,
+          'Licença Especial - 12/11/2001 a 12/11/2006',
+        );
+      },
+    );
   });
 }

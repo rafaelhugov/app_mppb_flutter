@@ -391,8 +391,14 @@ void main() {
       expect(find.text('05/09/2026 a 16/09/2026'), findsOneWidget);
       expect(find.text('Interrupção a partir de 16/09/2026'), findsOneWidget);
       expect(find.text('Suspensão integral do gozo'), findsOneWidget);
-      expect(find.text('12 dia(s) solicitados para retorno'), findsOneWidget);
-      expect(find.text('20 dia(s) solicitados para retorno'), findsOneWidget);
+      expect(
+        find.text('12 dia(s) solicitados para estorno do saldo disponível'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('20 dia(s) solicitados para estorno do saldo disponível'),
+        findsOneWidget,
+      );
       expect(
         find.text('Aguardando análise do 2º Subprocurador-Geral'),
         findsNWidgets(2),

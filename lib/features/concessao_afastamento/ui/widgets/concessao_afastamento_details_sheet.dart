@@ -298,7 +298,7 @@ class _SolicitacaoTile extends StatelessWidget {
                     if (dias != null && dias > 0)
                       Text(
                         solicitacao.possuiDiasParaRetorno
-                            ? '$dias dia(s) solicitados para retorno'
+                            ? '$dias dia(s) solicitados para estorno do saldo disponível'
                             : '$dias dia(s)',
                         style: const TextStyle(
                           color: ConcessaoAfastamentoColors.ink,
@@ -1272,18 +1272,25 @@ class _DetailLine extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
+            flex: 2,
             child: Text(
               label,
               style: const TextStyle(color: ConcessaoAfastamentoColors.muted),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: ConcessaoAfastamentoColors.ink,
-              fontWeight: FontWeight.w800,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: ConcessaoAfastamentoColors.ink,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],

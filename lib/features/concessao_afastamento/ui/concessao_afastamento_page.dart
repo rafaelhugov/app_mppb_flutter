@@ -331,7 +331,7 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 260),
+          constraints: const BoxConstraints(maxWidth: 290),
           child: Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -349,6 +349,7 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
             child: TabBar(
               dividerColor: Colors.transparent,
               indicatorSize: TabBarIndicatorSize.tab,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
               labelColor: const Color(0xFF202322),
               unselectedLabelColor: const Color(0xFFDDE4DF),
               labelStyle: const TextStyle(
@@ -371,7 +372,13 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
                     children: [
                       Icon(Icons.calendar_month, size: 17),
                       SizedBox(width: 5),
-                      Flexible(child: Text('Calendário')),
+                      Flexible(
+                        child: Text(
+                          'Calendário',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -382,7 +389,13 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
                     children: [
                       Icon(Icons.inventory_2_outlined, size: 17),
                       SizedBox(width: 5),
-                      Flexible(child: Text('Concessões')),
+                      Flexible(
+                        child: Text(
+                          'Concessões',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -4,13 +4,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/pages/pdf_viewer_page.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
-import '../../../core/ui/widgets/pdf_pinch_viewer.dart';
 import '../providers/diario_oficial_provider.dart';
 import '../models/diario_oficial.dart';
 
@@ -414,16 +413,14 @@ class _DiarioCard extends StatelessWidget {
   }
 
   void _mostrarPdf(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _DiarioPdfSheet(
-        diario: diario,
-        loadPdf: _carregarPdf,
-        onOpenExternal: () => _abrirPdfExterno(context),
-      ),
+    PdfViewerPage.open(
+      context,
+      title: 'Diário Oficial Nº ${diario.numeroEdicao}',
+      fileName: 'diario-oficial-${diario.numeroEdicao}.pdf',
+      bytesFuture: _carregarPdf(),
+      primaryColor: const Color(0xFFD62828),
+      onOpenExternal: () => _abrirPdfExterno(context),
+      externalUrlLabel: 'Abrir no navegador',
     );
   }
 
@@ -600,163 +597,3 @@ class _DiarioActionButton extends StatelessWidget {
   }
 }
 
-class _DiarioPdfSheet extends StatelessWidget {
-  const _DiarioPdfSheet({
-    required this.diario,
-    required this.loadPdf,
-    required this.onOpenExternal,
-  });
-
-  final DiarioOficial diario;
-  final Future<Uint8List> Function() loadPdf;
-  final VoidCallback onOpenExternal;
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-
-    return FractionallySizedBox(
-      heightFactor: 0.94,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFF7F8F6),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 10, 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0x33202322),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      'Diário Oficial Nº ${diario.numeroEdicao}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF202322),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onOpenExternal,
-                    tooltip: 'Abrir fora do app',
-                    icon: const Icon(
-                      Icons.open_in_new_rounded,
-                      color: Color(0xFF697370),
-                      size: 20,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Fechar',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Color(0xFF202322),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: FutureBuilder<Uint8List>(
-                future: loadPdf(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFD62828),
-                      ),
-                    );
-                  }
-
-                  if (snapshot.hasError ||
-                      snapshot.data == null ||
-                      snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.picture_as_pdf_outlined,
-                              color: Color(0xFFD62828),
-                              size: 42,
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Não foi possível carregar o PDF.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Color(0xFF697370),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            OutlinedButton.icon(
-                              onPressed: onOpenExternal,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFFD62828),
-                                side: const BorderSide(
-                                  color: Color(0x66D62828),
-                                ),
-                              ),
-                              icon: const Icon(Icons.open_in_new_rounded),
-                              label: const Text('Abrir no navegador'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  final pdfBytes = snapshot.data!;
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: bottomInset + 10),
-                    child: PdfPreview.builder(
-                      build: (_) async => pdfBytes,
-                      canChangeOrientation: false,
-                      canChangePageFormat: false,
-                      canDebug: false,
-                      allowPrinting: false,
-                      allowSharing: false,
-                      useActions: false,
-                      pdfFileName: 'diario-oficial-${diario.numeroEdicao}.pdf',
-                      pagesBuilder: (context, pages) {
-                        return PdfPinchViewer(
-                          pages: pages,
-                          documentLabel: 'Diário Oficial',
-                        );
-                      },
-                      loadingWidget: const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFFD62828),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

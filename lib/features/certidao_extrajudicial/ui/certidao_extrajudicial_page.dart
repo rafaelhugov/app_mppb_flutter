@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:printing/printing.dart';
 
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
+import '../../../core/ui/pages/pdf_viewer_page.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
-import '../../../core/ui/widgets/pdf_pinch_viewer.dart';
 import '../models/certidao_extrajudicial.dart';
 import '../providers/certidao_extrajudicial_provider.dart';
 
@@ -638,155 +637,15 @@ class _CertidaoExtrajudicialPageState
   }
 
   void _mostrarPdf(Uint8List bytes, String fileName) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => FractionallySizedBox(
-        heightFactor: 0.94,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFF7F8F6),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 10, 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0x33202322),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Text(
-                        'Certidão Extrajudicial',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Color(0xFF202322),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      tooltip: 'Compartilhar PDF',
-                      onPressed: () =>
-                          Printing.sharePdf(bytes: bytes, filename: fileName),
-                      icon: const Icon(
-                        Icons.ios_share_rounded,
-                        color: Color(0xFF697370),
-                        size: 19,
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Fechar',
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: Color(0xFF202322),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.paddingOf(context).bottom + 72,
-                  ),
-                  child: PdfPreview.builder(
-                    build: (_) async => bytes,
-                    canChangeOrientation: false,
-                    canChangePageFormat: false,
-                    canDebug: false,
-                    allowPrinting: false,
-                    allowSharing: false,
-                    useActions: false,
-                    pdfFileName: fileName,
-                    pagesBuilder: (context, pages) {
-                      return PdfPinchViewer(
-                        pages: pages,
-                        documentLabel: 'certidão extrajudicial',
-                      );
-                    },
-                    loadingWidget: const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFD62828),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  8,
-                  16,
-                  MediaQuery.paddingOf(context).bottom + 12,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 40,
-                        child: FilledButton(
-                          onPressed: () => Printing.sharePdf(
-                            bytes: bytes,
-                            filename: fileName,
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFD62828),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                          child: const Text('Baixar'),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: SizedBox(
-                        height: 40,
-                        child: OutlinedButton(
-                          onPressed: () => Printing.sharePdf(
-                            bytes: bytes,
-                            filename: fileName,
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF202322),
-                            side: const BorderSide(color: Color(0xFFE0E5E3)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                          child: const Text('Compartilhar'),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    PdfViewerPage.open(
+      context,
+      title: 'Certidão Extrajudicial',
+      fileName: fileName,
+      bytes: bytes,
+      primaryColor: const Color(0xFFD62828),
     );
   }
+
 
   String _digitsOnly(String value) => value.replaceAll(RegExp(r'\D'), '');
 }

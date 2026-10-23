@@ -227,7 +227,7 @@ void main() {
         'solicitacoes': [],
       });
 
-      expect(concessao.titulo, 'Férias - 1º período/2026');
+      expect(concessao.titulo, 'Férias - 1º / 2026');
       expect(concessao.solicitacoes, isEmpty);
       expect(concessao.inicioPeriodoAquisitivo, DateTime(2025, 1, 1));
     });

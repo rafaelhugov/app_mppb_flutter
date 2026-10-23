@@ -107,7 +107,7 @@ class ConcessaoAfastamentoDetailsSheet extends StatelessWidget {
                 const SizedBox(height: 18),
                 _SolicitacoesSection(
                   title: 'Gozos programados',
-                  emptyMessage: 'Nenhum período de gozo programado',
+                  emptyMessage: 'Nenhum gozo programado',
                   solicitacoes: gozos,
                   isMembro: isMembro,
                   dateFormat: dateFormat,

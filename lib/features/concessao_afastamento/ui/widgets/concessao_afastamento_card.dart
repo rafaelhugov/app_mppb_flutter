@@ -115,7 +115,7 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           concessao.tipo == TipoConcessao.licencaPremio
-                              ? 'Período: $titleDetail'
+                              ? 'Aquisitivo: $titleDetail'
                               : titleDetail,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -163,7 +163,7 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
             const SizedBox(height: 10),
             if (primeiraSolicitacao == null)
               const Text(
-                'Nenhum período de gozo programado',
+                'Nenhum gozo programado',
                 style: TextStyle(
                   color: ConcessaoAfastamentoColors.muted,
                   fontSize: 13,
@@ -172,7 +172,7 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
               )
             else ...[
               Text(
-                'Período: ${dateFormat.format(primeiraSolicitacao.inicio!)} a ${dateFormat.format(primeiraSolicitacao.fim!)}',
+                'Gozo: ${dateFormat.format(primeiraSolicitacao.inicio!)} a ${dateFormat.format(primeiraSolicitacao.fim!)}',
                 style: const TextStyle(
                   color: ConcessaoAfastamentoColors.ink,
                   fontSize: 13,

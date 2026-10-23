@@ -85,7 +85,7 @@ void main() {
         expect(find.text('Férias'), findsOneWidget);
         expect(find.text('Saldo disponível'), findsOneWidget);
         expect(find.text('0 dias'), findsWidgets);
-        expect(find.text('Período: 11/01/2027 a 09/02/2027'), findsOneWidget);
+        expect(find.text('Gozo: 11/01/2027 a 09/02/2027'), findsOneWidget);
         expect(find.text('Marcar gozo'), findsNothing);
       },
     );

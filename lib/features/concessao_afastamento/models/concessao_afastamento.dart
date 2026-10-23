@@ -51,7 +51,8 @@ class ConcessaoAfastamento {
   String get titulo {
     final ano = anoReferencia == null ? '' : '/$anoReferencia';
     if (tipo == TipoConcessao.ferias && periodo != null) {
-      return '${tipo.label} - $periodoº período$ano';
+      final ref = anoReferencia == null ? '' : ' / $anoReferencia';
+      return '${tipo.label} - $periodoº$ref';
     }
     if (tipo == TipoConcessao.licencaEleitoral) {
       return '${tipo.label} - ${TurnoEleitoral.fromPeriodo(periodo).label}$ano';

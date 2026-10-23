@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:printing/printing.dart';
 import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
@@ -12,8 +11,8 @@ import '../providers/contra_cheque_provider.dart';
 import 'widgets/competencia_selector.dart';
 import 'widgets/grafico_contracheque.dart';
 import 'widgets/contracheque_lancamentos.dart';
+import '../../../core/ui/pages/pdf_viewer_page.dart';
 import '../../../core/ui/widgets/feature_header.dart';
-import '../../../core/ui/widgets/pdf_pinch_viewer.dart';
 
 class ContraChequePage extends ConsumerWidget {
   const ContraChequePage({super.key});
@@ -152,6 +151,7 @@ class ContraChequePage extends ConsumerWidget {
                 cheque.linkPdf,
                 'contracheque-${cheque.mes}-${cheque.ano}.pdf',
                 authToken,
+                title: 'Contracheque ${cheque.mes}/${cheque.ano}',
               ),
               icon: const Icon(Icons.file_download, size: 18),
               label: const Text('BAIXAR PDF'),
@@ -215,8 +215,9 @@ class ContraChequePage extends ConsumerWidget {
     BuildContext context,
     String? linkPdf,
     String fileName,
-    String? authToken,
-  ) async {
+    String? authToken, {
+    String title = 'Contracheque',
+  }) async {
     if (linkPdf == null || linkPdf.isEmpty) {
       AppFeedback.showWarning(context, 'Link do PDF indisponível.');
       return;
@@ -237,156 +238,12 @@ class ContraChequePage extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final bottomInset = MediaQuery.paddingOf(context).bottom;
-
-        return FractionallySizedBox(
-          heightFactor: 0.94,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFFF7F8F6),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 10, 8),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: const Color(0x33202322),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Text(
-                          'Contracheque',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Color(0xFF202322),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Fechar',
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: Color(0xFF202322),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: FutureBuilder<Uint8List>(
-                    future: pdfFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState != ConnectionState.done) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF00A86B),
-                          ),
-                        );
-                      }
-
-                      if (snapshot.hasError ||
-                          snapshot.data == null ||
-                          snapshot.data!.isEmpty) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Text(
-                              'Não foi possível carregar o PDF.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Color(0xFF697370),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final pdfBytes = snapshot.data!;
-                      return Stack(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(bottom: bottomInset + 72),
-                            child: PdfPreview.builder(
-                              build: (_) async => pdfBytes,
-                              canChangeOrientation: false,
-                              canChangePageFormat: false,
-                              canDebug: false,
-                              allowPrinting: false,
-                              allowSharing: false,
-                              useActions: false,
-                              pdfFileName: fileName,
-                              pagesBuilder: (context, pages) {
-                                return PdfPinchViewer(
-                                  pages: pages,
-                                  documentLabel: 'contracheque',
-                                );
-                              },
-                              loadingWidget: const Center(
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF00A86B),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            left: 16,
-                            right: 16,
-                            bottom: bottomInset + 12,
-                            child: SizedBox(
-                              height: 42,
-                              child: FilledButton(
-                                onPressed: () => Printing.sharePdf(
-                                  bytes: pdfBytes,
-                                  filename: fileName,
-                                ),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFF00A86B),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                child: const Text('Salvar PDF'),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    PdfViewerPage.open(
+      context,
+      title: title,
+      fileName: fileName,
+      bytesFuture: pdfFuture,
+      primaryColor: const Color(0xFF00A86B),
     );
   }
 }

@@ -38,6 +38,26 @@ class _PdfPinchViewerState extends State<PdfPinchViewer> {
     _updateZoomState();
   }
 
+  void _zoomIn() {
+    final currentScale = _transformationController.value.getMaxScaleOnAxis();
+    final newScale = (currentScale + 0.6).clamp(1.0, 5.0);
+    _transformationController.value =
+        Matrix4.diagonal3Values(newScale, newScale, 1.0);
+    _updateZoomState();
+  }
+
+  void _zoomOut() {
+    final currentScale = _transformationController.value.getMaxScaleOnAxis();
+    final newScale = (currentScale - 0.6).clamp(1.0, 5.0);
+    if (newScale <= 1.05) {
+      _resetZoom();
+    } else {
+      _transformationController.value =
+          Matrix4.diagonal3Values(newScale, newScale, 1.0);
+      _updateZoomState();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -53,8 +73,6 @@ class _PdfPinchViewerState extends State<PdfPinchViewer> {
                   constrained: false,
                   minScale: 1,
                   maxScale: 5,
-                  // Uma margem horizontal ampla deixa o usuário alcançar
-                  // completamente os dois lados da página após ampliar.
                   boundaryMargin: const EdgeInsets.symmetric(
                     horizontal: 480,
                     vertical: 72,
@@ -65,44 +83,44 @@ class _PdfPinchViewerState extends State<PdfPinchViewer> {
                   child: SizedBox(
                     width: constraints.maxWidth,
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 48),
-                        for (
-                          var index = 0;
-                          index < widget.pages.length;
-                          index++
-                        )
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
-                            child: DecoratedBox(
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0x29000000),
-                                    blurRadius: 8,
-                                    offset: Offset(0, 3),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 48),
+                          for (
+                            var index = 0;
+                            index < widget.pages.length;
+                            index++
+                          )
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+                              child: DecoratedBox(
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0x29000000),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: AspectRatio(
+                                  aspectRatio: widget.pages[index].aspectRatio,
+                                  child: Image(
+                                    image: widget.pages[index].image,
+                                    fit: BoxFit.contain,
+                                    semanticLabel:
+                                        'Página ${index + 1} de ${widget.pages.length}',
                                   ),
-                                ],
-                              ),
-                              child: AspectRatio(
-                                aspectRatio: widget.pages[index].aspectRatio,
-                                child: Image(
-                                  image: widget.pages[index].image,
-                                  fit: BoxFit.contain,
-                                  semanticLabel:
-                                      'Página ${index + 1} de ${widget.pages.length}',
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
             Positioned(
               top: 8,
               left: 12,
@@ -145,19 +163,65 @@ class _PdfPinchViewerState extends State<PdfPinchViewer> {
                 ),
               ),
             ),
-            if (_isZoomed)
-              Positioned(
-                right: 12,
-                bottom: 12,
-                child: FloatingActionButton.small(
-                  heroTag: null,
-                  onPressed: _resetZoom,
-                  tooltip: 'Restaurar zoom',
-                  backgroundColor: const Color(0xFF202322),
-                  foregroundColor: Colors.white,
-                  child: const Icon(Icons.fit_screen_rounded),
-                ),
+            // Controles de zoom rápidos no canto inferior
+            Positioned(
+              right: 14,
+              bottom: 14,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDDE2E0)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x1F000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.zoom_in_rounded, size: 20),
+                          color: const Color(0xFF202322),
+                          tooltip: 'Aumentar zoom',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: _zoomIn,
+                        ),
+                        Container(
+                          width: 24,
+                          height: 1,
+                          color: const Color(0xFFE5EAE8),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.zoom_out_rounded, size: 20),
+                          color: const Color(0xFF202322),
+                          tooltip: 'Diminuir zoom',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: _zoomOut,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_isZoomed) ...[
+                    const SizedBox(height: 8),
+                    FloatingActionButton.small(
+                      heroTag: null,
+                      onPressed: _resetZoom,
+                      tooltip: 'Restaurar zoom',
+                      backgroundColor: const Color(0xFF202322),
+                      foregroundColor: Colors.white,
+                      child: const Icon(Icons.fit_screen_rounded),
+                    ),
+                  ],
+                ],
               ),
+            ),
           ],
         );
       },

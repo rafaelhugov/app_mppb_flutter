@@ -32,7 +32,7 @@ class ConcessaoAfastamento {
     return ConcessaoAfastamento(
       id: (json['id'] as num).toInt(),
       tipo: TipoConcessao.fromJson(json['tipo'] as String?),
-      descricaoOriginal: json['descricaoOriginal'] as String?,
+      descricaoOriginal: (json['descricaoOriginal'] ?? json['descricao']) as String?,
       diasConcedidos: (json['diasConcedidos'] as num?)?.toInt() ?? 0,
       saldoRestante: (json['saldoRestante'] as num?)?.toInt() ?? 0,
       periodo: (json['periodo'] as num?)?.toInt(),
@@ -51,10 +51,30 @@ class ConcessaoAfastamento {
   String get titulo {
     final ano = anoReferencia == null ? '' : '/$anoReferencia';
     if (tipo == TipoConcessao.ferias && periodo != null) {
-      return '${tipo.label} - $periodoº período$ano';
+      final ref = anoReferencia == null ? '' : ' / $anoReferencia';
+      return '${tipo.label} - $periodoº$ref';
     }
     if (tipo == TipoConcessao.licencaEleitoral) {
       return '${tipo.label} - ${TurnoEleitoral.fromPeriodo(periodo).label}$ano';
+    }
+    if (tipo == TipoConcessao.licencaPremio) {
+      if (inicioPeriodoAquisitivo != null && finalPeriodoAquisitivo != null) {
+        final inicioFmt =
+            '${inicioPeriodoAquisitivo!.day.toString().padLeft(2, '0')}/${inicioPeriodoAquisitivo!.month.toString().padLeft(2, '0')}/${inicioPeriodoAquisitivo!.year}';
+        final fimFmt =
+            '${finalPeriodoAquisitivo!.day.toString().padLeft(2, '0')}/${finalPeriodoAquisitivo!.month.toString().padLeft(2, '0')}/${finalPeriodoAquisitivo!.year}';
+        return '${tipo.label} - $inicioFmt a $fimFmt';
+      }
+      if (descricaoOriginal != null && descricaoOriginal!.trim().isNotEmpty) {
+        final desc = descricaoOriginal!.trim();
+        final limpo = desc
+            .replaceFirst(RegExp(r'^LICENÇA\s*', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\s+-\s+'), ' a ')
+            .trim();
+        if (limpo.isNotEmpty) {
+          return '${tipo.label} - $limpo';
+        }
+      }
     }
     return '${tipo.label}$ano';
   }

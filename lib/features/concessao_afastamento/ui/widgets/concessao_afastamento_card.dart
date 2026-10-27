@@ -114,9 +114,7 @@ class ConcessaoAfastamentoCard extends StatelessWidget {
                       if (titleDetail.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
-                          concessao.tipo == TipoConcessao.licencaPremio
-                              ? 'Aquisitivo: $titleDetail'
-                              : titleDetail,
+                          titleDetail,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

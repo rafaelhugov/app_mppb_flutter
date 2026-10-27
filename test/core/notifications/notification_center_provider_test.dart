@@ -27,7 +27,7 @@ void main() {
     });
   });
 
-  test('monta notificacoes separadas e filtra as ja lidas', () {
+  test('monta notificacoes preservando historico e sinalizando lidas', () {
     final noticias = [
       Noticia(
         titulo: 'Primeira noticia',
@@ -60,15 +60,22 @@ void main() {
       includeDesignacoes: true,
     );
 
-    expect(items, hasLength(2));
-    expect(items.map((item) => item.key), [
-      'noticia:https://mppb.mp.br/segunda',
-      'designacao:42',
-    ]);
-    expect(items.first.title, 'Segunda noticia');
-    expect(items.first.subtitle, 'Cidadania - 08/09/2026');
-    expect(items.first.targetUrl, 'https://mppb.mp.br/segunda');
-    expect(items.first.imageUrl, 'https://mppb.mp.br/segunda.jpg');
+    expect(items, hasLength(3));
+    final primeira = items.firstWhere(
+      (item) => item.key == 'noticia:https://mppb.mp.br/primeira',
+    );
+    final segunda = items.firstWhere(
+      (item) => item.key == 'noticia:https://mppb.mp.br/segunda',
+    );
+    final designacao = items.firstWhere((item) => item.key == 'designacao:42');
+
+    expect(primeira.isRead, isTrue);
+    expect(segunda.isRead, isFalse);
+    expect(designacao.isRead, isFalse);
+    expect(segunda.title, 'Segunda noticia');
+    expect(segunda.subtitle, 'Cidadania - 08/09/2026');
+    expect(segunda.targetUrl, 'https://mppb.mp.br/segunda');
+    expect(segunda.imageUrl, 'https://mppb.mp.br/segunda.jpg');
   });
 
   test('na area publica mostra apenas notificacoes de noticias', () {

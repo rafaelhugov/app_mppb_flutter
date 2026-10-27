@@ -93,7 +93,9 @@ class PushNotificationService {
   static const String publicNewsTopic = 'mppb_noticias';
 
   static bool get isSupportedPlatform {
-    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    return !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
   }
 
   static bool get isFirebaseReady => Firebase.apps.isNotEmpty;
@@ -127,6 +129,21 @@ class PushNotificationService {
     FirebaseMessaging.onMessage.listen(_foregroundMessages.add);
     FirebaseMessaging.onMessageOpenedApp.listen(_openedMessages.add);
     _messaging.onTokenRefresh.listen(_tokenRefreshes.add);
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      try {
+        await _messaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Falha ao configurar opções de apresentação iOS: $e');
+        }
+      }
+    }
+
     await _preparePublicNewsTopic();
 
     try {
@@ -148,7 +165,15 @@ class PushNotificationService {
     return _messaging.requestPermission(alert: true, badge: true, sound: true);
   }
 
-  Future<String?> getToken() {
+  Future<String?> getToken() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      try {
+        final apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken == null) {
+          await Future<void>.delayed(const Duration(milliseconds: 600));
+        }
+      } catch (_) {}
+    }
     return _messaging.getToken();
   }
 

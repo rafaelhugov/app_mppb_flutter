@@ -30,6 +30,7 @@ class NotificationCenterItem {
   final String? imageUrl;
   final Noticia? noticia;
   final DateTime? receivedAt;
+  final bool isRead;
 
   const NotificationCenterItem({
     required this.key,
@@ -41,7 +42,34 @@ class NotificationCenterItem {
     this.imageUrl,
     this.noticia,
     this.receivedAt,
+    this.isRead = false,
   });
+
+  NotificationCenterItem copyWith({
+    String? key,
+    NotificationCenterItemType? type,
+    String? title,
+    String? subtitle,
+    String? targetUrl,
+    String? targetRoute,
+    String? imageUrl,
+    Noticia? noticia,
+    DateTime? receivedAt,
+    bool? isRead,
+  }) {
+    return NotificationCenterItem(
+      key: key ?? this.key,
+      type: type ?? this.type,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      targetUrl: targetUrl ?? this.targetUrl,
+      targetRoute: targetRoute ?? this.targetRoute,
+      imageUrl: imageUrl ?? this.imageUrl,
+      noticia: noticia ?? this.noticia,
+      receivedAt: receivedAt ?? this.receivedAt,
+      isRead: isRead ?? this.isRead,
+    );
+  }
 
   Map<String, dynamic> toInboxJson() => {
     'key': key,
@@ -211,7 +239,7 @@ List<NotificationCenterItem> buildNotificationCenterItems({
     uniqueItems.putIfAbsent(item.key, () => item);
   }
   return uniqueItems.values
-      .where((item) => !readKeys.contains(item.key))
+      .map((item) => item.copyWith(isRead: readKeys.contains(item.key)))
       .toList();
 }
 

@@ -9,6 +9,7 @@ class NotificationCenterSheet {
     BuildContext context, {
     required List<NotificationCenterItem> items,
     required ValueChanged<NotificationCenterItem> onOpenItem,
+    VoidCallback? onMarkAllAsRead,
     DeviceRegistrationDiagnosticsState? deviceDiagnostics,
     VoidCallback? onRetryDeviceRegistration,
   }) {
@@ -24,6 +25,7 @@ class NotificationCenterSheet {
             Navigator.pop(ctx);
             onOpenItem(item);
           },
+          onMarkAllAsRead: onMarkAllAsRead,
           deviceDiagnostics: deviceDiagnostics,
           onRetryDeviceRegistration: onRetryDeviceRegistration,
         );
@@ -36,6 +38,7 @@ class NotificationCenterContent extends StatefulWidget {
   final List<NotificationCenterItem> items;
   final VoidCallback onClose;
   final ValueChanged<NotificationCenterItem> onOpenItem;
+  final VoidCallback? onMarkAllAsRead;
   final DeviceRegistrationDiagnosticsState? deviceDiagnostics;
   final VoidCallback? onRetryDeviceRegistration;
 
@@ -44,6 +47,7 @@ class NotificationCenterContent extends StatefulWidget {
     required this.items,
     required this.onClose,
     required this.onOpenItem,
+    this.onMarkAllAsRead,
     this.deviceDiagnostics,
     this.onRetryDeviceRegistration,
   });
@@ -137,6 +141,28 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
                             ),
                           ),
                         ),
+                        if (widget.items.any((item) => !item.isRead) &&
+                            widget.onMarkAllAsRead != null) ...[
+                          TextButton.icon(
+                            onPressed: widget.onMarkAllAsRead,
+                            icon: const Icon(Icons.done_all_rounded, size: 16),
+                            label: const Text('Marcar lidas'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF047857),
+                              textStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         InkWell(
                           onTap: widget.onClose,
                           borderRadius: BorderRadius.circular(8),
@@ -314,6 +340,8 @@ class _NotificationGroup extends StatelessWidget {
     final useGrid = responsive.usesWideLayout && visibleItems.length > 1;
     final gridItemHeight = responsive.isTablet ? 104.0 : 92.0;
 
+    final unreadCount = items.where((item) => !item.isRead).length;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -336,7 +364,11 @@ class _NotificationGroup extends StatelessWidget {
                     ),
                   ),
                 ),
-                _CountBadge(count: count, color: accentColor),
+                _CountBadge(
+                  count: unreadCount > 0 ? unreadCount : count,
+                  color: accentColor,
+                  isUnread: unreadCount > 0,
+                ),
               ],
             ),
           ),
@@ -359,6 +391,7 @@ class _NotificationGroup extends StatelessWidget {
                   title: item.title,
                   subtitle: item.subtitle,
                   imageUrl: item.imageUrl,
+                  isRead: item.isRead,
                   accentColor: accentColor,
                   onTap: () => onOpenItem(item),
                 );
@@ -374,6 +407,7 @@ class _NotificationGroup extends StatelessWidget {
                   subtitle: item.subtitle,
                   imageUrl: item.imageUrl,
                   isGridItem: true,
+                  isRead: item.isRead,
                   accentColor: accentColor,
                   onTap: () => onOpenItem(item),
                 ),
@@ -412,8 +446,13 @@ class _NotificationGroup extends StatelessWidget {
 class _CountBadge extends StatelessWidget {
   final int count;
   final Color color;
+  final bool isUnread;
 
-  const _CountBadge({required this.count, required this.color});
+  const _CountBadge({
+    required this.count,
+    required this.color,
+    this.isUnread = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -422,13 +461,13 @@ class _CountBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
+        color: isUnread ? color : color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         count > 99 ? '99+' : '$count',
         style: TextStyle(
-          color: color,
+          color: isUnread ? Colors.white : color,
           fontSize: 11,
           fontWeight: FontWeight.w900,
           height: 1,
@@ -498,6 +537,7 @@ class _NotificationShortcut extends StatelessWidget {
   final String subtitle;
   final String? imageUrl;
   final bool isGridItem;
+  final bool isRead;
   final Color accentColor;
   final VoidCallback onTap;
 
@@ -507,6 +547,7 @@ class _NotificationShortcut extends StatelessWidget {
     required this.subtitle,
     this.imageUrl,
     this.isGridItem = false,
+    this.isRead = false,
     required this.accentColor,
     required this.onTap,
   });
@@ -514,7 +555,7 @@ class _NotificationShortcut extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: isRead ? const Color(0xFFF0F2F1) : Colors.white,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -524,14 +565,22 @@ class _NotificationShortcut extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0x26343A40)),
+            border: Border.all(
+              color: isRead
+                  ? const Color(0x1F343A40)
+                  : accentColor.withValues(alpha: 0.35),
+              width: isRead ? 1.0 : 1.2,
+            ),
           ),
           child: Row(
             children: [
-              _NotificationLeading(
-                icon: icon,
-                imageUrl: imageUrl,
-                accentColor: accentColor,
+              Opacity(
+                opacity: isRead ? 0.72 : 1.0,
+                child: _NotificationLeading(
+                  icon: icon,
+                  imageUrl: imageUrl,
+                  accentColor: accentColor,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -539,27 +588,53 @@ class _NotificationShortcut extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      title,
-                      maxLines: isGridItem ? 3 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF202322),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        height: 1.18,
-                        letterSpacing: 0,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (!isRead) ...[
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(right: 6),
+                            decoration: BoxDecoration(
+                              color: accentColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: isGridItem ? 3 : 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isRead
+                                  ? const Color(0xFF555E5B)
+                                  : const Color(0xFF202322),
+                              fontSize: 14,
+                              fontWeight: isRead
+                                  ? FontWeight.w600
+                                  : FontWeight.w900,
+                              height: 1.18,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
                       maxLines: isGridItem ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF697370),
+                      style: TextStyle(
+                        color: isRead
+                            ? const Color(0xFF828E8A)
+                            : const Color(0xFF697370),
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: isRead
+                            ? FontWeight.w500
+                            : FontWeight.w600,
                         height: 1.2,
                         letterSpacing: 0,
                       ),
@@ -567,9 +642,11 @@ class _NotificationShortcut extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: Color(0xFF8A9490),
+                color: isRead
+                    ? const Color(0xFFAAB3B0)
+                    : const Color(0xFF8A9490),
                 size: 22,
               ),
             ],

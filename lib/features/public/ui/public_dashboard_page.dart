@@ -234,7 +234,7 @@ class PublicDashboardPage extends ConsumerWidget {
                                 ),
                               ),
                               child: const Text(
-                                'Todas as notícias',
+                                'Mais notícias',
                                 style: TextStyle(color: Colors.white),
                               ),
                             ),

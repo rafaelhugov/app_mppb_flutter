@@ -31,7 +31,7 @@ void main() {
 
     await _androidBack(tester);
     await _waitForText(tester, 'Bem-vindo');
-    await _tapText(tester, 'Todas as notícias');
+    await _tapText(tester, 'Mais notícias');
 
     await _waitForText(tester, 'Buscar notícias...');
 

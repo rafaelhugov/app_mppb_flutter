@@ -737,7 +737,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                             ),
                           ),
                           child: const Text(
-                            'Todas as notícias',
+                            'Mais notícias',
                             style: TextStyle(color: Colors.white),
                           ),
                         ),

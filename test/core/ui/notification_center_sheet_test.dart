@@ -134,4 +134,65 @@ void main() {
     expect(find.text('Pagamentos'), findsOneWidget);
     expect(find.text('Afastamentos'), findsOneWidget);
   });
+
+  testWidgets('exibe botao Marcar lidas quando ha itens nao lidos e executa callback', (
+    tester,
+  ) async {
+    var markAllCalled = false;
+    const item = NotificationCenterItem(
+      key: 'noticia:1',
+      type: NotificationCenterItemType.noticia,
+      title: 'Noticia pendente',
+      subtitle: '08/09/2026',
+      isRead: false,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NotificationCenterContent(
+            items: const [item],
+            onClose: () {},
+            onOpenItem: (_) {},
+            onMarkAllAsRead: () => markAllCalled = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Marcar lidas'), findsOneWidget);
+
+    await tester.tap(find.text('Marcar lidas'));
+    await tester.pump();
+
+    expect(markAllCalled, isTrue);
+  });
+
+  testWidgets('oculta botao Marcar lidas quando todas as notificacoes estao lidas', (
+    tester,
+  ) async {
+    const item = NotificationCenterItem(
+      key: 'noticia:1',
+      type: NotificationCenterItemType.noticia,
+      title: 'Noticia ja lida',
+      subtitle: '08/09/2026',
+      isRead: true,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NotificationCenterContent(
+            items: const [item],
+            onClose: () {},
+            onOpenItem: (_) {},
+            onMarkAllAsRead: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Noticia ja lida'), findsOneWidget);
+    expect(find.text('Marcar lidas'), findsNothing);
+  });
 }

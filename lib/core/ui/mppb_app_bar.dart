@@ -66,6 +66,8 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         includePagamentos: notificationPreferences.centralPagamentos,
         includeAfastamentos: notificationPreferences.centralAfastamentos,
       );
+      final unreadNotificationCount =
+          notificationItems.where((item) => !item.isRead).length;
 
       return AppBar(
         toolbarHeight: toolbarHeight,
@@ -138,25 +140,28 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
             onPressed: () => context.go('/perfil'),
           ),
           IconButton(
-            tooltip: notificationItems.isEmpty
+            tooltip: unreadNotificationCount == 0
                 ? 'Notificações'
-                : 'Notificações (${notificationItems.length} novas)',
+                : 'Notificações ($unreadNotificationCount não lida${unreadNotificationCount > 1 ? 's' : ''})',
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
-            icon: _NotificationBell(count: notificationItems.length),
+            icon: _NotificationBell(count: unreadNotificationCount),
             onPressed: () {
-              // Abrir o centro equivale a visualizar os avisos pendentes.
-              // A lista atual permanece visivel neste painel, mas o badge
-              // some imediatamente e nao volta quando ele for reaberto.
-              unawaited(
-                ref
-                    .read(notificationCenterProvider.notifier)
-                    .markAllAsRead(notificationItems.map((item) => item.key)),
-              );
               NotificationCenterSheet.show(
                 context,
                 items: notificationItems,
                 onOpenItem: (item) => _openNotificationItem(context, ref, item),
+                onMarkAllAsRead: unreadNotificationCount == 0
+                    ? null
+                    : () {
+                        unawaited(
+                          ref
+                              .read(notificationCenterProvider.notifier)
+                              .markAllAsRead(
+                                notificationItems.map((item) => item.key),
+                              ),
+                        );
+                      },
                 deviceDiagnostics: deviceDiagnostics,
                 onRetryDeviceRegistration: () =>
                     _retryDeviceRegistration(ref, authState.token),
@@ -179,6 +184,8 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       includePagamentos: false,
       includeAfastamentos: false,
     );
+    final unreadNotificationCount =
+        notificationItems.where((item) => !item.isRead).length;
 
     return AppBar(
       toolbarHeight: toolbarHeight,
@@ -232,22 +239,28 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
-          tooltip: notificationItems.isEmpty
+          tooltip: unreadNotificationCount == 0
               ? 'Notificações'
-              : 'Notificações (${notificationItems.length} novas)',
+              : 'Notificações ($unreadNotificationCount não lida${unreadNotificationCount > 1 ? 's' : ''})',
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
-          icon: _NotificationBell(count: notificationItems.length),
+          icon: _NotificationBell(count: unreadNotificationCount),
           onPressed: () {
-            unawaited(
-              ref
-                  .read(notificationCenterProvider.notifier)
-                  .markAllAsRead(notificationItems.map((item) => item.key)),
-            );
             NotificationCenterSheet.show(
               context,
               items: notificationItems,
               onOpenItem: (item) => _openNotificationItem(context, ref, item),
+              onMarkAllAsRead: unreadNotificationCount == 0
+                  ? null
+                  : () {
+                      unawaited(
+                        ref
+                            .read(notificationCenterProvider.notifier)
+                            .markAllAsRead(
+                              notificationItems.map((item) => item.key),
+                            ),
+                      );
+                    },
             );
           },
         ),

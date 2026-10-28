@@ -85,6 +85,16 @@ class ServicesBottomSheet {
                                   (MediaQuery.of(context).size.width - 70) / 4,
                               child: _buildMenuShortcut(
                                 ctx,
+                                Icons.live_tv_rounded,
+                                'TV MPPB',
+                                '/videos',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
                                 Icons.description,
                                 'Diário',
                                 '/diario_oficial',
@@ -171,6 +181,16 @@ class ServicesBottomSheet {
                                 Icons.verified_outlined,
                                 'Certidão',
                                 '/certidao-extrajudicial',
+                              ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.live_tv_rounded,
+                                'TV MPPB',
+                                '/videos',
                               ),
                             ),
                             SizedBox(

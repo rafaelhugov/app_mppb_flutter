@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_mppb_flutter/features/public/ui/public_dashboard_page.dart';
 import 'package:app_mppb_flutter/features/dashboard/ui/dashboard_page.dart';
 import 'package:app_mppb_flutter/features/noticias/providers/noticia_provider.dart';
+import 'package:app_mppb_flutter/features/videos/models/video_item.dart';
+import 'package:app_mppb_flutter/features/videos/providers/videos_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class MockNoticiaNotifier extends Notifier<NoticiaState>
@@ -22,6 +24,23 @@ class MockNoticiaNotifier extends Notifier<NoticiaState>
   void setPage(int page) {}
 }
 
+class MockVideosNotifier extends Notifier<VideosState>
+    implements VideosNotifier {
+  @override
+  VideosState build() {
+    return const VideosState();
+  }
+
+  @override
+  Future<void> fetchVideos({bool isUserRefresh = false}) async {}
+
+  @override
+  void setSearchTerm(String term) {}
+
+  @override
+  void setFiltro(TipoVideoFiltro filtro) {}
+}
+
 void main() {
   group('Home Publica - Testes', () {
     testWidgets('Deve exibir o card de Contatos na grade de serviços', (
@@ -31,6 +50,7 @@ void main() {
         ProviderScope(
           overrides: [
             noticiaProvider.overrideWith(() => MockNoticiaNotifier()),
+            videosProvider.overrideWith(() => MockVideosNotifier()),
           ],
           child: const MaterialApp(home: PublicDashboardPage()),
         ),
@@ -54,6 +74,7 @@ void main() {
           ProviderScope(
             overrides: [
               noticiaProvider.overrideWith(() => MockNoticiaNotifier()),
+              videosProvider.overrideWith(() => MockVideosNotifier()),
             ],
             child: const MaterialApp(home: DashboardPage()),
           ),

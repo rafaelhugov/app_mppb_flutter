@@ -6,6 +6,8 @@ import '../../../core/ui/responsive_layout.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
 import '../../noticias/ui/widgets/news_carousel.dart';
+import '../../videos/providers/videos_provider.dart';
+import '../../videos/ui/widgets/videos_carousel.dart';
 import '../../contatos/ui/widgets/secao_institucional.dart';
 
 class PublicDashboardPage extends ConsumerWidget {
@@ -26,7 +28,10 @@ class PublicDashboardPage extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           await ref.read(connectivityProvider.notifier).refresh();
-          await ref.read(noticiaProvider.notifier).fetchNoticias();
+          await Future.wait([
+            ref.read(noticiaProvider.notifier).fetchNoticias(),
+            ref.read(videosProvider.notifier).fetchVideos(isUserRefresh: true),
+          ]);
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -242,6 +247,8 @@ class PublicDashboardPage extends ConsumerWidget {
                         ),
                         SizedBox(height: isTablet ? 20 : 18),
                         const NewsCarousel(),
+                        SizedBox(height: isTablet ? 36 : 40),
+                        const VideosCarousel(),
                         SizedBox(height: isTablet ? 42 : 48),
                         SecaoInstitucional(compacta: isWide),
                       ],

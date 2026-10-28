@@ -20,6 +20,8 @@ import '../../noticias/providers/noticia_provider.dart';
 import '../../noticias/models/noticia.dart';
 import '../../noticias/ui/noticias_page.dart';
 import '../../noticias/utils/noticia_share.dart';
+import '../../videos/providers/videos_provider.dart';
+import '../../videos/ui/widgets/videos_carousel.dart';
 import '../../contatos/ui/widgets/secao_institucional.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -597,6 +599,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
           await Future.wait([
             ref.read(carteiraProvider.notifier).fetchCarteira(),
             ref.read(noticiaProvider.notifier).fetchNoticias(),
+            ref.read(videosProvider.notifier).fetchVideos(isUserRefresh: true),
           ]);
         },
         child: SingleChildScrollView(
@@ -1067,6 +1070,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       ),
                       const SizedBox(height: 10),
                       _buildNewsAutoPlayControl(carouselNews.length),
+                      const SizedBox(height: 36),
+                      const VideosCarousel(),
                     ],
                   ] else ...[
                     const Padding(

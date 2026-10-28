@@ -19,7 +19,9 @@ import '../../features/concessao_afastamento/ui/concessao_afastamento_page.dart'
 import '../../features/pagamentos/ui/pagamentos_page.dart';
 import '../../features/ouvidoria/ui/ouvidoria_page.dart';
 import '../../features/contatos/ui/contatos_page.dart';
+import '../../features/videos/models/video_item.dart';
 import '../../features/videos/ui/videos_page.dart';
+import '../../features/videos/ui/video_watch_page.dart';
 import '../network/connectivity_provider.dart';
 import '../ui/main_layout.dart';
 
@@ -103,6 +105,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/videos/watch',
+        builder: (context, state) {
+          final video = state.extra is VideoItem ? state.extra! as VideoItem : null;
+          final videoId = state.uri.queryParameters['v'] ?? video?.id;
+          return VideoWatchPage(
+            video: video,
+            initialVideoId: videoId,
+          );
+        },
+      ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {

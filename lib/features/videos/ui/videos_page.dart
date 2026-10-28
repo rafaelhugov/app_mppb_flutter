@@ -1,13 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/ui/mppb_app_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../models/video_item.dart';
 import '../providers/videos_provider.dart';
 import '../utils/video_share.dart';
+import 'video_watch_page.dart';
 import 'widgets/live_banner_card.dart';
-import 'widgets/video_player_sheet.dart';
 
 class VideosPage extends ConsumerStatefulWidget {
   const VideosPage({super.key});
@@ -40,6 +40,20 @@ class _VideosPageState extends ConsumerState<VideosPage> {
     compartilharVideo(video);
   }
 
+  Future<void> _abrirNoYouTube(VideoItem video) async {
+    final uri = Uri.tryParse(video.youtubeUrl);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _abrirCanalMPPB() async {
+    final uri = Uri.parse('https://www.youtube.com/@CanalMPPB');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(videosProvider);
@@ -49,7 +63,6 @@ class _VideosPageState extends ConsumerState<VideosPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: const MppbAppBar(),
       body: RefreshIndicator(
         color: const Color(0xFFD62828),
         onRefresh: () => ref.read(videosProvider.notifier).fetchVideos(isUserRefresh: true),
@@ -60,31 +73,128 @@ class _VideosPageState extends ConsumerState<VideosPage> {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   responsive.horizontalPadding,
-                  16,
+                  14,
                   responsive.horizontalPadding,
                   8,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // LIVE ATIVA SE HOUVER
+                    // LIVE ATIVA EM DESTAQUE SE HOUVER
                     if (liveAtiva != null) ...[
                       LiveBannerCard(liveVideo: liveAtiva),
+                      const SizedBox(height: 12),
                     ],
 
-                    // BARRA DE PESQUISA
+                    // CABEÇALHO DO CANAL OFICIAL NO ESTILO YOUTUBE
                     Container(
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x0A000000),
-                            blurRadius: 10,
-                            offset: Offset(0, 3),
+                            color: Color(0x06000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
                           ),
                         ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFFF1F5F9),
+                              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/images/brasao.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => const Icon(
+                                  Icons.account_balance_rounded,
+                                  color: Color(0xFFD62828),
+                                  size: 26,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Text(
+                                      'Canal MPPB',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 14,
+                                      color: Color(0xFF0284C7),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Ministério Público da Paraíba',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          InkWell(
+                            onTap: _abrirCanalMPPB,
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F172A),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'Canal',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // CAMPO DE BUSCA
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
                       child: TextField(
                         controller: _searchController,
@@ -95,16 +205,16 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                           hintText: 'Buscar vídeos, sessões, transmissões...',
                           hintStyle: const TextStyle(
                             color: Color(0xFF94A3B8),
-                            fontSize: 14,
+                            fontSize: 13.5,
                           ),
                           prefixIcon: const Icon(
                             Icons.search_rounded,
                             color: Color(0xFF64748B),
-                            size: 22,
+                            size: 20,
                           ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear_rounded, color: Color(0xFF64748B), size: 18),
+                                  icon: const Icon(Icons.clear_rounded, color: Color(0xFF64748B), size: 16),
                                   onPressed: () {
                                     _searchController.clear();
                                     ref.read(videosProvider.notifier).setSearchTerm('');
@@ -112,13 +222,13 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                                 )
                               : null,
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
 
-                    // PÍLULAS DE FILTRO
+                    // ABAS NO ESTILO YOUTUBE (TODOS, VÍDEOS, AO VIVO & SESSÕES)
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -127,21 +237,18 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                             label: 'Todos (${state.videos.length})',
                             isSelected: state.filtroSelecionado == TipoVideoFiltro.todos,
                             onTap: () => ref.read(videosProvider.notifier).setFiltro(TipoVideoFiltro.todos),
-                            icon: Icons.video_collection_outlined,
                           ),
                           const SizedBox(width: 8),
                           _buildFilterChip(
-                            label: 'Sessões & Lives (${state.sessoesCount})',
-                            isSelected: state.filtroSelecionado == TipoVideoFiltro.sessoes,
-                            onTap: () => ref.read(videosProvider.notifier).setFiltro(TipoVideoFiltro.sessoes),
-                            icon: Icons.gavel_rounded,
-                          ),
-                          const SizedBox(width: 8),
-                          _buildFilterChip(
-                            label: 'Institucionais (${state.institucionaisCount})',
+                            label: 'Vídeos (${state.institucionaisCount})',
                             isSelected: state.filtroSelecionado == TipoVideoFiltro.institucionais,
                             onTap: () => ref.read(videosProvider.notifier).setFiltro(TipoVideoFiltro.institucionais),
-                            icon: Icons.videocam_outlined,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildFilterChip(
+                            label: 'Ao Vivo & Sessões (${state.sessoesCount})',
+                            isSelected: state.filtroSelecionado == TipoVideoFiltro.sessoes,
+                            onTap: () => ref.read(videosProvider.notifier).setFiltro(TipoVideoFiltro.sessoes),
                           ),
                         ],
                       ),
@@ -152,7 +259,7 @@ class _VideosPageState extends ConsumerState<VideosPage> {
               ),
             ),
 
-            // CONTEÚDO: LOADING, ERRO OU LISTA
+            // CONTEÚDO: CARREGANDO, VAZIO OU FEED
             if (state.isLoading && videos.isEmpty)
               const SliverFillRemaining(
                 child: Center(
@@ -168,8 +275,8 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          width: 64,
-                          height: 64,
+                          width: 60,
+                          height: 60,
                           decoration: const BoxDecoration(
                             color: Color(0x1AD62828),
                             shape: BoxShape.circle,
@@ -177,10 +284,10 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                           child: const Icon(
                             Icons.video_library_outlined,
                             color: Color(0xFFD62828),
-                            size: 32,
+                            size: 30,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                         const Text(
                           'Nenhum vídeo encontrado',
                           style: TextStyle(
@@ -191,7 +298,7 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                         ),
                         const SizedBox(height: 6),
                         const Text(
-                          'Tente buscar com outros termos ou altere o filtro.',
+                          'Tente pesquisar com outro termo ou mude de aba.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
@@ -231,42 +338,28 @@ class _VideosPageState extends ConsumerState<VideosPage> {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
-    required IconData icon,
   }) {
     return Material(
-      color: isSelected ? const Color(0xFFD62828) : Colors.white,
+      color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
       borderRadius: BorderRadius.circular(999),
-      elevation: isSelected ? 2 : 0,
-      shadowColor: const Color(0x40D62828),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
-              color: isSelected ? const Color(0xFFD62828) : const Color(0xFFE2E8F0),
+              color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected ? Colors.white : const Color(0xFF64748B),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : const Color(0xFF475569),
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              color: isSelected ? Colors.white : const Color(0xFF475569),
+            ),
           ),
         ),
       ),
@@ -275,193 +368,244 @@ class _VideosPageState extends ConsumerState<VideosPage> {
 
   Widget _buildVideoCard(BuildContext context, VideoItem video) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 14,
-            offset: Offset(0, 6),
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // THUMBNAIL COM OVERLAY
-          GestureDetector(
-            onTap: () => VideoPlayerSheet.show(context, video),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CachedNetworkImage(
-                      imageUrl: video.fallbackThumbnail,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: const Color(0xFF0F172A),
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD62828)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => VideoWatchPage.open(context, video: video),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // THUMBNAIL 16:9 ESTILO YOUTUBE
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: video.fallbackThumbnail,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: const Color(0xFF0F172A),
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD62828)),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: const Color(0xFF0F172A),
+                          child: const Center(
+                            child: Icon(Icons.videocam_rounded, color: Colors.white54, size: 40),
+                          ),
                         ),
                       ),
-                      errorWidget: (context, url, error) => Container(
-                        color: const Color(0xFF0F172A),
-                        child: const Center(
-                          child: Icon(Icons.videocam_rounded, color: Colors.white54, size: 40),
-                        ),
-                      ),
-                    ),
-                    // Gradiente
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.black45,
-                            Colors.transparent,
-                            Colors.black54,
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                    // Botão Central de Play
-                    Center(
-                      child: Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD62828).withValues(alpha: 0.92),
-                          shape: BoxShape.circle,
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x66000000),
-                              blurRadius: 14,
-                              offset: Offset(0, 4),
+                      // BADGE DE DURAÇÃO OU AO VIVO NO CANTO INFERIOR DIREITO
+                      if (video.isAoVivo)
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD62828),
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 34,
-                        ),
-                      ),
-                    ),
-                    // Badge da Categoria
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(video.badgeIcon, color: Colors.white, size: 13),
-                            const SizedBox(width: 5),
-                            Text(
-                              video.badgeLabel,
+                            child: const Text(
+                              'AO VIVO',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        )
+                      else if (video.duracao != null && video.duracao!.isNotEmpty)
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.82),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              video.duracao!,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.3,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // CONTEÚDO
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (video.dataPublicacao != null && video.dataPublicacao!.isNotEmpty)
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xFF94A3B8)),
-                      const SizedBox(width: 4),
-                      Text(
-                        video.dataPublicacao!,
-                        style: const TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                      // BADGE SUPERIOR DE TIPO
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(video.badgeIcon, size: 11, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                video.badgeLabel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
-                const SizedBox(height: 6),
-                Text(
-                  video.titulo,
-                  style: const TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
-                    height: 1.25,
-                  ),
                 ),
-                const SizedBox(height: 14),
-                Row(
+              ),
+
+              // INFORMAÇÕES DO VÍDEO ABAIXO DA THUMBNAIL ESTILO YOUTUBE
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => VideoPlayerSheet.show(context, video),
-                        icon: const Icon(Icons.play_circle_fill_rounded, size: 16),
-                        label: const Text('Assistir Vídeo'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD62828),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                          textStyle: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
+                    // AVATAR DO CANAL
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFF1F5F9),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/brasao.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.account_balance_rounded,
+                            color: Color(0xFFD62828),
+                            size: 18,
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
-                    IconButton(
-                      onPressed: () => _compartilhar(video),
-                      icon: const Icon(Icons.share_outlined, size: 20),
-                      color: const Color(0xFF64748B),
-                      tooltip: 'Compartilhar',
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.all(10),
+
+                    // TÍTULO E METADADOS
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            video.titulo,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                              height: 1.25,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Text(
+                                'Canal MPPB',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              if (video.visualizacoes != null && video.visualizacoes!.isNotEmpty) ...[
+                                const Text(' • ', style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8))),
+                                Text(
+                                  video.visualizacoes!,
+                                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                              if (video.dataPublicacao != null && video.dataPublicacao!.isNotEmpty) ...[
+                                const Text(' • ', style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8))),
+                                Flexible(
+                                  child: Text(
+                                    video.dataPublicacao!,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
+
+                    // BOTÃO DE 3 PONTINHOS COM MENU
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert_rounded, size: 18, color: Color(0xFF64748B)),
+                      padding: EdgeInsets.zero,
+                      onSelected: (val) {
+                        if (val == 'compartilhar') {
+                          _compartilhar(video);
+                        } else if (val == 'youtube') {
+                          _abrirNoYouTube(video);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'compartilhar',
+                          child: Row(
+                            children: [
+                              Icon(Icons.share_rounded, size: 16, color: Color(0xFF475569)),
+                              SizedBox(width: 8),
+                              Text('Compartilhar', style: TextStyle(fontSize: 12.5)),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'youtube',
+                          child: Row(
+                            children: [
+                              Icon(Icons.open_in_new_rounded, size: 16, color: Color(0xFFFF0000)),
+                              SizedBox(width: 8),
+                              Text('Abrir no YouTube', style: TextStyle(fontSize: 12.5)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

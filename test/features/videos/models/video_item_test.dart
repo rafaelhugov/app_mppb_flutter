@@ -15,6 +15,8 @@ void main() {
         'dataPublicacaoIso': '2026-10-27T01:57:13+00:00',
         'tipo': 'SESSAO_LIVE',
         'isAoVivo': false,
+        'duracao': '1:11:15',
+        'visualizacoes': '96 visualizações',
       };
 
       final video = VideoItem.fromJson(json);
@@ -24,6 +26,8 @@ void main() {
       expect(video.isSessao, isTrue);
       expect(video.isInstitucional, isFalse);
       expect(video.isAoVivo, isFalse);
+      expect(video.duracao, '1:11:15');
+      expect(video.visualizacoes, '96 visualizações');
       expect(video.badgeLabel, 'SESSÃO / LIVE GRAVADA');
       expect(video.youtubeUrl, 'https://www.youtube.com/watch?v=abc12345678');
       expect(video.fallbackThumbnail, 'https://i.ytimg.com/vi/abc12345678/hqdefault.jpg');

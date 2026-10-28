@@ -16,6 +16,8 @@ class VideoItem {
   final String? dataPublicacaoIso;
   final String tipo; // AO_VIVO, SESSAO_LIVE, INSTITUCIONAL
   final bool isAoVivo;
+  final String? duracao;
+  final String? visualizacoes;
 
   const VideoItem({
     required this.id,
@@ -27,6 +29,8 @@ class VideoItem {
     this.dataPublicacaoIso,
     this.tipo = 'INSTITUCIONAL',
     this.isAoVivo = false,
+    this.duracao,
+    this.visualizacoes,
   });
 
   factory VideoItem.fromJson(Map<String, dynamic> json) {
@@ -40,6 +44,8 @@ class VideoItem {
       dataPublicacaoIso: json['dataPublicacaoIso'] as String?,
       tipo: json['tipo'] as String? ?? 'INSTITUCIONAL',
       isAoVivo: json['isAoVivo'] as bool? ?? false,
+      duracao: json['duracao'] as String?,
+      visualizacoes: json['visualizacoes'] as String?,
     );
   }
 

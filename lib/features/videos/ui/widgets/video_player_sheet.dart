@@ -4,6 +4,8 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../../models/video_item.dart';
 import '../../utils/video_share.dart';
 
+import '../video_watch_page.dart';
+
 class VideoPlayerSheet extends StatefulWidget {
   final VideoItem video;
 
@@ -13,13 +15,7 @@ class VideoPlayerSheet extends StatefulWidget {
   });
 
   static Future<void> show(BuildContext context, VideoItem video) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => VideoPlayerSheet(video: video),
-    );
+    return VideoWatchPage.open(context, video: video);
   }
 
   @override

@@ -459,6 +459,12 @@ class _NotificationPreferencesSection extends StatelessWidget {
               (value) => preferencias.copyWith(pushNoticias: value),
             ),
             _NotificationOption(
+              Icons.live_tv_rounded,
+              'Transmissões (Lives)',
+              preferencias.pushLives,
+              (value) => preferencias.copyWith(pushLives: value),
+            ),
+            _NotificationOption(
               Icons.assignment_ind_rounded,
               'Designações',
               preferencias.pushDesignacoes,
@@ -497,6 +503,12 @@ class _NotificationPreferencesSection extends StatelessWidget {
               'Notícias',
               preferencias.centralNoticias,
               (value) => preferencias.copyWith(centralNoticias: value),
+            ),
+            _NotificationOption(
+              Icons.live_tv_rounded,
+              'Transmissões (Lives)',
+              preferencias.centralLives,
+              (value) => preferencias.copyWith(centralLives: value),
             ),
             _NotificationOption(
               Icons.assignment_ind_rounded,

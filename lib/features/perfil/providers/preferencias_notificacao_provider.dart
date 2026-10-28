@@ -65,12 +65,20 @@ class PreferenciasNotificacaoNotifier
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final preferencias = await ref
+      final preferenciasApi = await ref
           .read(preferenciasNotificacaoRepositoryProvider)
           .buscar(token: token);
       if (!ref.mounted) return;
+      final localCache = await _lerCacheLocal();
+      final preferencias = localCache != null
+          ? preferenciasApi.copyWith(
+              pushLives: localCache.pushLives,
+              centralLives: localCache.centralLives,
+            )
+          : preferenciasApi;
       await _salvarCache(preferencias);
       await _sincronizarNoticias(preferencias.pushNoticias);
+      await _sincronizarLives(preferencias.pushLives);
       if (!ref.mounted) return;
       state = state.copyWith(
         preferencias: preferencias,
@@ -91,12 +99,17 @@ class PreferenciasNotificacaoNotifier
 
     state = state.copyWith(isSaving: true, errorMessage: null);
     try {
-      final salvas = await ref
+      final salvasApi = await ref
           .read(preferenciasNotificacaoRepositoryProvider)
           .salvar(token: token, preferencias: preferencias);
       if (!ref.mounted) return false;
+      final salvas = salvasApi.copyWith(
+        pushLives: preferencias.pushLives,
+        centralLives: preferencias.centralLives,
+      );
       await _salvarCache(salvas);
       await _sincronizarNoticias(salvas.pushNoticias);
+      await _sincronizarLives(salvas.pushLives);
       if (!ref.mounted) return false;
       state = state.copyWith(
         preferencias: salvas,
@@ -137,24 +150,17 @@ class PreferenciasNotificacaoNotifier
   Future<void> _carregarCache(String errorMessage) async {
     if (!ref.mounted) return;
     try {
-      final storage = ref.read(secureStorageProvider);
-      final username = await storage.read(key: 'auth_username');
-      final cached = await storage.read(key: _cacheKey);
-      if (cached != null && username != null) {
-        final json = jsonDecode(cached) as Map<String, dynamic>;
-        if (json['username'] == username) {
-          final preferencias = PreferenciasNotificacao.fromJson(
-            json['preferencias'] as Map<String, dynamic>,
-          );
-          await _sincronizarNoticias(preferencias.pushNoticias);
-          if (!ref.mounted) return;
-          state = state.copyWith(
-            preferencias: preferencias,
-            isLoading: false,
-            errorMessage: errorMessage,
-          );
-          return;
-        }
+      final local = await _lerCacheLocal();
+      if (local != null) {
+        await _sincronizarNoticias(local.pushNoticias);
+        await _sincronizarLives(local.pushLives);
+        if (!ref.mounted) return;
+        state = state.copyWith(
+          preferencias: local,
+          isLoading: false,
+          errorMessage: errorMessage,
+        );
+        return;
       }
     } catch (_) {
       // Mantém o padrão seguro e informa que a leitura não pôde ser concluída.
@@ -175,6 +181,37 @@ class PreferenciasNotificacaoNotifier
     } catch (_) {
       // O servidor já preserva a escolha; o tópico será sincronizado na próxima carga.
     }
+  }
+
+  Future<void> _sincronizarLives(bool habilitadas) async {
+    if (!PushNotificationService.isSupportedPlatform ||
+        !PushNotificationService.isFirebaseReady) {
+      return;
+    }
+    try {
+      await PushNotificationService.instance.setPublicLivesSubscription(
+        habilitadas,
+      );
+    } catch (_) {
+      // O tópico será sincronizado na próxima carga.
+    }
+  }
+
+  Future<PreferenciasNotificacao?> _lerCacheLocal() async {
+    try {
+      final storage = ref.read(secureStorageProvider);
+      final username = await storage.read(key: 'auth_username');
+      final cached = await storage.read(key: _cacheKey);
+      if (cached != null && username != null) {
+        final json = jsonDecode(cached) as Map<String, dynamic>;
+        if (json['username'] == username) {
+          return PreferenciasNotificacao.fromJson(
+            json['preferencias'] as Map<String, dynamic>,
+          );
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<String?> _tokenAtual() async {

@@ -28,7 +28,7 @@ class PreferenciasNotificacaoRepository {
   }) async {
     final response = await dio.put(
       '/api/notificacoes/preferencias',
-      data: preferencias.toJson(),
+      data: preferencias.toApiJson(),
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
         extra: {'skipAuthLogout': true},

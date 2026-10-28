@@ -18,6 +18,7 @@ enum NotificationCenterItemType {
   contracheque,
   pagamento,
   afastamento,
+  live,
 }
 
 class NotificationCenterItem {
@@ -220,6 +221,7 @@ List<NotificationCenterItem> buildNotificationCenterItems({
   bool includeContracheques = true,
   bool includePagamentos = true,
   bool includeAfastamentos = true,
+  bool includeLives = true,
 }) {
   final items = <NotificationCenterItem>[
     if (includeNoticias) ...noticias.map(_noticiaItem),
@@ -231,6 +233,7 @@ List<NotificationCenterItem> buildNotificationCenterItems({
         NotificationCenterItemType.contracheque => includeContracheques,
         NotificationCenterItemType.pagamento => includePagamentos,
         NotificationCenterItemType.afastamento => includeAfastamentos,
+        NotificationCenterItemType.live => includeLives,
       },
     ),
   ];
@@ -299,6 +302,7 @@ NotificationCenterItemType? _functionalType(String? eventType) {
     'NOVO_PAGAMENTO' => NotificationCenterItemType.pagamento,
     'AFASTAMENTO_STATUS_ALTERADO' ||
     'AFASTAMENTO_MOVIMENTACAO' => NotificationCenterItemType.afastamento,
+    'NOVA_LIVE' => NotificationCenterItemType.live,
     _ => null,
   };
 }
@@ -310,6 +314,7 @@ String _routeForType(NotificationCenterItemType type) {
     NotificationCenterItemType.afastamento => '/concessao-afastamento',
     NotificationCenterItemType.noticia => '/noticias',
     NotificationCenterItemType.designacao => '/designacoes',
+    NotificationCenterItemType.live => '/videos',
   };
 }
 
@@ -320,6 +325,7 @@ String _defaultTitle(NotificationCenterItemType type) {
     NotificationCenterItemType.afastamento => 'Afastamento atualizado',
     NotificationCenterItemType.noticia => 'Nova notícia',
     NotificationCenterItemType.designacao => 'Nova designação',
+    NotificationCenterItemType.live => 'Transmissão ao vivo',
   };
 }
 

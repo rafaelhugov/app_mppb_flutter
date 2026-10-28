@@ -65,6 +65,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         includeContracheques: notificationPreferences.centralContracheques,
         includePagamentos: notificationPreferences.centralPagamentos,
         includeAfastamentos: notificationPreferences.centralAfastamentos,
+        includeLives: notificationPreferences.centralLives,
       );
       final unreadNotificationCount =
           notificationItems.where((item) => !item.isRead).length;
@@ -179,10 +180,12 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       noticias: noticiaState.noticias,
       designacoes: const [],
       readKeys: notificationState.readKeys,
+      inboxItems: notificationState.inboxItems,
       includeDesignacoes: false,
       includeContracheques: false,
       includePagamentos: false,
       includeAfastamentos: false,
+      includeLives: true,
     );
     final unreadNotificationCount =
         notificationItems.where((item) => !item.isRead).length;
@@ -317,6 +320,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         return;
       case NotificationCenterItemType.afastamento:
         context.go('/concessao-afastamento');
+        return;
+      case NotificationCenterItemType.live:
+        context.go('/videos');
         return;
     }
   }

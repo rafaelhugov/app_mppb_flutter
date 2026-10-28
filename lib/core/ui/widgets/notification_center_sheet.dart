@@ -61,6 +61,7 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
   static const int _previewLimit = 4;
 
   bool _showAllNews = false;
+  bool _showAllLives = false;
   bool _showAllDesignations = false;
   bool _showAllPayslips = false;
   bool _showAllPayments = false;
@@ -77,6 +78,9 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
     final heightFactor = responsive.isTablet ? 0.88 : 0.92;
     final newsItems = widget.items
         .where((item) => item.type == NotificationCenterItemType.noticia)
+        .toList();
+    final liveItems = widget.items
+        .where((item) => item.type == NotificationCenterItemType.live)
         .toList();
     final designationItems = widget.items
         .where((item) => item.type == NotificationCenterItemType.designacao)
@@ -227,6 +231,20 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
                               showAll: _showAllNews,
                               onToggleShowAll: () {
                                 setState(() => _showAllNews = !_showAllNews);
+                              },
+                              onOpenItem: widget.onOpenItem,
+                            ),
+                          if (liveItems.isNotEmpty)
+                            _NotificationGroup(
+                              title: 'Transmissões ao Vivo',
+                              count: liveItems.length,
+                              icon: Icons.live_tv_rounded,
+                              accentColor: const Color(0xFFE50914),
+                              items: liveItems,
+                              previewLimit: _previewLimit,
+                              showAll: _showAllLives,
+                              onToggleShowAll: () {
+                                setState(() => _showAllLives = !_showAllLives);
                               },
                               onOpenItem: widget.onOpenItem,
                             ),

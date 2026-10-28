@@ -122,6 +122,29 @@ void main() {
     expect(item?.title, 'Novo pagamento disponível');
   });
 
+  test('converte push de nova live em item persistivel da central', () {
+    const message = RemoteMessage(
+      messageId: 'mensagem-live-1',
+      data: {
+        'tipo_evento': 'NOVA_LIVE',
+        'rota': '/videos',
+        'id_evento_notificacao': 'NOVA_LIVE_xyz',
+      },
+      notification: RemoteNotification(
+        title: 'Transmissão ao vivo iniciada',
+        body: 'Sessão Solene de Abertura no Canal do MPPB.',
+      ),
+    );
+
+    final item = notificationCenterItemFromRemoteMessage(message);
+
+    expect(item?.key, 'push:NOVA_LIVE_xyz');
+    expect(item?.type, NotificationCenterItemType.live);
+    expect(item?.targetRoute, '/videos');
+    expect(item?.title, 'Transmissão ao vivo iniciada');
+    expect(item?.subtitle, 'Sessão Solene de Abertura no Canal do MPPB.');
+  });
+
   test('preferencias ocultam categorias desabilitadas da central', () {
     final items = buildNotificationCenterItems(
       noticias: [
@@ -132,12 +155,19 @@ void main() {
       includeNoticias: false,
       includeDesignacoes: false,
       includePagamentos: false,
+      includeLives: false,
       inboxItems: const [
         NotificationCenterItem(
           key: 'push:pagamento-1',
           type: NotificationCenterItemType.pagamento,
           title: 'Pagamento',
           subtitle: 'Disponível',
+        ),
+        NotificationCenterItem(
+          key: 'push:live-1',
+          type: NotificationCenterItemType.live,
+          title: 'Live',
+          subtitle: 'Ao vivo',
         ),
         NotificationCenterItem(
           key: 'push:contracheque-1',

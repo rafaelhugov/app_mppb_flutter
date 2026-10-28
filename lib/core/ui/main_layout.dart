@@ -145,15 +145,6 @@ class _MainLayoutState extends ConsumerState<MainLayout>
   bool _handleScrollNotification(ScrollNotification notification) {
     if (notification.metrics.axis != Axis.vertical) return false;
 
-    final location = GoRouterState.of(context).matchedLocation;
-    // Na tela de vídeos, o dock deve permanecer visível durante a rolagem para acesso imediato
-    if (location == '/videos') {
-      if (!_isNavVisible) {
-        setState(() => _isNavVisible = true);
-      }
-      return false;
-    }
-
     if (notification is UserScrollNotification) {
       if (notification.direction == ScrollDirection.reverse && _isNavVisible) {
         setState(() => _isNavVisible = false);

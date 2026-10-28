@@ -2,7 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../models/video_item.dart';
 import '../providers/videos_provider.dart';
 import '../utils/video_share.dart';
@@ -80,6 +82,15 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // HEADER PADRÃO COM NOME TV MPPB E BOTÃO DE VOLTAR
+                    const HeroHeaderPublico(
+                      label: '',
+                      title: 'TV MPPB',
+                      subtitle: '',
+                      icon: Icons.play_circle_outline_rounded,
+                    ),
+                    const SizedBox(height: 10),
+
                     // LIVE ATIVA EM DESTAQUE SE HOUVER
                     if (liveAtiva != null) ...[
                       LiveBannerCard(liveVideo: liveAtiva),
@@ -339,6 +350,13 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                   ),
                 ),
               ),
+
+            // ESPAÇAMENTO INFERIOR PARA NÃO FICAR ATRÁS DO DOCK FLUTUANTE
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MainLayout.contentBottomPadding(context) + 36,
+              ),
+            ),
           ],
         ),
       ),

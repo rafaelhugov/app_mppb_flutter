@@ -180,7 +180,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
       if (location == '/') return 0;
       if (location == '/processos') return 1;
       if (location == '/diario_oficial') return 3;
-      if (location == '/ouvidoria' || location == '/noticias') return 4;
+      if (location == '/ouvidoria' || location == '/noticias' || location == '/videos') return 4;
       return -1;
     }
   }
@@ -746,6 +746,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         label4 = 'Notíc.';
         icon4 = Icons.newspaper_rounded;
         route4 = '/noticias';
+      } else if (location == '/videos') {
+        label4 = 'Vídeos';
+        icon4 = Icons.smart_display_rounded;
+        route4 = '/videos';
       } else if (location == '/diario_oficial') {
         label4 = 'Diár.';
         icon4 = Icons.description_rounded;
@@ -760,6 +764,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         label4 = 'Ouvid.';
         icon4 = Icons.record_voice_over;
         route4 = '/ouvidoria';
+      } else if (location == '/videos') {
+        label4 = 'Vídeos';
+        icon4 = Icons.smart_display_rounded;
+        route4 = '/videos';
       } else {
         label4 = 'Notíc.';
         icon4 = Icons.newspaper_rounded;

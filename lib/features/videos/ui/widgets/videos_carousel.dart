@@ -7,7 +7,7 @@ import '../../models/video_item.dart';
 import '../../providers/videos_provider.dart';
 import '../../utils/video_share.dart';
 import 'live_banner_card.dart';
-import 'video_player_sheet.dart';
+import '../video_watch_page.dart';
 
 class VideosCarousel extends ConsumerStatefulWidget {
   const VideosCarousel({super.key});
@@ -118,27 +118,14 @@ class _VideosCarouselState extends ConsumerState<VideosCarousel> {
               ),
               const SizedBox(width: 10),
               const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TV MPPB',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF1E293B),
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    Text(
-                      'Sessões, transmissões e conteúdos oficiais',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'TV MPPB',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF1E293B),
+                    letterSpacing: -0.2,
+                  ),
                 ),
               ),
               TextButton(
@@ -153,7 +140,7 @@ class _VideosCarouselState extends ConsumerState<VideosCarousel> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Ver todos'),
+                    Text('Mais vídeos'),
                     SizedBox(width: 2),
                     Icon(Icons.arrow_forward_ios_rounded, size: 12),
                   ],
@@ -168,7 +155,7 @@ class _VideosCarouselState extends ConsumerState<VideosCarousel> {
           height: carouselHeight,
           child: PageView.builder(
             controller: pageController,
-            itemCount: videos.take(8).length,
+            itemCount: videos.take(4).length,
             padEnds: false,
             itemBuilder: (context, index) {
               final video = videos[index];
@@ -195,7 +182,7 @@ class _VideosCarouselState extends ConsumerState<VideosCarousel> {
                       Expanded(
                         flex: 11,
                         child: GestureDetector(
-                          onTap: () => VideoPlayerSheet.show(context, video),
+                          onTap: () => VideoWatchPage.open(context, video: video),
                           child: ClipRRect(
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                             child: Stack(
@@ -331,7 +318,7 @@ class _VideosCarouselState extends ConsumerState<VideosCarousel> {
                                 children: [
                                   Expanded(
                                     child: ElevatedButton.icon(
-                                      onPressed: () => VideoPlayerSheet.show(context, video),
+                                      onPressed: () => VideoWatchPage.open(context, video: video),
                                       icon: const Icon(Icons.play_circle_outline_rounded, size: 15),
                                       label: const Text('Assistir'),
                                       style: ElevatedButton.styleFrom(

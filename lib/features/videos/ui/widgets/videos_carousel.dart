@@ -128,22 +128,30 @@ class _VideosCarouselState extends ConsumerState<VideosCarousel> {
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: () => context.push('/videos'),
-                style: TextButton.styleFrom(
+              FilledButton(
+                onPressed: () => context.go('/videos'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFD62828),
                   foregroundColor: const Color(0xFFD62828),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 9,
+                  ),
+                  minimumSize: const Size(82, 34),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  elevation: 0,
+                  side: const BorderSide(color: Color(0xFFD62828)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                   textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Mais vídeos'),
-                    SizedBox(width: 2),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 12),
-                  ],
+                child: const Text(
+                  'Mais vídeos',
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
             ],

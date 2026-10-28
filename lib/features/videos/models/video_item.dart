@@ -34,19 +34,36 @@ class VideoItem {
   });
 
   factory VideoItem.fromJson(Map<String, dynamic> json) {
+    final rawTitulo = json['titulo'] as String? ?? '';
+    final rawTipo = json['tipo'] as String?;
     return VideoItem(
       id: json['id'] as String? ?? '',
-      titulo: json['titulo'] as String? ?? '',
+      titulo: rawTitulo,
       descricao: json['descricao'] as String?,
       link: json['link'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
       dataPublicacao: json['dataPublicacao'] as String?,
       dataPublicacaoIso: json['dataPublicacaoIso'] as String?,
-      tipo: json['tipo'] as String? ?? 'INSTITUCIONAL',
+      tipo: _normalizarTipo(rawTipo, rawTitulo),
       isAoVivo: json['isAoVivo'] as bool? ?? false,
       duracao: json['duracao'] as String?,
       visualizacoes: json['visualizacoes'] as String?,
     );
+  }
+
+  static String _normalizarTipo(String? tipoRecebido, String titulo) {
+    if (tipoRecebido == 'AO_VIVO') return 'AO_VIVO';
+    if (tipoRecebido == 'INSTITUCIONAL') return 'INSTITUCIONAL';
+
+    // Se o tipo veio genérico ou como SESSAO_LIVE, verifica se é realmente uma sessão colegiada
+    final tLower = titulo.toLowerCase();
+    final isSessaoFormal = tLower.contains('sessão') ||
+        tLower.contains('sessao') ||
+        tLower.contains('csmp') ||
+        tLower.contains('colégio de procuradores') ||
+        tLower.contains('colegio de procuradores');
+
+    return isSessaoFormal ? 'SESSAO_LIVE' : 'INSTITUCIONAL';
   }
 
   bool get isSessao => tipo == 'SESSAO_LIVE' || tipo == 'AO_VIVO';

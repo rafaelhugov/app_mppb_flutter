@@ -108,17 +108,28 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                             height: 48,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFFF1F5F9),
+                              color: Colors.white,
                               border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0A000000),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: ClipOval(
                               child: Image.asset(
-                                'assets/images/brasao.png',
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => const Icon(
-                                  Icons.account_balance_rounded,
-                                  color: Color(0xFFD62828),
-                                  size: 26,
+                                'assets/images/canal_mppb_avatar.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Image.asset(
+                                  'assets/images/brasao_mppb_sem_fundo.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) => const Icon(
+                                    Icons.account_balance_rounded,
+                                    color: Color(0xFFD62828),
+                                    size: 26,
+                                  ),
                                 ),
                               ),
                             ),
@@ -499,17 +510,21 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                       height: 36,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFF1F5F9),
+                        color: Colors.white,
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
                       child: ClipOval(
                         child: Image.asset(
-                          'assets/images/brasao.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.account_balance_rounded,
-                            color: Color(0xFFD62828),
-                            size: 18,
+                          'assets/images/canal_mppb_avatar.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Image.asset(
+                            'assets/images/brasao_mppb_sem_fundo.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const Icon(
+                              Icons.account_balance_rounded,
+                              color: Color(0xFFD62828),
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -566,10 +581,18 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                       ),
                     ),
 
-                    // BOTÃO DE 3 PONTINHOS COM MENU
+                    // BOTÃO DE 3 PONTINHOS COM MENU (FUNDO BRANCO PURO)
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert_rounded, size: 18, color: Color(0xFF64748B)),
                       padding: EdgeInsets.zero,
+                      color: Colors.white,
+                      surfaceTintColor: Colors.transparent,
+                      shadowColor: Colors.black.withValues(alpha: 0.15),
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
                       onSelected: (val) {
                         if (val == 'compartilhar') {
                           _compartilhar(video);
@@ -582,9 +605,16 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                           value: 'compartilhar',
                           child: Row(
                             children: [
-                              Icon(Icons.share_rounded, size: 16, color: Color(0xFF475569)),
-                              SizedBox(width: 8),
-                              Text('Compartilhar', style: TextStyle(fontSize: 12.5)),
+                              Icon(Icons.share_rounded, size: 17, color: Color(0xFF334155)),
+                              SizedBox(width: 10),
+                              Text(
+                                'Compartilhar',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -592,9 +622,16 @@ class _VideosPageState extends ConsumerState<VideosPage> {
                           value: 'youtube',
                           child: Row(
                             children: [
-                              Icon(Icons.open_in_new_rounded, size: 16, color: Color(0xFFFF0000)),
-                              SizedBox(width: 8),
-                              Text('Abrir no YouTube', style: TextStyle(fontSize: 12.5)),
+                              Icon(Icons.open_in_new_rounded, size: 17, color: Color(0xFFFF0000)),
+                              SizedBox(width: 10),
+                              Text(
+                                'Abrir no YouTube',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
                             ],
                           ),
                         ),

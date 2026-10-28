@@ -14,6 +14,7 @@ void main() {
     late FakeSimpleRefresher contrachequeRefresher;
     late FakeSimpleRefresher pagamentosRefresher;
     late FakeSimpleRefresher afastamentosRefresher;
+    late FakeVideosRefresher videosRefresher;
     late bool authenticated;
     late PushNavigationService service;
 
@@ -25,6 +26,7 @@ void main() {
       contrachequeRefresher = FakeSimpleRefresher();
       pagamentosRefresher = FakeSimpleRefresher();
       afastamentosRefresher = FakeSimpleRefresher();
+      videosRefresher = FakeVideosRefresher();
       authenticated = true;
       service = PushNavigationService(
         gateway: gateway,
@@ -32,6 +34,7 @@ void main() {
         isAuthenticated: () => authenticated,
         refreshDesignacoes: refresher.refresh,
         refreshNoticias: noticiasRefresher.refresh,
+        refreshVideos: videosRefresher.refresh,
         refreshContracheque: contrachequeRefresher.refresh,
         refreshPagamentos: pagamentosRefresher.refresh,
         refreshAfastamentos: afastamentosRefresher.refresh,
@@ -137,6 +140,31 @@ void main() {
           '/noticias?noticia=noticia-externa-1&link=https%3A%2F%2Fwww.mppb.mp.br%2Fnoticia%2F1&titulo=Noticia+especial',
         ]);
         expect(noticiasRefresher.refreshCount, 1);
+      },
+    );
+
+    test('foreground de nova live atualiza vídeos sem navegar', () async {
+      authenticated = false;
+
+      await service.handleForegroundPayload(_livesPayload());
+
+      expect(videosRefresher.refreshCount, 1);
+      expect(videosRefresher.isUserRefreshes, [true]);
+      expect(navigator.routes, isEmpty);
+    });
+
+    test(
+      'background com toque em live abre tela de videos e atualiza provider',
+      () async {
+        authenticated = false;
+
+        await service.handleOpenedPayload(
+          _livesPayload(),
+          messageKey: 'live-1',
+        );
+
+        expect(navigator.routes, ['/videos']);
+        expect(videosRefresher.refreshCount, 1);
       },
     );
 
@@ -357,6 +385,16 @@ PushTechnicalPayload _afastamentoPayload() {
   );
 }
 
+PushTechnicalPayload _livesPayload() {
+  return const PushTechnicalPayload(
+    tipoEvento: 'NOVA_LIVE',
+    rota: '/videos',
+    liveId: 'live123',
+    liveTitulo: 'Sessão Plenária ao Vivo',
+    liveUrl: 'https://youtube.com/watch?v=live123',
+  );
+}
+
 class FakePushMessageGateway implements PushMessageGateway {
   final StreamController<RemoteMessage> _foregroundController =
       StreamController<RemoteMessage>.broadcast();
@@ -423,5 +461,15 @@ class FakeSimpleRefresher {
 
   Future<void> refresh() async {
     refreshCount++;
+  }
+}
+
+class FakeVideosRefresher {
+  int refreshCount = 0;
+  final List<bool> isUserRefreshes = [];
+
+  Future<void> refresh({bool isUserRefresh = true}) async {
+    refreshCount++;
+    isUserRefreshes.add(isUserRefresh);
   }
 }

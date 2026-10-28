@@ -11,6 +11,7 @@ import '../../features/contra_cheque/providers/contra_cheque_provider.dart';
 import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
 import '../../features/pagamentos/providers/pagamentos_provider.dart';
+import '../../features/videos/providers/videos_provider.dart';
 import '../router/app_router.dart';
 import 'notification_center_provider.dart';
 import 'push_notification_service.dart';
@@ -19,6 +20,8 @@ const String _designacoesEventType = 'NOVAS_DESIGNACOES';
 const String _designacoesRoute = '/designacoes';
 const String _noticiasEventType = 'NOVAS_NOTICIAS';
 const String _noticiasRoute = '/noticias';
+const String _livesEventType = 'NOVA_LIVE';
+const String _videosRoute = '/videos';
 const String _contrachequeEventType = 'NOVO_CONTRACHEQUE';
 const String _contrachequeRoute = '/contracheque';
 const String _pagamentosEventType = 'NOVO_PAGAMENTO';
@@ -103,6 +106,7 @@ class PushNavigationService {
   final bool Function() isAuthenticated;
   final Future<void> Function({required bool forceRefresh}) refreshDesignacoes;
   final Future<void> Function() refreshNoticias;
+  final Future<void> Function({bool isUserRefresh})? refreshVideos;
   final Future<void> Function() refreshContracheque;
   final Future<void> Function() refreshPagamentos;
   final Future<void> Function() refreshAfastamentos;
@@ -119,6 +123,7 @@ class PushNavigationService {
     required this.isAuthenticated,
     required this.refreshDesignacoes,
     required this.refreshNoticias,
+    this.refreshVideos,
     required this.refreshContracheque,
     required this.refreshPagamentos,
     required this.refreshAfastamentos,
@@ -170,6 +175,11 @@ class PushNavigationService {
       return;
     }
 
+    if (_isAllowedLivesPayload(payload)) {
+      await refreshVideos?.call(isUserRefresh: true);
+      return;
+    }
+
     if (_isAllowedAuthenticatedFunctionalPayload(payload) &&
         isAuthenticated()) {
       await _refreshFunctionalPayload(payload);
@@ -184,6 +194,7 @@ class PushNavigationService {
   }) async {
     if (!_isAllowedDesignacoesPayload(payload) &&
         !_isAllowedNoticiasPayload(payload) &&
+        !_isAllowedLivesPayload(payload) &&
         !_isAllowedAuthenticatedFunctionalPayload(payload)) {
       return;
     }
@@ -205,6 +216,11 @@ class PushNavigationService {
 
     if (_isAllowedNoticiasPayload(payload)) {
       await _openNoticiasAndRefresh(payload);
+      return;
+    }
+
+    if (_isAllowedLivesPayload(payload)) {
+      await _openVideosAndRefresh(payload);
       return;
     }
 
@@ -253,6 +269,11 @@ class PushNavigationService {
   Future<void> _openNoticiasAndRefresh(PushTechnicalPayload payload) async {
     _goToNoticiasIfNeeded(payload);
     await refreshNoticias();
+  }
+
+  Future<void> _openVideosAndRefresh(PushTechnicalPayload payload) async {
+    _goToRouteIfNeeded(_videosRoute);
+    await refreshVideos?.call(isUserRefresh: true);
   }
 
   Future<void> _openFunctionalAndRefresh(
@@ -348,6 +369,11 @@ class PushNavigationService {
         payload.rota == _noticiasRoute;
   }
 
+  bool _isAllowedLivesPayload(PushTechnicalPayload payload) {
+    return payload.tipoEvento == _livesEventType &&
+        payload.rota == _videosRoute;
+  }
+
   bool _isAllowedContrachequePayload(PushTechnicalPayload payload) {
     return payload.tipoEvento == _contrachequeEventType &&
         payload.rota == _contrachequeRoute;
@@ -426,6 +452,11 @@ final pushNavigationServiceProvider = Provider<PushNavigationService>((ref) {
     },
     refreshAfastamentos: () {
       return ref.read(concessaoAfastamentoProvider.notifier).atualizarTudo();
+    },
+    refreshVideos: ({bool isUserRefresh = true}) {
+      return ref
+          .read(videosProvider.notifier)
+          .fetchVideos(isUserRefresh: isUserRefresh);
     },
     recordNotification: (message) {
       return ref

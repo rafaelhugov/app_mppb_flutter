@@ -44,6 +44,29 @@ void main() {
     expect(payload.toAllowedData().containsKey('matricula'), isFalse);
   });
 
+  test('reconhece payload tecnico publico de lives', () {
+    final payload = PushTechnicalPayload.fromData({
+      'tipo_evento': 'NOVA_LIVE',
+      'rota': '/videos',
+      'live_id': 'live_xyz',
+      'live_titulo': 'Sessão Solene de Posse',
+      'live_url': 'https://youtube.com/watch?v=live_xyz',
+      'jwt': 'token_ignorado',
+    });
+
+    expect(payload.isSupportedLivesSignal, isTrue);
+    expect(payload.isSupportedNoticiasSignal, isFalse);
+    expect(payload.isSupportedDesignacaoSignal, isFalse);
+    expect(payload.toAllowedData(), {
+      'tipo_evento': 'NOVA_LIVE',
+      'rota': '/videos',
+      'live_id': 'live_xyz',
+      'live_titulo': 'Sessão Solene de Posse',
+      'live_url': 'https://youtube.com/watch?v=live_xyz',
+    });
+    expect(payload.toAllowedData().containsKey('jwt'), isFalse);
+  });
+
   test('normaliza valores vazios do payload tecnico', () {
     final payload = PushTechnicalPayload.fromData({
       'tipo_evento': ' ',

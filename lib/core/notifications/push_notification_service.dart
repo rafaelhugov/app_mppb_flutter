@@ -28,6 +28,9 @@ class PushTechnicalPayload {
   final String? noticiaChave;
   final String? noticiaLink;
   final String? noticiaTitulo;
+  final String? liveId;
+  final String? liveTitulo;
+  final String? liveUrl;
 
   const PushTechnicalPayload({
     this.tipoEvento,
@@ -35,6 +38,9 @@ class PushTechnicalPayload {
     this.noticiaChave,
     this.noticiaLink,
     this.noticiaTitulo,
+    this.liveId,
+    this.liveTitulo,
+    this.liveUrl,
   });
 
   factory PushTechnicalPayload.fromData(Map<String, dynamic> data) {
@@ -44,6 +50,9 @@ class PushTechnicalPayload {
       noticiaChave: _stringValue(data['noticia_chave']),
       noticiaLink: _stringValue(data['noticia_link']),
       noticiaTitulo: _stringValue(data['noticia_titulo']),
+      liveId: _stringValue(data['live_id']),
+      liveTitulo: _stringValue(data['live_titulo']),
+      liveUrl: _stringValue(data['live_url']),
     );
   }
 
@@ -53,6 +62,10 @@ class PushTechnicalPayload {
 
   bool get isSupportedNoticiasSignal {
     return tipoEvento == 'NOVAS_NOTICIAS' && rota == '/noticias';
+  }
+
+  bool get isSupportedLivesSignal {
+    return tipoEvento == 'NOVA_LIVE' && rota == '/videos';
   }
 
   Map<String, String> toAllowedData() {
@@ -74,6 +87,15 @@ class PushTechnicalPayload {
     if (noticiaTitulo != null) {
       data['noticia_titulo'] = noticiaTitulo!;
     }
+    if (liveId != null) {
+      data['live_id'] = liveId!;
+    }
+    if (liveTitulo != null) {
+      data['live_titulo'] = liveTitulo!;
+    }
+    if (liveUrl != null) {
+      data['live_url'] = liveUrl!;
+    }
     return data;
   }
 
@@ -91,6 +113,7 @@ class PushNotificationService {
 
   static final PushNotificationService instance = PushNotificationService._();
   static const String publicNewsTopic = 'mppb_noticias';
+  static const String publicLivesTopic = 'mppb_lives';
 
   static bool get isSupportedPlatform {
     return !kIsWeb &&
@@ -144,7 +167,7 @@ class PushNotificationService {
       }
     }
 
-    await _preparePublicNewsTopic();
+    await _preparePublicTopics();
 
     try {
       final initialMessage = await _messaging.getInitialMessage().timeout(
@@ -187,13 +210,24 @@ class PushNotificationService {
         : _messaging.unsubscribeFromTopic(publicNewsTopic);
   }
 
-  Future<void> _preparePublicNewsTopic() async {
+  Future<void> subscribeToPublicLivesTopic() {
+    return _messaging.subscribeToTopic(publicLivesTopic);
+  }
+
+  Future<void> setPublicLivesSubscription(bool enabled) {
+    return enabled
+        ? _messaging.subscribeToTopic(publicLivesTopic)
+        : _messaging.unsubscribeFromTopic(publicLivesTopic);
+  }
+
+  Future<void> _preparePublicTopics() async {
     try {
       await requestPermission().timeout(const Duration(seconds: 5));
       await subscribeToPublicNewsTopic().timeout(const Duration(seconds: 5));
+      await subscribeToPublicLivesTopic().timeout(const Duration(seconds: 5));
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('FCM public topic unavailable.');
+        debugPrint('FCM public topics unavailable: $e');
       }
     }
   }

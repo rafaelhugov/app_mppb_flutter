@@ -77,18 +77,6 @@ class SecaoSigaMppb extends StatelessWidget {
                   ),
                 ),
               ),
-              _iconeRede(
-                context: context,
-                cor: const Color(0xFFFF0000),
-                icone: FontAwesomeIcons.youtube,
-                label: 'YouTube',
-                onTap: () => _link(
-                  context,
-                  () => ServicoLinksExternos.abrirUrlExterna(
-                    DadosInstitucionais.urlYoutube,
-                  ),
-                ),
-              ),
             ],
           ),
         ),

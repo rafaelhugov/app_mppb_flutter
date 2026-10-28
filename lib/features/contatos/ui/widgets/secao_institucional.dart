@@ -157,18 +157,6 @@ class SecaoInstitucional extends StatelessWidget {
                   ),
                 ),
               ),
-              _buildCompactSocial(
-                context,
-                icone: FontAwesomeIcons.youtube,
-                cor: const Color(0xFFFF0000),
-                label: 'YouTube',
-                onTap: () => _handleLink(
-                  context,
-                  () => ServicoLinksExternos.abrirUrlExterna(
-                    DadosInstitucionais.urlYoutube,
-                  ),
-                ),
-              ),
             ],
           ),
         ),

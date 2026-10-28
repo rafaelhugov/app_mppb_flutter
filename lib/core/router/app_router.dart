@@ -19,6 +19,7 @@ import '../../features/concessao_afastamento/ui/concessao_afastamento_page.dart'
 import '../../features/pagamentos/ui/pagamentos_page.dart';
 import '../../features/ouvidoria/ui/ouvidoria_page.dart';
 import '../../features/contatos/ui/contatos_page.dart';
+import '../../features/videos/ui/videos_page.dart';
 import '../network/connectivity_provider.dart';
 import '../ui/main_layout.dart';
 
@@ -64,6 +65,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/certidao-extrajudicial',
     '/processos',
     '/ouvidoria',
+    '/videos',
   ];
 
   return GoRouter(
@@ -154,6 +156,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               initialNewsLink: state.uri.queryParameters['link'],
               initialNewsTitle: state.uri.queryParameters['titulo'],
             ),
+          ),
+          GoRoute(
+            path: '/videos',
+            builder: (context, state) => const VideosPage(),
           ),
           GoRoute(
             path: '/processos',

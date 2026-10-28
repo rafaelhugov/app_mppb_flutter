@@ -82,6 +82,7 @@ class MainLayout extends ConsumerStatefulWidget {
 class _MainLayoutState extends ConsumerState<MainLayout>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   bool _isNavVisible = true;
+  String? _lastLocation;
   late final AnimationController _crestIntroController;
   bool _showCrestIntro = false;
   bool _hasPlayedAuthenticatedIntro = false;
@@ -143,6 +144,15 @@ class _MainLayoutState extends ConsumerState<MainLayout>
 
   bool _handleScrollNotification(ScrollNotification notification) {
     if (notification.metrics.axis != Axis.vertical) return false;
+
+    final location = GoRouterState.of(context).matchedLocation;
+    // Na tela de vídeos, o dock deve permanecer visível durante a rolagem para acesso imediato
+    if (location == '/videos') {
+      if (!_isNavVisible) {
+        setState(() => _isNavVisible = true);
+      }
+      return false;
+    }
 
     if (notification is UserScrollNotification) {
       if (notification.direction == ScrollDirection.reverse && _isNavVisible) {
@@ -712,6 +722,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     final hasInternet = ref.watch(connectivityProvider);
     final isOnline = hasInternet;
     final location = GoRouterState.of(context).matchedLocation;
+    if (_lastLocation != location) {
+      _lastLocation = location;
+      _isNavVisible = true;
+    }
 
     final isHiddenPage = location == '/login' || location.contains('/detalhes');
     final isHome = location == '/' || location == '/restrito';

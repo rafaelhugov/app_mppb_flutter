@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -53,10 +54,29 @@ class _VideoWatchPageState extends ConsumerState<VideoWatchPage> {
         enableCaption: true,
       ),
     );
+
+    _controller.setFullScreenListener((isFullScreen) {
+      if (isFullScreen) {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      } else {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+        ]);
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      }
+    });
   }
 
   @override
   void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _controller.close();
     _scrollController.dispose();
     super.dispose();
@@ -150,18 +170,6 @@ class _VideoWatchPageState extends ConsumerState<VideoWatchPage> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.open_in_new_rounded, color: Colors.white70, size: 20),
-            tooltip: 'Assistir no YouTube',
-            onPressed: () => _abrirNoYouTube(_currentVideo),
-          ),
-          IconButton(
-            icon: const Icon(Icons.share_rounded, color: Colors.white70, size: 20),
-            tooltip: 'Compartilhar',
-            onPressed: () => _compartilhar(_currentVideo),
-          ),
-        ],
       ),
       body: SafeArea(
         top: false,

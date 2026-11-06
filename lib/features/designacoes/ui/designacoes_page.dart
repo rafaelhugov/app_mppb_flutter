@@ -320,6 +320,18 @@ class DesignacaoCard extends StatelessWidget {
           labelColor: category.metadataLabelColor,
           valueColor: category.metadataValueColor,
         ),
+      if (designacao.naturezaAto != null &&
+          designacao.naturezaAto!.trim().isNotEmpty)
+        _DesignacaoMetadataItemData(
+          icon: Icons.bookmark_outline_rounded,
+          label: 'Natureza',
+          value: designacao.naturezaAto!.trim(),
+          color: category.base,
+          background: category.metadataBackground,
+          border: category.metadataBorder,
+          labelColor: category.metadataLabelColor,
+          valueColor: category.metadataValueColor,
+        ),
     ];
   }
 

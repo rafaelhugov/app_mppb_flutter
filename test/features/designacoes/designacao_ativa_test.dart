@@ -51,4 +51,23 @@ void main() {
     expect(designacao.dataPublicacao, isNull);
     expect(designacao.periodo, 'Desde 23/10/2025');
   });
+
+  test('converte Exercer atribuições para Teletrabalho e preenche naturezaAto', () {
+    final designacao = DesignacaoAtiva.fromJson({
+      'id': 2002,
+      'tipoCodigo': 'F',
+      'tipoDescricao': 'Função',
+      'titulo': 'Exercer atribuições',
+      'subtitulo': 'Departamento de Desenvolvimento de Sistemas',
+      'dataInicial': '2026-06-16',
+      'dataFinal': '2027-06-15',
+      'ato': '1902/2026',
+      'naturezaAto': 'Teletrabalho',
+    });
+
+    expect(designacao.titulo, 'Teletrabalho');
+    expect(designacao.subtitulo, 'Departamento de Desenvolvimento de Sistemas');
+    expect(designacao.naturezaAto, 'Teletrabalho');
+    expect(designacao.ato, '1902/2026');
+  });
 }

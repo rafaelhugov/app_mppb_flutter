@@ -295,5 +295,55 @@ void main() {
         );
       },
     );
+
+    test('formata titulo de Plantao com periodo aquisitivo', () {
+      final concessao = ConcessaoAfastamento.fromJson({
+        'id': 14,
+        'tipo': 'P',
+        'diasConcedidos': 2,
+        'saldoRestante': 2,
+        'inicioPeriodoAquisitivo': '2022-06-20',
+        'finalPeriodoAquisitivo': '2022-06-26',
+        'solicitacoes': [],
+      });
+
+      expect(
+        concessao.titulo,
+        'Plantão - 20/06/2022 a 26/06/2022',
+      );
+    });
+
+    test('formata titulo de Plantao de data unica', () {
+      final concessao = ConcessaoAfastamento.fromJson({
+        'id': 15,
+        'tipo': 'P',
+        'diasConcedidos': 1,
+        'saldoRestante': 1,
+        'inicioPeriodoAquisitivo': '2019-12-28',
+        'finalPeriodoAquisitivo': '2019-12-28',
+        'solicitacoes': [],
+      });
+
+      expect(
+        concessao.titulo,
+        'Plantão - 28/12/2019',
+      );
+    });
+
+    test('formata titulo de Plantao a partir de descricaoOriginal quando datas forem nulas', () {
+      final concessao = ConcessaoAfastamento.fromJson({
+        'id': 16,
+        'tipo': 'P',
+        'diasConcedidos': 4,
+        'saldoRestante': 2,
+        'descricao': 'PLANTÃO 05/06/2023 - 11/06/2023',
+        'solicitacoes': [],
+      });
+
+      expect(
+        concessao.titulo,
+        'Plantão - 05/06/2023 a 11/06/2023',
+      );
+    });
   });
 }

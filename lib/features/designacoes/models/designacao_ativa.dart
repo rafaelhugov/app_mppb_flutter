@@ -30,6 +30,7 @@ class DesignacaoAtiva {
   final DateTime? dataFinal;
   final String? ato;
   final DateTime? dataPublicacao;
+  final String? naturezaAto;
 
   const DesignacaoAtiva({
     required this.id,
@@ -43,15 +44,23 @@ class DesignacaoAtiva {
     this.dataFinal,
     this.ato,
     this.dataPublicacao,
+    this.naturezaAto,
   });
 
   factory DesignacaoAtiva.fromJson(Map<String, dynamic> json) {
     final ato = _technicalAct(json['ato']);
+    final rawTitulo = json['titulo'] as String? ?? 'Designação';
+    final naturezaAto = json['naturezaAto'] as String?;
+    final isTeletrabalho = (naturezaAto != null &&
+            naturezaAto.toLowerCase().contains('teletrabalho')) ||
+        rawTitulo.trim().toLowerCase() == 'exercer atribuições';
+    final titulo = isTeletrabalho ? 'Teletrabalho' : rawTitulo;
+
     return DesignacaoAtiva(
       id: (json['id'] as num?)?.toInt() ?? 0,
       tipoCodigo: json['tipoCodigo'] as String? ?? '',
       tipoDescricao: json['tipoDescricao'] as String? ?? 'Designação',
-      titulo: json['titulo'] as String? ?? 'Designação',
+      titulo: titulo,
       subtitulo: json['subtitulo'] as String?,
       orgao: json['orgao'] as String?,
       funcao: json['funcao'] as String?,
@@ -61,6 +70,9 @@ class DesignacaoAtiva {
       dataPublicacao: ato == null && _startsWithIni(json['ato'])
           ? null
           : _date(json['dataPublicacao']),
+      naturezaAto: isTeletrabalho && (naturezaAto == null || naturezaAto.isEmpty)
+          ? 'Teletrabalho'
+          : naturezaAto,
     );
   }
 

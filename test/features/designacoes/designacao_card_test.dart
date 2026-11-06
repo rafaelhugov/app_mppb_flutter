@@ -49,4 +49,30 @@ void main() {
     expect(find.text('Desde 07/01/2019'), findsOneWidget);
     expect(find.textContaining('Ato'), findsNothing);
   });
+
+  testWidgets('exibe titulo Teletrabalho e metadado de Natureza quando presente', (tester) async {
+    final designacao = DesignacaoAtiva(
+      id: 2002,
+      tipoCodigo: 'F',
+      tipoDescricao: 'Função',
+      titulo: 'Teletrabalho',
+      subtitulo: 'Departamento de Desenvolvimento de Sistemas',
+      dataInicial: DateTime(2026, 6, 16),
+      dataFinal: DateTime(2027, 6, 15),
+      ato: '1902/2026',
+      naturezaAto: 'Teletrabalho',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: DesignacaoCard(designacao: designacao)),
+      ),
+    );
+
+    expect(find.text('Teletrabalho'), findsNWidgets(2)); // título e metadado de natureza
+    expect(find.text('Departamento de Desenvolvimento de Sistemas'), findsOneWidget);
+    expect(find.text('16/06/2026 até 15/06/2027'), findsOneWidget);
+    expect(find.text('Ato 1902/2026'), findsOneWidget);
+    expect(find.text('Natureza'), findsOneWidget);
+  });
 }

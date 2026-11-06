@@ -861,7 +861,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
 
     final fallback = Image.asset(
       assinaturaAsset,
-      height: 30,
+      height: 52,
       fit: BoxFit.contain,
     );
 
@@ -871,7 +871,7 @@ class _CarteiraPageState extends ConsumerState<CarteiraPage>
 
     return CachedNetworkImage(
       imageUrl: assinaturaUrl,
-      height: 30,
+      height: 52,
       fit: BoxFit.contain,
       placeholder: (context, url) => fallback,
       errorWidget: (context, url, error) => fallback,

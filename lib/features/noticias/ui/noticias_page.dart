@@ -7,6 +7,7 @@ import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/noticia_provider.dart';
 import '../models/noticia.dart';
 import '../utils/noticia_share.dart';
+import 'noticia_detalhes_page.dart';
 
 class NoticiasPage extends ConsumerStatefulWidget {
   static const fallbackImageUrl =
@@ -39,18 +40,9 @@ class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   }
 
   void _mostrarNoticia(Noticia noticia) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => NewsDetailSheet(
-        noticia: noticia,
-        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
-        date: _dateFor(noticia),
-        readingTime: _readingTime(noticia),
-        onOpenLink: () => _abrirNoticia(noticia.link),
-        onShare: () => compartilharNoticia(noticia),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NoticiaDetalhesPage(noticia: noticia),
       ),
     );
   }

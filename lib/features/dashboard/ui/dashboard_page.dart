@@ -18,6 +18,7 @@ import '../../../core/ui/responsive_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
 import '../../noticias/models/noticia.dart';
+import '../../noticias/ui/noticia_detalhes_page.dart';
 import '../../noticias/ui/noticias_page.dart';
 import '../../noticias/utils/noticia_share.dart';
 import '../../videos/providers/videos_provider.dart';
@@ -379,18 +380,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
   }
 
   void _showNewsModal(Noticia noticia) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => NewsDetailSheet(
-        noticia: noticia,
-        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
-        date: _dateForNews(noticia),
-        readingTime: _readingTime(noticia),
-        onOpenLink: () => _openNews(noticia.link),
-        onShare: () => compartilharNoticia(noticia),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NoticiaDetalhesPage(noticia: noticia),
       ),
     );
   }

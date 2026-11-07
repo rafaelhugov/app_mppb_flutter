@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/responsive_layout.dart';
 import '../../models/noticia.dart';
 import '../../providers/noticia_provider.dart';
+import '../noticia_detalhes_page.dart';
 import '../../ui/noticias_page.dart';
 import '../../utils/noticia_share.dart';
 
@@ -221,18 +222,9 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
   }
 
   void _showNewsModal(Noticia noticia) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => NewsDetailSheet(
-        noticia: noticia,
-        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
-        date: _dateForNews(noticia),
-        readingTime: _readingTime(noticia),
-        onOpenLink: () => _openNews(noticia.link),
-        onShare: () => compartilharNoticia(noticia),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NoticiaDetalhesPage(noticia: noticia),
       ),
     );
   }

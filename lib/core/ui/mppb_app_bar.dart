@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
+import '../../features/noticias/ui/noticia_detalhes_page.dart';
 import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/noticias/utils/noticia_share.dart';
 import '../../features/perfil/providers/preferencias_notificacao_provider.dart';
@@ -342,18 +343,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       return;
     }
 
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => NewsDetailSheet(
-        noticia: noticia,
-        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
-        date: _dateForNews(item),
-        readingTime: _readingTime(item),
-        onOpenLink: () => _openNewsTarget(context, item.targetUrl),
-        onShare: () => compartilharNoticia(noticia),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NoticiaDetalhesPage(noticia: noticia),
       ),
     );
   }

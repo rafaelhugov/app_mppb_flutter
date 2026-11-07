@@ -9,6 +9,8 @@ import '../../features/contra_cheque/ui/contra_cheque_page.dart';
 import '../../features/dashboard/ui/dashboard_page.dart';
 import '../../features/designacoes/ui/designacoes_page.dart';
 import '../../features/diario_oficial/ui/diario_oficial_page.dart';
+import '../../features/noticias/models/noticia.dart';
+import '../../features/noticias/ui/noticia_detalhes_page.dart';
 import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/processos/ui/consulta_processos_page.dart';
 import '../../features/processos/ui/processo_detalhes_page.dart';
@@ -105,6 +107,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/noticias/detalhes',
+        builder: (context, state) {
+          final noticia =
+              state.extra is Noticia ? state.extra! as Noticia : null;
+          final chave =
+              state.uri.queryParameters['noticia'] ?? noticia?.chaveExterna;
+          final link = state.uri.queryParameters['link'] ?? noticia?.link;
+          final titulo = state.uri.queryParameters['titulo'] ?? noticia?.titulo;
+          return NoticiaDetalhesPage(
+            noticia: noticia,
+            chave: chave,
+            link: link,
+            titulo: titulo,
+          );
+        },
+      ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: '/videos/watch',

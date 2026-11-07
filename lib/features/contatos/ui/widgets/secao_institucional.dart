@@ -4,6 +4,7 @@ import '../../../../core/ui/app_feedback.dart';
 import '../../dados/dados_institucionais.dart';
 import '../../servicos/servico_links_externos.dart';
 import 'secao_fale_com_mppb.dart';
+import 'secao_hub_atendimento_sede.dart';
 import 'secao_localizacao_mppb.dart';
 import 'secao_siga_mppb.dart';
 
@@ -21,9 +22,7 @@ class SecaoInstitucional extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        SecaoFaleComMppb(),
-        SizedBox(height: 24),
-        SecaoLocalizacaoMppb(),
+        SecaoHubAtendimentoSede(),
         SizedBox(height: 24),
         SecaoSigaMppb(),
         SizedBox(height: 32),

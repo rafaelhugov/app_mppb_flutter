@@ -148,7 +148,7 @@ class SecaoHubAtendimentoSede extends StatelessWidget {
                           ),
                           SizedBox(height: 1),
                           Text(
-                            'Denúncias, manifestações e informações',
+                            'Canal oficial para denúncias e pedidos',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -400,7 +400,7 @@ class SecaoHubAtendimentoSede extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${DadosInstitucionais.enderecoSedeLinha1} • ${DadosInstitucionais.enderecoSedeLinha2}, ${DadosInstitucionais.enderecoSedeLinha3} • CEP 58013-030',
+                            '${DadosInstitucionais.enderecoSedeLinha1} • ${DadosInstitucionais.enderecoSedeLinha2} • ${DadosInstitucionais.enderecoSedeLinha3}',
                             style: const TextStyle(
                               color: Color(0xFF64748B),
                               fontSize: 11,

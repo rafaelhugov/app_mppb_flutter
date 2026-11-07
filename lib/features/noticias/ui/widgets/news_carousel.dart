@@ -53,7 +53,7 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
     if (responsive.windowClass == MppbWindowClass.large) return 0.25;
     if (responsive.isTablet && responsive.isLandscape) return 0.25;
     if (responsive.usesWideLayout) return 0.32;
-    return 0.92;
+    return 0.87;
   }
 
   PageController _controllerFor(double viewportFraction) {
@@ -324,18 +324,23 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                 }
                 final imageUrl = _newsImageUrl(noticia);
 
-                return Padding(
+                final cardWidget = Padding(
                   padding: EdgeInsets.only(right: itemRightPadding),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0x26343A40)),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0x1F343A40)),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x14101828),
                           blurRadius: 18,
                           offset: Offset(0, 8),
+                        ),
+                        BoxShadow(
+                          color: Color(0x0A101828),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
@@ -350,8 +355,8 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(15),
-                                  topRight: Radius.circular(15),
+                                  topLeft: Radius.circular(17),
+                                  topRight: Radius.circular(17),
                                 ),
                                 gradient: const LinearGradient(
                                   colors: [
@@ -514,6 +519,63 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
                       ],
                     ),
                   ),
+                );
+
+                return AnimatedBuilder(
+                  animation: pageController,
+                  builder: (context, child) {
+                    // Em telas largas/tablets em paisagem com múltiplos cards simultâneos,
+                    // mantém o layout tradicional sem empilhamento
+                    if (responsive.usesWideLayout ||
+                        (responsive.isTablet && responsive.isLandscape)) {
+                      return cardWidget;
+                    }
+
+                    double page = _currentNewsIndex.toDouble();
+                    if (pageController.hasClients &&
+                        pageController.position.haveDimensions &&
+                        pageController.page != null) {
+                      page = pageController.page!;
+                    }
+
+                    final diff = index - page;
+
+                    // Efeito Cartas Empilhadas (Stacked Cards)
+                    double scale = 1.0;
+                    double translateY = 0.0;
+                    double rotation = 0.0;
+                    double opacity = 1.0;
+
+                    if (diff >= 0) {
+                      // Cartas à direita (no maço): ficam ligeiramente menores,
+                      // mais baixas e com transparência sutil de profundidade
+                      scale = (1.0 - (diff * 0.08)).clamp(0.86, 1.0);
+                      translateY = (diff * 10.0).clamp(0.0, 16.0);
+                      opacity = (1.0 - (diff * 0.22)).clamp(0.65, 1.0);
+                    } else {
+                      // Carta ativa sendo descartada para a esquerda:
+                      // leve rotação para fora simulando carta sendo puxada do maço
+                      scale = (1.0 + (diff * 0.02)).clamp(0.96, 1.0);
+                      translateY = (diff.abs() * 4.0).clamp(0.0, 8.0);
+                      rotation = (diff * -0.035).clamp(-0.06, 0.0);
+                      opacity = (1.0 + (diff * 0.40)).clamp(0.0, 1.0);
+                    }
+
+                    return Transform.translate(
+                      offset: Offset(0, translateY),
+                      child: Transform.rotate(
+                        angle: rotation,
+                        alignment: Alignment.bottomLeft,
+                        child: Transform.scale(
+                          scale: scale,
+                          child: Opacity(
+                            opacity: opacity,
+                            child: cardWidget,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),

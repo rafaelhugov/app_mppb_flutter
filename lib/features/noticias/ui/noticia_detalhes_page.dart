@@ -685,7 +685,7 @@ class _NoticiaImageViewerPageState extends State<NoticiaImageViewerPage> {
                     Expanded(
                       child: Text(
                         widget.title,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
@@ -696,7 +696,7 @@ class _NoticiaImageViewerPageState extends State<NoticiaImageViewerPage> {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      'Pinça: zoom • 2 toques: ampliar',
+                      'Pinça: zoom',
                       style: TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 11,
@@ -759,3 +759,4 @@ class _MetaPill extends StatelessWidget {
     );
   }
 }
+

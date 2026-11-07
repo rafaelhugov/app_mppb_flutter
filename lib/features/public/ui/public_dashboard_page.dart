@@ -190,60 +190,63 @@ class PublicDashboardPage extends ConsumerWidget {
 
                         SizedBox(height: isTablet ? 44 : 48),
 
-                        Wrap(
-                          alignment: WrapAlignment.spaceBetween,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.newspaper_rounded,
-                                  color: const Color(0xFFD62828),
-                                  size: isTablet ? 23 : 21,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Notícias',
-                                  style: TextStyle(
-                                    color: const Color(0xFF202322),
-                                    fontSize: isTablet ? 22 : 20,
-                                    fontWeight: FontWeight.w800,
+                        SizedBox(
+                          width: double.infinity,
+                          child: Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.newspaper_rounded,
+                                    color: const Color(0xFFD62828),
+                                    size: isTablet ? 23 : 21,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Notícias',
+                                    style: TextStyle(
+                                      color: const Color(0xFF202322),
+                                      fontSize: isTablet ? 22 : 20,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              FilledButton(
+                                onPressed: () => context.go('/noticias'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD62828),
+                                  foregroundColor: const Color(0xFFD62828),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 9,
+                                  ),
+                                  minimumSize: const Size(82, 34),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  elevation: 0,
+                                  side: const BorderSide(
+                                    color: Color(0xFFD62828),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ],
-                            ),
-                            FilledButton(
-                              onPressed: () => context.go('/noticias'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFD62828),
-                                foregroundColor: const Color(0xFFD62828),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 9,
-                                ),
-                                minimumSize: const Size(82, 34),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                elevation: 0,
-                                side: const BorderSide(
-                                  color: Color(0xFFD62828),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                child: const Text(
+                                  'Mais notícias',
+                                  style: TextStyle(color: Colors.white),
                                 ),
                               ),
-                              child: const Text(
-                                'Mais notícias',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         SizedBox(height: isTablet ? 20 : 18),
                         const NewsCarousel(),

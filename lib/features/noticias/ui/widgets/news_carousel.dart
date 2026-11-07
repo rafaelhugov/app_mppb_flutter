@@ -127,78 +127,77 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
       return const SizedBox.shrink();
     }
 
-    return Column(
-      children: [
-        Tooltip(
-          message: _isAutoPlayPaused ? 'Retomar notícias' : 'Pausar notícias',
-          child: InkWell(
-            onTap: _toggleAutoPlay,
-            borderRadius: BorderRadius.circular(999),
-            child: SizedBox(
-              width: 38,
-              height: 38,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  AnimatedBuilder(
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Indicadores de página integrados com barra de progresso suave no dot ativo
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(itemCount, (index) {
+              final isCurrent = _currentNewsIndex == index;
+              if (isCurrent) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  height: 5,
+                  width: 26,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE9EDF0),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: AnimatedBuilder(
                     animation: _autoPlayProgressController,
                     builder: (context, _) {
-                      return CircularProgressIndicator(
-                        value: 1 - _autoPlayProgressController.value,
-                        strokeWidth: 2.6,
-                        backgroundColor: const Color(0xFFE9EDF0),
-                        color: const Color(0xFFD62828),
+                      return FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: _isAutoPlayPaused
+                            ? 1.0
+                            : _autoPlayProgressController.value.clamp(0.0, 1.0),
+                        child: Container(
+                          color: const Color(0xFFD62828),
+                        ),
                       );
                     },
                   ),
-                  Container(
-                    width: 31,
-                    height: 31,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: const Color(0xFFE2E4E8)),
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x10101828),
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      _isAutoPlayPaused
-                          ? Icons.play_arrow_rounded
-                          : Icons.pause_rounded,
-                      color: const Color(0xFF697370),
-                      size: 18,
-                    ),
-                  ),
-                ],
+                );
+              }
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                height: 5,
+                width: 6,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(width: 8),
+          // Controle discreto de pausa/reprodução perfeitamente alinhado
+          Tooltip(
+            message: _isAutoPlayPaused ? 'Retomar rotação' : 'Pausar rotação',
+            child: InkWell(
+              onTap: _toggleAutoPlay,
+              borderRadius: BorderRadius.circular(999),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  _isAutoPlayPaused
+                      ? Icons.play_arrow_rounded
+                      : Icons.pause_rounded,
+                  color: _isAutoPlayPaused
+                      ? const Color(0xFFD62828)
+                      : const Color(0xFF94A3B8),
+                  size: 15,
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 7),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            itemCount,
-            (index) => AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              height: 7,
-              width: _currentNewsIndex == index ? 20 : 7,
-              decoration: BoxDecoration(
-                color: _currentNewsIndex == index
-                    ? const Color(0xFFD62828)
-                    : const Color(0x33D62828),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

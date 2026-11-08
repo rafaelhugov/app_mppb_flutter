@@ -44,3 +44,4 @@ class AppVersionInfo {
   static String get defaultStoreUrl =>
       platformName == 'ios' ? defaultAppStoreUrl : defaultPlayStoreUrl;
 }
+

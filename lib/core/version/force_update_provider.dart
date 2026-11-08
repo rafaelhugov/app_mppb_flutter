@@ -76,3 +76,4 @@ final forceUpdateProvider =
     NotifierProvider<ForceUpdateNotifier, ForceUpdateState>(() {
   return ForceUpdateNotifier();
 });
+

@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../carteira/models/usuario_carteira.dart';
@@ -17,10 +15,7 @@ import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../noticias/providers/noticia_provider.dart';
-import '../../noticias/models/noticia.dart';
-import '../../noticias/ui/noticia_detalhes_page.dart';
-import '../../noticias/ui/noticias_page.dart';
-import '../../noticias/utils/noticia_share.dart';
+import '../../noticias/ui/widgets/news_carousel.dart';
 import '../../videos/providers/videos_provider.dart';
 import '../../videos/ui/widgets/videos_carousel.dart';
 import '../../contatos/ui/widgets/secao_institucional.dart';
@@ -36,16 +31,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     with TickerProviderStateMixin {
   static final Set<String> _typedGreetingKeys = <String>{};
 
-  PageController? _pageController;
-  double? _currentViewportFraction;
-  Timer? _autoPlayTimer;
-  int _currentNewsIndex = 0;
-  int _carouselNewsCount = 0;
-  bool _isNewsAutoPlayPaused = false;
-
   late final AnimationController _blinkController;
   late final Animation<double> _blinkAnimation;
-  late final AnimationController _newsAutoPlayProgressController;
 
   @override
   void initState() {
@@ -58,11 +45,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
     _blinkAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _blinkController, curve: Curves.easeInOut),
-    );
-
-    _newsAutoPlayProgressController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
     );
 
     Future.microtask(() {
@@ -198,207 +180,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
   @override
   void dispose() {
-    _autoPlayTimer?.cancel();
     _blinkController.dispose();
-    _newsAutoPlayProgressController.dispose();
-    _pageController?.dispose();
     super.dispose();
-  }
-
-  double _newsViewportFractionFor(MppbResponsiveMetrics responsive) {
-    if (responsive.windowClass == MppbWindowClass.large) return 0.25;
-    if (responsive.isTablet && responsive.isLandscape) return 0.25;
-    if (responsive.usesWideLayout) return 0.32;
-    return 0.92;
-  }
-
-  PageController _newsControllerFor(double viewportFraction) {
-    final currentController = _pageController;
-    if (currentController != null &&
-        _currentViewportFraction == viewportFraction) {
-      return currentController;
-    }
-
-    final initialPage = _currentNewsIndex;
-    _autoPlayTimer?.cancel();
-    _autoPlayTimer = null;
-    _currentViewportFraction = viewportFraction;
-    _pageController?.dispose();
-    _pageController = PageController(
-      initialPage: initialPage,
-      viewportFraction: viewportFraction,
-      keepPage: false,
-    );
-    return _pageController!;
-  }
-
-  void _restartNewsAutoPlayProgress() {
-    _newsAutoPlayProgressController
-      ..stop()
-      ..forward(from: 0);
-  }
-
-  void _syncAutoPlay(int itemCount) {
-    if (_carouselNewsCount == itemCount &&
-        _autoPlayTimer != null &&
-        !_isNewsAutoPlayPaused) {
-      return;
-    }
-
-    _carouselNewsCount = itemCount;
-    _autoPlayTimer?.cancel();
-    _autoPlayTimer = null;
-    _newsAutoPlayProgressController.stop();
-
-    if (_isNewsAutoPlayPaused || itemCount < 2) {
-      return;
-    }
-
-    _restartNewsAutoPlayProgress();
-    _autoPlayTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      final controller = _pageController;
-      if (!mounted || controller == null || !controller.hasClients) {
-        return;
-      }
-
-      final nextPage = (_currentNewsIndex + 1) % itemCount;
-      controller.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 420),
-        curve: Curves.easeOutCubic,
-      );
-      _restartNewsAutoPlayProgress();
-    });
-  }
-
-  void _toggleNewsAutoPlay() {
-    setState(() {
-      _isNewsAutoPlayPaused = !_isNewsAutoPlayPaused;
-    });
-    _syncAutoPlay(_carouselNewsCount);
-  }
-
-  Widget _buildNewsAutoPlayControl(int itemCount) {
-    if (itemCount < 2) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      children: [
-        Tooltip(
-          message: _isNewsAutoPlayPaused
-              ? 'Retomar notícias'
-              : 'Pausar notícias',
-          child: InkWell(
-            onTap: _toggleNewsAutoPlay,
-            borderRadius: BorderRadius.circular(999),
-            child: SizedBox(
-              width: 38,
-              height: 38,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  AnimatedBuilder(
-                    animation: _newsAutoPlayProgressController,
-                    builder: (context, _) {
-                      return CircularProgressIndicator(
-                        value: 1 - _newsAutoPlayProgressController.value,
-                        strokeWidth: 2.6,
-                        backgroundColor: const Color(0xFFE9EDF0),
-                        color: const Color(0xFFD62828),
-                      );
-                    },
-                  ),
-                  Container(
-                    width: 31,
-                    height: 31,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: const Color(0xFFE2E4E8)),
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x10101828),
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      _isNewsAutoPlayPaused
-                          ? Icons.play_arrow_rounded
-                          : Icons.pause_rounded,
-                      color: const Color(0xFF697370),
-                      size: 18,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 7),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            itemCount,
-            (index) => AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              height: 7,
-              width: _currentNewsIndex == index ? 20 : 7,
-              decoration: BoxDecoration(
-                color: _currentNewsIndex == index
-                    ? const Color(0xFFD62828)
-                    : const Color(0x33D62828),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _openNews(String? url) async {
-    if (url != null && url.isNotEmpty) {
-      final uri = Uri.tryParse(url);
-      if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    }
-  }
-
-  String? _newsImageUrl(Noticia noticia) {
-    final url = noticia.imagemUrl?.trim();
-    if (url == null || url.isEmpty) return null;
-    if (kIsWeb) return null;
-    return url.replaceFirst(
-      'http://www.mppb.mp.br/',
-      'https://www.mppb.mp.br/',
-    );
-  }
-
-  void _showNewsModal(Noticia noticia) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => NoticiaDetalhesPage(noticia: noticia),
-      ),
-    );
-  }
-
-  int _readingTime(Noticia noticia) {
-    final words = (noticia.resumo ?? '')
-        .split(RegExp(r'\s+'))
-        .where((e) => e.isNotEmpty)
-        .length;
-    final minutes = (words / 180).ceil();
-    return minutes > 0 ? minutes : 1;
-  }
-
-  String _dateForNews(Noticia noticia) {
-    final date = noticia.dataPublicacao ?? '';
-    return date.split(' ').isNotEmpty ? date.split(' ')[0] : '';
   }
 
   String _greetingForCurrentTime(DateTime now) {
@@ -552,7 +335,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     final responsive = MppbResponsive.of(context);
     final isTablet = responsive.isTablet;
     final isWide = responsive.usesWideLayout;
-    final isTabletLandscape = isTablet && responsive.isLandscape;
 
     final firstName = _capitalizeName(
       usuario?.nome
@@ -574,14 +356,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
       displayName: displayName,
       hasLoadedUser: usuario != null,
     );
-
-    final noticiaState = ref.watch(noticiaProvider);
-    final todasNoticias = noticiaState.noticias;
-    final carouselNews = todasNoticias.take(isTabletLandscape ? 8 : 4).toList();
-    final newsPageController = _newsControllerFor(
-      _newsViewportFractionFor(responsive),
-    );
-    _syncAutoPlay(carouselNews.length);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F6),
@@ -693,378 +467,70 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
                     SizedBox(height: isTablet ? 38 : 34),
 
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.newspaper_rounded,
-                          color: Color(0xFFD62828),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 7),
-                        const Text(
-                          'Notícias',
-                          style: TextStyle(
-                            color: Color(0xFF202322),
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const Spacer(),
-                        FilledButton(
-                          onPressed: () => context.go('/noticias'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFD62828),
-                            foregroundColor: const Color(0xFFD62828),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 9,
-                            ),
-                            minimumSize: const Size(82, 34),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            elevation: 0,
-                            side: const BorderSide(color: Color(0xFFD62828)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          child: const Text(
-                            'Mais notícias',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isTablet ? 18 : 16),
-
-                    if (noticiaState.isLoading && carouselNews.isEmpty)
-                      Container(
-                        height: 280,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFFD62828),
-                          ),
-                        ),
-                      )
-                    else if (carouselNews.isEmpty)
-                      Container(
-                        constraints: const BoxConstraints(minHeight: 108),
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0x26343A40)),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.newspaper,
-                              color: Color(0xFFD62828),
-                              size: 24,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Nenhuma notícia disponível no momento.',
-                                style: TextStyle(color: Color(0xFF697370)),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.newspaper_rounded,
+                                color: const Color(0xFFD62828),
+                                size: isTablet ? 23 : 21,
                               ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else ...[
-                      SizedBox(
-                        height: isTabletLandscape ? 292 : 380,
-                        child: PageView.builder(
-                          controller: newsPageController,
-                          itemCount: carouselNews.length,
-                          padEnds: false,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentNewsIndex = index;
-                            });
-                            if (!_isNewsAutoPlayPaused &&
-                                carouselNews.length > 1) {
-                              _autoPlayTimer?.cancel();
-                              _autoPlayTimer = null;
-                              _syncAutoPlay(carouselNews.length);
-                            }
-                          },
-                          itemBuilder: (context, index) {
-                            final noticia = carouselNews[index];
-                            String dateFormatted = noticia.dataPublicacao ?? '';
-                            final parts = dateFormatted.split(' ');
-                            if (parts.length > 1) {
-                              dateFormatted = '${parts[0]}, ${parts[1]}';
-                            }
-                            final imageUrl = _newsImageUrl(noticia);
-                            final cardHorizontalPadding = isTabletLandscape
-                                ? 12.0
-                                : 18.0;
-                            final cardTopPadding = isTabletLandscape
-                                ? 10.0
-                                : 16.0;
-                            final cardBottomPadding = isTabletLandscape
-                                ? 6.0
-                                : 10.0;
-
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                right: isTabletLandscape ? 8.0 : 12.0,
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: const Color(0x26343A40),
-                                  ),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x14101828),
-                                      blurRadius: 18,
-                                      offset: Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    // IMAGE
-                                    Expanded(
-                                      flex: isTabletLandscape ? 8 : 9,
-                                      child: GestureDetector(
-                                        onTap: () => _showNewsModal(noticia),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                                  topLeft: Radius.circular(15),
-                                                  topRight: Radius.circular(15),
-                                                ),
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                Color(0xFF202322),
-                                                Color(0xFF2563EB),
-                                                Color(0xFFD62828),
-                                              ],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ),
-                                            image: imageUrl != null
-                                                ? DecorationImage(
-                                                    image: NetworkImage(
-                                                      imageUrl,
-                                                    ),
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                : null,
-                                          ),
-                                          child: imageUrl == null
-                                              ? const Center(
-                                                  child: Icon(
-                                                    Icons.newspaper,
-                                                    color: Color(0xFFD62828),
-                                                    size: 42,
-                                                  ),
-                                                )
-                                              : null,
-                                        ),
-                                      ),
-                                    ),
-                                    // CONTENT
-                                    Expanded(
-                                      flex: isTabletLandscape ? 10 : 11,
-                                      child: Padding(
-                                        padding: EdgeInsets.only(
-                                          left: cardHorizontalPadding,
-                                          right: cardHorizontalPadding,
-                                          top: cardTopPadding,
-                                          bottom: cardBottomPadding,
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Container(
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: isTabletLandscape
-                                                    ? 7
-                                                    : 9,
-                                                vertical: isTabletLandscape
-                                                    ? 5
-                                                    : 7,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0x1FD62828),
-                                                borderRadius:
-                                                    BorderRadius.circular(999),
-                                              ),
-                                              child: Text(
-                                                (noticia.categoria ??
-                                                        'Destaque')
-                                                    .toUpperCase(),
-                                                style: TextStyle(
-                                                  color: Color(0xFFD62828),
-                                                  fontSize: isTabletLandscape
-                                                      ? 8.5
-                                                      : 10,
-                                                  fontWeight: FontWeight.w700,
-                                                  letterSpacing: 0.2,
-                                                  height: 1.0,
-                                                ),
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: isTabletLandscape ? 6 : 8,
-                                            ),
-                                            Text(
-                                              dateFormatted,
-                                              style: TextStyle(
-                                                color: Color(0xFF697370),
-                                                fontSize: isTabletLandscape
-                                                    ? 10.5
-                                                    : 12,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: isTabletLandscape ? 6 : 8,
-                                            ),
-                                            Text(
-                                              noticia.titulo,
-                                              maxLines: isTabletLandscape
-                                                  ? 2
-                                                  : 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                color: Color(0xFF202322),
-                                                fontSize: isTabletLandscape
-                                                    ? 14
-                                                    : 18,
-                                                fontWeight: FontWeight.w900,
-                                                height: isTabletLandscape
-                                                    ? 1.08
-                                                    : 1.12,
-                                              ),
-                                            ),
-                                            if (!isTabletLandscape) ...[
-                                              const SizedBox(height: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  noticia.resumo ?? '',
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF697370),
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w600,
-                                                    height: 1.4,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    // ACTIONS
-                                    Padding(
-                                      padding: EdgeInsets.only(
-                                        left: cardHorizontalPadding,
-                                        right: cardHorizontalPadding,
-                                        bottom: isTabletLandscape ? 10 : 16,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          SizedBox(
-                                            width: isTabletLandscape
-                                                ? 104
-                                                : 132,
-                                            child: ElevatedButton(
-                                              onPressed: () =>
-                                                  _showNewsModal(noticia),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(
-                                                  0xFFD62828,
-                                                ),
-                                                foregroundColor: const Color(
-                                                  0xFFFFFFFF,
-                                                ),
-                                                elevation: 0,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                minimumSize: Size(
-                                                  0,
-                                                  isTabletLandscape ? 28 : 32,
-                                                ),
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: isTabletLandscape
-                                                      ? 9
-                                                      : 12,
-                                                  vertical: isTabletLandscape
-                                                      ? 6
-                                                      : 8,
-                                                ),
-                                                textStyle: TextStyle(
-                                                  fontSize: isTabletLandscape
-                                                      ? 10
-                                                      : 11.5,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              child: const FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    Text('Ler notícia'),
-                                                    SizedBox(width: 5),
-                                                    Icon(
-                                                      Icons.open_in_new,
-                                                      size: 14,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const Spacer(),
-                                          SizedBox(
-                                            width: isTabletLandscape ? 32 : 38,
-                                            height: isTabletLandscape ? 30 : 34,
-                                            child: _DashboardNewsShareButton(
-                                              onPressed: () =>
-                                                  compartilharNoticia(noticia),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(width: 8),
+                              Text(
+                                'Notícias',
+                                style: TextStyle(
+                                  color: const Color(0xFF202322),
+                                  fontSize: isTablet ? 22 : 20,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                            ],
+                          ),
+                          FilledButton(
+                            onPressed: () => context.go('/noticias'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFD62828),
+                              foregroundColor: const Color(0xFFD62828),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 9,
+                              ),
+                              minimumSize: const Size(82, 34),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              elevation: 0,
+                              side: const BorderSide(
+                                color: Color(0xFFD62828),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: const Text(
+                              'Mais notícias',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      _buildNewsAutoPlayControl(carouselNews.length),
-                      const SizedBox(height: 36),
-                      const VideosCarousel(),
-                    ],
+                    ),
+                    SizedBox(height: isTablet ? 20 : 18),
+                    const NewsCarousel(),
+                    SizedBox(height: isTablet ? 36 : 40),
+
+
+                    const VideosCarousel(),
                   ] else ...[
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
@@ -1716,35 +1182,6 @@ class _TypewriterNameTextState extends State<_TypewriterNameText>
   }
 }
 
-class _DashboardNewsShareButton extends StatelessWidget {
-  const _DashboardNewsShareButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0x0FD62828),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0x2ED62828)),
-          ),
-          child: const Icon(
-            Icons.ios_share_rounded,
-            color: Color(0xFFD62828),
-            size: 17,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _WalletMiniature extends StatefulWidget {
   const _WalletMiniature({required this.usuario, this.compact = false});

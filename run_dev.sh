@@ -25,9 +25,10 @@ if [ "${#FLUTTER_ARGS[@]}" -gt 0 ]; then
 fi
 
 BACKEND_PID=""
-RESTAPI_DIR="/home/rafaelhugo/projetosMPPB/spring-boot/restapi"
-BACKEND_DIR="/home/rafaelhugo/projetosMPPB/spring-boot/restapi/mobile-service"
-FRONTEND_DIR="/home/rafaelhugo/projetosMPPB/app_mppb_flutter"
+FRONTEND_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$FRONTEND_DIR/.." && pwd )"
+RESTAPI_DIR="${RESTAPI_DIR:-$PROJECT_ROOT/spring-boot/restapi}"
+BACKEND_DIR="${BACKEND_DIR:-$RESTAPI_DIR/mobile-service}"
 BACKEND_LOG="$BACKEND_DIR/target/run-dev/backend.log"
 
 cleanup() {
@@ -38,6 +39,26 @@ cleanup() {
 
 trap cleanup EXIT
 
+# Configura JAVA_HOME e PATH se necessário
+if [ -z "${JAVA_HOME:-}" ]; then
+  if [ -d "/opt/homebrew/opt/openjdk@21" ]; then
+    export JAVA_HOME="/opt/homebrew/opt/openjdk@21"
+  elif command -v /usr/libexec/java_home >/dev/null 2>&1; then
+    export JAVA_HOME="$(/usr/libexec/java_home -v 21 2>/dev/null || true)"
+  fi
+fi
+
+if [ -n "${JAVA_HOME:-}" ]; then
+  export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
+if [ -d "$HOME/development/tools/apache-maven-3.9.9/bin" ]; then
+  export PATH="$HOME/development/tools/apache-maven-3.9.9/bin:$PATH"
+fi
+
+if [ -d "$HOME/development/flutter/bin" ]; then
+  export PATH="$HOME/development/flutter/bin:$PATH"
+fi
 export PATH="$PATH:/home/rafaelhugo/flutter/bin"
 
 echo "========================================="
@@ -71,6 +92,12 @@ mkdir -p "$(dirname "$BACKEND_LOG")"
 
 # Carrega as variáveis do .env.dev
 if [ -f ".env.dev" ]; then
+  set -a
+  source .env.dev
+  set +a
+elif [ -f ".env_tpl" ]; then
+  echo "Arquivo .env.dev não encontrado. Criando a partir de .env_tpl..."
+  cp .env_tpl .env.dev
   set -a
   source .env.dev
   set +a
@@ -183,6 +210,13 @@ if [[ "$FLUTTER_ARGS_TEXT" == *"emulator"* || "$FLUTTER_ARGS_TEXT" == *"localhos
     adb -s "$DEVICE_ID" reverse tcp:${BACKEND_PORT} tcp:${BACKEND_PORT} || echo "Aviso: falha ao configurar adb reverse"
   else
     adb reverse tcp:${BACKEND_PORT} tcp:${BACKEND_PORT} || echo "Aviso: falha ao configurar adb reverse"
+  fi
+fi
+
+# No macOS, garante que a janela gráfica do Simulador seja aberta
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if [[ "$FLUTTER_ARGS_TEXT" == *"iPhone"* || "$FLUTTER_ARGS_TEXT" == *"ios"* || "$FLUTTER_ARGS_TEXT" == *"simulator"* || -z "$FLUTTER_ARGS_TEXT" ]]; then
+    open -a Simulator 2>/dev/null || true
   fi
 fi
 

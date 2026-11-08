@@ -35,7 +35,14 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
   done
 
   if [ "$HAS_DEVICE_ARG" = false ]; then
-    EXTRA_ARGS=("-d" "iPhone 16 Pro" "${EXTRA_ARGS[@]}")
+    BOOTED_SIM="$(xcrun simctl list devices 2>/dev/null | grep '(Booted)' | head -n 1 | sed -E 's/[^(]*\(([A-F0-9-]+)\).*/\1/' || true)"
+    if [ -n "$BOOTED_SIM" ]; then
+      EXTRA_ARGS=("-d" "$BOOTED_SIM" "${EXTRA_ARGS[@]}")
+    elif xcrun simctl list devices available 2>/dev/null | grep -q "iPhone 17"; then
+      EXTRA_ARGS=("-d" "iPhone 17" "${EXTRA_ARGS[@]}")
+    else
+      EXTRA_ARGS=("-d" "iPhone 16 Pro" "${EXTRA_ARGS[@]}")
+    fi
   fi
 fi
 

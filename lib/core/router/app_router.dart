@@ -27,6 +27,7 @@ import '../../features/videos/models/video_item.dart';
 import '../../features/videos/ui/videos_page.dart';
 import '../../features/videos/ui/video_watch_page.dart';
 import '../network/connectivity_provider.dart';
+import '../version/force_update_provider.dart';
 import '../ui/main_layout.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -38,7 +39,10 @@ class RouterNotifier extends ChangeNotifier {
     _ref.listen(authProvider, (_, _) {
       notifyListeners();
     });
-    _ref.listen(connectivityProvider, (_, _) {
+    _ref.listen(connectivityProvider, (_, isOnline) {
+      if (isOnline) {
+        _ref.read(forceUpdateProvider.notifier).checkAppVersion();
+      }
       notifyListeners();
     });
   }

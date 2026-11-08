@@ -14,6 +14,9 @@ import 'core/notifications/push_navigation_service.dart';
 import 'core/notifications/notification_center_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/session/session_reset_provider.dart';
+import 'core/version/app_version_info.dart';
+import 'core/version/force_update_provider.dart';
+import 'core/version/ui/force_update_dialog.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/perfil/providers/preferencias_notificacao_provider.dart';
 import 'firebase_options.dart';
@@ -30,6 +33,7 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_BR', null);
+  await AppVersionInfo.ensureInitialized();
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -52,6 +56,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_initializeFirebaseAndPush());
+      unawaited(ref.read(forceUpdateProvider.notifier).checkAppVersion());
     });
   }
 
@@ -65,6 +70,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(ref.read(notificationCenterProvider.notifier).reload());
+      unawaited(ref.read(forceUpdateProvider.notifier).checkAppVersion());
     }
   }
 
@@ -100,6 +106,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+    final forceUpdate = ref.watch(forceUpdateProvider);
     ref.watch(sessionResetProvider);
     ref.watch(preferenciasNotificacaoProvider);
     if (_fcmReady) {
@@ -118,6 +125,17 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       routerConfig: router,
       scrollBehavior: AppScrollBehavior(),
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            ?child,
+            if (forceUpdate.isForceUpdateRequired)
+              Positioned.fill(
+                child: ForceUpdateDialog(state: forceUpdate),
+              ),
+          ],
+        );
+      },
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

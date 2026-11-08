@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
 import '../providers/noticia_provider.dart';
 import '../models/noticia.dart';
 import '../utils/noticia_share.dart';
+import 'noticia_detalhes_page.dart';
 
 class NoticiasPage extends ConsumerStatefulWidget {
   static const fallbackImageUrl =
@@ -30,27 +30,10 @@ class NoticiasPage extends ConsumerStatefulWidget {
 class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   String? _openedInitialTarget;
 
-  Future<void> _abrirNoticia(String? link) async {
-    if (link == null || link.isEmpty) return;
-    final url = Uri.parse(link);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
-
   void _mostrarNoticia(Noticia noticia) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => NewsDetailSheet(
-        noticia: noticia,
-        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
-        date: _dateFor(noticia),
-        readingTime: _readingTime(noticia),
-        onOpenLink: () => _abrirNoticia(noticia.link),
-        onShare: () => compartilharNoticia(noticia),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NoticiaDetalhesPage(noticia: noticia),
       ),
     );
   }

@@ -3,8 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../../core/ui/app_feedback.dart';
 import '../../dados/dados_institucionais.dart';
 import '../../servicos/servico_links_externos.dart';
-import 'secao_fale_com_mppb.dart';
-import 'secao_localizacao_mppb.dart';
+import 'secao_hub_bento_grid.dart';
 import 'secao_siga_mppb.dart';
 
 class SecaoInstitucional extends StatelessWidget {
@@ -21,9 +20,7 @@ class SecaoInstitucional extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        SecaoFaleComMppb(),
-        SizedBox(height: 24),
-        SecaoLocalizacaoMppb(),
+        SecaoHubBentoGrid(),
         SizedBox(height: 24),
         SecaoSigaMppb(),
         SizedBox(height: 32),

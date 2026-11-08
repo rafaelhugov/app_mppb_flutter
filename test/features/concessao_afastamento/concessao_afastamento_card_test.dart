@@ -58,6 +58,30 @@ void main() {
     );
 
     testWidgets(
+      'exibe periodo de plantao no card',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            _card(
+              ConcessaoAfastamento(
+                id: 4,
+                tipo: TipoConcessao.plantao,
+                diasConcedidos: 2,
+                saldoRestante: 2,
+                inicioPeriodoAquisitivo: DateTime(2022, 6, 20),
+                finalPeriodoAquisitivo: DateTime(2022, 6, 26),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Plantão'), findsOneWidget);
+        expect(find.text('20/06/2022 a 26/06/2022'), findsOneWidget);
+        expect(find.text('Marcar gozo'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'mantem card visivel e oculta Marcar gozo com saldo zero e solicitacao futura',
       (tester) async {
         await tester.pumpWidget(

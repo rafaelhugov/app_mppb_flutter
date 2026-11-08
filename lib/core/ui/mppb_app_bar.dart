@@ -4,12 +4,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
-import '../../features/noticias/ui/noticias_page.dart';
-import '../../features/noticias/utils/noticia_share.dart';
+import '../../features/noticias/ui/noticia_detalhes_page.dart';
 import '../../features/perfil/providers/preferencias_notificacao_provider.dart';
 import '../notifications/device_registration_diagnostics_provider.dart';
 import '../notifications/device_registration_provider.dart';
@@ -130,6 +128,17 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         actions: [
           IconButton(
+            tooltip: 'Configurações',
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
+            icon: Icon(
+              Icons.settings_outlined,
+              color: const Color(0xFF202322),
+              size: metrics.isTablet ? 23 : 21,
+            ),
+            onPressed: () => context.push('/configuracoes'),
+          ),
+          IconButton(
             tooltip: 'Meu perfil',
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
@@ -242,6 +251,17 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
+          tooltip: 'Configurações',
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
+          icon: Icon(
+            Icons.settings_outlined,
+            color: const Color(0xFF202322),
+            size: metrics.isTablet ? 23 : 21,
+          ),
+          onPressed: () => context.push('/configuracoes'),
+        ),
+        IconButton(
           tooltip: unreadNotificationCount == 0
               ? 'Notificações'
               : 'Notificações ($unreadNotificationCount não lida${unreadNotificationCount > 1 ? 's' : ''})',
@@ -342,48 +362,11 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       return;
     }
 
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => NewsDetailSheet(
-        noticia: noticia,
-        fallbackImageUrl: NoticiasPage.fallbackImageUrl,
-        date: _dateForNews(item),
-        readingTime: _readingTime(item),
-        onOpenLink: () => _openNewsTarget(context, item.targetUrl),
-        onShare: () => compartilharNoticia(noticia),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NoticiaDetalhesPage(noticia: noticia),
       ),
     );
-  }
-
-  int _readingTime(NotificationCenterItem item) {
-    final words = (item.noticia?.resumo ?? '')
-        .split(RegExp(r'\s+'))
-        .where((e) => e.isNotEmpty)
-        .length;
-    final minutes = (words / 180).ceil();
-    return minutes > 0 ? minutes : 1;
-  }
-
-  String _dateForNews(NotificationCenterItem item) {
-    final date = item.noticia?.dataPublicacao ?? '';
-    return date.split(' ').isNotEmpty ? date.split(' ')[0] : '';
-  }
-
-  Future<void> _openNewsTarget(BuildContext context, String? targetUrl) async {
-    final text = targetUrl?.trim();
-    if (text == null || text.isEmpty) {
-      return;
-    }
-
-    final url = Uri.tryParse(text);
-    if (url == null || !await canLaunchUrl(url)) {
-      return;
-    }
-
-    await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 }
 

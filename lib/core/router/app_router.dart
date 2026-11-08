@@ -5,10 +5,14 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/carteira/ui/carteira_page.dart';
 import '../../features/certidao_extrajudicial/ui/certidao_extrajudicial_page.dart';
+import '../../features/configuracoes/ui/configuracoes_notificacoes_page.dart';
+import '../../features/configuracoes/ui/configuracoes_page.dart';
 import '../../features/contra_cheque/ui/contra_cheque_page.dart';
 import '../../features/dashboard/ui/dashboard_page.dart';
 import '../../features/designacoes/ui/designacoes_page.dart';
 import '../../features/diario_oficial/ui/diario_oficial_page.dart';
+import '../../features/noticias/models/noticia.dart';
+import '../../features/noticias/ui/noticia_detalhes_page.dart';
 import '../../features/noticias/ui/noticias_page.dart';
 import '../../features/processos/ui/consulta_processos_page.dart';
 import '../../features/processos/ui/processo_detalhes_page.dart';
@@ -23,6 +27,7 @@ import '../../features/videos/models/video_item.dart';
 import '../../features/videos/ui/videos_page.dart';
 import '../../features/videos/ui/video_watch_page.dart';
 import '../network/connectivity_provider.dart';
+import '../version/force_update_provider.dart';
 import '../ui/main_layout.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -34,7 +39,10 @@ class RouterNotifier extends ChangeNotifier {
     _ref.listen(authProvider, (_, _) {
       notifyListeners();
     });
-    _ref.listen(connectivityProvider, (_, _) {
+    _ref.listen(connectivityProvider, (_, isOnline) {
+      if (isOnline) {
+        _ref.read(forceUpdateProvider.notifier).checkAppVersion();
+      }
       notifyListeners();
     });
   }
@@ -107,6 +115,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
+        path: '/noticias/detalhes',
+        builder: (context, state) {
+          final noticia =
+              state.extra is Noticia ? state.extra! as Noticia : null;
+          final chave =
+              state.uri.queryParameters['noticia'] ?? noticia?.chaveExterna;
+          final link = state.uri.queryParameters['link'] ?? noticia?.link;
+          final titulo = state.uri.queryParameters['titulo'] ?? noticia?.titulo;
+          return NoticiaDetalhesPage(
+            noticia: noticia,
+            chave: chave,
+            link: link,
+            titulo: titulo,
+          );
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
         path: '/videos/watch',
         builder: (context, state) {
           final video = state.extra is VideoItem ? state.extra! as VideoItem : null;
@@ -116,6 +142,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             initialVideoId: videoId,
           );
         },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/configuracoes',
+        builder: (context, state) => const ConfiguracoesPage(),
+        routes: [
+          GoRoute(
+            parentNavigatorKey: _rootNavigatorKey,
+            path: 'notificacoes',
+            builder: (context, state) =>
+                const ConfiguracoesNotificacoesPage(),
+          ),
+        ],
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

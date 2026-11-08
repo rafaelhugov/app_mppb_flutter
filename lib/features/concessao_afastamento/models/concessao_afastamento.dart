@@ -76,6 +76,33 @@ class ConcessaoAfastamento {
         }
       }
     }
+    if (tipo == TipoConcessao.plantao) {
+      if (inicioPeriodoAquisitivo != null && finalPeriodoAquisitivo != null) {
+        final inicioFmt =
+            '${inicioPeriodoAquisitivo!.day.toString().padLeft(2, '0')}/${inicioPeriodoAquisitivo!.month.toString().padLeft(2, '0')}/${inicioPeriodoAquisitivo!.year}';
+        final fimFmt =
+            '${finalPeriodoAquisitivo!.day.toString().padLeft(2, '0')}/${finalPeriodoAquisitivo!.month.toString().padLeft(2, '0')}/${finalPeriodoAquisitivo!.year}';
+        if (inicioFmt == fimFmt) {
+          return '${tipo.label} - $inicioFmt';
+        }
+        return '${tipo.label} - $inicioFmt a $fimFmt';
+      }
+      if (inicioPeriodoAquisitivo != null) {
+        final inicioFmt =
+            '${inicioPeriodoAquisitivo!.day.toString().padLeft(2, '0')}/${inicioPeriodoAquisitivo!.month.toString().padLeft(2, '0')}/${inicioPeriodoAquisitivo!.year}';
+        return '${tipo.label} - $inicioFmt';
+      }
+      if (descricaoOriginal != null && descricaoOriginal!.trim().isNotEmpty) {
+        final desc = descricaoOriginal!.trim();
+        final limpo = desc
+            .replaceFirst(RegExp(r'^PLANTÃO\s*', caseSensitive: false), '')
+            .replaceAll(RegExp(r'\s+-\s+'), ' a ')
+            .trim();
+        if (limpo.isNotEmpty) {
+          return '${tipo.label} - $limpo';
+        }
+      }
+    }
     return '${tipo.label}$ano';
   }
 }

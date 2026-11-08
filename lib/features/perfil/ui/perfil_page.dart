@@ -7,9 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/perfil_usuario.dart';
-import '../models/preferencias_notificacao.dart';
 import '../providers/perfil_provider.dart';
-import '../providers/preferencias_notificacao_provider.dart';
 
 class PerfilPage extends ConsumerStatefulWidget {
   const PerfilPage({super.key});
@@ -194,24 +192,6 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
     );
   }
 
-  Future<void> _updateNotificationPreference(
-    PreferenciasNotificacao preferencias,
-  ) async {
-    final saved = await ref
-        .read(preferenciasNotificacaoProvider.notifier)
-        .atualizar(preferencias);
-    if (!mounted) return;
-    final errorMessage = ref.read(preferenciasNotificacaoProvider).errorMessage;
-    await _showFeedbackDialog(
-      type: saved ? _ProfileFeedbackType.success : _ProfileFeedbackType.error,
-      title: saved ? 'Preferência atualizada' : 'Não foi possível salvar',
-      message: saved
-          ? 'Suas preferências de notificação foram salvas e serão aplicadas aos seus aparelhos.'
-          : errorMessage ??
-                'Não foi possível salvar a preferência de notificação.',
-    );
-  }
-
   Future<void> _confirmLogout() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -275,17 +255,13 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(perfilProvider);
     final authState = ref.watch(authProvider);
-    final notificationState = ref.watch(preferenciasNotificacaoProvider);
     final perfil = state.data;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAF7),
       body: RefreshIndicator(
         onRefresh: () async {
-          await Future.wait([
-            ref.read(perfilProvider.notifier).carregar(forceRefresh: true),
-            ref.read(preferenciasNotificacaoProvider.notifier).carregar(),
-          ]);
+          await ref.read(perfilProvider.notifier).carregar(forceRefresh: true);
         },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -389,9 +365,17 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _NotificationPreferencesSection(
-                            state: notificationState,
-                            onChanged: _updateNotificationPreference,
+                          _Section(
+                            title: 'Aplicativo',
+                            children: [
+                              _ActionTile(
+                                icon: Icons.settings_outlined,
+                                label: 'Configurações do aplicativo',
+                                helper:
+                                    'Notificações, armazenamento e diagnóstico',
+                                onTap: () => context.push('/configuracoes'),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           _SecuritySection(
@@ -418,249 +402,72 @@ class _PerfilPageState extends ConsumerState<PerfilPage> {
   }
 }
 
-class _NotificationPreferencesSection extends StatelessWidget {
-  final PreferenciasNotificacaoState state;
-  final ValueChanged<PreferenciasNotificacao> onChanged;
-
-  const _NotificationPreferencesSection({
-    required this.state,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final preferencias = state.preferencias;
-    final enabled = !state.isLoading && !state.isSaving;
-    return _Section(
-      title: 'Notificações',
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
-          child: Text(
-            'Defina separadamente os avisos exibidos no aparelho e os mantidos na central de notificações.',
-            style: TextStyle(
-              color: Color(0xFF697370),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
-            ),
-          ),
-        ),
-        _NotificationDeliveryGroup(
-          title: 'Receber por push',
-          icon: Icons.notifications_active_rounded,
-          helper: 'Exibe um alerta no aparelho.',
-          enabled: enabled,
-          values: [
-            _NotificationOption(
-              Icons.newspaper_rounded,
-              'Notícias',
-              preferencias.pushNoticias,
-              (value) => preferencias.copyWith(pushNoticias: value),
-            ),
-            _NotificationOption(
-              Icons.live_tv_rounded,
-              'Transmissões (Lives)',
-              preferencias.pushLives,
-              (value) => preferencias.copyWith(pushLives: value),
-            ),
-            _NotificationOption(
-              Icons.assignment_ind_rounded,
-              'Designações',
-              preferencias.pushDesignacoes,
-              (value) => preferencias.copyWith(pushDesignacoes: value),
-            ),
-            _NotificationOption(
-              Icons.receipt_long_rounded,
-              'Contracheques',
-              preferencias.pushContracheques,
-              (value) => preferencias.copyWith(pushContracheques: value),
-            ),
-            _NotificationOption(
-              Icons.payments_rounded,
-              'Pagamentos',
-              preferencias.pushPagamentos,
-              (value) => preferencias.copyWith(pushPagamentos: value),
-            ),
-            _NotificationOption(
-              Icons.event_busy_rounded,
-              'Afastamentos',
-              preferencias.pushAfastamentos,
-              (value) => preferencias.copyWith(pushAfastamentos: value),
-            ),
-          ],
-          onChanged: onChanged,
-        ),
-        const Divider(height: 20, indent: 16, endIndent: 16),
-        _NotificationDeliveryGroup(
-          title: 'Mostrar na central',
-          icon: Icons.inbox_rounded,
-          helper: 'Mantém o aviso disponível no sino.',
-          enabled: enabled,
-          values: [
-            _NotificationOption(
-              Icons.newspaper_rounded,
-              'Notícias',
-              preferencias.centralNoticias,
-              (value) => preferencias.copyWith(centralNoticias: value),
-            ),
-            _NotificationOption(
-              Icons.live_tv_rounded,
-              'Transmissões (Lives)',
-              preferencias.centralLives,
-              (value) => preferencias.copyWith(centralLives: value),
-            ),
-            _NotificationOption(
-              Icons.assignment_ind_rounded,
-              'Designações',
-              preferencias.centralDesignacoes,
-              (value) => preferencias.copyWith(centralDesignacoes: value),
-            ),
-            _NotificationOption(
-              Icons.receipt_long_rounded,
-              'Contracheques',
-              preferencias.centralContracheques,
-              (value) => preferencias.copyWith(centralContracheques: value),
-            ),
-            _NotificationOption(
-              Icons.payments_rounded,
-              'Pagamentos',
-              preferencias.centralPagamentos,
-              (value) => preferencias.copyWith(centralPagamentos: value),
-            ),
-            _NotificationOption(
-              Icons.event_busy_rounded,
-              'Afastamentos',
-              preferencias.centralAfastamentos,
-              (value) => preferencias.copyWith(centralAfastamentos: value),
-            ),
-          ],
-          onChanged: onChanged,
-          isLast: true,
-        ),
-        if (state.isLoading || state.isSaving)
-          const LinearProgressIndicator(minHeight: 2),
-      ],
-    );
-  }
-}
-
-class _NotificationOption {
+class _ActionTile extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool value;
-  final PreferenciasNotificacao Function(bool value) update;
-
-  const _NotificationOption(this.icon, this.label, this.value, this.update);
-}
-
-class _NotificationDeliveryGroup extends StatelessWidget {
-  final String title;
-  final IconData icon;
   final String helper;
-  final bool enabled;
-  final List<_NotificationOption> values;
-  final ValueChanged<PreferenciasNotificacao> onChanged;
-  final bool isLast;
+  final VoidCallback onTap;
 
-  const _NotificationDeliveryGroup({
-    required this.title,
+  const _ActionTile({
     required this.icon,
+    required this.label,
     required this.helper,
-    required this.enabled,
-    required this.values,
-    required this.onChanged,
-    this.isLast = false,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: const Color(0xFF006B4A)),
-              const SizedBox(width: 8),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F3F1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 20, color: const Color(0xFF202322)),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      label,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
                         color: Color(0xFF202322),
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       helper,
                       style: const TextStyle(
-                        fontSize: 12,
                         color: Color(0xFF697370),
+                        fontSize: 12.5,
                       ),
                     ),
                   ],
                 ),
               ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF98A29D),
+                size: 22,
+              ),
             ],
           ),
         ),
-        for (var index = 0; index < values.length; index++)
-          _NotificationSwitch(
-            icon: values[index].icon,
-            label: values[index].label,
-            value: values[index].value,
-            enabled: enabled,
-            isLast: isLast && index == values.length - 1,
-            onChanged: (value) => onChanged(values[index].update(value)),
-          ),
-      ],
-    );
-  }
-}
-
-class _NotificationSwitch extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool value;
-  final bool enabled;
-  final bool isLast;
-  final ValueChanged<bool> onChanged;
-
-  const _NotificationSwitch({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.enabled,
-    required this.onChanged,
-    this.isLast = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SwitchListTile.adaptive(
-          secondary: Icon(icon, color: const Color(0xFF697370), size: 21),
-          title: Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF202322),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          value: value,
-          activeTrackColor: const Color(0xFF00A76F),
-          onChanged: enabled ? onChanged : null,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        ),
-        if (!isLast) const Divider(height: 1, indent: 52, endIndent: 16),
-      ],
+      ),
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -586,7 +585,7 @@ class _NoticiaImageViewerPageState extends State<NoticiaImageViewerPage> {
                     _transformController.value = Matrix4.identity();
                   } else {
                     _transformController.value = Matrix4.identity()
-                      ..scale(2.5);
+                      ..scaleByDouble(2.5, 2.5, 1.0, 1.0);
                   }
                 },
                 child: InteractiveViewer(

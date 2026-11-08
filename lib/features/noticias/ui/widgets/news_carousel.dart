@@ -4,12 +4,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/responsive_layout.dart';
 import '../../models/noticia.dart';
 import '../../providers/noticia_provider.dart';
 import '../noticia_detalhes_page.dart';
-import '../../ui/noticias_page.dart';
 import '../../utils/noticia_share.dart';
 
 class NewsCarousel extends ConsumerStatefulWidget {
@@ -303,15 +301,6 @@ class _NewsCarouselState extends ConsumerState<NewsCarousel>
         ],
       ),
     );
-  }
-
-  void _openNews(String? url) async {
-    if (url != null && url.isNotEmpty) {
-      final uri = Uri.tryParse(url);
-      if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    }
   }
 
   String? _newsImageUrl(Noticia noticia) {

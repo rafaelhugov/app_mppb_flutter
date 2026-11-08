@@ -40,16 +40,13 @@ class PreferenciasNotificacaoState {
 class PreferenciasNotificacaoNotifier
     extends Notifier<PreferenciasNotificacaoState> {
   static const _cacheKey = 'preferencias_notificacao_cache';
+  static const _publicCacheKey = 'preferencias_notificacao_public_cache';
 
   @override
   PreferenciasNotificacaoState build() {
     ref.listen(authProvider, (previous, next) {
       if (previous?.token == next.token) return;
-      if (next.token == null) {
-        state = const PreferenciasNotificacaoState();
-      } else {
-        Future.microtask(carregar);
-      }
+      Future.microtask(carregar);
     });
     Future.microtask(carregar);
     return const PreferenciasNotificacaoState(isLoading: true);
@@ -58,8 +55,13 @@ class PreferenciasNotificacaoNotifier
   Future<void> carregar() async {
     final token = await _tokenAtual();
     if (!ref.mounted) return;
+
     if (token == null) {
-      state = state.copyWith(isLoading: false);
+      final local = await _lerCacheLocal() ?? const PreferenciasNotificacao();
+      await _sincronizarNoticias(local.pushNoticias);
+      await _sincronizarLives(local.pushLives);
+      if (!ref.mounted) return;
+      state = state.copyWith(preferencias: local, isLoading: false);
       return;
     }
 
@@ -95,8 +97,24 @@ class PreferenciasNotificacaoNotifier
   Future<bool> atualizar(PreferenciasNotificacao preferencias) async {
     if (state.isSaving) return false;
     final token = await _tokenAtual();
-    if (!ref.mounted || token == null) return false;
+    if (!ref.mounted) return false;
 
+    // Modo não logado / público (cidadão)
+    if (token == null) {
+      state = state.copyWith(isSaving: true, errorMessage: null);
+      await _salvarCache(preferencias);
+      await _sincronizarNoticias(preferencias.pushNoticias);
+      await _sincronizarLives(preferencias.pushLives);
+      if (!ref.mounted) return false;
+      state = state.copyWith(
+        preferencias: preferencias,
+        isSaving: false,
+        errorMessage: null,
+      );
+      return true;
+    }
+
+    // Modo autenticado (servidor ou membro)
     state = state.copyWith(isSaving: true, errorMessage: null);
     try {
       final salvasApi = await ref
@@ -137,14 +155,20 @@ class PreferenciasNotificacaoNotifier
   Future<void> _salvarCache(PreferenciasNotificacao preferencias) async {
     final storage = ref.read(secureStorageProvider);
     final username = await storage.read(key: 'auth_username');
-    if (username == null || username.trim().isEmpty) return;
-    await storage.write(
-      key: _cacheKey,
-      value: jsonEncode({
-        'username': username,
-        'preferencias': preferencias.toJson(),
-      }),
-    );
+    if (username != null && username.trim().isNotEmpty) {
+      await storage.write(
+        key: _cacheKey,
+        value: jsonEncode({
+          'username': username,
+          'preferencias': preferencias.toJson(),
+        }),
+      );
+    } else {
+      await storage.write(
+        key: _publicCacheKey,
+        value: jsonEncode(preferencias.toJson()),
+      );
+    }
   }
 
   Future<void> _carregarCache(String errorMessage) async {
@@ -201,13 +225,21 @@ class PreferenciasNotificacaoNotifier
     try {
       final storage = ref.read(secureStorageProvider);
       final username = await storage.read(key: 'auth_username');
-      final cached = await storage.read(key: _cacheKey);
-      if (cached != null && username != null) {
-        final json = jsonDecode(cached) as Map<String, dynamic>;
-        if (json['username'] == username) {
-          return PreferenciasNotificacao.fromJson(
-            json['preferencias'] as Map<String, dynamic>,
-          );
+      if (username != null && username.trim().isNotEmpty) {
+        final cached = await storage.read(key: _cacheKey);
+        if (cached != null) {
+          final json = jsonDecode(cached) as Map<String, dynamic>;
+          if (json['username'] == username) {
+            return PreferenciasNotificacao.fromJson(
+              json['preferencias'] as Map<String, dynamic>,
+            );
+          }
+        }
+      } else {
+        final cachedPublic = await storage.read(key: _publicCacheKey);
+        if (cachedPublic != null) {
+          final json = jsonDecode(cachedPublic) as Map<String, dynamic>;
+          return PreferenciasNotificacao.fromJson(json);
         }
       }
     } catch (_) {}

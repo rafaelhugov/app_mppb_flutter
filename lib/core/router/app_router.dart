@@ -5,6 +5,8 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/carteira/ui/carteira_page.dart';
 import '../../features/certidao_extrajudicial/ui/certidao_extrajudicial_page.dart';
+import '../../features/configuracoes/ui/configuracoes_notificacoes_page.dart';
+import '../../features/configuracoes/ui/configuracoes_page.dart';
 import '../../features/contra_cheque/ui/contra_cheque_page.dart';
 import '../../features/dashboard/ui/dashboard_page.dart';
 import '../../features/designacoes/ui/designacoes_page.dart';
@@ -136,6 +138,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             initialVideoId: videoId,
           );
         },
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/configuracoes',
+        builder: (context, state) => const ConfiguracoesPage(),
+        routes: [
+          GoRoute(
+            parentNavigatorKey: _rootNavigatorKey,
+            path: 'notificacoes',
+            builder: (context, state) =>
+                const ConfiguracoesNotificacoesPage(),
+          ),
+        ],
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

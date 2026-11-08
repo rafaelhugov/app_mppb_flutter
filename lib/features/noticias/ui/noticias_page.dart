@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/widgets/hero_header_publico.dart';
@@ -30,14 +29,6 @@ class NoticiasPage extends ConsumerStatefulWidget {
 
 class _NoticiasPageState extends ConsumerState<NoticiasPage> {
   String? _openedInitialTarget;
-
-  Future<void> _abrirNoticia(String? link) async {
-    if (link == null || link.isEmpty) return;
-    final url = Uri.parse(link);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
 
   void _mostrarNoticia(Noticia noticia) {
     Navigator.of(context).push(

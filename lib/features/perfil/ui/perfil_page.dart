@@ -945,119 +945,124 @@ class _SecuritySection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: enabled
-                      ? const Color(0x1400A76F)
-                      : const Color(0x14D62828),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.fingerprint_rounded,
-                  color: enabled
-                      ? const Color(0xFF00A76F)
-                      : const Color(0xFFD62828),
-                  size: 22,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: enabled
+                          ? const Color(0x1400A76F)
+                          : const Color(0x14D62828),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.fingerprint_rounded,
+                      color: enabled
+                          ? const Color(0xFF00A76F)
+                          : const Color(0xFFD62828),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          enabled
+                              ? 'Acesso seguro habilitado'
+                              : 'Acesso seguro desabilitado',
+                          style: const TextStyle(
+                            color: Color(0xFF202322),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          supportsBiometrics
+                              ? 'O acesso usa a segurança local do aparelho e uma credencial revogável, sem armazenar sua senha institucional.'
+                              : 'Configure biometria, PIN, padrão ou senha de bloqueio no aparelho.',
+                          style: const TextStyle(
+                            color: Color(0xFF697370),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      enabled
-                          ? 'Acesso seguro habilitado'
-                          : 'Acesso seguro desabilitado',
-                      style: const TextStyle(
-                        color: Color(0xFF202322),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      supportsBiometrics
-                          ? 'O acesso usa a segurança local do aparelho e uma credencial revogável, sem armazenar sua senha institucional.'
-                          : 'Configure biometria, PIN, padrão ou senha de bloqueio no aparelho.',
-                      style: const TextStyle(
-                        color: Color(0xFF697370),
+              const SizedBox(height: 16),
+              Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOutCubic,
+                  width: isLoading ? 48 : 240,
+                  height: 44,
+                  child: OutlinedButton(
+                    // Permite uma tentativa manual mesmo quando a
+                    // sondagem inicial do Android falhar. O prompt nativo
+                    // continua sendo a autoridade final.
+                    onPressed: !isLoading
+                        ? (enabled ? onDisable : onEnable)
+                        : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFD62828),
+                      side: const BorderSide(color: Color(0xFFD62828)),
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w700,
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        height: 1.35,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 240),
-                        curve: Curves.easeOutCubic,
-                        width: isLoading ? 48 : null,
-                        height: 40,
-                        child: OutlinedButton(
-                          // Permite uma tentativa manual mesmo quando a
-                          // sondagem inicial do Android falhar. O prompt nativo
-                          // continua sendo a autoridade final.
-                          onPressed: !isLoading
-                              ? (enabled ? onDisable : onEnable)
-                              : null,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFD62828),
-                            side: const BorderSide(color: Color(0xFFD62828)),
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13,
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isLoading ? 0 : 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                isLoading ? 20 : 12,
-                              ),
-                            ),
-                          ),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 180),
-                            child: isLoading
-                                ? const SizedBox(
-                                    key: ValueKey('loading'),
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Color(0xFFD62828),
-                                    ),
-                                  )
-                                : Row(
-                                    key: const ValueKey('label'),
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        enabled
-                                            ? Icons.lock_open_rounded
-                                            : Icons.fingerprint_rounded,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        enabled
-                                            ? 'Desativar acesso seguro'
-                                            : 'Habilitar acesso seguro',
-                                      ),
-                                    ],
-                                  ),
-                          ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isLoading ? 0 : 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          isLoading ? 22 : 12,
                         ),
                       ),
                     ),
-                  ],
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      child: isLoading
+                          ? const SizedBox(
+                              key: ValueKey('loading'),
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFFD62828),
+                              ),
+                            )
+                          : Row(
+                              key: const ValueKey('label'),
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  enabled
+                                      ? Icons.lock_open_rounded
+                                      : Icons.fingerprint_rounded,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  enabled
+                                      ? 'Desativar acesso seguro'
+                                      : 'Habilitar acesso seguro',
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1078,20 +1083,24 @@ class _LogoutSection extends StatelessWidget {
     return Column(
       children: [
         Center(
-          child: FilledButton.icon(
-            onPressed: onLogout,
-            icon: const Icon(Icons.logout_rounded, size: 18),
-            label: const Text('Sair do aplicativo'),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFD62828),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+          child: SizedBox(
+            width: 240,
+            height: 44,
+            child: FilledButton.icon(
+              onPressed: onLogout,
+              icon: const Icon(Icons.logout_rounded, size: 18),
+              label: const Text('Sair do aplicativo'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFD62828),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),

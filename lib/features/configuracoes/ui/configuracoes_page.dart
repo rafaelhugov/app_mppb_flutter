@@ -5,12 +5,11 @@ import 'package:local_auth/local_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../core/network/connectivity_provider.dart';
+import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../perfil/providers/perfil_provider.dart';
-
-enum _SecurityFeedbackType { success, warning, error }
 
 class ConfiguracoesPage extends ConsumerStatefulWidget {
   const ConfiguracoesPage({super.key});
@@ -40,12 +39,11 @@ class _ConfiguracoesPageState extends ConsumerState<ConfiguracoesPage> {
     if (!mounted) return;
     if (!authenticated) {
       setState(() => _isBiometricActionLoading = false);
-      await _showFeedbackDialog(
-        type: _SecurityFeedbackType.warning,
-        title: 'Identidade não confirmada',
-        message:
-            _biometricAuthenticationError ??
+      AppFeedback.showWarning(
+        context,
+        _biometricAuthenticationError ??
             'A confirmação pelo aparelho falhou ou foi cancelada. Tente novamente.',
+        title: 'Identidade não confirmada',
       );
       return;
     }
@@ -57,18 +55,20 @@ class _ConfiguracoesPageState extends ConsumerState<ConfiguracoesPage> {
     setState(() => _isBiometricActionLoading = false);
     final activationError =
         ref.read(authProvider.notifier).biometricActivationError;
-    await _showFeedbackDialog(
-      type: enabled
-          ? _SecurityFeedbackType.success
-          : _SecurityFeedbackType.error,
-      title: enabled
-          ? 'Acesso seguro habilitado'
-          : 'Não foi possível habilitar',
-      message: enabled
-          ? 'O aparelho recebeu uma credencial revogável, separada da sua senha.'
-          : activationError ??
-                'Não foi possível registrar a credencial segura no servidor.',
-    );
+    if (enabled) {
+      AppFeedback.showSuccess(
+        context,
+        'O aparelho recebeu uma credencial revogável, separada da sua senha.',
+        title: 'Acesso seguro habilitado',
+      );
+    } else {
+      AppFeedback.showError(
+        context,
+        activationError ??
+            'Não foi possível registrar a credencial segura no servidor.',
+        title: 'Não foi possível habilitar',
+      );
+    }
   }
 
   Future<void> _disableBiometrics() async {
@@ -80,10 +80,10 @@ class _ConfiguracoesPageState extends ConsumerState<ConfiguracoesPage> {
     if (!mounted) return;
     if (!authenticated) {
       setState(() => _isBiometricActionLoading = false);
-      await _showFeedbackDialog(
-        type: _SecurityFeedbackType.warning,
+      AppFeedback.showWarning(
+        context,
+        'Não foi possível confirmar sua identidade neste aparelho.',
         title: 'Identidade não confirmada',
-        message: 'Não foi possível confirmar sua identidade neste aparelho.',
       );
       return;
     }
@@ -92,10 +92,10 @@ class _ConfiguracoesPageState extends ConsumerState<ConfiguracoesPage> {
     await ref.read(perfilProvider.notifier).refreshBiometrics();
     if (!mounted) return;
     setState(() => _isBiometricActionLoading = false);
-    await _showFeedbackDialog(
-      type: _SecurityFeedbackType.success,
+    AppFeedback.showSuccess(
+      context,
+      'O acesso com senha volta a ser necessário no próximo login.',
       title: 'Acesso seguro desativado',
-      message: 'O acesso com senha volta a ser necessário no próximo login.',
     );
   }
 
@@ -147,41 +147,6 @@ class _ConfiguracoesPageState extends ConsumerState<ConfiguracoesPage> {
     }
   }
 
-  Future<void> _showFeedbackDialog({
-    required _SecurityFeedbackType type,
-    required String title,
-    required String message,
-  }) {
-    return showGeneralDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: title,
-      barrierColor: const Color(0x99000000),
-      transitionDuration: const Duration(milliseconds: 280),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return _SecurityFeedbackDialog(
-          type: type,
-          title: title,
-          message: message,
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutBack,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.88, end: 1).animate(curved),
-            child: child,
-          ),
-        );
-      },
-    );
-  }
-
   Future<void> _limparCache() async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -231,12 +196,10 @@ class _ConfiguracoesPageState extends ConsumerState<ConfiguracoesPage> {
     PaintingBinding.instance.imageCache.clear();
     PaintingBinding.instance.imageCache.clearLiveImages();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Cache de imagens e dados temporários liberado.'),
-        backgroundColor: Color(0xFF00A76F),
-        behavior: SnackBarBehavior.floating,
-      ),
+    AppFeedback.showSuccess(
+      context,
+      'Cache de imagens e dados temporários liberado.',
+      title: 'Tudo certo',
     );
   }
 
@@ -705,100 +668,6 @@ class _ConfigTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               trailing,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SecurityFeedbackDialog extends StatelessWidget {
-  final _SecurityFeedbackType type;
-  final String title;
-  final String message;
-
-  const _SecurityFeedbackDialog({
-    required this.type,
-    required this.title,
-    required this.message,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final IconData icon;
-    final Color color;
-    switch (type) {
-      case _SecurityFeedbackType.success:
-        icon = Icons.check_circle_rounded;
-        color = const Color(0xFF00A76F);
-        break;
-      case _SecurityFeedbackType.warning:
-        icon = Icons.warning_amber_rounded;
-        color = const Color(0xFFF59E0B);
-        break;
-      case _SecurityFeedbackType.error:
-        icon = Icons.error_rounded;
-        color = const Color(0xFFD62828);
-        break;
-    }
-
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 32),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 24,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF202322),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  color: Color(0xFF697370),
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF202322),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Entendi'),
-                ),
-              ),
             ],
           ),
         ),

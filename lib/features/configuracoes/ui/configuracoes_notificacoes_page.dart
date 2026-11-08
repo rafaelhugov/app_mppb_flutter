@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ui/app_feedback.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -29,13 +30,7 @@ class _ConfiguracoesNotificacoesPageState
       final errorMessage =
           ref.read(preferenciasNotificacaoProvider).errorMessage ??
           'Não foi possível salvar suas preferências.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: const Color(0xFFD62828),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppFeedback.showError(context, errorMessage);
     }
   }
 
@@ -213,11 +208,11 @@ class _ConfiguracoesNotificacoesPageState
 
                     const SizedBox(height: 24),
 
-                    // SEÇÃO 3: CENTRAL DE NOTIFICAÇÕES (SINO NO APP)
+                    // SEÇÃO 3: CENTRAL DE NOTIFICAÇÕES (SINO NO APP) - CANAIS PÚBLICOS
                     _SectionHeader(
-                      title: 'CENTRAL DE AVISOS (SINO)',
+                      title: 'CENTRAL DE AVISOS — CANAIS PÚBLICOS',
                       subtitle:
-                          'Itens que ficam salvos na caixa de entrada do aplicativo.',
+                          'Itens públicos guardados na caixa de entrada do aplicativo.',
                       icon: Icons.inbox_rounded,
                     ),
                     _CardContainer(
@@ -243,8 +238,20 @@ class _ConfiguracoesNotificacoesPageState
                             prefs.copyWith(centralLives: val),
                           ),
                         ),
-                        if (isAuthenticated) ...[
-                          const Divider(height: 1, indent: 56, endIndent: 16),
+                      ],
+                    ),
+
+                    if (isAuthenticated) ...[
+                      const SizedBox(height: 24),
+                      // SEÇÃO 4: CENTRAL DE NOTIFICAÇÕES (SINO NO APP) - CANAIS FUNCIONAIS
+                      _SectionHeader(
+                        title: 'CENTRAL DE AVISOS — CANAIS FUNCIONAIS',
+                        subtitle:
+                            'Avisos individuais guardados na caixa de entrada do aplicativo.',
+                        icon: Icons.badge_outlined,
+                      ),
+                      _CardContainer(
+                        children: [
                           _NotificationSwitchTile(
                             icon: Icons.receipt_long_rounded,
                             title: 'Salvar Contracheques',
@@ -289,8 +296,8 @@ class _ConfiguracoesNotificacoesPageState
                             ),
                           ),
                         ],
-                      ],
-                    ),
+                      ),
+                    ],
 
                     const SizedBox(height: 32),
                   ],

@@ -32,7 +32,7 @@ void main() {
     });
 
     testWidgets(
-      'calcula e exibe saldo total e categorias com precisão',
+      'inicia recolhido exibindo cabeçalho e progresso, e expande ao tocar exibindo as categorias',
       (tester) async {
         const concessoes = [
           ConcessaoAfastamento(
@@ -59,14 +59,22 @@ void main() {
           _wrap(const ConcessoesResumoDashboard(concessoes: concessoes)),
         );
 
-        // Cabeçalho
+        // 1. Cabeçalho e progresso visíveis no estado recolhido inicial
         expect(find.text('Resumo de Concessões'), findsOneWidget);
         expect(find.text('3 concessões ativas no total'), findsOneWidget);
-
-        // Saldo total: 20 + 10 + 15 = 45 dias livres
         expect(find.text('45 dias livres'), findsOneWidget);
+        expect(find.textContaining('Disponível: 45 dias'), findsOneWidget);
+        expect(find.textContaining('Usufruído: 105 dias'), findsOneWidget);
 
-        // Categorias: Férias total 30d (2 períodos), Licença Especial total 15d (1 período)
+        // Categorias ainda NÃO visíveis pois inicia recolhido
+        expect(find.text('Férias'), findsNothing);
+        expect(find.text('Licença Especial'), findsNothing);
+
+        // 2. Toca no cabeçalho para expandir
+        await tester.tap(find.text('Resumo de Concessões'));
+        await tester.pumpAndSettle();
+
+        // Agora as categorias aparecem
         expect(find.text('Férias'), findsOneWidget);
         expect(find.text('30d'), findsOneWidget);
         expect(find.text('2 períodos'), findsOneWidget);
@@ -74,11 +82,18 @@ void main() {
         expect(find.text('Licença Especial'), findsOneWidget);
         expect(find.text('15d'), findsOneWidget);
         expect(find.text('1 período'), findsOneWidget);
+
+        // 3. Toca novamente para recolher
+        await tester.tap(find.text('Resumo de Concessões'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Férias'), findsNothing);
+        expect(find.text('Licença Especial'), findsNothing);
       },
     );
 
     testWidgets(
-      'dispara onTipoSelecionado ao tocar na categoria para filtrar',
+      'dispara onTipoSelecionado ao tocar na categoria após expandir',
       (tester) async {
         TipoConcessao? selecionado;
 
@@ -109,6 +124,11 @@ void main() {
           ),
         );
 
+        // Expande o dashboard
+        await tester.tap(find.text('Resumo de Concessões'));
+        await tester.pumpAndSettle();
+
+        // Toca em Férias
         await tester.tap(find.text('Férias'));
         await tester.pumpAndSettle();
 
@@ -139,7 +159,7 @@ void main() {
     });
 
     testWidgets(
-      'exibe dashboard e filtra os cards abaixo ao selecionar tipo',
+      'exibe dashboard e filtra os cards abaixo ao expandir e selecionar tipo',
       (tester) async {
         tester.view.physicalSize = const Size(1080, 2400);
         tester.view.devicePixelRatio = 1.0;
@@ -177,11 +197,15 @@ void main() {
           ),
         );
 
-        // O dashboard está presente com 2 concessões
+        // O dashboard está presente com 2 concessões (recolhido)
         expect(find.text('Resumo de Concessões'), findsOneWidget);
         expect(find.text('2 concessões ativas no total'), findsOneWidget);
 
-        // Toca no card de Férias para filtrar
+        // Expande o dashboard
+        await tester.tap(find.text('Resumo de Concessões'));
+        await tester.pumpAndSettle();
+
+        // Toca no card de Férias do dashboard para filtrar
         await tester.tap(find.text('Férias').first);
         await tester.pumpAndSettle();
 
@@ -197,4 +221,3 @@ void main() {
     );
   });
 }
-

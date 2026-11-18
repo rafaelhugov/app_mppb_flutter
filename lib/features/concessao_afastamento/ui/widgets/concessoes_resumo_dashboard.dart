@@ -28,24 +28,47 @@ class _AcumuladorCategoria {
 }
 
 /// Mini-Dashboard executivo exibido no topo da listagem de concessões vigentes.
-/// Apresenta o saldo consolidado total e por categoria com opção de filtro interativo.
-class ConcessoesResumoDashboard extends StatelessWidget {
+/// Apresenta o saldo consolidado total e por categoria com opção de filtro interativo
+/// e capacidade de recolher/expandir para economizar espaço de tela.
+class ConcessoesResumoDashboard extends StatefulWidget {
   final List<ConcessaoAfastamento> concessoes;
   final TipoConcessao? filtroTipoSelecionado;
   final ValueChanged<TipoConcessao?>? onTipoSelecionado;
+  final bool inicialmenteExpandido;
 
   const ConcessoesResumoDashboard({
     super.key,
     required this.concessoes,
     this.filtroTipoSelecionado,
     this.onTipoSelecionado,
+    this.inicialmenteExpandido = false,
   });
 
+  @override
+  State<ConcessoesResumoDashboard> createState() =>
+      _ConcessoesResumoDashboardState();
+}
+
+class _ConcessoesResumoDashboardState extends State<ConcessoesResumoDashboard> {
+  late bool _isExpandido;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpandido = widget.inicialmenteExpandido;
+  }
+
+  void _toggleExpandido() {
+    setState(() {
+      _isExpandido = !_isExpandido;
+    });
+  }
+
   int get _saldoTotalGeral =>
-      concessoes.fold<int>(0, (total, c) => total + c.saldoRestante);
+      widget.concessoes.fold<int>(0, (total, c) => total + c.saldoRestante);
 
   int get _concedidoTotalGeral =>
-      concessoes.fold<int>(0, (total, c) => total + c.diasConcedidos);
+      widget.concessoes.fold<int>(0, (total, c) => total + c.diasConcedidos);
 
   int get _usufruidoTotalGeral =>
       (_concedidoTotalGeral - _saldoTotalGeral).clamp(0, _concedidoTotalGeral);
@@ -57,7 +80,7 @@ class ConcessoesResumoDashboard extends StatelessWidget {
   List<ResumoCategoriaItem> _calcularResumosPorCategoria() {
     final map = <TipoConcessao, _AcumuladorCategoria>{};
 
-    for (final c in concessoes) {
+    for (final c in widget.concessoes) {
       final acc = map.putIfAbsent(c.tipo, () => _AcumuladorCategoria());
       acc.totalSaldo += c.saldoRestante;
       acc.totalConcedido += c.diasConcedidos;
@@ -97,7 +120,7 @@ class ConcessoesResumoDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (concessoes.isEmpty) {
+    if (widget.concessoes.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -122,7 +145,7 @@ class ConcessoesResumoDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Faixa Superior de Cabeçalho
+            // 1. Faixa Superior de Cabeçalho (Clicável para expandir/recolher)
             _buildHeaderStrip(),
 
             const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
@@ -133,16 +156,35 @@ class ConcessoesResumoDashboard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Barra de Progresso Global
+                  // Barra de Progresso Global (também clicável para alternar)
                   _buildProgressoGeral(),
 
-                  const SizedBox(height: 14),
+                  // Seção Recolhível das Categorias
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.topCenter,
+                    child: _isExpandido
+                        ? Column(
+                            key: const ValueKey('categorias_expandidas'),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 14),
+                              // Lista / Grid de Saldos por Categoria
+                              _buildCategoriasResumo(categorias),
 
-                  // Lista / Grid de Saldos por Categoria
-                  _buildCategoriasResumo(categorias),
+                              // Feedback de filtro ativo (se houver e expandido)
+                              if (widget.filtroTipoSelecionado != null) ...[
+                                const SizedBox(height: 10),
+                                _buildFiltroAtivoBanner(),
+                              ],
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                  ),
 
-                  // Feedback de filtro ativo (se houver)
-                  if (filtroTipoSelecionado != null) ...[
+                  // Se recolhido mas com filtro ativo, exibe o banner para que o usuário saiba do filtro
+                  if (!_isExpandido && widget.filtroTipoSelecionado != null) ...[
                     const SizedBox(height: 10),
                     _buildFiltroAtivoBanner(),
                   ],
@@ -160,83 +202,99 @@ class ConcessoesResumoDashboard extends StatelessWidget {
   // ===========================================================================
 
   Widget _buildHeaderStrip() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    return Material(
       color: const Color(0xFFF8FAFC),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
-            ),
-            child: const Icon(
-              Icons.pie_chart_outline_rounded,
-              size: 18,
-              color: Color(0xFF1D4ED8),
-            ),
+      child: InkWell(
+        onTap: _toggleExpandido,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                ),
+                child: const Icon(
+                  Icons.pie_chart_outline_rounded,
+                  size: 18,
+                  color: Color(0xFF1D4ED8),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Resumo de Concessões',
+                      style: TextStyle(
+                        fontFamily: 'Rawline',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${widget.concessoes.length} ${widget.concessoes.length == 1 ? "concessão ativa" : "concessões ativas"} no total',
+                      style: const TextStyle(
+                        fontFamily: 'Rawline',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Badge do Saldo Total
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 13,
+                      color: Color(0xFF15803D),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$_saldoTotalGeral dias livres',
+                      style: const TextStyle(
+                        fontFamily: 'Rawline',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF15803D),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Ícone animado indicando recolhido/expandido
+              AnimatedRotation(
+                turns: _isExpandido ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 250),
+                child: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 20,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Resumo de Concessões',
-                  style: TextStyle(
-                    fontFamily: 'Rawline',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  '${concessoes.length} ${concessoes.length == 1 ? "concessão ativa" : "concessões ativas"} no total',
-                  style: const TextStyle(
-                    fontFamily: 'Rawline',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Badge do Saldo Total
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.check_circle_outline_rounded,
-                  size: 13,
-                  color: Color(0xFF15803D),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '$_saldoTotalGeral dias livres',
-                  style: const TextStyle(
-                    fontFamily: 'Rawline',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF15803D),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -244,81 +302,91 @@ class ConcessoesResumoDashboard extends StatelessWidget {
   Widget _buildProgressoGeral() {
     final pctDisponivel = (_taxaDisponivel * 100).round();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Row(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _toggleExpandido,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF16A34A),
-                      shape: BoxShape.circle,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF16A34A),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            'Disponível: $_saldoTotalGeral dias ($pctDisponivel%)',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Rawline',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 5),
-                  Flexible(
-                    child: Text(
-                      'Disponível: $_saldoTotalGeral dias ($pctDisponivel%)',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Rawline',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
+                  const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF94A3B8),
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Usufruído: $_usufruidoTotalGeral dias',
+                        maxLines: 1,
+                        style: const TextStyle(
+                          fontFamily: 'Rawline',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF94A3B8),
-                    shape: BoxShape.circle,
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  height: 6,
+                  child: LinearProgressIndicator(
+                    value: _taxaDisponivel,
+                    backgroundColor: const Color(0xFFE2E8F0),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF16A34A),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 5),
-                Text(
-                  'Usufruído: $_usufruidoTotalGeral dias',
-                  maxLines: 1,
-                  style: const TextStyle(
-                    fontFamily: 'Rawline',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: SizedBox(
-            height: 6,
-            child: LinearProgressIndicator(
-              value: _taxaDisponivel,
-              backgroundColor: const Color(0xFFE2E8F0),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF16A34A),
               ),
-            ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -334,7 +402,7 @@ class ConcessoesResumoDashboard extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: categorias.map((item) {
-            final isSelecionado = filtroTipoSelecionado == item.tipo;
+            final isSelecionado = widget.filtroTipoSelecionado == item.tipo;
             final cor = item.tipo.color;
 
             return SizedBox(
@@ -342,13 +410,13 @@ class ConcessoesResumoDashboard extends StatelessWidget {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: onTipoSelecionado != null
+                  onTap: widget.onTipoSelecionado != null
                       ? () {
                           // Se já estiver selecionado, remove o filtro; senão, aplica
                           if (isSelecionado) {
-                            onTipoSelecionado!(null);
+                            widget.onTipoSelecionado!(null);
                           } else {
-                            onTipoSelecionado!(item.tipo);
+                            widget.onTipoSelecionado!(item.tipo);
                           }
                         }
                       : null,
@@ -474,7 +542,7 @@ class ConcessoesResumoDashboard extends StatelessWidget {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Filtrando por: ${filtroTipoSelecionado!.label}',
+              'Filtrando por: ${widget.filtroTipoSelecionado!.label}',
               style: const TextStyle(
                 fontFamily: 'Rawline',
                 fontSize: 11,
@@ -484,7 +552,7 @@ class ConcessoesResumoDashboard extends StatelessWidget {
             ),
           ),
           InkWell(
-            onTap: () => onTipoSelecionado?.call(null),
+            onTap: () => widget.onTipoSelecionado?.call(null),
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               child: Row(

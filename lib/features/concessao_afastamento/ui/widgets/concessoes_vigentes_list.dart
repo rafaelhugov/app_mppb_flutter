@@ -6,10 +6,12 @@ import '../../models/concessao_afastamento.dart';
 import '../../models/operacao_solicitacao_concessao.dart';
 import '../../models/solicitacao_concessao.dart';
 import '../../models/sugestao_data_final.dart';
+import '../../models/tipo_concessao.dart';
 import 'concessao_afastamento_card.dart';
 import 'concessao_afastamento_theme.dart';
+import 'concessoes_resumo_dashboard.dart';
 
-class ConcessoesVigentesList extends StatelessWidget {
+class ConcessoesVigentesList extends StatefulWidget {
   final List<ConcessaoAfastamento> concessoes;
   final bool isMembro;
   final bool isLoading;
@@ -54,21 +56,35 @@ class ConcessoesVigentesList extends StatelessWidget {
   });
 
   @override
+  State<ConcessoesVigentesList> createState() => _ConcessoesVigentesListState();
+}
+
+class _ConcessoesVigentesListState extends State<ConcessoesVigentesList> {
+  TipoConcessao? _filtroTipo;
+
+  @override
   Widget build(BuildContext context) {
-    if (isLoading && concessoes.isEmpty) {
+    if (widget.isLoading && widget.concessoes.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (errorMessage != null && concessoes.isEmpty) {
-      return _ErrorState(message: errorMessage!, onRetry: onRetry);
+    if (widget.errorMessage != null && widget.concessoes.isEmpty) {
+      return _ErrorState(
+        message: widget.errorMessage!,
+        onRetry: widget.onRetry,
+      );
     }
 
     final responsive = MppbResponsive.of(context);
     final horizontalPadding = MainLayout.horizontalPadding(context);
     final spacing = responsive.isTablet ? 14.0 : 10.0;
 
+    final concessoesFiltradas = _filtroTipo == null
+        ? widget.concessoes
+        : widget.concessoes.where((c) => c.tipo == _filtroTipo).toList();
+
     return RefreshIndicator(
-      onRefresh: onRefresh,
+      onRefresh: widget.onRefresh,
       child: ListView(
         primary: false,
         padding: EdgeInsets.fromLTRB(
@@ -78,9 +94,12 @@ class ConcessoesVigentesList extends StatelessWidget {
           MainLayout.contentBottomPadding(context),
         ),
         children: [
-          if (errorMessage != null)
-            _InlineError(message: errorMessage!, onRetry: onRetry),
-          if (concessoes.isEmpty)
+          if (widget.errorMessage != null)
+            _InlineError(
+              message: widget.errorMessage!,
+              onRetry: widget.onRetry,
+            ),
+          if (widget.concessoes.isEmpty)
             const _EmptyState()
           else
             Center(
@@ -90,39 +109,60 @@ class ConcessoesVigentesList extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    if (responsive.usesWideLayout)
+                    // Mini-Dashboard de Resumo e Filtro de Saldos por Categoria
+                    ConcessoesResumoDashboard(
+                      concessoes: widget.concessoes,
+                      filtroTipoSelecionado: _filtroTipo,
+                      onTipoSelecionado: (tipo) {
+                        setState(() {
+                          _filtroTipo = tipo;
+                        });
+                      },
+                    ),
+
+                    if (concessoesFiltradas.isEmpty && _filtroTipo != null)
+                      _FiltroVazioState(
+                        tipo: _filtroTipo!,
+                        onLimparFiltro: () {
+                          setState(() {
+                            _filtroTipo = null;
+                          });
+                        },
+                      )
+                    else if (responsive.usesWideLayout)
                       GridView.builder(
                         padding: EdgeInsets.zero,
-                        itemCount: concessoes.length,
+                        itemCount: concessoesFiltradas.length,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: spacing,
-                          mainAxisSpacing: spacing,
-                          mainAxisExtent: 292,
-                        ),
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: spacing,
+                              mainAxisSpacing: spacing,
+                              mainAxisExtent: 292,
+                            ),
                         itemBuilder: (context, index) =>
                             ConcessaoAfastamentoCard(
-                              concessao: concessoes[index],
-                              isMembro: isMembro,
-                              onSolicitar: onSolicitar,
-                              onBuscarSugestoes: onBuscarSugestoes,
-                              onBuscarOperacoes: onBuscarOperacoes,
-                              onExecutarOperacao: onExecutarOperacao,
+                              concessao: concessoesFiltradas[index],
+                              isMembro: widget.isMembro,
+                              onSolicitar: widget.onSolicitar,
+                              onBuscarSugestoes: widget.onBuscarSugestoes,
+                              onBuscarOperacoes: widget.onBuscarOperacoes,
+                              onExecutarOperacao: widget.onExecutarOperacao,
                             ),
                       )
                     else
                       Column(
-                        children: concessoes
+                        children: concessoesFiltradas
                             .map(
                               (concessao) => ConcessaoAfastamentoCard(
                                 concessao: concessao,
-                                isMembro: isMembro,
-                                onSolicitar: onSolicitar,
-                                onBuscarSugestoes: onBuscarSugestoes,
-                                onBuscarOperacoes: onBuscarOperacoes,
-                                onExecutarOperacao: onExecutarOperacao,
+                                isMembro: widget.isMembro,
+                                onSolicitar: widget.onSolicitar,
+                                onBuscarSugestoes: widget.onBuscarSugestoes,
+                                onBuscarOperacoes: widget.onBuscarOperacoes,
+                                onExecutarOperacao: widget.onExecutarOperacao,
                               ),
                             )
                             .toList(),
@@ -131,6 +171,55 @@ class ConcessoesVigentesList extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FiltroVazioState extends StatelessWidget {
+  final TipoConcessao tipo;
+  final VoidCallback onLimparFiltro;
+
+  const _FiltroVazioState({
+    required this.tipo,
+    required this.onLimparFiltro,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.filter_list_off_rounded,
+            size: 36,
+            color: Color(0xFF94A3B8),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Nenhuma concessão encontrada para ${tipo.label}.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Rawline',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF475569),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: onLimparFiltro,
+            icon: const Icon(Icons.clear_all_rounded, size: 16),
+            label: const Text('Limpar filtro'),
+          ),
         ],
       ),
     );

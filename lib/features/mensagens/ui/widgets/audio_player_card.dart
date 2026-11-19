@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../data/mensagens_repository.dart';
 import '../../models/mensagem_anexo_model.dart';
@@ -97,8 +98,9 @@ class _AudioPlayerCardState extends ConsumerState<AudioPlayerCard> {
         _carregado = true;
       } catch (_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Não foi possível reproduzir o áudio.')),
+          AppFeedback.showError(
+            context,
+            'Não foi possível reproduzir o áudio.',
           );
         }
         setState(() => _carregando = false);

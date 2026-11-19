@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../../../core/ui/main_layout.dart';
 import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../models/mensagem_aviso_model.dart';
@@ -170,14 +171,11 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
   Future<void> _publicar() async {
     final enviada = await ref.read(envioMensagemProvider.notifier).enviar();
     if (!mounted || enviada == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          enviada.statusPublicacao == 'AGENDADA'
-              ? 'Aviso agendado com sucesso!'
-              : 'Aviso enviado para ${enviada.totalDestinatarios} destinatário(s)!',
-        ),
-      ),
+    AppFeedback.showSuccess(
+      context,
+      enviada.statusPublicacao == 'AGENDADA'
+          ? 'Aviso agendado com sucesso!'
+          : 'Aviso enviado para ${enviada.totalDestinatarios} destinatário(s)!',
     );
     Navigator.of(context).pop(enviada);
   }
@@ -734,12 +732,9 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                             if (dt == null || !context.mounted) return;
                             final limpouExp = notifier.setDataAgendamento(dt);
                             if (limpouExp) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'A data de expiração foi limpa porque era menor que 1h após o novo agendamento.',
-                                  ),
-                                ),
+                              AppFeedback.showWarning(
+                                context,
+                                'A data de expiração foi limpa porque era menor que 1h após o novo agendamento.',
                               );
                             }
                           },
@@ -772,12 +767,9 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                             if (dt == null || !context.mounted) return;
                             final ok = notifier.setDataExpiracao(dt);
                             if (!ok) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'A expiração deve ter pelo menos 1 hora de margem após o envio.',
-                                  ),
-                                ),
+                              AppFeedback.showWarning(
+                                context,
+                                'A expiração deve ter pelo menos 1 hora de margem após o envio.',
                               );
                             }
                           },

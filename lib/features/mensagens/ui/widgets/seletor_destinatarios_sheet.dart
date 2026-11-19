@@ -6,6 +6,7 @@ import '../../models/grupo_mensagem_model.dart';
 import '../../models/mensagem_aviso_model.dart';
 import '../../providers/envio_mensagem_provider.dart';
 import 'mensagens_theme.dart';
+import 'remetente_avatar.dart';
 
 class SeletorDestinatariosWidget extends ConsumerStatefulWidget {
   const SeletorDestinatariosWidget({super.key});
@@ -293,6 +294,11 @@ class _SeletorDestinatariosWidgetState
             runSpacing: 4,
             children: state.destinatariosUnicast.map((d) {
               return InputChip(
+                avatar: RemetenteAvatar(
+                  nome: d.nome,
+                  matricula: d.matricula,
+                  size: 24,
+                ),
                 label: Text('${d.nome} (${d.matricula})'),
                 onDeleted: () {
                   final nova = state.destinatariosUnicast
@@ -323,6 +329,11 @@ class _SeletorDestinatariosWidgetState
                 );
                 return ListTile(
                   dense: true,
+                  leading: RemetenteAvatar(
+                    nome: item.nome,
+                    matricula: item.matricula,
+                    size: 38,
+                  ),
                   title: Text(
                     item.nome,
                     style: const TextStyle(fontWeight: FontWeight.w600),

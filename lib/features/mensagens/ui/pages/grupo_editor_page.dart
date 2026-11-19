@@ -7,6 +7,7 @@ import '../../data/mensagens_repository.dart';
 import '../../models/grupo_mensagem_model.dart';
 import '../../providers/grupos_mensagem_provider.dart';
 import '../widgets/mensagens_theme.dart';
+import '../widgets/remetente_avatar.dart';
 
 class GrupoEditorPage extends ConsumerStatefulWidget {
   const GrupoEditorPage({super.key, this.existente});
@@ -260,6 +261,11 @@ class _GrupoEditorPageState extends ConsumerState<GrupoEditorPage> {
                                 final jaTem = _matriculas.contains(r.matricula);
                                 return ListTile(
                                   dense: true,
+                                  leading: RemetenteAvatar(
+                                    nome: r.nome,
+                                    matricula: r.matricula,
+                                    size: 36,
+                                  ),
                                   title: Text(
                                     r.nome,
                                     style: const TextStyle(
@@ -320,17 +326,10 @@ class _GrupoEditorPageState extends ConsumerState<GrupoEditorPage> {
                               return ListTile(
                                 dense: true,
                                 contentPadding: EdgeInsets.zero,
-                                leading: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor:
-                                      MensagensColors.brandDark.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  child: const Icon(
-                                    Icons.person_outline_rounded,
-                                    size: 16,
-                                    color: MensagensColors.ink,
-                                  ),
+                                leading: RemetenteAvatar(
+                                  nome: nome ?? m,
+                                  matricula: m,
+                                  size: 34,
                                 ),
                                 title: Text(
                                   nome != null ? '$nome ($m)' : 'Matrícula $m',

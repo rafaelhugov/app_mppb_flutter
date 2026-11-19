@@ -117,6 +117,8 @@ class EnvioMensagemState {
 }
 
 class EnvioMensagemNotifier extends Notifier<EnvioMensagemState> {
+  static const Duration margemMinimaExpiracao = Duration(hours: 1);
+
   @override
   EnvioMensagemState build() => const EnvioMensagemState();
 
@@ -132,15 +134,53 @@ class EnvioMensagemNotifier extends Notifier<EnvioMensagemState> {
 
   void setExigeCiencia(bool v) => state = state.copyWith(exigeCiencia: v);
 
-  void setDataAgendamento(DateTime? dt) => state = state.copyWith(
-        dataAgendamento: dt,
-        clearAgendamento: dt == null,
-      );
+  DateTime dataBaseEnvio() {
+    final agora = DateTime.now();
+    final ag = state.dataAgendamento;
+    if (ag != null && ag.isAfter(agora)) {
+      return ag;
+    }
+    return agora;
+  }
 
-  void setDataExpiracao(DateTime? dt) => state = state.copyWith(
-        dataExpiracao: dt,
-        clearExpiracao: dt == null,
+  /// Atualiza a data de agendamento e limpa uma expiração que fique com
+  /// margem menor que 1 hora após o envio agendado.
+  bool setDataAgendamento(DateTime? dt) {
+    var limparExpiracao = false;
+    if (dt != null && state.dataExpiracao != null) {
+      if (state.dataExpiracao!.isBefore(dt.add(margemMinimaExpiracao))) {
+        limparExpiracao = true;
+      }
+    }
+    state = state.copyWith(
+      dataAgendamento: dt,
+      clearAgendamento: dt == null,
+      clearExpiracao: limparExpiracao,
+      clearError: true,
+    );
+    return limparExpiracao;
+  }
+
+  /// Define a data de expiração garantindo margem mínima de 1 hora após o envio.
+  bool setDataExpiracao(DateTime? dt) {
+    if (dt == null) {
+      state = state.copyWith(clearExpiracao: true, clearError: true);
+      return true;
+    }
+    final minimo = dataBaseEnvio().add(margemMinimaExpiracao);
+    if (dt.isBefore(minimo)) {
+      state = state.copyWith(
+        errorMessage:
+            'A data de expiração deve ter pelo menos 1 hora de margem após o envio.',
       );
+      return false;
+    }
+    state = state.copyWith(
+      dataExpiracao: dt,
+      clearError: true,
+    );
+    return true;
+  }
 
   Future<void> setModalidade(ModalidadeEnvio m) async {
     state = state.copyWith(modalidade: m, clearError: true);
@@ -227,6 +267,17 @@ class EnvioMensagemNotifier extends Notifier<EnvioMensagemState> {
       state = state.copyWith(
         errorMessage:
             'Informe um texto ou adicione ao menos uma mídia/áudio/documento.',
+      );
+      return null;
+    }
+
+    if (state.dataExpiracao != null &&
+        state.dataExpiracao!.isBefore(
+          dataBaseEnvio().add(margemMinimaExpiracao),
+        )) {
+      state = state.copyWith(
+        errorMessage:
+            'A data de expiração deve ter pelo menos 1 hora de margem após o envio.',
       );
       return null;
     }

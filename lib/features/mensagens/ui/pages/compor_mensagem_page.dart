@@ -14,6 +14,7 @@ import '../../providers/envio_mensagem_provider.dart';
 import '../../providers/permissao_mensagens_provider.dart';
 import '../widgets/audio_recorder_bar.dart';
 import '../widgets/mensagens_theme.dart';
+import '../widgets/rich_markdown_controller.dart';
 import '../widgets/seletor_destinatarios_sheet.dart';
 
 class ComporMensagemPage extends ConsumerStatefulWidget {
@@ -25,39 +26,43 @@ class ComporMensagemPage extends ConsumerStatefulWidget {
 
 class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
   final TextEditingController _tituloCtrl = TextEditingController();
-  final TextEditingController _conteudoCtrl = TextEditingController();
+  final RichMarkdownEditingController _conteudoCtrl =
+      RichMarkdownEditingController();
   final ImagePicker _imagePicker = ImagePicker();
   final GlobalKey<AudioRecorderBarState> _audioRecorderKey =
       GlobalKey<AudioRecorderBarState>();
   bool _previewMarkdown = false;
 
   @override
+  void initState() {
+    super.initState();
+    _conteudoCtrl.addListener(_onCursorOrTextChanged);
+  }
+
+  void _onCursorOrTextChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _conteudoCtrl.removeListener(_onCursorOrTextChanged);
     _tituloCtrl.dispose();
     _conteudoCtrl.dispose();
     super.dispose();
   }
 
-  void _aplicarFormatacao({
-    required String prefixo,
-    String sufixo = '',
-    String placeholder = 'texto',
-  }) {
-    final text = _conteudoCtrl.text;
-    final sel = _conteudoCtrl.selection;
-    final start = sel.isValid ? sel.start : text.length;
-    final end = sel.isValid ? sel.end : text.length;
-    final selecionado = start < end ? text.substring(start, end) : placeholder;
-    final inserido = '$prefixo$selecionado$sufixo';
-    final novoTexto = text.replaceRange(start, end, inserido);
+  void _alternarEnvoltorio(String token) {
+    final novoTexto = _conteudoCtrl.alternarEnvoltorio(token);
+    ref.read(envioMensagemProvider.notifier).setConteudo(novoTexto);
+  }
 
-    _conteudoCtrl.value = TextEditingValue(
-      text: novoTexto,
-      selection: TextSelection(
-        baseOffset: start + prefixo.length,
-        extentOffset: start + prefixo.length + selecionado.length,
-      ),
-    );
+  void _alternarLista() {
+    final novoTexto = _conteudoCtrl.alternarListaLinha();
+    ref.read(envioMensagemProvider.notifier).setConteudo(novoTexto);
+  }
+
+  void _inserirLink() {
+    final novoTexto = _conteudoCtrl.inserirLink();
     ref.read(envioMensagemProvider.notifier).setConteudo(novoTexto);
   }
 
@@ -367,46 +372,31 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                                     _FormatActionButton(
                                       tooltip: 'Negrito',
                                       icon: Icons.format_bold_rounded,
-                                      onTap: () => _aplicarFormatacao(
-                                        prefixo: '**',
-                                        sufixo: '**',
-                                        placeholder: 'negrito',
-                                      ),
+                                      ativo: _conteudoCtrl.estaEnvolvido('**'),
+                                      onTap: () => _alternarEnvoltorio('**'),
                                     ),
                                     _FormatActionButton(
                                       tooltip: 'Itálico',
                                       icon: Icons.format_italic_rounded,
-                                      onTap: () => _aplicarFormatacao(
-                                        prefixo: '*',
-                                        sufixo: '*',
-                                        placeholder: 'itálico',
-                                      ),
+                                      ativo: _conteudoCtrl.estaEnvolvido('*') &&
+                                          !_conteudoCtrl.estaEnvolvido('**'),
+                                      onTap: () => _alternarEnvoltorio('*'),
                                     ),
                                     _FormatActionButton(
                                       tooltip: 'Tachado',
                                       icon: Icons.format_strikethrough_rounded,
-                                      onTap: () => _aplicarFormatacao(
-                                        prefixo: '~~',
-                                        sufixo: '~~',
-                                        placeholder: 'tachado',
-                                      ),
+                                      ativo: _conteudoCtrl.estaEnvolvido('~~'),
+                                      onTap: () => _alternarEnvoltorio('~~'),
                                     ),
                                     _FormatActionButton(
                                       tooltip: 'Lista',
                                       icon: Icons.format_list_bulleted_rounded,
-                                      onTap: () => _aplicarFormatacao(
-                                        prefixo: '- ',
-                                        placeholder: 'item da lista',
-                                      ),
+                                      onTap: _alternarLista,
                                     ),
                                     _FormatActionButton(
                                       tooltip: 'Link',
                                       icon: Icons.link_rounded,
-                                      onTap: () => _aplicarFormatacao(
-                                        prefixo: '[',
-                                        sufixo: '](https://)',
-                                        placeholder: 'título do link',
-                                      ),
+                                      onTap: _inserirLink,
                                     ),
                                     const Spacer(),
                                     TextButton.icon(
@@ -468,26 +458,38 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                                         ),
                                 )
                               else
-                                TextField(
-                                  controller: _conteudoCtrl,
-                                  maxLines: 5,
-                                  minLines: 4,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    height: 1.4,
-                                    color: MensagensColors.ink,
-                                  ),
-                                  decoration: const InputDecoration(
-                                    hintText:
-                                        'Digite sua mensagem institucional...',
-                                    hintStyle: TextStyle(
-                                      color: MensagensColors.muted,
-                                      fontSize: 13.5,
+                                Theme(
+                                  data: Theme.of(context).copyWith(
+                                    textSelectionTheme: TextSelectionThemeData(
+                                      cursorColor: MensagensColors.brandDark,
+                                      selectionColor: MensagensColors.green
+                                          .withValues(alpha: 0.22),
+                                      selectionHandleColor:
+                                          MensagensColors.brandDark,
                                     ),
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.all(14),
                                   ),
-                                  onChanged: notifier.setConteudo,
+                                  child: TextField(
+                                    controller: _conteudoCtrl,
+                                    cursorColor: MensagensColors.brandDark,
+                                    maxLines: 5,
+                                    minLines: 4,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      height: 1.4,
+                                      color: MensagensColors.ink,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText:
+                                          'Digite sua mensagem institucional...',
+                                      hintStyle: TextStyle(
+                                        color: MensagensColors.muted,
+                                        fontSize: 13.5,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.all(14),
+                                    ),
+                                    onChanged: notifier.setConteudo,
+                                  ),
                                 ),
                             ],
                           ),
@@ -859,21 +861,36 @@ class _FormatActionButton extends StatelessWidget {
     required this.tooltip,
     required this.icon,
     required this.onTap,
+    this.ativo = false,
   });
 
   final String tooltip;
   final IconData icon;
   final VoidCallback onTap;
+  final bool ativo;
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onTap,
-      icon: Icon(icon, size: 18, color: MensagensColors.ink),
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-      padding: EdgeInsets.zero,
+    return Container(
+      margin: const EdgeInsets.only(right: 2),
+      decoration: BoxDecoration(
+        color: ativo
+            ? MensagensColors.green.withValues(alpha: 0.14)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onTap,
+        icon: Icon(
+          icon,
+          size: 18,
+          color: ativo ? MensagensColors.green : MensagensColors.ink,
+        ),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+        padding: EdgeInsets.zero,
+      ),
     );
   }
 }

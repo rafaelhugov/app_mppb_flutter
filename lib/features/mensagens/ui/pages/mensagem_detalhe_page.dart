@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/main_layout.dart';
-import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../models/mensagem_aviso_model.dart';
 import '../../providers/caixa_entrada_provider.dart';
 import '../widgets/mensagem_bolha_card.dart';
@@ -74,20 +73,41 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
     }
   }
 
+  Future<void> _alternarArquivo() async {
+    final msg = _mensagem;
+    if (msg == null) return;
+    final novoEstado = !msg.arquivada;
+    await ref
+        .read(caixaEntradaProvider.notifier)
+        .arquivar(msg.id, arquivada: novoEstado);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          novoEstado ? 'Aviso arquivado.' : 'Aviso movido para a caixa.',
+        ),
+      ),
+    );
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = MainLayout.horizontalPadding(context);
     final bottomPadding = MainLayout.contentBottomPadding(context);
+    final remetente = _mensagem?.remetenteNome?.trim().isNotEmpty == true
+        ? _mensagem!.remetenteNome!.trim()
+        : 'Comunicado Institucional';
 
     return Scaffold(
-      backgroundColor: MensagensColors.background,
+      backgroundColor: const Color(0xFFEFEAE2),
       body: Column(
         children: [
-          const HeroHeaderPublico(
-            label: '',
-            title: 'Detalhe do Aviso',
-            subtitle: '',
-            icon: Icons.campaign_rounded,
+          _WhatsAppChatHeader(
+            remetente: remetente,
+            mensagem: _mensagem,
+            onBack: () => Navigator.of(context).maybePop(),
+            onToggleArchive: _mensagem != null ? _alternarArquivo : null,
           ),
           Expanded(
             child: _carregando
@@ -105,19 +125,190 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
                     : SingleChildScrollView(
                         padding: EdgeInsets.fromLTRB(
                           horizontalPadding,
-                          12,
+                          14,
                           horizontalPadding,
                           bottomPadding,
                         ),
-                        child: MensagemBolhaCard(
-                          mensagem: _mensagem!,
-                          onConfirmarCiencia: _mensagem!.pendenteCiencia
-                              ? _confirmarCiencia
-                              : null,
+                        child: Column(
+                          children: [
+                            if (_mensagem!.dataEnvio != null) ...[
+                              _DataConversaPill(data: _mensagem!.dataEnvio!),
+                              const SizedBox(height: 12),
+                            ],
+                            MensagemBolhaCard(
+                              mensagem: _mensagem!,
+                              onConfirmarCiencia: _mensagem!.pendenteCiencia
+                                  ? _confirmarCiencia
+                                  : null,
+                            ),
+                          ],
                         ),
                       ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _WhatsAppChatHeader extends StatelessWidget {
+  const _WhatsAppChatHeader({
+    required this.remetente,
+    required this.mensagem,
+    required this.onBack,
+    this.onToggleArchive,
+  });
+
+  final String remetente;
+  final MensagemAvisoModel? mensagem;
+  final VoidCallback onBack;
+  final VoidCallback? onToggleArchive;
+
+  @override
+  Widget build(BuildContext context) {
+    final iniciais = _iniciais(remetente);
+    final subtitulo = mensagem == null
+        ? 'Carregando comunicado...'
+        : 'Comunicado Oficial • ${mensagem!.prioridade.apiValue}';
+
+    return Container(
+      color: MensagensColors.brandDark,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(4, 8, 8, 10),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                tooltip: 'Voltar',
+                onPressed: onBack,
+              ),
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: MensagensColors.green.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: MensagensColors.green.withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Text(
+                  iniciais,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      remetente,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      subtitulo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFCBD5E1),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onToggleArchive != null)
+                IconButton(
+                  icon: Icon(
+                    mensagem?.arquivada == true
+                        ? Icons.unarchive_outlined
+                        : Icons.archive_outlined,
+                    color: Colors.white,
+                  ),
+                  tooltip: mensagem?.arquivada == true
+                      ? 'Desarquivar'
+                      : 'Arquivar',
+                  onPressed: onToggleArchive,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _iniciais(String texto) {
+    final partes = texto
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (partes.isEmpty) return 'MP';
+    if (partes.length == 1) return partes.first.substring(0, 1).toUpperCase();
+    return (partes.first.substring(0, 1) + partes[1].substring(0, 1))
+        .toUpperCase();
+  }
+}
+
+class _DataConversaPill extends StatelessWidget {
+  const _DataConversaPill({required this.data});
+
+  final DateTime data;
+
+  static const _meses = [
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final texto = '${data.day} de ${_meses[data.month - 1]} de ${data.year}';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFDFD),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: MensagensColors.muted,
+        ),
       ),
     );
   }

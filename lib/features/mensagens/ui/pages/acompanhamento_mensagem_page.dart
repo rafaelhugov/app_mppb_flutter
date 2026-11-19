@@ -8,6 +8,7 @@ import '../../models/acompanhamento_mensagem_model.dart';
 import '../../models/mensagem_aviso_model.dart';
 import '../../providers/acompanhamento_provider.dart';
 import '../widgets/mensagens_theme.dart';
+import '../widgets/remetente_avatar.dart';
 
 class AcompanhamentoMensagemPage extends ConsumerStatefulWidget {
   const AcompanhamentoMensagemPage({super.key, required this.mensagemId});
@@ -235,6 +236,11 @@ class _AcompanhamentoMensagemPageState
                         border: Border.all(color: MensagensColors.border),
                       ),
                       child: ListTile(
+                        leading: RemetenteAvatar(
+                          nome: d.nome,
+                          matricula: d.matricula,
+                          size: 42,
+                        ),
                         title: Text(
                           '${d.nome} (${d.matricula})',
                           style: const TextStyle(

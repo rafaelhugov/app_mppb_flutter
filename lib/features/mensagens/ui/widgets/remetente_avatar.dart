@@ -115,3 +115,4 @@ class RemetenteAvatar extends ConsumerWidget {
         .toUpperCase();
   }
 }
+

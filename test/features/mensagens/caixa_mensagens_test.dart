@@ -106,7 +106,7 @@ void main() {
       expect(find.text('URGENTE'), findsOneWidget);
       expect(find.text('pauta.pdf'), findsOneWidget);
       expect(find.text('Confirmar Ciência'), findsOneWidget);
-      expect(find.text('Painel'), findsNothing);
+      expect(find.text('Painel de Envio de Avisos'), findsNothing);
       expect(fakeRepo.entreguesConfirmadas, [10]);
 
       await tester.tap(find.text('Confirmar Ciência'));
@@ -114,6 +114,32 @@ void main() {
 
       expect(fakeRepo.cienciaConfirmadaId, 10);
       expect(find.textContaining('Ciência confirmada em'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'CaixaMensagensPage exibe card explicativo do Painel de Envio de Avisos quando usuario tem permissao admin',
+    (tester) async {
+      final fakeRepo = _FakeMensagensRepository();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authProvider.overrideWith(_FakeAuthNotifier.new),
+            mensagensRepositoryProvider.overrideWithValue(fakeRepo),
+            podeEnviarMensagensProvider.overrideWith((ref) async => true),
+          ],
+          child: const MaterialApp(home: CaixaMensagensPage()),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Painel de Envio de Avisos'), findsOneWidget);
+      expect(
+        find.text('Enviar comunicados, gerenciar grupos e acompanhar leituras'),
+        findsOneWidget,
+      );
     },
   );
 

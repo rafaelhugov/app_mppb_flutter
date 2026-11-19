@@ -40,53 +40,12 @@ class _CaixaMensagensPageState extends ConsumerState<CaixaMensagensPage> {
             title: 'Mensagens e Avisos',
             subtitle: '',
             icon: Icons.campaign_rounded,
-            rightWidget: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (podeEnviar) ...[
-                  Material(
-                    color: MensagensColors.brandDark,
-                    borderRadius: BorderRadius.circular(16),
-                    child: InkWell(
-                      onTap: () => context.push('/mensagens/painel'),
-                      borderRadius: BorderRadius.circular(16),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.campaign_rounded,
-                              size: 15,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Painel',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                MensagensHeaderIconButton(
-                  icon: Icons.refresh_rounded,
-                  tooltip: 'Atualizar',
-                  onPressed: () => ref
-                      .read(caixaEntradaProvider.notifier)
-                      .carregar(forceRefresh: true),
-                ),
-              ],
+            rightWidget: MensagensHeaderIconButton(
+              icon: Icons.refresh_rounded,
+              tooltip: 'Atualizar',
+              onPressed: () => ref
+                  .read(caixaEntradaProvider.notifier)
+                  .carregar(forceRefresh: true),
             ),
           ),
           Padding(
@@ -117,6 +76,18 @@ class _CaixaMensagensPageState extends ConsumerState<CaixaMensagensPage> {
               ],
             ),
           ),
+          if (podeEnviar)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                MainLayout.horizontalPadding(context),
+                2,
+                MainLayout.horizontalPadding(context),
+                8,
+              ),
+              child: _PainelAdminBanner(
+                onTap: () => context.push('/mensagens/painel'),
+              ),
+            ),
           Expanded(
             child: _buildLista(context, state),
           ),
@@ -176,6 +147,87 @@ class _CaixaMensagensPageState extends ConsumerState<CaixaMensagensPage> {
                 .arquivar(item.id, arquivada: !item.arquivada),
           );
         },
+      ),
+    );
+  }
+}
+
+class _PainelAdminBanner extends StatelessWidget {
+  const _PainelAdminBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: MensagensColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: MensagensColors.red.withValues(alpha: 0.25),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D101828),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: MensagensColors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.campaign_rounded,
+                    color: MensagensColors.red,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Painel de Envio de Avisos',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          color: MensagensColors.ink,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Enviar comunicados, gerenciar grupos e acompanhar leituras',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: MensagensColors.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: MensagensColors.muted,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

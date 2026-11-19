@@ -30,6 +30,8 @@
 	<string>O Face ID pode ser usado para confirmar sua identidade e acessar o MPPB+ com segurança.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>O MPPB+ necessita de acesso à câmera para captura de fotos e documentos nos serviços e manifestações da Ouvidoria.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>O MPPB+ necessita de acesso ao microfone para gravação de avisos em áudio e vídeos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>O MPPB+ necessita de acesso à galeria de fotos para anexar imagens e documentos nos serviços e manifestações da Ouvidoria.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

@@ -26,6 +26,12 @@ import '../../features/contatos/ui/contatos_page.dart';
 import '../../features/videos/models/video_item.dart';
 import '../../features/videos/ui/videos_page.dart';
 import '../../features/videos/ui/video_watch_page.dart';
+import '../../features/mensagens/ui/pages/acompanhamento_mensagem_page.dart';
+import '../../features/mensagens/ui/pages/caixa_mensagens_page.dart';
+import '../../features/mensagens/ui/pages/compor_mensagem_page.dart';
+import '../../features/mensagens/ui/pages/grupos_personalizados_page.dart';
+import '../../features/mensagens/ui/pages/mensagem_detalhe_page.dart';
+import '../../features/mensagens/ui/pages/painel_remetente_page.dart';
 import '../network/connectivity_provider.dart';
 import '../version/force_update_provider.dart';
 import '../ui/main_layout.dart';
@@ -64,12 +70,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/concessao-afastamento',
     '/designacoes',
     '/perfil',
+    '/mensagens',
   ];
   final onlineOnlyRoutes = [
     '/contracheque',
     '/pagamentos',
     '/concessao-afastamento',
     '/designacoes',
+    '/mensagens',
     '/noticias',
     '/diario_oficial',
     '/certidao-extrajudicial',
@@ -248,6 +256,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/contatos',
             builder: (context, state) => const ContatosPage(),
+          ),
+          GoRoute(
+            path: '/mensagens',
+            builder: (context, state) => const CaixaMensagensPage(),
+          ),
+          GoRoute(
+            path: '/mensagens/painel',
+            builder: (context, state) => const PainelRemetentePage(),
+          ),
+          GoRoute(
+            path: '/mensagens/painel/nova',
+            builder: (context, state) => const ComporMensagemPage(),
+          ),
+          GoRoute(
+            path: '/mensagens/painel/grupos',
+            builder: (context, state) => const GruposPersonalizadosPage(),
+          ),
+          GoRoute(
+            path: '/mensagens/painel/:id/acompanhamento',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+              return AcompanhamentoMensagemPage(mensagemId: id);
+            },
+          ),
+          GoRoute(
+            path: '/mensagens/:id',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+              return MensagemDetalhePage(mensagemId: id);
+            },
           ),
         ],
       ),

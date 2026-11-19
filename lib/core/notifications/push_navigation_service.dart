@@ -12,6 +12,7 @@ import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
 import '../../features/pagamentos/providers/pagamentos_provider.dart';
 import '../../features/videos/providers/videos_provider.dart';
+import '../../features/mensagens/providers/caixa_entrada_provider.dart';
 import '../router/app_router.dart';
 import 'notification_center_provider.dart';
 import 'push_notification_service.dart';
@@ -29,6 +30,8 @@ const String _pagamentosRoute = '/pagamentos';
 const String _afastamentoStatusEventType = 'AFASTAMENTO_STATUS_ALTERADO';
 const String _afastamentoMovimentacaoEventType = 'AFASTAMENTO_MOVIMENTACAO';
 const String _afastamentosRoute = '/concessao-afastamento';
+const String _mensagemAvisoEventType = 'MENSAGEM_AVISO';
+const String _mensagensRoute = '/mensagens';
 
 abstract class PushMessageGateway {
   Stream<RemoteMessage> get foregroundMessages;
@@ -110,6 +113,7 @@ class PushNavigationService {
   final Future<void> Function() refreshContracheque;
   final Future<void> Function() refreshPagamentos;
   final Future<void> Function() refreshAfastamentos;
+  final Future<void> Function()? refreshMensagens;
   final Future<void> Function(RemoteMessage message)? recordNotification;
 
   StreamSubscription<RemoteMessage>? _foregroundSubscription;
@@ -127,6 +131,7 @@ class PushNavigationService {
     required this.refreshContracheque,
     required this.refreshPagamentos,
     required this.refreshAfastamentos,
+    this.refreshMensagens,
     this.recordNotification,
   });
 
@@ -334,6 +339,9 @@ class PushNavigationService {
   }
 
   Future<void> _refreshFunctionalRoute(String route) {
+    if (route.startsWith(_mensagensRoute)) {
+      return refreshMensagens?.call() ?? Future<void>.value();
+    }
     switch (route) {
       case _contrachequeRoute:
         return refreshContracheque();
@@ -355,6 +363,9 @@ class PushNavigationService {
     }
     if (_isAllowedAfastamentosPayload(payload)) {
       return _afastamentosRoute;
+    }
+    if (_isAllowedMensagemAvisoPayload(payload)) {
+      return payload.rota!;
     }
     return null;
   }
@@ -390,6 +401,13 @@ class PushNavigationService {
         payload.rota == _afastamentosRoute;
   }
 
+  bool _isAllowedMensagemAvisoPayload(PushTechnicalPayload payload) {
+    final rota = payload.rota?.trim();
+    return payload.tipoEvento == _mensagemAvisoEventType &&
+        rota != null &&
+        rota.startsWith(_mensagensRoute);
+  }
+
   bool _isAllowedAuthenticatedFunctionalPayload(PushTechnicalPayload payload) {
     return _functionalRoute(payload) != null;
   }
@@ -397,7 +415,8 @@ class PushNavigationService {
   bool _isFunctionalRoute(String? route) {
     return route == _contrachequeRoute ||
         route == _pagamentosRoute ||
-        route == _afastamentosRoute;
+        route == _afastamentosRoute ||
+        (route != null && route.startsWith(_mensagensRoute));
   }
 
   bool _markOpenedMessageAsPending(String? key) {
@@ -452,6 +471,11 @@ final pushNavigationServiceProvider = Provider<PushNavigationService>((ref) {
     },
     refreshAfastamentos: () {
       return ref.read(concessaoAfastamentoProvider.notifier).atualizarTudo();
+    },
+    refreshMensagens: () {
+      return ref
+          .read(caixaEntradaProvider.notifier)
+          .carregar(forceRefresh: true);
     },
     refreshVideos: ({bool isUserRefresh = true}) {
       return ref

@@ -1,14 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'mensagens_theme.dart';
+
+/// Formatter que continua automaticamente listas (`• ` ou `N. `) ao pressionar
+/// Enter e encerra a lista quando o usuário pressiona Enter em um item vazio.
+class ListContinuationTextInputFormatter extends TextInputFormatter {
+  static final RegExp _orderedListRegex = RegExp(r'^(\d+\.\s)(.*)$');
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final sel = newValue.selection;
+    if (!sel.isValid || !sel.isCollapsed) return newValue;
+
+    final pos = sel.start;
+    if (pos <= 0 || newValue.text[pos - 1] != '\n') return newValue;
+
+    final oldNewlines = '\n'.allMatches(oldValue.text).length;
+    final newNewlines = '\n'.allMatches(newValue.text).length;
+    if (newNewlines != oldNewlines + 1) return newValue;
+
+    final beforeNl = newValue.text.substring(0, pos - 1);
+    final prevLineStart = beforeNl.lastIndexOf('\n') + 1;
+    final prevLine = beforeNl.substring(prevLineStart);
+
+    if (prevLine == '• ' ||
+        prevLine == '- ' ||
+        prevLine == '•' ||
+        prevLine == '-') {
+      final limpo = newValue.text.replaceRange(prevLineStart, pos, '');
+      return TextEditingValue(
+        text: limpo,
+        selection: TextSelection.collapsed(offset: prevLineStart),
+      );
+    }
+
+    if (prevLine.startsWith('• ') || prevLine.startsWith('- ')) {
+      final comBullet = newValue.text.replaceRange(pos, pos, '• ');
+      return TextEditingValue(
+        text: comBullet,
+        selection: TextSelection.collapsed(offset: pos + 2),
+      );
+    }
+
+    final prevOrdered = _orderedListRegex.firstMatch(prevLine);
+    if (prevOrdered != null) {
+      final conteudoItem = prevOrdered.group(2)!.trim();
+      if (conteudoItem.isEmpty) {
+        final limpo = newValue.text.replaceRange(prevLineStart, pos, '');
+        return TextEditingValue(
+          text: limpo,
+          selection: TextSelection.collapsed(offset: prevLineStart),
+        );
+      }
+      final numAtual = int.tryParse(
+        prevOrdered.group(1)!.replaceAll('.', '').trim(),
+      );
+      if (numAtual != null) {
+        final prox = '${numAtual + 1}. ';
+        final comNumero = newValue.text.replaceRange(pos, pos, prox);
+        return TextEditingValue(
+          text: comNumero,
+          selection: TextSelection.collapsed(offset: pos + prox.length),
+        );
+      }
+    }
+
+    return newValue;
+  }
+}
 
 /// Controller de texto que aplica formatação visual imediata (negrito, itálico,
 /// tachado, links, lista com marcadores `•` e lista ordenada `1.`) no próprio
 /// `TextField`, ocultando visualmente os tokens Markdown sem alterar índices.
 class RichMarkdownEditingController extends TextEditingController {
   RichMarkdownEditingController({super.text});
-
-  String _ultimoTexto = '';
 
   static final RegExp _tokenRegex = RegExp(
     r'(\*\*(.+?)\*\*)|(~~(.+?)~~)|(\*(.+?)\*)|(\[([^\]]+)\]\(([^)]+)\))',
@@ -20,12 +89,6 @@ class RichMarkdownEditingController extends TextEditingController {
     fontSize: 0.01,
     color: Colors.transparent,
   );
-
-  @override
-  set value(TextEditingValue newValue) {
-    _ultimoTexto = text;
-    super.value = newValue;
-  }
 
   @override
   TextSpan buildTextSpan({
@@ -315,60 +378,6 @@ class RichMarkdownEditingController extends TextEditingController {
       text: novoTexto,
       selection: TextSelection.collapsed(offset: pos + prefixo.length),
     );
-    return normalizarParaMarkdown();
-  }
-
-  /// Continua automaticamente listas (`• ` ou `N. `) ao pressionar Enter.
-  String processarAlteracaoUsuario(String novoTexto) {
-    final cresceuUmChar = novoTexto.length == _ultimoTexto.length + 1;
-    final pos = selection.isValid ? selection.start : novoTexto.length;
-    if (cresceuUmChar && pos > 0 && novoTexto[pos - 1] == '\n') {
-      final beforeNl = novoTexto.substring(0, pos - 1);
-      final prevLineStart = beforeNl.lastIndexOf('\n') + 1;
-      final prevLine = beforeNl.substring(prevLineStart);
-
-      if (prevLine == '• ' || prevLine == '- ') {
-        final limpo = novoTexto.replaceRange(prevLineStart, pos, '');
-        value = TextEditingValue(
-          text: limpo,
-          selection: TextSelection.collapsed(offset: prevLineStart),
-        );
-        return normalizarParaMarkdown();
-      }
-      if (prevLine.startsWith('• ') || prevLine.startsWith('- ')) {
-        final comBullet = novoTexto.replaceRange(pos, pos, '• ');
-        value = TextEditingValue(
-          text: comBullet,
-          selection: TextSelection.collapsed(offset: pos + 2),
-        );
-        return normalizarParaMarkdown();
-      }
-      final prevOrdered = _orderedListRegex.firstMatch(prevLine);
-      if (prevOrdered != null) {
-        final conteudoItem = prevOrdered.group(2)!.trim();
-        if (conteudoItem.isEmpty) {
-          final limpo = novoTexto.replaceRange(prevLineStart, pos, '');
-          value = TextEditingValue(
-            text: limpo,
-            selection: TextSelection.collapsed(offset: prevLineStart),
-          );
-          return normalizarParaMarkdown();
-        }
-        final numAtual = int.tryParse(
-          prevOrdered.group(1)!.replaceAll('.', '').trim(),
-        );
-        if (numAtual != null) {
-          final prox = '${numAtual + 1}. ';
-          final comNumero = novoTexto.replaceRange(pos, pos, prox);
-          value = TextEditingValue(
-            text: comNumero,
-            selection: TextSelection.collapsed(offset: pos + prox.length),
-          );
-          return normalizarParaMarkdown();
-        }
-      }
-    }
-    _ultimoTexto = novoTexto;
     return normalizarParaMarkdown();
   }
 

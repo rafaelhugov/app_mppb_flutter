@@ -271,6 +271,59 @@ void main() {
       final mdOrdered = controller.alternarListaOrdenadaLinha();
       expect(controller.text, '1. Arroz');
       expect(mdOrdered, '1. Arroz');
+
+      final formatter = ListContinuationTextInputFormatter();
+      final enterBullet = formatter.formatEditUpdate(
+        const TextEditingValue(
+          text: '• Arroz',
+          selection: TextSelection.collapsed(offset: 7),
+        ),
+        const TextEditingValue(
+          text: '• Arroz\n',
+          selection: TextSelection.collapsed(offset: 8),
+        ),
+      );
+      expect(enterBullet.text, '• Arroz\n• ');
+      expect(enterBullet.selection.baseOffset, 10);
+
+      final exitBullet = formatter.formatEditUpdate(
+        const TextEditingValue(
+          text: '• Arroz\n• ',
+          selection: TextSelection.collapsed(offset: 10),
+        ),
+        const TextEditingValue(
+          text: '• Arroz\n• \n',
+          selection: TextSelection.collapsed(offset: 11),
+        ),
+      );
+      expect(exitBullet.text, '• Arroz\n');
+      expect(exitBullet.selection.baseOffset, 8);
+
+      final enterOrdered = formatter.formatEditUpdate(
+        const TextEditingValue(
+          text: '1. Arroz',
+          selection: TextSelection.collapsed(offset: 8),
+        ),
+        const TextEditingValue(
+          text: '1. Arroz\n',
+          selection: TextSelection.collapsed(offset: 9),
+        ),
+      );
+      expect(enterOrdered.text, '1. Arroz\n2. ');
+      expect(enterOrdered.selection.baseOffset, 12);
+
+      final exitOrdered = formatter.formatEditUpdate(
+        const TextEditingValue(
+          text: '1. Arroz\n2. ',
+          selection: TextSelection.collapsed(offset: 12),
+        ),
+        const TextEditingValue(
+          text: '1. Arroz\n2. \n',
+          selection: TextSelection.collapsed(offset: 13),
+        ),
+      );
+      expect(exitOrdered.text, '1. Arroz\n');
+      expect(exitOrdered.selection.baseOffset, 9);
     },
   );
 }

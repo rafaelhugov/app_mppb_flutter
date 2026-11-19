@@ -26,6 +26,8 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
   final TextEditingController _tituloCtrl = TextEditingController();
   final TextEditingController _conteudoCtrl = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
+  final GlobalKey<AudioRecorderBarState> _audioRecorderKey =
+      GlobalKey<AudioRecorderBarState>();
 
   @override
   void dispose() {
@@ -154,9 +156,11 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     const SeletorDestinatariosWidget(),
                     const SizedBox(height: 12),
                     Container(
@@ -264,8 +268,19 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                       ),
                       onChanged: notifier.setConteudo,
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Mídias e Anexos',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: MensagensColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     AudioRecorderBar(
+                      key: _audioRecorderKey,
+                      ocultarBotaoInicial: true,
                       onAudioConfirmado: (arquivo, duracao) async {
                         await notifier.uploadAnexo(
                           arquivo,
@@ -273,57 +288,55 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                         );
                       },
                     ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    Row(
                       children: [
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: MensagensColors.ink,
-                            side: const BorderSide(
-                              color: MensagensColors.border,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                        Expanded(
+                          child: _MidiaActionTile(
+                            icon: Icons.mic_none_rounded,
+                            cor: MensagensColors.green,
+                            titulo: 'Áudio',
+                            subtitulo: 'Gravar voz',
+                            enabled: !state.enviandoAnexo,
+                            onTap: () =>
+                                _audioRecorderKey.currentState?.iniciarGravacao(),
                           ),
-                          onPressed: state.enviandoAnexo
-                              ? null
-                              : () => _selecionarFotoOuVideo(video: false),
-                          icon: const Icon(Icons.photo_camera_outlined),
-                          label: const Text('Foto'),
                         ),
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: MensagensColors.ink,
-                            side: const BorderSide(
-                              color: MensagensColors.border,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _MidiaActionTile(
+                            icon: Icons.photo_camera_outlined,
+                            cor: MensagensColors.blue,
+                            titulo: 'Foto',
+                            subtitulo: 'Galeria',
+                            enabled: !state.enviandoAnexo,
+                            onTap: () => _selecionarFotoOuVideo(video: false),
                           ),
-                          onPressed: state.enviandoAnexo
-                              ? null
-                              : () => _selecionarFotoOuVideo(video: true),
-                          icon: const Icon(Icons.videocam_outlined),
-                          label: const Text('Vídeo'),
                         ),
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: MensagensColors.ink,
-                            side: const BorderSide(
-                              color: MensagensColors.border,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _MidiaActionTile(
+                            icon: Icons.videocam_outlined,
+                            cor: MensagensColors.orange,
+                            titulo: 'Vídeo',
+                            subtitulo: 'Galeria',
+                            enabled: !state.enviandoAnexo,
+                            onTap: () => _selecionarFotoOuVideo(video: true),
                           ),
-                          onPressed:
-                              state.enviandoAnexo ? null : _selecionarDocumento,
-                          icon: const Icon(Icons.attach_file),
-                          label: const Text('Documento (PDF, Office, MD...)'),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _MidiaActionTile(
+                            icon: Icons.description_outlined,
+                            cor: MensagensColors.red,
+                            titulo: 'Documento',
+                            subtitulo: 'PDF, Office, MD',
+                            enabled: !state.enviandoAnexo,
+                            onTap: _selecionarDocumento,
+                          ),
                         ),
                       ],
                     ),
@@ -368,71 +381,64 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                           ),
                         ),
                     ],
-                    const Divider(height: 24, color: MensagensColors.border),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: MensagensColors.ink,
-                              side: const BorderSide(
-                                color: MensagensColors.border,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () async {
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Agendamento e Validade',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: MensagensColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: MensagensColors.background,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: MensagensColors.border),
+                      ),
+                      child: Column(
+                        children: [
+                          _OpcaoTemporalRow(
+                            icon: Icons.schedule_rounded,
+                            titulo: 'Agendar envio',
+                            valor: state.dataAgendamento == null
+                                ? 'Envio imediato'
+                                : DateFormat(
+                                    'dd/MM/yyyy HH:mm',
+                                  ).format(state.dataAgendamento!),
+                            definido: state.dataAgendamento != null,
+                            onTap: () async {
                               final dt = await _escolherDataHora(context);
                               if (dt != null) notifier.setDataAgendamento(dt);
                             },
-                            icon: const Icon(Icons.schedule),
-                            label: Text(
-                              state.dataAgendamento == null
-                                  ? 'Agendar envio'
-                                  : 'Agendado: ${DateFormat('dd/MM HH:mm').format(state.dataAgendamento!)}',
-                            ),
+                            onClear: state.dataAgendamento != null
+                                ? () => notifier.setDataAgendamento(null)
+                                : null,
                           ),
-                        ),
-                        if (state.dataAgendamento != null)
-                          IconButton(
-                            onPressed: () => notifier.setDataAgendamento(null),
-                            icon: const Icon(Icons.clear),
+                          const Divider(
+                            height: 1,
+                            color: MensagensColors.border,
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: MensagensColors.ink,
-                              side: const BorderSide(
-                                color: MensagensColors.border,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () async {
+                          _OpcaoTemporalRow(
+                            icon: Icons.timer_off_outlined,
+                            titulo: 'Expiração do aviso',
+                            valor: state.dataExpiracao == null
+                                ? 'Sem data de expiração'
+                                : DateFormat(
+                                    'dd/MM/yyyy HH:mm',
+                                  ).format(state.dataExpiracao!),
+                            definido: state.dataExpiracao != null,
+                            onTap: () async {
                               final dt = await _escolherDataHora(context);
                               if (dt != null) notifier.setDataExpiracao(dt);
                             },
-                            icon: const Icon(Icons.timer_off_outlined),
-                            label: Text(
-                              state.dataExpiracao == null
-                                  ? 'Definir expiração'
-                                  : 'Expira: ${DateFormat('dd/MM HH:mm').format(state.dataExpiracao!)}',
-                            ),
+                            onClear: state.dataExpiracao != null
+                                ? () => notifier.setDataExpiracao(null)
+                                : null,
                           ),
-                        ),
-                        if (state.dataExpiracao != null)
-                          IconButton(
-                            onPressed: () => notifier.setDataExpiracao(null),
-                            icon: const Icon(Icons.clear),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                     if (state.errorMessage != null) ...[
                       const SizedBox(height: 12),
@@ -481,10 +487,178 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                     ),
                   ],
                 ),
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MidiaActionTile extends StatelessWidget {
+  const _MidiaActionTile({
+    required this.icon,
+    required this.cor,
+    required this.titulo,
+    required this.subtitulo,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color cor;
+  final String titulo;
+  final String subtitulo;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.55,
+      child: Container(
+        height: 70,
+        decoration: BoxDecoration(
+          color: MensagensColors.background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: MensagensColors.border),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: cor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: cor, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          titulo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: MensagensColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          subtitulo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: MensagensColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OpcaoTemporalRow extends StatelessWidget {
+  const _OpcaoTemporalRow({
+    required this.icon,
+    required this.titulo,
+    required this.valor,
+    required this.definido,
+    required this.onTap,
+    this.onClear,
+  });
+
+  final IconData icon;
+  final String titulo;
+  final String valor;
+  final bool definido;
+  final VoidCallback onTap;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: definido ? MensagensColors.green : MensagensColors.ink,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titulo,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: MensagensColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    valor,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: definido
+                          ? MensagensColors.green
+                          : MensagensColors.muted,
+                      fontWeight: definido ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (onClear != null)
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Limpar',
+                onPressed: onClear,
+                icon: const Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: MensagensColors.muted,
+                ),
+              )
+            else
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: MensagensColors.muted,
+              ),
+          ],
+        ),
       ),
     );
   }

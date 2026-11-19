@@ -6,7 +6,7 @@ import '../../../../core/ui/main_layout.dart';
 import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../providers/caixa_entrada_provider.dart';
 import '../../providers/permissao_mensagens_provider.dart';
-import '../widgets/mensagem_bolha_card.dart';
+import '../widgets/mensagem_conversa_tile.dart';
 import '../widgets/mensagens_theme.dart';
 
 class CaixaMensagensPage extends ConsumerStatefulWidget {
@@ -116,37 +116,63 @@ class _CaixaMensagensPageState extends ConsumerState<CaixaMensagensPage> {
       );
     }
 
-    final horizontalPadding = MainLayout.horizontalPadding(context);
     final bottomPadding = MainLayout.contentBottomPadding(context);
 
     return RefreshIndicator(
       color: MensagensColors.green,
       onRefresh: () =>
           ref.read(caixaEntradaProvider.notifier).carregar(forceRefresh: true),
-      child: ListView.builder(
-        padding: EdgeInsets.fromLTRB(
-          horizontalPadding,
-          8,
-          horizontalPadding,
-          bottomPadding,
+      child: Container(
+        color: MensagensColors.surface,
+        child: ListView.separated(
+          padding: EdgeInsets.only(bottom: bottomPadding),
+          itemCount: state.itens.length,
+          separatorBuilder: (_, _) => const Divider(
+            height: 1,
+            thickness: 0.6,
+            indent: 78,
+            endIndent: 16,
+            color: MensagensColors.border,
+          ),
+          itemBuilder: (context, index) {
+            final item = state.itens[index];
+            return Dismissible(
+              key: ValueKey('msg_${item.id}'),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                color: MensagensColors.green,
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      item.arquivada
+                          ? Icons.unarchive_outlined
+                          : Icons.archive_outlined,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      item.arquivada ? 'Desarquivar' : 'Arquivar',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              onDismissed: (_) => ref
+                  .read(caixaEntradaProvider.notifier)
+                  .arquivar(item.id, arquivada: !item.arquivada),
+              child: MensagemConversaTile(
+                mensagem: item,
+                onTap: () => context.push('/mensagens/${item.id}'),
+              ),
+            );
+          },
         ),
-        itemCount: state.itens.length,
-        itemBuilder: (context, index) {
-          final item = state.itens[index];
-          return MensagemBolhaCard(
-            key: ValueKey('msg_${item.id}'),
-            mensagem: item,
-            onTap: () => context.push('/mensagens/${item.id}'),
-            onConfirmarCiencia: item.pendenteCiencia
-                ? () => ref
-                    .read(caixaEntradaProvider.notifier)
-                    .confirmarCiencia(item.id)
-                : null,
-            onArquivar: () => ref
-                .read(caixaEntradaProvider.notifier)
-                .arquivar(item.id, arquivada: !item.arquivada),
-          );
-        },
       ),
     );
   }

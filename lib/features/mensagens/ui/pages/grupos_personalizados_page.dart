@@ -32,38 +32,36 @@ class GruposPersonalizadosPage extends ConsumerWidget {
       backgroundColor: MensagensColors.background,
       body: Column(
         children: [
-          HeroHeaderPublico(
+          const HeroHeaderPublico(
             label: '',
             title: 'Grupos Personalizados',
             subtitle: '',
             icon: Icons.groups_rounded,
-            rightWidget: Material(
-              color: MensagensColors.green,
-              borderRadius: BorderRadius.circular(16),
-              child: InkWell(
-                onTap: () => _abrirDialogGrupo(context, ref),
-                borderRadius: BorderRadius.circular(16),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.group_add_rounded,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Novo Grupo',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              4,
+              horizontalPadding,
+              8,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: MensagensColors.green,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
+                ),
+                onPressed: () => _abrirDialogGrupo(context, ref),
+                icon: const Icon(Icons.group_add_rounded, size: 18),
+                label: const Text(
+                  'Novo Grupo',
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ),

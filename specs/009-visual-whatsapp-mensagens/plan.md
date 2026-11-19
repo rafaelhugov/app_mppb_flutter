@@ -5,3 +5,4 @@
 2. Atualizar `CaixaMensagensPage` (`lib/features/mensagens/ui/pages/caixa_mensagens_page.dart`) para usar `MensagemConversaTile` com `Divider` recuado e `Dismissible` opcional para arquivar/desarquivar rapidamente, mantendo o `HeroHeaderPublico`, `MensagensSegmentedPillBar` e `_PainelAdminBanner`.
 3. Atualizar `MensagemDetalhePage` (`lib/features/mensagens/ui/pages/mensagem_detalhe_page.dart`) para apresentar cabeçalho estilo conversa do WhatsApp (avatar, remetente, prioridade, ação de arquivar) e fundo de conversa `#EFEAE2` envolvendo o `MensagemBolhaCard` completo.
 4. Atualizar/adicionar testes em `test/features/mensagens/caixa_mensagens_test.dart`.
+

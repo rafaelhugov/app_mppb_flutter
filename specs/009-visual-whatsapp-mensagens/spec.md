@@ -16,3 +16,4 @@ Atualmente `CaixaMensagensPage` exibe cards completos (`MensagemBolhaCard`) dire
 ## Critérios de Aceitação
 - Nenhum card expandido com mídias/botões deve poluir a lista principal de `CaixaMensagensPage`.
 - Todos os testes existentes e novos em `test/features/mensagens/` passam sem falhas e `flutter analyze` retorna 0 issues.
+

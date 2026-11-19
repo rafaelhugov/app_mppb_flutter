@@ -123,12 +123,21 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
     );
   }
 
-  Future<DateTime?> _escolherDataHora(BuildContext context) async {
+  Future<DateTime?> _escolherDataHora(
+    BuildContext context, {
+    DateTime? referenciaInicial,
+    DateTime? dataMinima,
+  }) async {
     final agora = DateTime.now();
+    final min = dataMinima ?? agora;
+    final inicial = referenciaInicial != null && referenciaInicial.isAfter(min)
+        ? referenciaInicial
+        : min.add(const Duration(hours: 1));
+    final firstDate = DateTime(min.year, min.month, min.day);
     final data = await showDatePicker(
       context: context,
-      initialDate: agora.add(const Duration(hours: 1)),
-      firstDate: agora,
+      initialDate: inicial,
+      firstDate: firstDate,
       lastDate: agora.add(const Duration(days: 365)),
       builder: (ctx, child) => Theme(
         data: _pickerTheme(ctx),
@@ -138,7 +147,7 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
     if (data == null || !context.mounted) return null;
     final hora = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(agora.add(const Duration(hours: 1))),
+      initialTime: TimeOfDay.fromDateTime(inicial),
       builder: (ctx, child) => Theme(
         data: _pickerTheme(ctx),
         child: child!,
@@ -702,7 +711,17 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                           definido: state.dataAgendamento != null,
                           onTap: () async {
                             final dt = await _escolherDataHora(context);
-                            if (dt != null) notifier.setDataAgendamento(dt);
+                            if (dt == null || !context.mounted) return;
+                            final limpouExp = notifier.setDataAgendamento(dt);
+                            if (limpouExp) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'A data de expiração foi limpa porque era menor que 1h após o novo agendamento.',
+                                  ),
+                                ),
+                              );
+                            }
                           },
                           onClear: state.dataAgendamento != null
                               ? () => notifier.setDataAgendamento(null)
@@ -716,14 +735,31 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                           icon: Icons.timer_off_outlined,
                           titulo: 'Expiração do aviso',
                           valor: state.dataExpiracao == null
-                              ? 'Sem data de expiração'
+                              ? 'Sem data de expiração (mín. +1h após envio)'
                               : DateFormat(
                                   'dd/MM/yyyy HH:mm',
                                 ).format(state.dataExpiracao!),
                           definido: state.dataExpiracao != null,
                           onTap: () async {
-                            final dt = await _escolherDataHora(context);
-                            if (dt != null) notifier.setDataExpiracao(dt);
+                            final base = notifier.dataBaseEnvio();
+                            final dt = await _escolherDataHora(
+                              context,
+                              dataMinima: base,
+                              referenciaInicial: base.add(
+                                const Duration(hours: 24),
+                              ),
+                            );
+                            if (dt == null || !context.mounted) return;
+                            final ok = notifier.setDataExpiracao(dt);
+                            if (!ok) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'A expiração deve ter pelo menos 1 hora de margem após o envio.',
+                                  ),
+                                ),
+                              );
+                            }
                           },
                           onClear: state.dataExpiracao != null
                               ? () => notifier.setDataExpiracao(null)

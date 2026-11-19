@@ -55,6 +55,12 @@ void main() {
         find.text('Nenhum grupo personalizado cadastrado.'),
         findsOneWidget,
       );
+
+      await tester.tap(find.text('Novo Grupo'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dados do Grupo'), findsOneWidget);
+      expect(find.text('Salvar Grupo'), findsOneWidget);
     },
   );
 }

@@ -197,5 +197,36 @@ void main() {
       expect(find.text('Expiração do aviso'), findsOneWidget);
     },
   );
+
+  test(
+    'EnvioMensagemNotifier exige margem mínima de 1 hora entre envio/agendamento e expiração',
+    () {
+      final container = ProviderContainer(
+        overrides: [
+          mensagensRepositoryProvider.overrideWithValue(_FakeRemetenteRepo()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(envioMensagemProvider.notifier);
+      final agendamento = DateTime.now().add(const Duration(days: 1));
+      notifier.setDataAgendamento(agendamento);
+
+      final aceitouMenor = notifier.setDataExpiracao(
+        agendamento.add(const Duration(minutes: 30)),
+      );
+      expect(aceitouMenor, isFalse);
+      expect(
+        container.read(envioMensagemProvider).errorMessage,
+        contains('1 hora'),
+      );
+
+      final aceitouValido = notifier.setDataExpiracao(
+        agendamento.add(const Duration(hours: 2)),
+      );
+      expect(aceitouValido, isTrue);
+      expect(container.read(envioMensagemProvider).dataExpiracao, isNotNull);
+    },
+  );
 }
 

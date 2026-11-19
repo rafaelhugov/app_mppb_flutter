@@ -261,6 +261,16 @@ void main() {
       expect(controller.text.startsWith('**Olá**'), isTrue);
       controller.alternarEnvoltorio('**');
       expect(controller.text.startsWith('Olá'), isTrue);
+
+      controller.text = 'Arroz';
+      controller.selection = const TextSelection.collapsed(offset: 5);
+      final mdBullet = controller.alternarListaLinha();
+      expect(controller.text, '• Arroz');
+      expect(mdBullet, '- Arroz');
+
+      final mdOrdered = controller.alternarListaOrdenadaLinha();
+      expect(controller.text, '1. Arroz');
+      expect(mdOrdered, '1. Arroz');
     },
   );
 }

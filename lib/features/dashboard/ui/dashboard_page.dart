@@ -462,6 +462,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                           icon: Icons.assignment,
                           route: '/pagamentos',
                         ),
+                        _DashboardService(
+                          title: 'Avisos',
+                          subtitle: 'Comunicados',
+                          icon: Icons.campaign_rounded,
+                          route: '/mensagens',
+                        ),
                       ],
                     ),
 

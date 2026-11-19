@@ -7,6 +7,7 @@ import 'package:app_mppb_flutter/features/mensagens/providers/envio_mensagem_pro
 import 'package:app_mppb_flutter/features/mensagens/providers/permissao_mensagens_provider.dart';
 import 'package:app_mppb_flutter/features/mensagens/ui/pages/compor_mensagem_page.dart';
 import 'package:app_mppb_flutter/features/mensagens/ui/pages/painel_remetente_page.dart';
+import 'package:app_mppb_flutter/features/mensagens/ui/widgets/rich_markdown_controller.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -226,6 +227,40 @@ void main() {
       );
       expect(aceitouValido, isTrue);
       expect(container.read(envioMensagemProvider).dataExpiracao, isNotNull);
+    },
+  );
+
+  testWidgets(
+    'RichMarkdownEditingController aplica formatacao visual imediata mantendo o mesmo tamanho do texto',
+    (tester) async {
+      final controller = RichMarkdownEditingController(
+        text: 'Olá **negrito**, *itálico* e ~~tachado~~',
+      );
+      addTearDown(controller.dispose);
+
+      late TextSpan spanGerado;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              spanGerado = controller.buildTextSpan(
+                context: context,
+                style: const TextStyle(fontSize: 14),
+                withComposing: false,
+              );
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      expect(spanGerado.toPlainText(), controller.text);
+
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 3);
+      controller.alternarEnvoltorio('**');
+      expect(controller.text.startsWith('**Olá**'), isTrue);
+      controller.alternarEnvoltorio('**');
+      expect(controller.text.startsWith('Olá'), isTrue);
     },
   );
 }

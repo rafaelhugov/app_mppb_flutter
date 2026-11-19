@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/mensagem_anexo_model.dart';
 import '../../models/mensagem_aviso_model.dart';
 import 'mensagens_theme.dart';
+import 'remetente_avatar.dart';
 
 /// Item compacto de lista estilo conversa do WhatsApp para a caixa de avisos.
 class MensagemConversaTile extends StatelessWidget {
@@ -36,9 +37,11 @@ class MensagemConversaTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _AvatarRemetente(
+              RemetenteAvatar(
                 nome: mensagem.remetenteNome ?? titulo,
+                matricula: mensagem.remetenteMatricula,
                 prioridade: mensagem.prioridade,
+                size: 50,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -220,68 +223,6 @@ class MensagemConversaTile extends StatelessWidget {
     CategoriaAnexo.video => Icons.videocam_rounded,
     CategoriaAnexo.documento => Icons.insert_drive_file_rounded,
   };
-}
-
-class _AvatarRemetente extends StatelessWidget {
-  const _AvatarRemetente({required this.nome, required this.prioridade});
-
-  final String nome;
-  final PrioridadeMensagem prioridade;
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (prioridade) {
-      PrioridadeMensagem.urgente => (
-        MensagensColors.red.withValues(alpha: 0.12),
-        MensagensColors.red,
-      ),
-      PrioridadeMensagem.importante => (
-        MensagensColors.orange.withValues(alpha: 0.12),
-        MensagensColors.orange,
-      ),
-      PrioridadeMensagem.normal => (
-        MensagensColors.green.withValues(alpha: 0.12),
-        MensagensColors.green,
-      ),
-    };
-
-    final iniciais = _extrairIniciais(nome);
-
-    return Container(
-      width: 50,
-      height: 50,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: bg,
-        shape: BoxShape.circle,
-        border: Border.all(color: fg.withValues(alpha: 0.25), width: 1.2),
-      ),
-      child: iniciais != null
-          ? Text(
-              iniciais,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: fg,
-              ),
-            )
-          : Icon(Icons.campaign_rounded, color: fg, size: 24),
-    );
-  }
-
-  String? _extrairIniciais(String texto) {
-    final partes = texto
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((p) => p.isNotEmpty)
-        .toList();
-    if (partes.isEmpty) return null;
-    if (partes.length == 1) {
-      return partes.first.substring(0, 1).toUpperCase();
-    }
-    return (partes.first.substring(0, 1) + partes[1].substring(0, 1))
-        .toUpperCase();
-  }
 }
 
 class _StatusCheckIcon extends StatelessWidget {

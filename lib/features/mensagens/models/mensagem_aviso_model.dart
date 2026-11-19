@@ -60,6 +60,7 @@ class MensagemAvisoModel {
     required this.modalidade,
     required this.exigeCiencia,
     this.remetenteNome,
+    this.remetenteMatricula,
     this.dataEnvio,
     this.dataExpiracao,
     required this.status,
@@ -77,6 +78,7 @@ class MensagemAvisoModel {
   final ModalidadeEnvio modalidade;
   final bool exigeCiencia;
   final String? remetenteNome;
+  final String? remetenteMatricula;
   final DateTime? dataEnvio;
   final DateTime? dataExpiracao;
   final StatusDestinatario status;
@@ -99,6 +101,7 @@ class MensagemAvisoModel {
       modalidade: ModalidadeEnvio.fromApi(json['modalidade'] as String?),
       exigeCiencia: (json['exigeCiencia'] as bool?) ?? false,
       remetenteNome: json['remetenteNome'] as String?,
+      remetenteMatricula: json['remetenteMatricula']?.toString(),
       dataEnvio: _parseDate(json['dataEnvio']),
       dataExpiracao: _parseDate(json['dataExpiracao']),
       status: StatusDestinatario.fromApi(json['status'] as String?),

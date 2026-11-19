@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,8 +18,32 @@ class MensagensRepository {
   MensagensRepository(this._dio);
 
   final Dio _dio;
+  final Map<String, Uint8List?> _fotoCache = {};
 
   String get baseUrl => _dio.options.baseUrl;
+
+  Future<Uint8List?> buscarFotoRemetente(String matricula) async {
+    final key = matricula.trim();
+    if (key.isEmpty) return null;
+    if (_fotoCache.containsKey(key)) return _fotoCache[key];
+
+    try {
+      final resp = await _dio.get<List<int>>(
+        '/api/mensagens/remetentes/$key/foto',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = resp.data;
+      if (data != null && data.isNotEmpty) {
+        final bytes = Uint8List.fromList(data);
+        _fotoCache[key] = bytes;
+        return bytes;
+      }
+    } catch (_) {
+      // Sem foto ou erro de rede: faz fallback silencioso para iniciais.
+    }
+    _fotoCache[key] = null;
+    return null;
+  }
 
   String anexoConteudoUrl(int mensagemId, int anexoId) {
     final base = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;

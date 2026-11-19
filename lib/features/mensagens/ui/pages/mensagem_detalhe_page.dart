@@ -6,6 +6,7 @@ import '../../models/mensagem_aviso_model.dart';
 import '../../providers/caixa_entrada_provider.dart';
 import '../widgets/mensagem_bolha_card.dart';
 import '../widgets/mensagens_theme.dart';
+import '../widgets/remetente_avatar.dart';
 
 class MensagemDetalhePage extends ConsumerStatefulWidget {
   const MensagemDetalhePage({super.key, required this.mensagemId});
@@ -166,7 +167,6 @@ class _WhatsAppChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iniciais = _iniciais(remetente);
     final subtitulo = mensagem == null
         ? 'Carregando comunicado...'
         : 'Comunicado Oficial • ${mensagem!.prioridade.apiValue}';
@@ -184,25 +184,12 @@ class _WhatsAppChatHeader extends StatelessWidget {
                 tooltip: 'Voltar',
                 onPressed: onBack,
               ),
-              Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: MensagensColors.green.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: MensagensColors.green.withValues(alpha: 0.6),
-                  ),
-                ),
-                child: Text(
-                  iniciais,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
-                  ),
-                ),
+              RemetenteAvatar(
+                nome: remetente,
+                matricula: mensagem?.remetenteMatricula,
+                prioridade: mensagem?.prioridade ?? PrioridadeMensagem.normal,
+                size: 38,
+                darkHeader: true,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -251,18 +238,6 @@ class _WhatsAppChatHeader extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _iniciais(String texto) {
-    final partes = texto
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((p) => p.isNotEmpty)
-        .toList();
-    if (partes.isEmpty) return 'MP';
-    if (partes.length == 1) return partes.first.substring(0, 1).toUpperCase();
-    return (partes.first.substring(0, 1) + partes[1].substring(0, 1))
-        .toUpperCase();
   }
 }
 

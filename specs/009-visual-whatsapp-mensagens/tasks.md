@@ -5,4 +5,5 @@
 - [x] Implementar `MensagemConversaTile` em `lib/features/mensagens/ui/widgets/mensagem_conversa_tile.dart`.
 - [x] Atualizar `CaixaMensagensPage` para lista compacta estilo WhatsApp.
 - [x] Atualizar `MensagemDetalhePage` para visualização dedicada estilo conversa WhatsApp.
+- [x] Atualizar `MensagemConversaTile` e `MensagemDetalhePage` para exibir a foto do remetente (com cache por matrícula e fallback para iniciais).
 - [x] Atualizar testes em `test/features/mensagens/caixa_mensagens_test.dart` e validar com `flutter analyze` + `flutter test`.

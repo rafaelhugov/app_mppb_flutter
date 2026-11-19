@@ -12,16 +12,18 @@ class AudioRecorderBar extends StatefulWidget {
   const AudioRecorderBar({
     super.key,
     required this.onAudioConfirmado,
+    this.ocultarBotaoInicial = false,
   });
 
   final Future<void> Function(File arquivo, int duracaoSegundos)
       onAudioConfirmado;
+  final bool ocultarBotaoInicial;
 
   @override
-  State<AudioRecorderBar> createState() => _AudioRecorderBarState();
+  State<AudioRecorderBar> createState() => AudioRecorderBarState();
 }
 
-class _AudioRecorderBarState extends State<AudioRecorderBar> {
+class AudioRecorderBarState extends State<AudioRecorderBar> {
   final AudioRecorder _recorder = AudioRecorder();
   Timer? _timer;
   bool _gravando = false;
@@ -35,6 +37,8 @@ class _AudioRecorderBarState extends State<AudioRecorderBar> {
     _recorder.dispose();
     super.dispose();
   }
+
+  Future<void> iniciarGravacao() => _iniciarGravacao();
 
   Future<void> _iniciarGravacao() async {
     try {
@@ -263,6 +267,10 @@ class _AudioRecorderBarState extends State<AudioRecorderBar> {
           ],
         ),
       );
+    }
+
+    if (widget.ocultarBotaoInicial) {
+      return const SizedBox.shrink();
     }
 
     return OutlinedButton.icon(

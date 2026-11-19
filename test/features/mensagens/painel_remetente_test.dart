@@ -5,6 +5,7 @@ import 'package:app_mppb_flutter/features/mensagens/models/mensagem_anexo_model.
 import 'package:app_mppb_flutter/features/mensagens/models/mensagem_aviso_model.dart';
 import 'package:app_mppb_flutter/features/mensagens/providers/envio_mensagem_provider.dart';
 import 'package:app_mppb_flutter/features/mensagens/providers/permissao_mensagens_provider.dart';
+import 'package:app_mppb_flutter/features/mensagens/ui/pages/compor_mensagem_page.dart';
 import 'package:app_mppb_flutter/features/mensagens/ui/pages/painel_remetente_page.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -166,6 +167,32 @@ void main() {
       final sucesso = await notifier.enviar();
       expect(sucesso, isNotNull);
       expect(sucesso!.id, 88);
+    },
+  );
+
+  testWidgets(
+    'ComporMensagemPage exibe grade uniforme 2x2 de mídias e bloco agrupado de agendamento/expiração',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            mensagensRepositoryProvider.overrideWithValue(_FakeRemetenteRepo()),
+            podeEnviarMensagensProvider.overrideWith((ref) async => true),
+          ],
+          child: const MaterialApp(home: ComporMensagemPage()),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mídias e Anexos'), findsOneWidget);
+      expect(find.text('Áudio'), findsOneWidget);
+      expect(find.text('Foto'), findsOneWidget);
+      expect(find.text('Vídeo'), findsOneWidget);
+      expect(find.text('Documento'), findsOneWidget);
+      expect(find.text('Agendamento e Validade'), findsOneWidget);
+      expect(find.text('Agendar envio'), findsOneWidget);
+      expect(find.text('Expiração do aviso'), findsOneWidget);
     },
   );
 }

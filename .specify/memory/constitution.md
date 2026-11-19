@@ -1,6 +1,6 @@
 # Constituição do Aplicativo MPPB+ (`app_mppb_flutter`)
 
-**Versão:** 1.2.0 | **Ratificação:** 2026-11-18 | **Última Emenda:** 2026-11-19
+**Versão:** 1.3.0 | **Ratificação:** 2026-11-18 | **Última Emenda:** 2026-11-19
 
 ## Princípios Fundamentais
 
@@ -23,7 +23,7 @@ Especificações, planos, tarefas, textos de interface e mensagens ao usuário d
 Novas regras de estado, parsers/modelos e fluxos críticos de UI devem possuir testes automatizados em `test/` (`flutter test` e `flutter analyze`). Nenhuma entrega pode ser declarada concluída sem informar exatamente os testes e análises executados.
 
 ### VII. Controle de Versão, Branch Dedicada por Tarefa e Proibição de Trabalho ou Merge Direto na `master`/`main`
-Toda tarefa deve obrigatoriamente iniciar com a criação de uma branch dedicada (`git checkout -b <tipo>/<slug>`) antes de qualquer edição. É estritamente proibido trabalhar diretamente na branch `master` (ou `main`), realizar commit direto ou `git merge` direto na `master`/`main` local, bem como publicar (`git push`) merges locais diretamente em `origin/master` ou `github/master`. Todo trabalho deve ser comitado e publicado exclusivamente em sua branch dedicada (`feat/...`, `fix/...`, `chore/...`), entregando os links de **Merge Request (GitLab)** e **Pull Request (GitHub)** para aprovação humana. A `master`/`main` local só deve ser atualizada via `git pull` após o merge remoto realizado pelo usuário.
+Toda tarefa (novo ajuste, correção ou nova funcionalidade) deve obrigatoriamente iniciar atualizando a branch principal (`git checkout master && git pull`, ou `main`) e criando uma branch dedicada (`git checkout -b <tipo>/<slug>`) a partir dela antes de qualquer edição. É estritamente proibido trabalhar diretamente na branch `master` (ou `main`), realizar commit direto ou `git merge` direto na `master`/`main` local, bem como publicar (`git push`) merges locais diretamente em `origin/master` ou `github/master`. Todo trabalho deve ser comitado e publicado exclusivamente em sua branch dedicada (`feat/...`, `fix/...`, `chore/...`), entregando os links de **Merge Request (GitLab)** e **Pull Request (GitHub)** para aprovação humana. A `master`/`main` local só deve ser atualizada via `git pull` após o merge remoto realizado pelo usuário.
 
 ### VIII. Uso Obrigatório do Spec Kit para Novos Ajustes
 Sempre que o usuário solicitar novos ajustes, refinamentos visuais, correções ou evoluções em qualquer funcionalidade do aplicativo, é obrigatório utilizar o **Spec Kit** (`specs/<NNN>-<funcionalidade>/spec.md`, `plan.md`, `tasks.md`) e atualizar `.specify/feature.json` antes de implementar as mudanças.

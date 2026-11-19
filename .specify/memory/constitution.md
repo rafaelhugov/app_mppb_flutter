@@ -1,6 +1,6 @@
 # Constituição do Aplicativo MPPB+ (`app_mppb_flutter`)
 
-**Versão:** 1.0.0 | **Ratificação:** 2026-11-18 | **Última Emenda:** 2026-11-18
+**Versão:** 1.1.0 | **Ratificação:** 2026-11-18 | **Última Emenda:** 2026-11-19
 
 ## Princípios Fundamentais
 
@@ -21,6 +21,9 @@ Especificações, planos, tarefas, textos de interface e mensagens ao usuário d
 
 ### VI. Qualidade, Testes e Verificação
 Novas regras de estado, parsers/modelos e fluxos críticos de UI devem possuir testes automatizados em `test/` (`flutter test` e `flutter analyze`). Nenhuma entrega pode ser declarada concluída sem informar exatamente os testes e análises executados.
+
+### VII. Controle de Versão e Proibição de Merge Direto na `master`/`main`
+É estritamente proibido realizar commit direto ou `git merge` direto na branch `master` (ou `main`) local, bem como publicar (`git push`) merges locais diretamente em `origin/master` ou `github/master`. Todo trabalho deve ser comitado e publicado exclusivamente em uma branch dedicada (`feat/...`, `fix/...`, `chore/...`), entregando os links de **Merge Request (GitLab)** e **Pull Request (GitHub)** para aprovação humana. A `master`/`main` local só deve ser atualizada via `git pull` após o merge remoto realizado pelo usuário.
 
 ## Organização do Spec Kit
 - Especificações: `specs/<NNN>-<funcionalidade>/spec.md`, `plan.md`, `tasks.md`

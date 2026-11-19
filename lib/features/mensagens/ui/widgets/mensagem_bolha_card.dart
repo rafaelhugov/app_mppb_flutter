@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/mensagem_aviso_model.dart';
 import 'anexo_preview_widget.dart';
@@ -158,12 +160,43 @@ class MensagemBolhaCard extends StatelessWidget {
                 if (mensagem.conteudo != null &&
                     mensagem.conteudo!.trim().isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  Text(
-                    mensagem.conteudo!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.4,
-                      color: MensagensColors.ink,
+                  MarkdownBody(
+                    data: mensagem.conteudo!,
+                    selectable: false,
+                    onTapLink: (_, href, _) {
+                      if (href != null && href.isNotEmpty) {
+                        final uri = Uri.tryParse(href);
+                        if (uri != null) {
+                          launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      }
+                    },
+                    styleSheet: MarkdownStyleSheet(
+                      p: const TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: MensagensColors.ink,
+                      ),
+                      strong: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: MensagensColors.ink,
+                      ),
+                      em: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: MensagensColors.ink,
+                      ),
+                      del: const TextStyle(
+                        decoration: TextDecoration.lineThrough,
+                        color: MensagensColors.muted,
+                      ),
+                      listBullet: const TextStyle(
+                        fontSize: 14,
+                        color: MensagensColors.ink,
+                      ),
+                      a: const TextStyle(
+                        color: MensagensColors.blue,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
                 ],

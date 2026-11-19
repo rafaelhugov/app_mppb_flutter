@@ -6,6 +6,7 @@ import 'package:record/record.dart';
 
 import '../../models/mensagem_anexo_model.dart';
 import 'audio_player_card.dart';
+import 'mensagens_theme.dart';
 
 class AudioRecorderBar extends StatefulWidget {
   const AudioRecorderBar({
@@ -141,16 +142,20 @@ class _AudioRecorderBarState extends State<AudioRecorderBar> {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
+          color: MensagensColors.background,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFCBD5E1)),
+          border: Border.all(color: MensagensColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Pré-visualização do aviso em áudio',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
+                color: MensagensColors.ink,
+              ),
             ),
             AudioPlayerCard(
               mensagemId: 0,
@@ -168,17 +173,24 @@ class _AudioRecorderBarState extends State<AudioRecorderBar> {
                           _caminhoGravado = null;
                           _segundos = 0;
                         }),
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: MensagensColors.red,
+                  ),
                   label: const Text(
                     'Descartar',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(color: MensagensColors.red),
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF15803D),
+                    backgroundColor: MensagensColors.green,
                     foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: _enviando ? null : _confirmarEnvioAudio,
                   icon: _enviando
@@ -204,32 +216,45 @@ class _AudioRecorderBarState extends State<AudioRecorderBar> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF2F2),
+          color: MensagensColors.red.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFFECACA)),
+          border: Border.all(
+            color: MensagensColors.red.withValues(alpha: 0.3),
+          ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.fiber_manual_record, color: Colors.red, size: 20),
+            const Icon(
+              Icons.fiber_manual_record,
+              color: MensagensColors.red,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Gravando áudio... ${_formatarTempo(_segundos)}',
                 style: const TextStyle(
-                  color: Color(0xFF991B1B),
-                  fontWeight: FontWeight.bold,
+                  color: MensagensColors.red,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
             IconButton(
               tooltip: 'Cancelar gravação',
               onPressed: () => _pararGravacao(descartar: true),
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              icon: const Icon(
+                Icons.delete_outline,
+                color: MensagensColors.red,
+              ),
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF15803D),
+                backgroundColor: MensagensColors.green,
                 foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () => _pararGravacao(descartar: false),
               icon: const Icon(Icons.stop),
@@ -243,13 +268,18 @@ class _AudioRecorderBarState extends State<AudioRecorderBar> {
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(double.infinity, 48),
-        foregroundColor: const Color(0xFF15803D),
-        side: const BorderSide(color: Color(0xFF15803D)),
+        foregroundColor: MensagensColors.green,
+        side: const BorderSide(color: MensagensColors.green),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
       onPressed: _iniciarGravacao,
       icon: const Icon(Icons.mic),
-      label: const Text('Gravar mensagem de áudio (estilo WhatsApp)'),
+      label: const Text(
+        'Gravar mensagem de áudio',
+        style: TextStyle(fontWeight: FontWeight.w600),
+      ),
     );
   }
 }
-

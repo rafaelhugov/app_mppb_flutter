@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ui/main_layout.dart';
+import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../models/mensagem_aviso_model.dart';
 import '../../providers/caixa_entrada_provider.dart';
 import '../widgets/mensagem_bolha_card.dart';
+import '../widgets/mensagens_theme.dart';
 
 class MensagemDetalhePage extends ConsumerStatefulWidget {
   const MensagemDetalhePage({super.key, required this.mensagemId});
@@ -38,7 +41,8 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
     if (msg == null) {
       setState(() {
         _carregando = false;
-        _erro = 'Não foi possível carregar este aviso ou você não é destinatário.';
+        _erro =
+            'Não foi possível carregar este aviso ou você não é destinatário.';
       });
     } else {
       setState(() {
@@ -62,7 +66,9 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Falha ao registrar confirmação de ciência.')),
+          const SnackBar(
+            content: Text('Falha ao registrar confirmação de ciência.'),
+          ),
         );
       }
     }
@@ -70,47 +76,49 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalPadding = MainLayout.horizontalPadding(context);
+    final bottomPadding = MainLayout.contentBottomPadding(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF6EE),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
-        foregroundColor: Colors.white,
-        title: const Text('Detalhe do Aviso'),
-      ),
-      body: _carregando
-          ? const Center(child: CircularProgressIndicator())
-          : _erro != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.lock_outline,
-                          size: 48,
-                          color: Colors.redAccent,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(_erro!, textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _abrirERegistrarLeitura,
-                          child: const Text('Tentar novamente'),
-                        ),
-                      ],
+      backgroundColor: MensagensColors.background,
+      body: Column(
+        children: [
+          const HeroHeaderPublico(
+            label: '',
+            title: 'Detalhe do Aviso',
+            subtitle: '',
+            icon: Icons.campaign_rounded,
+          ),
+          Expanded(
+            child: _carregando
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: MensagensColors.green,
                     ),
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: MensagemBolhaCard(
-                    mensagem: _mensagem!,
-                    onConfirmarCiencia:
-                        _mensagem!.pendenteCiencia ? _confirmarCiencia : null,
-                  ),
-                ),
+                  )
+                : _erro != null
+                    ? MensagensErrorState(
+                        message: _erro!,
+                        icon: Icons.lock_outline,
+                        onRetry: _abrirERegistrarLeitura,
+                      )
+                    : SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          12,
+                          horizontalPadding,
+                          bottomPadding,
+                        ),
+                        child: MensagemBolhaCard(
+                          mensagem: _mensagem!,
+                          onConfirmarCiencia: _mensagem!.pendenteCiencia
+                              ? _confirmarCiencia
+                              : null,
+                        ),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 }
-

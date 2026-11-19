@@ -5,6 +5,7 @@ import '../../data/mensagens_repository.dart';
 import '../../models/grupo_mensagem_model.dart';
 import '../../models/mensagem_aviso_model.dart';
 import '../../providers/envio_mensagem_provider.dart';
+import 'mensagens_theme.dart';
 
 class SeletorDestinatariosWidget extends ConsumerStatefulWidget {
   const SeletorDestinatariosWidget({super.key});
@@ -86,35 +87,40 @@ class _SeletorDestinatariosWidgetState
       children: [
         const Text(
           'Modalidade de Envio',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+            color: MensagensColors.ink,
+          ),
         ),
         const SizedBox(height: 8),
-        SegmentedButton<ModalidadeEnvio>(
-          segments: const [
-            ButtonSegment(
+        MensagensSegmentedPillBar<ModalidadeEnvio>(
+          maxWidth: double.infinity,
+          selectedValue: state.modalidade,
+          onSelected: notifier.setModalidade,
+          items: const [
+            MensagensSegmentItem(
               value: ModalidadeEnvio.broadcast,
-              icon: Icon(Icons.public, size: 18),
-              label: Text('Broadcast'),
+              icon: Icons.public,
+              label: 'Broadcast',
             ),
-            ButtonSegment(
+            MensagensSegmentItem(
               value: ModalidadeEnvio.multicast,
-              icon: Icon(Icons.groups, size: 18),
-              label: Text('Multicast'),
+              icon: Icons.groups,
+              label: 'Multicast',
             ),
-            ButtonSegment(
+            MensagensSegmentItem(
               value: ModalidadeEnvio.unicast,
-              icon: Icon(Icons.person, size: 18),
-              label: Text('Unicast'),
+              icon: Icons.person,
+              label: 'Unicast',
             ),
           ],
-          selected: {state.modalidade},
-          onSelectionChanged: (s) => notifier.setModalidade(s.first),
         ),
         const SizedBox(height: 12),
         if (state.modalidade == ModalidadeEnvio.broadcast)
           const Text(
             'Envia para todos os membros e servidores ativos do MPPB.',
-            style: TextStyle(color: Color(0xFF475569), fontSize: 13),
+            style: TextStyle(color: MensagensColors.muted, fontSize: 13),
           ),
         if (state.modalidade == ModalidadeEnvio.multicast)
           _buildMulticast(state, notifier),
@@ -131,7 +137,9 @@ class _SeletorDestinatariosWidgetState
     if (_carregandoCatalogo) {
       return const Padding(
         padding: EdgeInsets.all(16),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(
+          child: CircularProgressIndicator(color: MensagensColors.green),
+        ),
       );
     }
 
@@ -142,7 +150,11 @@ class _SeletorDestinatariosWidgetState
       children: [
         const Text(
           'Vínculo Funcional (RH)',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            color: MensagensColors.ink,
+          ),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -152,6 +164,12 @@ class _SeletorDestinatariosWidgetState
             return FilterChip(
               label: Text('${item.nome} (${item.quantidadeAtivos})'),
               selected: sel,
+              selectedColor: MensagensColors.brandDark,
+              checkmarkColor: Colors.white,
+              labelStyle: TextStyle(
+                color: sel ? Colors.white : MensagensColors.ink,
+                fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+              ),
               onSelected: (v) {
                 final atual = [...state.tiposCargo];
                 v ? atual.add(item.id) : atual.remove(item.id);
@@ -164,7 +182,11 @@ class _SeletorDestinatariosWidgetState
           const SizedBox(height: 12),
           const Text(
             'Grupos Personalizados',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: MensagensColors.ink,
+            ),
           ),
           const SizedBox(height: 6),
           Wrap(
@@ -174,6 +196,12 @@ class _SeletorDestinatariosWidgetState
               return FilterChip(
                 label: Text('${g.nome} (${g.quantidadeMembros})'),
                 selected: sel,
+                selectedColor: MensagensColors.brandDark,
+                checkmarkColor: Colors.white,
+                labelStyle: TextStyle(
+                  color: sel ? Colors.white : MensagensColors.ink,
+                  fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                ),
                 onSelected: (v) {
                   final atual = [...state.grupoPersonalizadoIds];
                   v ? atual.add(g.id) : atual.remove(g.id);
@@ -191,7 +219,11 @@ class _SeletorDestinatariosWidgetState
             tilePadding: EdgeInsets.zero,
             title: Text(
               'Setores / Lotações (${state.setorIds.length} selecionado(s))',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: MensagensColors.ink,
+              ),
             ),
             children: [
               SizedBox(
@@ -204,6 +236,7 @@ class _SeletorDestinatariosWidgetState
                     final sel = state.setorIds.contains(idNum);
                     return CheckboxListTile(
                       dense: true,
+                      activeColor: MensagensColors.green,
                       value: sel,
                       title: Text('${st.nome} (${st.quantidadeAtivos})'),
                       onChanged: (v) {
@@ -240,11 +273,16 @@ class _SeletorDestinatariosWidgetState
                     child: SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: MensagensColors.green,
+                      ),
                     ),
                   )
                 : null,
-            border: const OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           onChanged: _buscarServidores,
         ),
@@ -271,8 +309,9 @@ class _SeletorDestinatariosWidgetState
           Container(
             constraints: const BoxConstraints(maxHeight: 180),
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFCBD5E1)),
-              borderRadius: BorderRadius.circular(8),
+              color: MensagensColors.surface,
+              border: Border.all(color: MensagensColors.border),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: ListView.builder(
               shrinkWrap: true,
@@ -284,7 +323,10 @@ class _SeletorDestinatariosWidgetState
                 );
                 return ListTile(
                   dense: true,
-                  title: Text(item.nome),
+                  title: Text(
+                    item.nome,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   subtitle: Text(
                     'Matrícula: ${item.matricula} • ${item.setorNome ?? item.cargoNome ?? ""}',
                   ),
@@ -293,8 +335,8 @@ class _SeletorDestinatariosWidgetState
                         ? Icons.check_circle
                         : Icons.add_circle_outline,
                     color: jaSelecionado
-                        ? const Color(0xFF15803D)
-                        : const Color(0xFF475569),
+                        ? MensagensColors.green
+                        : MensagensColors.muted,
                   ),
                   onTap: () {
                     if (jaSelecionado) return;
@@ -312,4 +354,3 @@ class _SeletorDestinatariosWidgetState
     );
   }
 }
-

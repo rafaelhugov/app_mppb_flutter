@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../../../core/ui/main_layout.dart';
 import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../data/mensagens_repository.dart';
@@ -71,9 +72,7 @@ class _GrupoEditorPageState extends ConsumerState<GrupoEditorPage> {
   Future<void> _salvar() async {
     final nome = _nomeCtrl.text.trim();
     if (nome.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informe o nome do grupo.')),
-      );
+      AppFeedback.showWarning(context, 'Informe o nome do grupo.');
       return;
     }
     setState(() => _salvando = true);

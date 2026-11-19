@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../../../core/ui/main_layout.dart';
 import '../../models/mensagem_aviso_model.dart';
 import '../../providers/caixa_entrada_provider.dart';
@@ -59,16 +60,17 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
           .confirmarCiencia(widget.mensagemId);
       if (mounted && atualizada != null) {
         setState(() => _mensagem = atualizada);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ciência confirmada com sucesso.')),
+        AppFeedback.showSuccess(
+          context,
+          'Ciência confirmada com sucesso.',
+          title: 'Ciência registrada',
         );
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Falha ao registrar confirmação de ciência.'),
-          ),
+        AppFeedback.showError(
+          context,
+          'Falha ao registrar confirmação de ciência.',
         );
       }
     }
@@ -82,12 +84,9 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
         .read(caixaEntradaProvider.notifier)
         .arquivar(msg.id, arquivada: novoEstado);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          novoEstado ? 'Aviso arquivado.' : 'Aviso movido para a caixa.',
-        ),
-      ),
+    AppFeedback.showSuccess(
+      context,
+      novoEstado ? 'Aviso arquivado.' : 'Aviso movido para a caixa.',
     );
     Navigator.of(context).pop();
   }

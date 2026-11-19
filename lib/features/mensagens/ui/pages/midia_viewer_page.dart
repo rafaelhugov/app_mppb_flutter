@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../data/mensagem_midia_cache.dart';
 import '../../data/mensagens_repository.dart';
@@ -122,9 +123,7 @@ class _MidiaViewerPageState extends ConsumerState<MidiaViewerPage> {
           );
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Falha ao compartilhar arquivo.')),
-        );
+        AppFeedback.showError(context, 'Falha ao compartilhar arquivo.');
       }
     }
   }

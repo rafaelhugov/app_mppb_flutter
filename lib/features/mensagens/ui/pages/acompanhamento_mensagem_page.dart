@@ -229,48 +229,111 @@ class _AcompanhamentoMensagemPageState
                   itemBuilder: (context, index) {
                     final d = dados.destinatarios[index];
                     return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      margin: const EdgeInsets.symmetric(vertical: 5),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: MensagensColors.surface,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: MensagensColors.border),
-                      ),
-                      child: ListTile(
-                        leading: RemetenteAvatar(
-                          nome: d.nome,
-                          matricula: d.matricula,
-                          size: 42,
-                        ),
-                        title: Text(
-                          '${d.nome} (${d.matricula})',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13.5,
-                            color: MensagensColors.ink,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x08101828),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
                           ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (d.setor != null && d.setor!.isNotEmpty)
-                              Text(
-                                d.setor!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: MensagensColors.muted,
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              RemetenteAvatar(
+                                nome: d.nome,
+                                matricula: d.matricula,
+                                size: 42,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      d.nome,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                        color: MensagensColors.ink,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      d.setor != null && d.setor!.isNotEmpty
+                                          ? 'Mat. ${d.matricula} • ${d.setor}'
+                                          : 'Mat. ${d.matricula}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: MensagensColors.muted,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            Text(
-                              'Entregue: ${_formatarData(d.dataEntrega)} • Lido: ${_formatarData(d.dataLeitura)}'
-                              '${d.dataCiencia != null ? " • Ciente: ${_formatarData(d.dataCiencia)}" : ""}',
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                color: MensagensColors.muted,
+                              const SizedBox(width: 8),
+                              _StatusBadge(
+                                status: d.status,
+                                ciente: d.dataCiencia != null,
                               ),
-                            ),
-                          ],
-                        ),
-                        trailing: _StatusBadge(status: d.status),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const Divider(
+                            height: 1,
+                            color: MensagensColors.border,
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              _ConfirmacaoChip(
+                                icon: Icons.done_all_rounded,
+                                label: 'Entregue',
+                                valor: d.dataEntrega != null
+                                    ? _formatarData(d.dataEntrega)
+                                    : 'Aguardando',
+                                ativo: d.dataEntrega != null,
+                                corAtiva: MensagensColors.blue,
+                              ),
+                              _ConfirmacaoChip(
+                                icon: Icons.visibility_rounded,
+                                label: 'Lido',
+                                valor: d.dataLeitura != null
+                                    ? _formatarData(d.dataLeitura)
+                                    : 'Não lido',
+                                ativo: d.dataLeitura != null,
+                                corAtiva: MensagensColors.green,
+                              ),
+                              if (d.dataCiencia != null ||
+                                  dados.resumo.exigeCiencia)
+                                _ConfirmacaoChip(
+                                  icon: Icons.verified_rounded,
+                                  label: 'Ciente',
+                                  valor: d.dataCiencia != null
+                                      ? _formatarData(d.dataCiencia)
+                                      : 'Pendente',
+                                  ativo: d.dataCiencia != null,
+                                  corAtiva: MensagensColors.green,
+                                  corInativa: MensagensColors.orange,
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -317,30 +380,113 @@ class _ResumoBox extends StatelessWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
+  const _StatusBadge({required this.status, this.ciente = false});
 
   final StatusDestinatario status;
+  final bool ciente;
 
   @override
   Widget build(BuildContext context) {
-    final (cor, texto) = switch (status) {
-      StatusDestinatario.lido => (MensagensColors.green, 'LIDO'),
-      StatusDestinatario.entregue => (MensagensColors.blue, 'ENTREGUE'),
-      StatusDestinatario.pendente => (MensagensColors.muted, 'PENDENTE'),
-    };
+    final (cor, icone, texto) = ciente
+        ? (MensagensColors.green, Icons.verified_rounded, 'CIENTE')
+        : switch (status) {
+            StatusDestinatario.lido => (
+              MensagensColors.green,
+              Icons.visibility_rounded,
+              'LIDO',
+            ),
+            StatusDestinatario.entregue => (
+              MensagensColors.blue,
+              Icons.done_all_rounded,
+              'ENTREGUE',
+            ),
+            StatusDestinatario.pendente => (
+              MensagensColors.muted,
+              Icons.schedule_rounded,
+              'PENDENTE',
+            ),
+          };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: cor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: cor.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        texto,
-        style: TextStyle(
-          color: cor,
-          fontSize: 10.5,
-          fontWeight: FontWeight.w800,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icone, size: 12.5, color: cor),
+          const SizedBox(width: 4),
+          Text(
+            texto,
+            style: TextStyle(
+              color: cor,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConfirmacaoChip extends StatelessWidget {
+  const _ConfirmacaoChip({
+    required this.icon,
+    required this.label,
+    required this.valor,
+    required this.ativo,
+    required this.corAtiva,
+    this.corInativa = MensagensColors.muted,
+  });
+
+  final IconData icon;
+  final String label;
+  final String valor;
+  final bool ativo;
+  final Color corAtiva;
+  final Color corInativa;
+
+  @override
+  Widget build(BuildContext context) {
+    final cor = ativo ? corAtiva : corInativa;
+    final bg = ativo
+        ? corAtiva.withValues(alpha: 0.1)
+        : MensagensColors.surfaceMuted;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(
+          color: ativo ? cor.withValues(alpha: 0.25) : MensagensColors.border,
         ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13.5, color: cor),
+          const SizedBox(width: 5),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: ativo ? MensagensColors.ink : MensagensColors.muted,
+            ),
+          ),
+          Text(
+            valor,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: ativo ? FontWeight.w600 : FontWeight.w500,
+              color: cor,
+            ),
+          ),
+        ],
       ),
     );
   }

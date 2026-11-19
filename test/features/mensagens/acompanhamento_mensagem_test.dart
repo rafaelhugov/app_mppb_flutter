@@ -78,10 +78,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Convocação Extraordinária'), findsOneWidget);
-      expect(find.text('Maria Promotora (3001)'), findsOneWidget);
-      expect(find.text('João Servidor (3002)'), findsOneWidget);
-      expect(find.text('LIDO'), findsOneWidget);
+      expect(find.text('Maria Promotora'), findsOneWidget);
+      expect(find.textContaining('Mat. 3001'), findsOneWidget);
+      expect(find.text('João Servidor'), findsOneWidget);
+      expect(find.textContaining('Mat. 3002'), findsOneWidget);
+      expect(find.text('CIENTE'), findsOneWidget);
       expect(find.text('ENTREGUE'), findsOneWidget);
+      expect(find.text('Entregue: '), findsWidgets);
+      expect(find.text('Lido: '), findsWidgets);
     },
   );
 }

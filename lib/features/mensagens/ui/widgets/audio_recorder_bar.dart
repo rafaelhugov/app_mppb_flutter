@@ -6,6 +6,7 @@ import 'package:record/record.dart';
 
 import '../../models/mensagem_anexo_model.dart';
 import 'audio_player_card.dart';
+import '../../../../core/ui/app_feedback.dart';
 import 'mensagens_theme.dart';
 
 class AudioRecorderBar extends StatefulWidget {
@@ -45,10 +46,9 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
       final permitido = await _recorder.hasPermission();
       if (!permitido) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Permissão de microfone negada no dispositivo.'),
-            ),
+          AppFeedback.showWarning(
+            context,
+            'Permissão de microfone negada no dispositivo.',
           );
         }
         return;
@@ -76,8 +76,9 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
       });
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível iniciar a gravação.')),
+        AppFeedback.showError(
+          context,
+          'Não foi possível iniciar a gravação.',
         );
       }
     }

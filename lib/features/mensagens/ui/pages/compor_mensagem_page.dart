@@ -486,6 +486,9 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                                     cursorColor: MensagensColors.brandDark,
                                     maxLines: 5,
                                     minLines: 4,
+                                    inputFormatters: [
+                                      ListContinuationTextInputFormatter(),
+                                    ],
                                     style: const TextStyle(
                                       fontSize: 14,
                                       height: 1.4,
@@ -502,7 +505,7 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                                       contentPadding: EdgeInsets.all(14),
                                     ),
                                     onChanged: (v) => notifier.setConteudo(
-                                      _conteudoCtrl.processarAlteracaoUsuario(v),
+                                      _conteudoCtrl.normalizarParaMarkdown(v),
                                     ),
                                   ),
                                 ),

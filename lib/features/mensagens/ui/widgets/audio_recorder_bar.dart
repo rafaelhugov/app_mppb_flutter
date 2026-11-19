@@ -144,6 +144,7 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
       );
 
       return Container(
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: MensagensColors.background,
@@ -166,48 +167,66 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
               anexo: previewAnexo,
               localFilePath: _caminhoGravado,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton.icon(
-                  onPressed: _enviando
-                      ? null
-                      : () => setState(() {
-                          _caminhoGravado = null;
-                          _segundos = 0;
-                        }),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: MensagensColors.red,
-                  ),
-                  label: const Text(
-                    'Descartar',
-                    style: TextStyle(color: MensagensColors.red),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: MensagensColors.green,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: MensagensColors.red,
+                      side: BorderSide(
+                        color: MensagensColors.red.withValues(alpha: 0.35),
+                      ),
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: _enviando
+                        ? null
+                        : () => setState(() {
+                            _caminhoGravado = null;
+                            _segundos = 0;
+                          }),
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    label: const Text(
+                      'Descartar',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  onPressed: _enviando ? null : _confirmarEnvioAudio,
-                  icon: _enviando
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.check, size: 18),
-                  label: const Text('Anexar áudio ao aviso'),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: MensagensColors.green,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: _enviando ? null : _confirmarEnvioAudio,
+                    icon: _enviando
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.check_rounded, size: 18),
+                    label: const Text(
+                      'Anexar áudio',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -218,7 +237,8 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
 
     if (_gravando) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: MensagensColors.red.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
@@ -231,15 +251,18 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
             const Icon(
               Icons.fiber_manual_record,
               color: MensagensColors.red,
-              size: 20,
+              size: 18,
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Gravando áudio... ${_formatarTempo(_segundos)}',
+                'Gravando ${_formatarTempo(_segundos)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: MensagensColors.red,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13.5,
                 ),
               ),
             ),
@@ -256,13 +279,20 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
                 backgroundColor: MensagensColors.green,
                 foregroundColor: Colors.white,
                 elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               onPressed: () => _pararGravacao(descartar: false),
-              icon: const Icon(Icons.stop),
-              label: const Text('Concluir'),
+              icon: const Icon(Icons.stop_rounded, size: 18),
+              label: const Text(
+                'Concluir',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),

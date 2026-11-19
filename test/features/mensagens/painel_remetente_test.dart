@@ -171,7 +171,7 @@ void main() {
   );
 
   testWidgets(
-    'ComporMensagemPage exibe grade uniforme 2x2 de mídias e bloco agrupado de agendamento/expiração',
+    'ComporMensagemPage exibe barra de formatação, bandeja de 4 mídias estilo mensageiro e configurações',
     (tester) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -185,12 +185,14 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Mídias e Anexos'), findsOneWidget);
+      expect(find.byTooltip('Negrito'), findsOneWidget);
+      expect(find.byTooltip('Itálico'), findsOneWidget);
+      expect(find.byTooltip('Tachado'), findsOneWidget);
       expect(find.text('Áudio'), findsOneWidget);
       expect(find.text('Foto'), findsOneWidget);
       expect(find.text('Vídeo'), findsOneWidget);
-      expect(find.text('Documento'), findsOneWidget);
-      expect(find.text('Agendamento e Validade'), findsOneWidget);
+      expect(find.text('Arquivo'), findsOneWidget);
+      expect(find.text('Confirmar ciência'), findsOneWidget);
       expect(find.text('Agendar envio'), findsOneWidget);
       expect(find.text('Expiração do aviso'), findsOneWidget);
     },

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ui/main_layout.dart';
+import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../data/mensagens_repository.dart';
 import '../../models/grupo_mensagem_model.dart';
 import '../../providers/grupos_mensagem_provider.dart';
+import '../widgets/mensagens_theme.dart';
 
 class GruposPersonalizadosPage extends ConsumerWidget {
   const GruposPersonalizadosPage({super.key});
@@ -22,83 +25,140 @@ class GruposPersonalizadosPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncGrupos = ref.watch(gruposMensagemProvider);
+    final horizontalPadding = MainLayout.horizontalPadding(context);
+    final bottomPadding = MainLayout.contentBottomPadding(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
-        foregroundColor: Colors.white,
-        title: const Text('Grupos Personalizados'),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF15803D),
-        foregroundColor: Colors.white,
-        onPressed: () => _abrirDialogGrupo(context, ref),
-        icon: const Icon(Icons.group_add),
-        label: const Text('Novo Grupo'),
-      ),
-      body: asyncGrupos.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(
-          child: ElevatedButton(
-            onPressed: () =>
-                ref.read(gruposMensagemProvider.notifier).recarregar(),
-            child: const Text('Tentar novamente'),
-          ),
-        ),
-        data: (grupos) {
-          if (grupos.isEmpty) {
-            return const Center(
-              child: Text('Nenhum grupo personalizado cadastrado.'),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.only(top: 10, bottom: 88),
-            itemCount: grupos.length,
-            itemBuilder: (context, index) {
-              final g = grupos[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFF1E293B),
-                    foregroundColor: Colors.white,
-                    child: Icon(Icons.groups),
-                  ),
-                  title: Text(
-                    g.nome,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    '${g.quantidadeMembros} participante(s)'
-                    '${g.descricao != null && g.descricao!.isNotEmpty ? " • ${g.descricao}" : ""}',
-                  ),
-                  trailing: Row(
+      backgroundColor: MensagensColors.background,
+      body: Column(
+        children: [
+          HeroHeaderPublico(
+            label: '',
+            title: 'Grupos Personalizados',
+            subtitle: '',
+            icon: Icons.groups_rounded,
+            rightWidget: Material(
+              color: MensagensColors.green,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                onTap: () => _abrirDialogGrupo(context, ref),
+                borderRadius: BorderRadius.circular(16),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        tooltip: 'Editar grupo',
-                        icon: const Icon(Icons.edit_outlined),
-                        onPressed: () =>
-                            _abrirDialogGrupo(context, ref, existente: g),
+                      Icon(
+                        Icons.group_add_rounded,
+                        size: 16,
+                        color: Colors.white,
                       ),
-                      IconButton(
-                        tooltip: 'Remover grupo',
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
+                      SizedBox(width: 4),
+                      Text(
+                        'Novo Grupo',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
                         ),
-                        onPressed: () => ref
-                            .read(gruposMensagemProvider.notifier)
-                            .remover(g.id),
                       ),
                     ],
                   ),
                 ),
-              );
-            },
-          );
-        },
+              ),
+            ),
+          ),
+          Expanded(
+            child: asyncGrupos.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: MensagensColors.green),
+              ),
+              error: (_, _) => MensagensErrorState(
+                message: 'Não foi possível carregar os grupos personalizados.',
+                onRetry: () =>
+                    ref.read(gruposMensagemProvider.notifier).recarregar(),
+              ),
+              data: (grupos) {
+                if (grupos.isEmpty) {
+                  return const MensagensEmptyState(
+                    message: 'Nenhum grupo personalizado cadastrado.',
+                    icon: Icons.groups_outlined,
+                  );
+                }
+                return ListView.builder(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    8,
+                    horizontalPadding,
+                    bottomPadding,
+                  ),
+                  itemCount: grupos.length,
+                  itemBuilder: (context, index) {
+                    final g = grupos[index];
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: MensagensColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: MensagensColors.border),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x0D101828),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: MensagensColors.brandDark,
+                          foregroundColor: Colors.white,
+                          child: Icon(Icons.groups_rounded),
+                        ),
+                        title: Text(
+                          g.nome,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: MensagensColors.ink,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${g.quantidadeMembros} participante(s)'
+                          '${g.descricao != null && g.descricao!.isNotEmpty ? " • ${g.descricao}" : ""}',
+                          style: const TextStyle(color: MensagensColors.muted),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Editar grupo',
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                color: MensagensColors.ink,
+                              ),
+                              onPressed: () =>
+                                  _abrirDialogGrupo(context, ref, existente: g),
+                            ),
+                            IconButton(
+                              tooltip: 'Remover grupo',
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: MensagensColors.red,
+                              ),
+                              onPressed: () => ref
+                                  .read(gruposMensagemProvider.notifier)
+                                  .remover(g.id),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -179,8 +239,14 @@ class _EditorGrupoDialogState extends ConsumerState<_EditorGrupoDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: MensagensColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       title: Text(
         widget.existente == null ? 'Novo Grupo' : 'Editar Grupo',
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          color: MensagensColors.ink,
+        ),
       ),
       content: SizedBox(
         width: 420,
@@ -191,26 +257,32 @@ class _EditorGrupoDialogState extends ConsumerState<_EditorGrupoDialog> {
             children: [
               TextField(
                 controller: _nomeCtrl,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nome do grupo *',
-                  border: OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: _descCtrl,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Descrição (opcional)',
-                  border: OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _buscaCtrl,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Adicionar membro/servidor (nome ou matrícula)',
-                  prefixIcon: Icon(Icons.person_search),
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.person_search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onChanged: _buscar,
               ),
@@ -228,6 +300,9 @@ class _EditorGrupoDialogState extends ConsumerState<_EditorGrupoDialog> {
                         title: Text('${r.nome} (${r.matricula})'),
                         trailing: Icon(
                           jaTem ? Icons.check : Icons.add,
+                          color: jaTem
+                              ? MensagensColors.green
+                              : MensagensColors.ink,
                         ),
                         onTap: () {
                           if (!jaTem) {
@@ -243,8 +318,9 @@ class _EditorGrupoDialogState extends ConsumerState<_EditorGrupoDialog> {
               Text(
                 'Matrículas no grupo (${_matriculas.length}):',
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                   fontSize: 12.5,
+                  color: MensagensColors.ink,
                 ),
               ),
               const SizedBox(height: 6),
@@ -264,14 +340,27 @@ class _EditorGrupoDialogState extends ConsumerState<_EditorGrupoDialog> {
       actions: [
         TextButton(
           onPressed: _salvando ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: MensagensColors.muted),
+          ),
         ),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: MensagensColors.green,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
           onPressed: _salvando ? null : _salvar,
-          child: const Text('Salvar Grupo'),
+          child: const Text(
+            'Salvar Grupo',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );
   }
 }
-

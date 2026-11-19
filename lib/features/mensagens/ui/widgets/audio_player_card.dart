@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../data/mensagens_repository.dart';
 import '../../models/mensagem_anexo_model.dart';
+import 'mensagens_theme.dart';
 
 class AudioPlayerCard extends ConsumerStatefulWidget {
   const AudioPlayerCard({
@@ -134,9 +135,9 @@ class _AudioPlayerCardState extends ConsumerState<AudioPlayerCard> {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
+        color: MensagensColors.background,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFC8E6C9)),
+        border: Border.all(color: MensagensColors.border),
       ),
       child: Row(
         children: [
@@ -149,14 +150,17 @@ class _AudioPlayerCardState extends ConsumerState<AudioPlayerCard> {
                   ? const SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: MensagensColors.green,
+                      ),
                     )
                   : Icon(
                       _player.playing
                           ? Icons.pause_circle_filled
                           : Icons.play_circle_fill,
                       size: 36,
-                      color: const Color(0xFF1B5E20),
+                      color: MensagensColors.green,
                     ),
             ),
           ),
@@ -177,8 +181,8 @@ class _AudioPlayerCardState extends ConsumerState<AudioPlayerCard> {
                   child: Slider(
                     value: atualMs,
                     max: maxMs,
-                    activeColor: const Color(0xFF2E7D32),
-                    inactiveColor: const Color(0xFFA5D6A7),
+                    activeColor: MensagensColors.green,
+                    inactiveColor: MensagensColors.border,
                     onChanged: _carregado
                         ? (val) => _player.seek(
                             Duration(milliseconds: val.toInt()),
@@ -197,19 +201,23 @@ class _AudioPlayerCardState extends ConsumerState<AudioPlayerCard> {
                             : _duracaoTotal),
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF33691E),
-                          fontWeight: FontWeight.w600,
+                          color: MensagensColors.ink,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const Row(
                         children: [
-                          Icon(Icons.mic, size: 13, color: Color(0xFF2E7D32)),
+                          Icon(
+                            Icons.mic,
+                            size: 13,
+                            color: MensagensColors.green,
+                          ),
                           SizedBox(width: 4),
                           Text(
                             'Mensagem de voz',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF33691E),
+                              color: MensagensColors.muted,
                             ),
                           ),
                         ],
@@ -229,7 +237,7 @@ class _AudioPlayerCardState extends ConsumerState<AudioPlayerCard> {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32),
+                color: MensagensColors.brandDark,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -237,7 +245,7 @@ class _AudioPlayerCardState extends ConsumerState<AudioPlayerCard> {
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),

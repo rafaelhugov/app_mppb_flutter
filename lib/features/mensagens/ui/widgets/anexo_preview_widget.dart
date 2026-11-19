@@ -7,6 +7,7 @@ import '../../data/mensagens_repository.dart';
 import '../../models/mensagem_anexo_model.dart';
 import '../pages/midia_viewer_page.dart';
 import 'audio_player_card.dart';
+import 'mensagens_theme.dart';
 
 class AnexoPreviewWidget extends ConsumerWidget {
   const AnexoPreviewWidget({
@@ -60,14 +61,24 @@ class AnexoPreviewWidget extends ConsumerWidget {
                   },
                   errorBuilder: (_, _, _) => Container(
                     height: 120,
-                    color: const Color(0xFFE2E8F0),
+                    decoration: BoxDecoration(
+                      color: MensagensColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: MensagensColors.border),
+                    ),
                     alignment: Alignment.center,
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.image_outlined, color: Color(0xFF475569)),
+                        Icon(
+                          Icons.image_outlined,
+                          color: MensagensColors.muted,
+                        ),
                         SizedBox(width: 8),
-                        Text('Toque para abrir a imagem'),
+                        Text(
+                          'Toque para abrir a imagem',
+                          style: TextStyle(color: MensagensColors.ink),
+                        ),
                       ],
                     ),
                   ),
@@ -87,7 +98,7 @@ class AnexoPreviewWidget extends ConsumerWidget {
               height: 150,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: MensagensColors.brandDark,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Stack(
@@ -149,9 +160,9 @@ class AnexoPreviewWidget extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: MensagensColors.background,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFCBD5E1)),
+                border: Border.all(color: MensagensColors.border),
               ),
               child: Row(
                 children: [
@@ -160,14 +171,14 @@ class AnexoPreviewWidget extends ConsumerWidget {
                     height: 44,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFB91C1C),
-                      borderRadius: BorderRadius.circular(8),
+                      color: MensagensColors.red,
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       ext.length > 4 ? ext.substring(0, 4) : ext,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                         fontSize: 11,
                       ),
                     ),
@@ -182,8 +193,9 @@ class AnexoPreviewWidget extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                             fontSize: 13,
+                            color: MensagensColors.ink,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -191,7 +203,7 @@ class AnexoPreviewWidget extends ConsumerWidget {
                           '$ext • ${anexo.tamanhoFormatado}',
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF64748B),
+                            color: MensagensColors.muted,
                           ),
                         ),
                       ],
@@ -208,7 +220,7 @@ class AnexoPreviewWidget extends ConsumerWidget {
                     },
                     icon: const Icon(
                       Icons.download_outlined,
-                      color: Color(0xFF334155),
+                      color: MensagensColors.ink,
                     ),
                   ),
                 ],

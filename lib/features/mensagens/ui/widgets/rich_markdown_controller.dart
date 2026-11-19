@@ -3,20 +3,29 @@ import 'package:flutter/material.dart';
 import 'mensagens_theme.dart';
 
 /// Controller de texto que aplica formatação visual imediata (negrito, itálico,
-/// tachado, links e marcadores de lista) no próprio `TextField`, ocultando
-/// visualmente os tokens Markdown sem alterar os índices de cursor/seleção.
+/// tachado, links, lista com marcadores `•` e lista ordenada `1.`) no próprio
+/// `TextField`, ocultando visualmente os tokens Markdown sem alterar índices.
 class RichMarkdownEditingController extends TextEditingController {
   RichMarkdownEditingController({super.text});
+
+  String _ultimoTexto = '';
 
   static final RegExp _tokenRegex = RegExp(
     r'(\*\*(.+?)\*\*)|(~~(.+?)~~)|(\*(.+?)\*)|(\[([^\]]+)\]\(([^)]+)\))',
     dotAll: true,
   );
+  static final RegExp _orderedListRegex = RegExp(r'^(\d+\.\s)(.*)$');
 
   static const TextStyle _hiddenMarkerStyle = TextStyle(
     fontSize: 0.01,
     color: Colors.transparent,
   );
+
+  @override
+  set value(TextEditingValue newValue) {
+    _ultimoTexto = text;
+    super.value = newValue;
+  }
 
   @override
   TextSpan buildTextSpan({
@@ -30,17 +39,32 @@ class RichMarkdownEditingController extends TextEditingController {
     final lines = text.split('\n');
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
-      if (line.startsWith('- ')) {
+      final orderedMatch = _orderedListRegex.firstMatch(line);
+      if (line.startsWith('• ') || line.startsWith('- ')) {
         children.add(
           TextSpan(
-            text: '- ',
+            text: line.substring(0, 2),
             style: baseStyle.copyWith(
               color: MensagensColors.green,
               fontWeight: FontWeight.w900,
+              fontSize: (baseStyle.fontSize ?? 14) + 1,
             ),
           ),
         );
         children.addAll(_parseInline(line.substring(2), baseStyle));
+      } else if (orderedMatch != null) {
+        final prefix = orderedMatch.group(1)!;
+        final rest = orderedMatch.group(2)!;
+        children.add(
+          TextSpan(
+            text: prefix,
+            style: baseStyle.copyWith(
+              color: MensagensColors.green,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        );
+        children.addAll(_parseInline(rest, baseStyle));
       } else {
         children.addAll(_parseInline(line, baseStyle));
       }
@@ -68,7 +92,6 @@ class RichMarkdownEditingController extends TextEditingController {
       }
 
       if (match.group(1) != null) {
-        // Negrito: **conteudo**
         final inner = match.group(2) ?? '';
         spans.add(const TextSpan(text: '**', style: _hiddenMarkerStyle));
         spans.addAll(
@@ -79,7 +102,6 @@ class RichMarkdownEditingController extends TextEditingController {
         );
         spans.add(const TextSpan(text: '**', style: _hiddenMarkerStyle));
       } else if (match.group(3) != null) {
-        // Tachado: ~~conteudo~~
         final inner = match.group(4) ?? '';
         spans.add(const TextSpan(text: '~~', style: _hiddenMarkerStyle));
         spans.addAll(
@@ -95,7 +117,6 @@ class RichMarkdownEditingController extends TextEditingController {
         );
         spans.add(const TextSpan(text: '~~', style: _hiddenMarkerStyle));
       } else if (match.group(5) != null) {
-        // Itálico: *conteudo*
         final inner = match.group(6) ?? '';
         spans.add(const TextSpan(text: '*', style: _hiddenMarkerStyle));
         spans.addAll(
@@ -106,7 +127,6 @@ class RichMarkdownEditingController extends TextEditingController {
         );
         spans.add(const TextSpan(text: '*', style: _hiddenMarkerStyle));
       } else if (match.group(7) != null) {
-        // Link: [titulo](url)
         final label = match.group(8) ?? '';
         final url = match.group(9) ?? '';
         spans.add(const TextSpan(text: '[', style: _hiddenMarkerStyle));
@@ -139,6 +159,15 @@ class RichMarkdownEditingController extends TextEditingController {
     return TextDecoration.combine([a, b]);
   }
 
+  (int lineStart, String lineText) _linhaAtual() {
+    final pos = selection.isValid ? selection.start : text.length;
+    final before = text.substring(0, pos);
+    final lineStart = before.lastIndexOf('\n') + 1;
+    final nextNl = text.indexOf('\n', lineStart);
+    final lineEnd = nextNl == -1 ? text.length : nextNl;
+    return (lineStart, text.substring(lineStart, lineEnd));
+  }
+
   bool estaEnvolvido(String token) {
     final sel = selection;
     if (!sel.isValid) return false;
@@ -151,6 +180,16 @@ class RichMarkdownEditingController extends TextEditingController {
       if (before == token && after == token) return true;
     }
     return false;
+  }
+
+  bool get estaEmListaMarcadores {
+    final (_, line) = _linhaAtual();
+    return line.startsWith('• ') || line.startsWith('- ');
+  }
+
+  bool get estaEmListaOrdenada {
+    final (_, line) = _linhaAtual();
+    return _orderedListRegex.hasMatch(line);
   }
 
   /// Aplica ou remove formatação envolvendo a seleção atual (ou criando
@@ -174,7 +213,7 @@ class RichMarkdownEditingController extends TextEditingController {
             extentOffset: start - len + selecionado.length,
           ),
         );
-        return novoTexto;
+        return normalizarParaMarkdown();
       }
     }
 
@@ -188,33 +227,149 @@ class RichMarkdownEditingController extends TextEditingController {
         extentOffset: start + len + selecionado.length,
       ),
     );
-    return novoTexto;
+    return normalizarParaMarkdown();
   }
 
-  /// Alterna marcador de tópico (`- `) no início da linha atual.
+  /// Alterna marcador visual de tópico (`• `) no início da linha atual.
   String alternarListaLinha() {
-    final sel = selection;
-    final pos = sel.isValid ? sel.start : text.length;
-    final before = text.substring(0, pos);
-    final lineStart = before.lastIndexOf('\n') + 1;
-    final restOfLine = text.substring(lineStart);
+    final pos = selection.isValid ? selection.start : text.length;
+    final (lineStart, line) = _linhaAtual();
 
-    if (restOfLine.startsWith('- ')) {
+    if (line.startsWith('• ') || line.startsWith('- ')) {
       final novoTexto = text.replaceRange(lineStart, lineStart + 2, '');
       final novaPos = (pos - 2).clamp(lineStart, novoTexto.length);
       value = TextEditingValue(
         text: novoTexto,
         selection: TextSelection.collapsed(offset: novaPos),
       );
-      return novoTexto;
+      return normalizarParaMarkdown();
     }
 
-    final novoTexto = text.replaceRange(lineStart, lineStart, '- ');
+    final orderedMatch = _orderedListRegex.firstMatch(line);
+    if (orderedMatch != null) {
+      final oldLen = orderedMatch.group(1)!.length;
+      final novoTexto = text.replaceRange(lineStart, lineStart + oldLen, '• ');
+      final novaPos = (pos - oldLen + 2).clamp(lineStart, novoTexto.length);
+      value = TextEditingValue(
+        text: novoTexto,
+        selection: TextSelection.collapsed(offset: novaPos),
+      );
+      return normalizarParaMarkdown();
+    }
+
+    final novoTexto = text.replaceRange(lineStart, lineStart, '• ');
     value = TextEditingValue(
       text: novoTexto,
       selection: TextSelection.collapsed(offset: pos + 2),
     );
-    return novoTexto;
+    return normalizarParaMarkdown();
+  }
+
+  /// Alterna lista ordenada (`1. `, `2. `, ...) no início da linha atual.
+  String alternarListaOrdenadaLinha() {
+    final pos = selection.isValid ? selection.start : text.length;
+    final (lineStart, line) = _linhaAtual();
+
+    final orderedMatch = _orderedListRegex.firstMatch(line);
+    if (orderedMatch != null) {
+      final oldLen = orderedMatch.group(1)!.length;
+      final novoTexto = text.replaceRange(lineStart, lineStart + oldLen, '');
+      final novaPos = (pos - oldLen).clamp(lineStart, novoTexto.length);
+      value = TextEditingValue(
+        text: novoTexto,
+        selection: TextSelection.collapsed(offset: novaPos),
+      );
+      return normalizarParaMarkdown();
+    }
+
+    var numero = 1;
+    if (lineStart > 1) {
+      final prevEnd = lineStart - 1;
+      final prevStart = text.substring(0, prevEnd).lastIndexOf('\n') + 1;
+      final prevLine = text.substring(prevStart, prevEnd);
+      final prevMatch = _orderedListRegex.firstMatch(prevLine);
+      if (prevMatch != null) {
+        final prevNum = int.tryParse(
+          prevMatch.group(1)!.replaceAll('.', '').trim(),
+        );
+        if (prevNum != null) numero = prevNum + 1;
+      }
+    }
+    final prefixo = '$numero. ';
+
+    if (line.startsWith('• ') || line.startsWith('- ')) {
+      final novoTexto = text.replaceRange(lineStart, lineStart + 2, prefixo);
+      final novaPos = (pos - 2 + prefixo.length).clamp(
+        lineStart,
+        novoTexto.length,
+      );
+      value = TextEditingValue(
+        text: novoTexto,
+        selection: TextSelection.collapsed(offset: novaPos),
+      );
+      return normalizarParaMarkdown();
+    }
+
+    final novoTexto = text.replaceRange(lineStart, lineStart, prefixo);
+    value = TextEditingValue(
+      text: novoTexto,
+      selection: TextSelection.collapsed(offset: pos + prefixo.length),
+    );
+    return normalizarParaMarkdown();
+  }
+
+  /// Continua automaticamente listas (`• ` ou `N. `) ao pressionar Enter.
+  String processarAlteracaoUsuario(String novoTexto) {
+    final cresceuUmChar = novoTexto.length == _ultimoTexto.length + 1;
+    final pos = selection.isValid ? selection.start : novoTexto.length;
+    if (cresceuUmChar && pos > 0 && novoTexto[pos - 1] == '\n') {
+      final beforeNl = novoTexto.substring(0, pos - 1);
+      final prevLineStart = beforeNl.lastIndexOf('\n') + 1;
+      final prevLine = beforeNl.substring(prevLineStart);
+
+      if (prevLine == '• ' || prevLine == '- ') {
+        final limpo = novoTexto.replaceRange(prevLineStart, pos, '');
+        value = TextEditingValue(
+          text: limpo,
+          selection: TextSelection.collapsed(offset: prevLineStart),
+        );
+        return normalizarParaMarkdown();
+      }
+      if (prevLine.startsWith('• ') || prevLine.startsWith('- ')) {
+        final comBullet = novoTexto.replaceRange(pos, pos, '• ');
+        value = TextEditingValue(
+          text: comBullet,
+          selection: TextSelection.collapsed(offset: pos + 2),
+        );
+        return normalizarParaMarkdown();
+      }
+      final prevOrdered = _orderedListRegex.firstMatch(prevLine);
+      if (prevOrdered != null) {
+        final conteudoItem = prevOrdered.group(2)!.trim();
+        if (conteudoItem.isEmpty) {
+          final limpo = novoTexto.replaceRange(prevLineStart, pos, '');
+          value = TextEditingValue(
+            text: limpo,
+            selection: TextSelection.collapsed(offset: prevLineStart),
+          );
+          return normalizarParaMarkdown();
+        }
+        final numAtual = int.tryParse(
+          prevOrdered.group(1)!.replaceAll('.', '').trim(),
+        );
+        if (numAtual != null) {
+          final prox = '${numAtual + 1}. ';
+          final comNumero = novoTexto.replaceRange(pos, pos, prox);
+          value = TextEditingValue(
+            text: comNumero,
+            selection: TextSelection.collapsed(offset: pos + prox.length),
+          );
+          return normalizarParaMarkdown();
+        }
+      }
+    }
+    _ultimoTexto = novoTexto;
+    return normalizarParaMarkdown();
   }
 
   /// Insere estrutura de link mantendo o rótulo selecionado para edição.
@@ -232,6 +387,15 @@ class RichMarkdownEditingController extends TextEditingController {
         extentOffset: start + inserido.length - 1,
       ),
     );
-    return novoTexto;
+    return normalizarParaMarkdown();
+  }
+
+  /// Converte marcadores visuais `• ` em sintaxe Markdown `- ` para envio/prévia.
+  String normalizarParaMarkdown([String? fonte]) {
+    final base = fonte ?? text;
+    return base
+        .split('\n')
+        .map((l) => l.startsWith('• ') ? '- ${l.substring(2)}' : l)
+        .join('\n');
   }
 }

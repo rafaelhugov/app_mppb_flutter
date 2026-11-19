@@ -61,6 +61,11 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
     ref.read(envioMensagemProvider.notifier).setConteudo(novoTexto);
   }
 
+  void _alternarListaOrdenada() {
+    final novoTexto = _conteudoCtrl.alternarListaOrdenadaLinha();
+    ref.read(envioMensagemProvider.notifier).setConteudo(novoTexto);
+  }
+
   void _inserirLink() {
     final novoTexto = _conteudoCtrl.inserirLink();
     ref.read(envioMensagemProvider.notifier).setConteudo(novoTexto);
@@ -389,9 +394,16 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                                       onTap: () => _alternarEnvoltorio('~~'),
                                     ),
                                     _FormatActionButton(
-                                      tooltip: 'Lista',
+                                      tooltip: 'Lista com marcadores',
                                       icon: Icons.format_list_bulleted_rounded,
+                                      ativo: _conteudoCtrl.estaEmListaMarcadores,
                                       onTap: _alternarLista,
+                                    ),
+                                    _FormatActionButton(
+                                      tooltip: 'Lista ordenada',
+                                      icon: Icons.format_list_numbered_rounded,
+                                      ativo: _conteudoCtrl.estaEmListaOrdenada,
+                                      onTap: _alternarListaOrdenada,
                                     ),
                                     _FormatActionButton(
                                       tooltip: 'Link',
@@ -447,7 +459,8 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                                           ),
                                         )
                                       : MarkdownBody(
-                                          data: _conteudoCtrl.text,
+                                          data: _conteudoCtrl
+                                              .normalizarParaMarkdown(),
                                           styleSheet: MarkdownStyleSheet(
                                             p: const TextStyle(
                                               fontSize: 14,
@@ -488,7 +501,9 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                                       border: InputBorder.none,
                                       contentPadding: EdgeInsets.all(14),
                                     ),
-                                    onChanged: notifier.setConteudo,
+                                    onChanged: (v) => notifier.setConteudo(
+                                      _conteudoCtrl.processarAlteracaoUsuario(v),
+                                    ),
                                   ),
                                 ),
                             ],

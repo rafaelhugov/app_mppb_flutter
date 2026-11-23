@@ -1,11 +1,12 @@
 enum CategoriaAnexo {
-  imagem('IMAGEM'),
-  video('VIDEO'),
-  audio('AUDIO'),
-  documento('DOCUMENTO');
+  imagem('IMAGEM', 'Imagem'),
+  video('VIDEO', 'Vídeo'),
+  audio('AUDIO', 'Áudio'),
+  documento('DOCUMENTO', 'Documento');
 
-  const CategoriaAnexo(this.apiValue);
+  const CategoriaAnexo(this.apiValue, this.label);
   final String apiValue;
+  final String label;
 
   static CategoriaAnexo fromApi(String? value) {
     final normalized = value?.trim().toUpperCase();

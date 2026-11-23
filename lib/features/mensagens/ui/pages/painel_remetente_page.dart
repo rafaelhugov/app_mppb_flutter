@@ -344,7 +344,7 @@ class _MensagemEnviadaCard extends StatelessWidget {
     final titulo = (mensagem.titulo != null && mensagem.titulo!.isNotEmpty)
         ? mensagem.titulo!
         : (mensagem.anexos.isNotEmpty
-            ? 'Aviso em mídia (${mensagem.anexos.first.categoria.apiValue})'
+            ? 'Aviso em mídia (${mensagem.anexos.first.categoria.label})'
             : 'Aviso institucional');
 
     final (corPrioridade, rotuloPrioridade) = switch (mensagem.prioridade) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -25,9 +27,27 @@ class _AcompanhamentoMensagemPageState
   StatusDestinatario? _statusFiltro;
   String _busca = '';
   final TextEditingController _buscaCtrl = TextEditingController();
+  Timer? _autoRefreshTimer;
+
+  AcompanhamentoFiltro get _filtroAtual => AcompanhamentoFiltro(
+    mensagemId: widget.mensagemId,
+    status: _statusFiltro,
+    busca: _busca,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) {
+        ref.invalidate(acompanhamentoMensagemProvider(_filtroAtual));
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _autoRefreshTimer?.cancel();
     _buscaCtrl.dispose();
     super.dispose();
   }

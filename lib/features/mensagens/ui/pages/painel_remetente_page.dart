@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../../../core/ui/main_layout.dart';
 import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../data/mensagens_repository.dart';
@@ -21,35 +24,75 @@ class PainelRemetentePage extends ConsumerStatefulWidget {
 class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
   List<MensagemEnviadaModel> _enviadas = const [];
   bool _carregando = true;
+  bool _mostrarArquivadas = false;
   String? _erro;
+  Timer? _autoRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(_carregar);
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted && !_carregando) {
+        _carregar(silencioso: true);
+      }
+    });
   }
 
-  Future<void> _carregar() async {
-    setState(() {
-      _carregando = true;
-      _erro = null;
-    });
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _carregar({bool silencioso = false}) async {
+    if (!silencioso) {
+      setState(() {
+        _carregando = true;
+        _erro = null;
+      });
+    }
     try {
       final lista = await ref
           .read(mensagensRepositoryProvider)
-          .listarEnviadas();
+          .listarEnviadas(arquivada: _mostrarArquivadas);
       if (mounted) {
         setState(() {
           _enviadas = lista;
           _carregando = false;
+          _erro = null;
         });
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && !silencioso) {
         setState(() {
           _carregando = false;
           _erro = 'Não foi possível carregar os avisos enviados.';
         });
+      }
+    }
+  }
+
+  Future<void> _arquivarOuRestaurar(MensagemEnviadaModel msg) async {
+    final arquivar = !_mostrarArquivadas;
+    try {
+      await ref
+          .read(mensagensRepositoryProvider)
+          .arquivarRemetente(msg.id, arquivada: arquivar);
+      if (!mounted) return;
+      AppFeedback.showSuccess(
+        context,
+        arquivar
+            ? 'Aviso arquivado no painel.'
+            : 'Aviso restaurado para os ativos.',
+      );
+      _carregar();
+    } catch (_) {
+      if (mounted) {
+        AppFeedback.showError(
+          context,
+          'Não foi possível atualizar o arquivamento do aviso.',
+        );
       }
     }
   }
@@ -194,6 +237,33 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
               ],
             ),
           ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              2,
+              horizontalPadding,
+              6,
+            ),
+            child: MensagensSegmentedPillBar<bool>(
+              selectedValue: _mostrarArquivadas,
+              onSelected: (arq) {
+                setState(() => _mostrarArquivadas = arq);
+                _carregar();
+              },
+              items: const [
+                MensagensSegmentItem(
+                  value: false,
+                  icon: Icons.send_outlined,
+                  label: 'Ativos',
+                ),
+                MensagensSegmentItem(
+                  value: true,
+                  icon: Icons.archive_outlined,
+                  label: 'Arquivados',
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: _carregando
                 ? const Center(
@@ -207,9 +277,10 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
                         onRetry: _carregar,
                       )
                     : _enviadas.isEmpty
-                        ? const MensagensEmptyState(
-                            message:
-                                'Nenhum aviso institucional enviado ainda.',
+                        ? MensagensEmptyState(
+                            message: _mostrarArquivadas
+                                ? 'Nenhum aviso arquivado no painel.'
+                                : 'Nenhum aviso institucional enviado ainda.',
                             icon: Icons.campaign_outlined,
                           )
                         : RefreshIndicator(
@@ -227,12 +298,17 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
                                 final msg = _enviadas[index];
                                 return _MensagemEnviadaCard(
                                   mensagem: msg,
+                                  arquivada: _mostrarArquivadas,
                                   dataFormatada: _formatarData(
                                     msg.dataEnvio ?? msg.dataAgendamento,
                                   ),
-                                  onTapAcompanhamento: () => context.push(
-                                    '/mensagens/painel/${msg.id}/acompanhamento',
-                                  ),
+                                  onTapAcompanhamento: () async {
+                                    await context.push(
+                                      '/mensagens/painel/${msg.id}/acompanhamento',
+                                    );
+                                    if (mounted) _carregar(silencioso: true);
+                                  },
+                                  onArquivar: () => _arquivarOuRestaurar(msg),
                                   onCancelarAgendada:
                                       msg.statusPublicacao == 'AGENDADA'
                                           ? () async {
@@ -258,14 +334,18 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
 class _MensagemEnviadaCard extends StatelessWidget {
   const _MensagemEnviadaCard({
     required this.mensagem,
+    required this.arquivada,
     required this.dataFormatada,
     required this.onTapAcompanhamento,
+    required this.onArquivar,
     this.onCancelarAgendada,
   });
 
   final MensagemEnviadaModel mensagem;
+  final bool arquivada;
   final String dataFormatada;
   final VoidCallback onTapAcompanhamento;
+  final VoidCallback onArquivar;
   final VoidCallback? onCancelarAgendada;
 
   @override
@@ -391,23 +471,38 @@ class _MensagemEnviadaCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (onCancelarAgendada != null) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: onCancelarAgendada,
-                      icon: const Icon(
-                        Icons.cancel_outlined,
-                        color: MensagensColors.red,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (onCancelarAgendada != null)
+                      TextButton.icon(
+                        onPressed: onCancelarAgendada,
+                        icon: const Icon(
+                          Icons.cancel_outlined,
+                          size: 17,
+                          color: MensagensColors.red,
+                        ),
+                        label: const Text(
+                          'Cancelar agendamento',
+                          style: TextStyle(color: MensagensColors.red),
+                        ),
                       ),
-                      label: const Text(
-                        'Cancelar agendamento',
-                        style: TextStyle(color: MensagensColors.red),
+                    TextButton.icon(
+                      onPressed: onArquivar,
+                      icon: Icon(
+                        arquivada
+                            ? Icons.unarchive_outlined
+                            : Icons.archive_outlined,
+                        size: 17,
+                        color: MensagensColors.muted,
+                      ),
+                      label: Text(
+                        arquivada ? 'Restaurar' : 'Arquivar',
+                        style: const TextStyle(color: MensagensColors.muted),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ],
             ),
           ),

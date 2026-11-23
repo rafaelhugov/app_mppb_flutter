@@ -293,6 +293,8 @@ class _GrupoEditorPageState extends ConsumerState<GrupoEditorPage> {
                                       setState(() {
                                         _matriculas.add(r.matricula);
                                         _nomesPorMatricula[r.matricula] = r.nome;
+                                        _buscaCtrl.clear();
+                                        _resultados = const [];
                                       });
                                     }
                                   },

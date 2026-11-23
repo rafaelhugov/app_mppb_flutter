@@ -355,6 +355,8 @@ class _SeletorDestinatariosWidgetState
                       ...state.destinatariosUnicast,
                       item,
                     ]);
+                    _buscaCtrl.clear();
+                    setState(() => _resultadosBusca = const []);
                   },
                 );
               },

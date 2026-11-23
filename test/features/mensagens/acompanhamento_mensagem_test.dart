@@ -82,10 +82,8 @@ void main() {
       expect(find.textContaining('Mat. 3001'), findsOneWidget);
       expect(find.text('João Servidor'), findsOneWidget);
       expect(find.textContaining('Mat. 3002'), findsOneWidget);
-      expect(find.text('CIENTE'), findsOneWidget);
-      expect(find.text('ENTREGUE'), findsOneWidget);
-      expect(find.text('Entregue: '), findsWidgets);
-      expect(find.text('Lido: '), findsWidgets);
+      expect(find.text('Ciente por'), findsOneWidget);
+      expect(find.text('Entregue para'), findsOneWidget);
     },
   );
 }

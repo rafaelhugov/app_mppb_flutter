@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../../../core/ui/main_layout.dart';
 import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../data/mensagens_repository.dart';
 import '../../models/acompanhamento_mensagem_model.dart';
+import '../../models/mensagem_aviso_model.dart';
 import '../../providers/permissao_mensagens_provider.dart';
 import '../widgets/mensagens_theme.dart';
 
@@ -21,35 +25,75 @@ class PainelRemetentePage extends ConsumerStatefulWidget {
 class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
   List<MensagemEnviadaModel> _enviadas = const [];
   bool _carregando = true;
+  bool _mostrarArquivadas = false;
   String? _erro;
+  Timer? _autoRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(_carregar);
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted && !_carregando) {
+        _carregar(silencioso: true);
+      }
+    });
   }
 
-  Future<void> _carregar() async {
-    setState(() {
-      _carregando = true;
-      _erro = null;
-    });
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _carregar({bool silencioso = false}) async {
+    if (!silencioso) {
+      setState(() {
+        _carregando = true;
+        _erro = null;
+      });
+    }
     try {
       final lista = await ref
           .read(mensagensRepositoryProvider)
-          .listarEnviadas();
+          .listarEnviadas(arquivada: _mostrarArquivadas);
       if (mounted) {
         setState(() {
           _enviadas = lista;
           _carregando = false;
+          _erro = null;
         });
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && !silencioso) {
         setState(() {
           _carregando = false;
           _erro = 'Não foi possível carregar os avisos enviados.';
         });
+      }
+    }
+  }
+
+  Future<void> _arquivarOuRestaurar(MensagemEnviadaModel msg) async {
+    final arquivar = !_mostrarArquivadas;
+    try {
+      await ref
+          .read(mensagensRepositoryProvider)
+          .arquivarRemetente(msg.id, arquivada: arquivar);
+      if (!mounted) return;
+      AppFeedback.showSuccess(
+        context,
+        arquivar
+            ? 'Aviso arquivado no painel.'
+            : 'Aviso restaurado para os ativos.',
+      );
+      _carregar();
+    } catch (_) {
+      if (mounted) {
+        AppFeedback.showError(
+          context,
+          'Não foi possível atualizar o arquivamento do aviso.',
+        );
       }
     }
   }
@@ -136,10 +180,21 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
             title: 'Painel de Avisos',
             subtitle: '',
             icon: Icons.campaign_rounded,
-            rightWidget: MensagensHeaderIconButton(
-              icon: Icons.refresh_rounded,
-              tooltip: 'Atualizar',
-              onPressed: _carregar,
+            rightWidget: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MensagensHeaderIconButton(
+                  icon: Icons.groups_rounded,
+                  tooltip: 'Grupos personalizados',
+                  onPressed: () => context.push('/mensagens/painel/grupos'),
+                ),
+                const SizedBox(width: 6),
+                MensagensHeaderIconButton(
+                  icon: Icons.refresh_rounded,
+                  tooltip: 'Atualizar',
+                  onPressed: _carregar,
+                ),
+              ],
             ),
           ),
           Padding(
@@ -147,49 +202,55 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
               horizontalPadding,
               4,
               horizontalPadding,
-              8,
+              12,
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: MensagensColors.red,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size(0, 44),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: () async {
-                      await context.push('/mensagens/painel/nova');
-                      if (mounted) _carregar();
-                    },
-                    icon: const Icon(Icons.send_rounded, size: 17),
-                    label: const Text(
-                      'Novo Aviso',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: MensagensColors.red,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size(0, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                const SizedBox(width: 10),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: MensagensColors.ink,
-                    backgroundColor: MensagensColors.surface,
-                    side: const BorderSide(color: MensagensColors.border),
-                    minimumSize: const Size(0, 44),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () => context.push('/mensagens/painel/grupos'),
-                  icon: const Icon(Icons.groups_rounded, size: 18),
-                  label: const Text(
-                    'Grupos',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                onPressed: () async {
+                  await context.push('/mensagens/painel/nova');
+                  if (mounted) _carregar();
+                },
+                icon: const Icon(Icons.send_rounded, size: 17),
+                label: const Text(
+                  'Novo Aviso',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              0,
+              horizontalPadding,
+              8,
+            ),
+            child: MensagensSegmentedPillBar<bool>(
+              selectedValue: _mostrarArquivadas,
+              onSelected: (arq) {
+                setState(() => _mostrarArquivadas = arq);
+                _carregar();
+              },
+              items: const [
+                MensagensSegmentItem(
+                  value: false,
+                  icon: Icons.send_outlined,
+                  label: 'Ativos',
+                ),
+                MensagensSegmentItem(
+                  value: true,
+                  icon: Icons.archive_outlined,
+                  label: 'Arquivados',
                 ),
               ],
             ),
@@ -207,9 +268,10 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
                         onRetry: _carregar,
                       )
                     : _enviadas.isEmpty
-                        ? const MensagensEmptyState(
-                            message:
-                                'Nenhum aviso institucional enviado ainda.',
+                        ? MensagensEmptyState(
+                            message: _mostrarArquivadas
+                                ? 'Nenhum aviso arquivado no painel.'
+                                : 'Nenhum aviso institucional enviado ainda.',
                             icon: Icons.campaign_outlined,
                           )
                         : RefreshIndicator(
@@ -227,12 +289,17 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
                                 final msg = _enviadas[index];
                                 return _MensagemEnviadaCard(
                                   mensagem: msg,
+                                  arquivada: _mostrarArquivadas,
                                   dataFormatada: _formatarData(
                                     msg.dataEnvio ?? msg.dataAgendamento,
                                   ),
-                                  onTapAcompanhamento: () => context.push(
-                                    '/mensagens/painel/${msg.id}/acompanhamento',
-                                  ),
+                                  onTapAcompanhamento: () async {
+                                    await context.push(
+                                      '/mensagens/painel/${msg.id}/acompanhamento',
+                                    );
+                                    if (mounted) _carregar(silencioso: true);
+                                  },
+                                  onArquivar: () => _arquivarOuRestaurar(msg),
                                   onCancelarAgendada:
                                       msg.statusPublicacao == 'AGENDADA'
                                           ? () async {
@@ -258,14 +325,18 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
 class _MensagemEnviadaCard extends StatelessWidget {
   const _MensagemEnviadaCard({
     required this.mensagem,
+    required this.arquivada,
     required this.dataFormatada,
     required this.onTapAcompanhamento,
+    required this.onArquivar,
     this.onCancelarAgendada,
   });
 
   final MensagemEnviadaModel mensagem;
+  final bool arquivada;
   final String dataFormatada;
   final VoidCallback onTapAcompanhamento;
+  final VoidCallback onArquivar;
   final VoidCallback? onCancelarAgendada;
 
   @override
@@ -276,139 +347,175 @@ class _MensagemEnviadaCard extends StatelessWidget {
             ? 'Aviso em mídia (${mensagem.anexos.first.categoria.apiValue})'
             : 'Aviso institucional');
 
+    final (corPrioridade, rotuloPrioridade) = switch (mensagem.prioridade) {
+      PrioridadeMensagem.urgente => (MensagensColors.red, 'URGENTE'),
+      PrioridadeMensagem.importante => (MensagensColors.orange, 'IMPORTANTE'),
+      PrioridadeMensagem.normal => (MensagensColors.green, 'NORMAL'),
+    };
+    final (corStatus, rotuloStatus) = switch (mensagem.statusPublicacao) {
+      'AGENDADA' => (MensagensColors.blue, 'AGENDADA'),
+      'CANCELADA' => (MensagensColors.red, 'CANCELADA'),
+      _ => (MensagensColors.green, 'ENVIADA'),
+    };
+    final previewLimpa = (mensagem.conteudo ?? '')
+        .replaceAllMapped(
+          RegExp(r'\[([^\]]+)\]\([^)]+\)'),
+          (m) => m.group(1) ?? '',
+        )
+        .replaceAll('**', '')
+        .replaceAll('~~', '')
+        .replaceAll('*', '')
+        .replaceAll(RegExp(r'\s*\n+\s*'), ' ')
+        .trim();
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
         color: MensagensColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: MensagensColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D101828),
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: Color(0x0A101828),
+            blurRadius: 10,
+            offset: Offset(0, 3),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTapAcompanhamento,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTapAcompanhamento,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 4, color: corPrioridade),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              _TagPill(
+                                texto: rotuloPrioridade,
+                                cor: corPrioridade,
+                              ),
+                              const SizedBox(width: 6),
+                              _TagPill(
+                                texto: rotuloStatus,
+                                cor: corStatus,
+                              ),
+                              const Spacer(),
+                              Text(
+                                dataFormatada,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: MensagensColors.muted,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: arquivada ? 'Restaurar' : 'Arquivar',
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.only(left: 4),
+                                constraints: const BoxConstraints(),
+                                onPressed: onArquivar,
+                                icon: Icon(
+                                  arquivada
+                                      ? Icons.unarchive_outlined
+                                      : Icons.archive_outlined,
+                                  size: 18,
+                                  color: MensagensColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            titulo,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: MensagensColors.ink,
+                            ),
+                          ),
+                          if (previewLimpa.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              previewLimpa,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: MensagensColors.muted,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              _MiniMetricaPill(
+                                icon: Icons.people_outline_rounded,
+                                valor: mensagem.totalDestinatarios,
+                                rotulo: 'dest.',
+                                cor: MensagensColors.ink,
+                              ),
+                              _MiniMetricaPill(
+                                icon: Icons.done_all_rounded,
+                                valor: mensagem.totalEntregues,
+                                rotulo: 'entr.',
+                                cor: MensagensColors.blue,
+                              ),
+                              _MiniMetricaPill(
+                                icon: Icons.visibility_rounded,
+                                valor: mensagem.totalLidos,
+                                rotulo: 'lidos',
+                                cor: MensagensColors.green,
+                              ),
+                              if (mensagem.exigeCiencia)
+                                _MiniMetricaPill(
+                                  icon: Icons.verified_rounded,
+                                  valor: mensagem.totalCientes,
+                                  rotulo: 'cientes',
+                                  cor: MensagensColors.orange,
+                                ),
+                              if (onCancelarAgendada != null)
+                                TextButton(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: MensagensColors.red,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                    ),
+                                    minimumSize: const Size(0, 26),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: onCancelarAgendada,
+                                  child: const Text(
+                                    'Cancelar',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
-                      decoration: BoxDecoration(
-                        color: MensagensColors.background,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: MensagensColors.border),
-                      ),
-                      child: Text(
-                        '${mensagem.modalidade.apiValue} • ${mensagem.statusPublicacao}',
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          color: MensagensColors.ink,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      dataFormatada,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        color: MensagensColors.muted,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: MensagensColors.ink,
-                  ),
-                ),
-                if (mensagem.conteudo != null &&
-                    mensagem.conteudo!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    mensagem.conteudo!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: MensagensColors.muted,
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: MensagensColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: MensagensColors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _MetricaChip(
-                        label: 'Total',
-                        valor: mensagem.totalDestinatarios,
-                        cor: MensagensColors.ink,
-                      ),
-                      _MetricaChip(
-                        label: 'Entregues',
-                        valor: mensagem.totalEntregues,
-                        cor: MensagensColors.blue,
-                      ),
-                      _MetricaChip(
-                        label: 'Lidos',
-                        valor: mensagem.totalLidos,
-                        cor: MensagensColors.green,
-                      ),
-                      if (mensagem.exigeCiencia)
-                        _MetricaChip(
-                          label: 'Cientes',
-                          valor: mensagem.totalCientes,
-                          cor: MensagensColors.orange,
-                        ),
-                    ],
-                  ),
-                ),
-                if (onCancelarAgendada != null) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: onCancelarAgendada,
-                      icon: const Icon(
-                        Icons.cancel_outlined,
-                        color: MensagensColors.red,
-                      ),
-                      label: const Text(
-                        'Cancelar agendamento',
-                        style: TextStyle(color: MensagensColors.red),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),
@@ -417,37 +524,68 @@ class _MensagemEnviadaCard extends StatelessWidget {
   }
 }
 
-class _MetricaChip extends StatelessWidget {
-  const _MetricaChip({
-    required this.label,
-    required this.valor,
-    required this.cor,
-  });
+class _TagPill extends StatelessWidget {
+  const _TagPill({required this.texto, required this.cor});
 
-  final String label;
-  final int valor;
+  final String texto;
   final Color cor;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          '$valor',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: cor,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        texto,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: cor,
         ),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: MensagensColors.muted,
+      ),
+    );
+  }
+}
+
+class _MiniMetricaPill extends StatelessWidget {
+  const _MiniMetricaPill({
+    required this.icon,
+    required this.valor,
+    required this.rotulo,
+    required this.cor,
+  });
+
+  final IconData icon;
+  final int valor;
+  final String rotulo;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12.5, color: cor),
+          const SizedBox(width: 4),
+          Text(
+            '$valor $rotulo',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: cor,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

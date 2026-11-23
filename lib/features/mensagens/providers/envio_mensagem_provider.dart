@@ -227,10 +227,47 @@ class EnvioMensagemNotifier extends Notifier<EnvioMensagemState> {
     }
   }
 
+  static const int maxImagemBytes = 10 * 1024 * 1024;
+  static const int maxAudioBytes = 15 * 1024 * 1024;
+  static const int maxDocumentoBytes = 25 * 1024 * 1024;
+  static const int maxVideoBytes = 50 * 1024 * 1024;
+
+  static String? validarTamanhoAnexo(File arquivo) {
+    if (!arquivo.existsSync()) return null;
+    final bytes = arquivo.lengthSync();
+    final ext = arquivo.path.split('.').last.toLowerCase();
+    final (limite, rotulo) = switch (ext) {
+      'jpg' || 'jpeg' || 'png' || 'webp' || 'heic' => (
+        maxImagemBytes,
+        'imagem (10 MB)',
+      ),
+      'm4a' || 'aac' || 'ogg' || 'opus' || 'mp3' || 'wav' => (
+        maxAudioBytes,
+        'áudio (15 MB)',
+      ),
+      'mp4' || 'mov' || 'avi' || 'mkv' || 'webm' => (
+        maxVideoBytes,
+        'vídeo (50 MB)',
+      ),
+      _ => (maxDocumentoBytes, 'documento (25 MB)'),
+    };
+    if (bytes > limite) {
+      final mb = (bytes / (1024 * 1024)).toStringAsFixed(1);
+      return 'Arquivo muito grande ($mb MB). O limite permitido para $rotulo foi excedido.';
+    }
+    return null;
+  }
+
   Future<MensagemAnexoModel?> uploadAnexo(
     File arquivo, {
     int? duracaoSegundos,
   }) async {
+    final erroTamanho = validarTamanhoAnexo(arquivo);
+    if (erroTamanho != null) {
+      state = state.copyWith(enviandoAnexo: false, errorMessage: erroTamanho);
+      return null;
+    }
+
     state = state.copyWith(enviandoAnexo: true, clearError: true);
     try {
       final repo = ref.read(mensagensRepositoryProvider);
@@ -243,10 +280,13 @@ class EnvioMensagemNotifier extends Notifier<EnvioMensagemState> {
         anexos: [...state.anexos, anexo],
       );
       return anexo;
-    } catch (_) {
+    } catch (e) {
+      final msg = e.toString().contains('413')
+          ? 'Arquivo excede o limite máximo permitido pelo servidor.'
+          : 'Não foi possível enviar o arquivo/mídia selecionado.';
       state = state.copyWith(
         enviandoAnexo: false,
-        errorMessage: 'Não foi possível enviar o arquivo/mídia selecionado.',
+        errorMessage: msg,
       );
       return null;
     }

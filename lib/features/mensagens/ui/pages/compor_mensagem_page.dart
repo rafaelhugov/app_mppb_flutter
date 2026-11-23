@@ -72,6 +72,22 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
     ref.read(envioMensagemProvider.notifier).setConteudo(novoTexto);
   }
 
+  Future<void> _enviarAnexoComFeedback(
+    File arquivo, {
+    int? duracaoSegundos,
+  }) async {
+    final anexo = await ref
+        .read(envioMensagemProvider.notifier)
+        .uploadAnexo(arquivo, duracaoSegundos: duracaoSegundos);
+    if (!mounted || anexo != null) return;
+    final erro = ref.read(envioMensagemProvider).errorMessage;
+    AppFeedback.showError(
+      context,
+      erro ?? 'Não foi possível anexar o arquivo selecionado.',
+      title: 'Anexo não enviado',
+    );
+  }
+
   Future<void> _selecionarFotoOuVideo({required bool video}) async {
     final XFile? midia = video
         ? await _imagePicker.pickVideo(source: ImageSource.gallery)
@@ -80,9 +96,7 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
             imageQuality: 85,
           );
     if (midia == null) return;
-    await ref
-        .read(envioMensagemProvider.notifier)
-        .uploadAnexo(File(midia.path));
+    await _enviarAnexoComFeedback(File(midia.path));
   }
 
   Future<void> _selecionarDocumento() async {
@@ -95,7 +109,7 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
     );
     final path = result?.files.single.path;
     if (path == null) return;
-    await ref.read(envioMensagemProvider.notifier).uploadAnexo(File(path));
+    await _enviarAnexoComFeedback(File(path));
   }
 
   ThemeData _pickerTheme(BuildContext context) {
@@ -237,40 +251,40 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                       children: [
                         const SeletorDestinatariosWidget(),
                         const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: MensagensColors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: MensagensColors.green.withValues(alpha: 0.25),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.people_outline,
-                                color: MensagensColors.green,
-                                size: 20,
+                            decoration: BoxDecoration(
+                              color: MensagensColors.green.withValues(
+                                alpha: 0.08,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.people_outline_rounded,
+                                  color: MensagensColors.green,
+                                  size: 15,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
                                   state.calculandoPrevia
-                                      ? 'Calculando prévia de destinatários...'
-                                      : 'Alcance estimado: ${state.totalEstimado ?? 0} destinatário(s) ativo(s)',
+                                      ? 'Calculando alcance...'
+                                      : 'Alcance: ${state.totalEstimado ?? 0} destinatário(s)',
                                   style: const TextStyle(
                                     color: MensagensColors.green,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -372,43 +386,64 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                                 ),
                                 child: Row(
                                   children: [
-                                    _FormatActionButton(
-                                      tooltip: 'Negrito',
-                                      icon: Icons.format_bold_rounded,
-                                      ativo: _conteudoCtrl.estaEnvolvido('**'),
-                                      onTap: () => _alternarEnvoltorio('**'),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [
+                                            _FormatActionButton(
+                                              tooltip: 'Negrito',
+                                              icon: Icons.format_bold_rounded,
+                                              ativo: _conteudoCtrl
+                                                  .estaEnvolvido('**'),
+                                              onTap: () =>
+                                                  _alternarEnvoltorio('**'),
+                                            ),
+                                            _FormatActionButton(
+                                              tooltip: 'Itálico',
+                                              icon: Icons.format_italic_rounded,
+                                              ativo: _conteudoCtrl
+                                                      .estaEnvolvido('*') &&
+                                                  !_conteudoCtrl
+                                                      .estaEnvolvido('**'),
+                                              onTap: () =>
+                                                  _alternarEnvoltorio('*'),
+                                            ),
+                                            _FormatActionButton(
+                                              tooltip: 'Tachado',
+                                              icon: Icons
+                                                  .format_strikethrough_rounded,
+                                              ativo: _conteudoCtrl
+                                                  .estaEnvolvido('~~'),
+                                              onTap: () =>
+                                                  _alternarEnvoltorio('~~'),
+                                            ),
+                                            _FormatActionButton(
+                                              tooltip: 'Lista com marcadores',
+                                              icon: Icons
+                                                  .format_list_bulleted_rounded,
+                                              ativo: _conteudoCtrl
+                                                  .estaEmListaMarcadores,
+                                              onTap: _alternarLista,
+                                            ),
+                                            _FormatActionButton(
+                                              tooltip: 'Lista ordenada',
+                                              icon: Icons
+                                                  .format_list_numbered_rounded,
+                                              ativo: _conteudoCtrl
+                                                  .estaEmListaOrdenada,
+                                              onTap: _alternarListaOrdenada,
+                                            ),
+                                            _FormatActionButton(
+                                              tooltip: 'Link',
+                                              icon: Icons.link_rounded,
+                                              onTap: _inserirLink,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                    _FormatActionButton(
-                                      tooltip: 'Itálico',
-                                      icon: Icons.format_italic_rounded,
-                                      ativo: _conteudoCtrl.estaEnvolvido('*') &&
-                                          !_conteudoCtrl.estaEnvolvido('**'),
-                                      onTap: () => _alternarEnvoltorio('*'),
-                                    ),
-                                    _FormatActionButton(
-                                      tooltip: 'Tachado',
-                                      icon: Icons.format_strikethrough_rounded,
-                                      ativo: _conteudoCtrl.estaEnvolvido('~~'),
-                                      onTap: () => _alternarEnvoltorio('~~'),
-                                    ),
-                                    _FormatActionButton(
-                                      tooltip: 'Lista com marcadores',
-                                      icon: Icons.format_list_bulleted_rounded,
-                                      ativo: _conteudoCtrl.estaEmListaMarcadores,
-                                      onTap: _alternarLista,
-                                    ),
-                                    _FormatActionButton(
-                                      tooltip: 'Lista ordenada',
-                                      icon: Icons.format_list_numbered_rounded,
-                                      ativo: _conteudoCtrl.estaEmListaOrdenada,
-                                      onTap: _alternarListaOrdenada,
-                                    ),
-                                    _FormatActionButton(
-                                      tooltip: 'Link',
-                                      icon: Icons.link_rounded,
-                                      onTap: _inserirLink,
-                                    ),
-                                    const Spacer(),
+                                    const SizedBox(width: 4),
                                     TextButton.icon(
                                       style: TextButton.styleFrom(
                                         foregroundColor: _previewMarkdown
@@ -514,12 +549,11 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                         AudioRecorderBar(
                           key: _audioRecorderKey,
                           ocultarBotaoInicial: true,
-                          onAudioConfirmado: (arquivo, duracao) async {
-                            await notifier.uploadAnexo(
-                              arquivo,
-                              duracaoSegundos: duracao,
-                            );
-                          },
+                          onAudioConfirmado: (arquivo, duracao) =>
+                              _enviarAnexoComFeedback(
+                                arquivo,
+                                duracaoSegundos: duracao,
+                              ),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

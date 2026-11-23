@@ -17,6 +17,38 @@ class MensagensColors {
   static const blue = Color(0xFF2563EB);
 }
 
+/// Converte nomes em CAPS LOCK para Title Case mantendo preposições em minúsculo.
+String formatarNomeProprio(String? nome) {
+  final raw = nome?.trim() ?? '';
+  if (raw.isEmpty) return '';
+  const preposicoes = {
+    'da',
+    'de',
+    'do',
+    'das',
+    'dos',
+    'e',
+    'em',
+    'na',
+    'no',
+    'nas',
+    'nos',
+  };
+  final palavras = raw.split(RegExp(r'\s+'));
+  return List.generate(palavras.length, (i) {
+    final lower = palavras[i].toLowerCase();
+    if (i > 0 && preposicoes.contains(lower)) return lower;
+    return lower
+        .split('-')
+        .map((parte) {
+          if (parte.isEmpty) return parte;
+          if (parte.length == 1) return parte.toUpperCase();
+          return parte[0].toUpperCase() + parte.substring(1);
+        })
+        .join('-');
+  }).join(' ');
+}
+
 class MensagensSegmentItem<T> {
   final T value;
   final String label;

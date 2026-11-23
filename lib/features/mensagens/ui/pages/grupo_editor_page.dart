@@ -266,7 +266,7 @@ class _GrupoEditorPageState extends ConsumerState<GrupoEditorPage> {
                                     size: 36,
                                   ),
                                   title: Text(
-                                    r.nome,
+                                    formatarNomeProprio(r.nome),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
@@ -293,6 +293,8 @@ class _GrupoEditorPageState extends ConsumerState<GrupoEditorPage> {
                                       setState(() {
                                         _matriculas.add(r.matricula);
                                         _nomesPorMatricula[r.matricula] = r.nome;
+                                        _buscaCtrl.clear();
+                                        _resultados = const [];
                                       });
                                     }
                                   },
@@ -331,7 +333,9 @@ class _GrupoEditorPageState extends ConsumerState<GrupoEditorPage> {
                                   size: 34,
                                 ),
                                 title: Text(
-                                  nome != null ? '$nome ($m)' : 'Matrícula $m',
+                                  nome != null
+                                      ? '${formatarNomeProprio(nome)} ($m)'
+                                      : 'Matrícula $m',
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,

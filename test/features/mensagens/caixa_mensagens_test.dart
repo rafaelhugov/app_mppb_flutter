@@ -171,7 +171,7 @@ void main() {
   );
 
   testWidgets(
-    'CaixaMensagensPage exibe card explicativo do Painel de Envio de Avisos quando usuario tem permissao admin',
+    'CaixaMensagensPage mantem separacao de responsabilidades sem exibir banner admin na caixa de entrada',
     (tester) async {
       final fakeRepo = _FakeMensagensRepository();
 
@@ -188,11 +188,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Painel de Envio de Avisos'), findsOneWidget);
-      expect(
-        find.text('Enviar comunicados, gerenciar grupos e acompanhar leituras'),
-        findsOneWidget,
-      );
+      expect(find.text('Painel de Envio de Avisos'), findsNothing);
     },
   );
 

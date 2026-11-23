@@ -19,6 +19,7 @@ import '../../noticias/ui/widgets/news_carousel.dart';
 import '../../videos/providers/videos_provider.dart';
 import '../../videos/ui/widgets/videos_carousel.dart';
 import '../../contatos/ui/widgets/secao_institucional.dart';
+import '../../mensagens/providers/permissao_mensagens_provider.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -437,37 +438,45 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       title: 'Serviços internos',
                       icon: Icons.grid_view_rounded,
                       iconColor: const Color(0xFF2563EB),
-                      services: const [
-                        _DashboardService(
+                      services: [
+                        const _DashboardService(
                           title: 'Contracheque',
                           subtitle: 'Demonstrativo',
                           icon: Icons.receipt_long_rounded,
                           route: '/contracheque',
                         ),
-                        _DashboardService(
+                        const _DashboardService(
                           title: 'Designações',
                           subtitle: 'Ativas',
                           icon: Icons.assignment_ind,
                           route: '/designacoes',
                         ),
-                        _DashboardService(
+                        const _DashboardService(
                           title: 'Afastamento',
                           subtitle: 'Concessões',
                           icon: Icons.event_available_rounded,
                           route: '/concessao-afastamento',
                         ),
-                        _DashboardService(
+                        const _DashboardService(
                           title: 'Pagamentos',
                           subtitle: 'Área Financeira',
                           icon: Icons.assignment,
                           route: '/pagamentos',
                         ),
-                        _DashboardService(
+                        const _DashboardService(
                           title: 'Avisos',
                           subtitle: 'Comunicados',
                           icon: Icons.campaign_rounded,
                           route: '/mensagens',
                         ),
+                        if (ref.watch(podeEnviarMensagensProvider).asData?.value ??
+                            false)
+                          const _DashboardService(
+                            title: 'Painel de Avisos',
+                            subtitle: 'Enviar e gerir',
+                            icon: Icons.edit_notifications_rounded,
+                            route: '/mensagens/painel',
+                          ),
                       ],
                     ),
 

@@ -292,22 +292,54 @@ class _SeletorDestinatariosWidgetState
           Wrap(
             spacing: 6,
             runSpacing: 4,
-            children: state.destinatariosUnicast.map((d) {
-              return InputChip(
-                avatar: RemetenteAvatar(
-                  nome: d.nome,
-                  matricula: d.matricula,
-                  size: 24,
+            children: [
+              ...(state.destinatariosUnicast.length >= 3
+                      ? state.destinatariosUnicast.take(2)
+                      : state.destinatariosUnicast)
+                  .map((d) {
+                return InputChip(
+                  avatar: RemetenteAvatar(
+                    nome: d.nome,
+                    matricula: d.matricula,
+                    size: 24,
+                  ),
+                  label: Text(
+                    '${formatarNomeProprio(d.nome)} (${d.matricula})',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onDeleted: () {
+                    final nova = state.destinatariosUnicast
+                        .where((item) => item.matricula != d.matricula)
+                        .toList();
+                    notifier.definirDestinatariosUnicast(nova);
+                  },
+                );
+              }),
+              if (state.destinatariosUnicast.length >= 3)
+                ActionChip(
+                  avatar: const Icon(
+                    Icons.groups_rounded,
+                    size: 16,
+                    color: MensagensColors.green,
+                  ),
+                  backgroundColor: MensagensColors.green.withValues(alpha: 0.1),
+                  side: BorderSide(
+                    color: MensagensColors.green.withValues(alpha: 0.3),
+                  ),
+                  label: Text(
+                    '+${state.destinatariosUnicast.length - 2} selecionados • Ver todos',
+                    style: const TextStyle(
+                      color: MensagensColors.green,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                  onPressed: () => _abrirModalSelecionados(
+                    context,
+                    notifier,
+                  ),
                 ),
-                label: Text('${formatarNomeProprio(d.nome)} (${d.matricula})'),
-                onDeleted: () {
-                  final nova = state.destinatariosUnicast
-                      .where((item) => item.matricula != d.matricula)
-                      .toList();
-                  notifier.definirDestinatariosUnicast(nova);
-                },
-              );
-            }).toList(),
+            ],
           ),
         ],
         if (_resultadosBusca.isNotEmpty) ...[
@@ -364,6 +396,129 @@ class _SeletorDestinatariosWidgetState
           ),
         ],
       ],
+    );
+  }
+
+  void _abrirModalSelecionados(
+    BuildContext context,
+    EnvioMensagemNotifier notifier,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: MensagensColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Consumer(
+          builder: (ctx, modalRef, _) {
+            final selecionados =
+                modalRef.watch(envioMensagemProvider).destinatariosUnicast;
+            return SafeArea(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.65,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Destinatários (${selecionados.length})',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: MensagensColors.ink,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (selecionados.isNotEmpty)
+                            TextButton(
+                              onPressed: () {
+                                notifier.definirDestinatariosUnicast(const []);
+                                Navigator.pop(ctx);
+                              },
+                              child: const Text(
+                                'Limpar todos',
+                                style: TextStyle(
+                                  color: MensagensColors.red,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: MensagensColors.border),
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: selecionados.length,
+                        separatorBuilder: (_, _) => const Divider(
+                          height: 1,
+                          indent: 64,
+                          color: MensagensColors.border,
+                        ),
+                        itemBuilder: (_, idx) {
+                          final d = selecionados[idx];
+                          final nome = formatarNomeProprio(d.nome);
+                          return ListTile(
+                            leading: RemetenteAvatar(
+                              nome: nome,
+                              matricula: d.matricula,
+                              size: 38,
+                            ),
+                            title: Text(
+                              nome,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Mat. ${d.matricula}${d.setorNome != null ? " • ${d.setorNome}" : ""}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: MensagensColors.muted,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: MensagensColors.red,
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                final nova = selecionados
+                                    .where((x) => x.matricula != d.matricula)
+                                    .toList();
+                                notifier.definirDestinatariosUnicast(nova);
+                                if (nova.isEmpty) Navigator.pop(ctx);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

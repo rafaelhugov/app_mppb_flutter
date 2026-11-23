@@ -10,6 +10,7 @@ import '../../../../core/ui/main_layout.dart';
 import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../data/mensagens_repository.dart';
 import '../../models/acompanhamento_mensagem_model.dart';
+import '../../models/mensagem_aviso_model.dart';
 import '../../providers/permissao_mensagens_provider.dart';
 import '../widgets/mensagens_theme.dart';
 
@@ -346,141 +347,244 @@ class _MensagemEnviadaCard extends StatelessWidget {
             ? 'Aviso em mídia (${mensagem.anexos.first.categoria.apiValue})'
             : 'Aviso institucional');
 
+    final (corPrioridade, rotuloPrioridade) = switch (mensagem.prioridade) {
+      PrioridadeMensagem.urgente => (MensagensColors.red, 'URGENTE'),
+      PrioridadeMensagem.importante => (MensagensColors.orange, 'IMPORTANTE'),
+      PrioridadeMensagem.normal => (MensagensColors.green, 'NORMAL'),
+    };
+    final (corStatus, rotuloStatus) = switch (mensagem.statusPublicacao) {
+      'AGENDADA' => (MensagensColors.blue, 'AGENDADA'),
+      'CANCELADA' => (MensagensColors.red, 'CANCELADA'),
+      _ => (MensagensColors.green, 'ENVIADA'),
+    };
+    final previewLimpa = (mensagem.conteudo ?? '')
+        .replaceAllMapped(
+          RegExp(r'\[([^\]]+)\]\([^)]+\)'),
+          (m) => m.group(1) ?? '',
+        )
+        .replaceAll('**', '')
+        .replaceAll('~~', '')
+        .replaceAll('*', '')
+        .replaceAll(RegExp(r'\s*\n+\s*'), ' ')
+        .trim();
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
         color: MensagensColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: MensagensColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D101828),
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: Color(0x0A101828),
+            blurRadius: 10,
+            offset: Offset(0, 3),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTapAcompanhamento,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        titulo,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: MensagensColors.ink,
-                        ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTapAcompanhamento,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 4, color: corPrioridade),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              _TagPill(
+                                texto: rotuloPrioridade,
+                                cor: corPrioridade,
+                              ),
+                              const SizedBox(width: 6),
+                              _TagPill(
+                                texto: rotuloStatus,
+                                cor: corStatus,
+                              ),
+                              const Spacer(),
+                              Text(
+                                dataFormatada,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: MensagensColors.muted,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: arquivada ? 'Restaurar' : 'Arquivar',
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.only(left: 4),
+                                constraints: const BoxConstraints(),
+                                onPressed: onArquivar,
+                                icon: Icon(
+                                  arquivada
+                                      ? Icons.unarchive_outlined
+                                      : Icons.archive_outlined,
+                                  size: 18,
+                                  color: MensagensColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            titulo,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: MensagensColors.ink,
+                            ),
+                          ),
+                          if (previewLimpa.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              previewLimpa,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: MensagensColors.muted,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              _MiniMetricaPill(
+                                icon: Icons.people_outline_rounded,
+                                valor: mensagem.totalDestinatarios,
+                                rotulo: 'dest.',
+                                cor: MensagensColors.ink,
+                              ),
+                              _MiniMetricaPill(
+                                icon: Icons.done_all_rounded,
+                                valor: mensagem.totalEntregues,
+                                rotulo: 'entr.',
+                                cor: MensagensColors.blue,
+                              ),
+                              _MiniMetricaPill(
+                                icon: Icons.visibility_rounded,
+                                valor: mensagem.totalLidos,
+                                rotulo: 'lidos',
+                                cor: MensagensColors.green,
+                              ),
+                              if (mensagem.exigeCiencia)
+                                _MiniMetricaPill(
+                                  icon: Icons.verified_rounded,
+                                  valor: mensagem.totalCientes,
+                                  rotulo: 'cientes',
+                                  cor: MensagensColors.orange,
+                                ),
+                              if (onCancelarAgendada != null)
+                                TextButton(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: MensagensColors.red,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                    ),
+                                    minimumSize: const Size(0, 26),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: onCancelarAgendada,
+                                  child: const Text(
+                                    'Cancelar',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      dataFormatada,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: MensagensColors.muted,
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: arquivada ? 'Restaurar' : 'Arquivar',
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.only(left: 4),
-                      constraints: const BoxConstraints(),
-                      onPressed: onArquivar,
-                      icon: Icon(
-                        arquivada
-                            ? Icons.unarchive_outlined
-                            : Icons.archive_outlined,
-                        size: 18,
-                        color: MensagensColors.muted,
-                      ),
-                    ),
-                  ],
-                ),
-                if (mensagem.conteudo != null &&
-                    mensagem.conteudo!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    mensagem.conteudo!.trim(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color: MensagensColors.muted,
                     ),
                   ),
                 ],
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: MensagensColors.surfaceMuted,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '${mensagem.modalidade.apiValue} • ${mensagem.statusPublicacao}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: MensagensColors.muted,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '${mensagem.totalDestinatarios} dest. • '
-                        '${mensagem.totalEntregues} entr. • '
-                        '${mensagem.totalLidos} lido(s)'
-                        '${mensagem.exigeCiencia ? " • ${mensagem.totalCientes} ciente(s)" : ""}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: MensagensColors.ink,
-                        ),
-                      ),
-                    ),
-                    if (onCancelarAgendada != null)
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          foregroundColor: MensagensColors.red,
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          minimumSize: const Size(0, 28),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: onCancelarAgendada,
-                        child: const Text(
-                          'Cancelar',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TagPill extends StatelessWidget {
+  const _TagPill({required this.texto, required this.cor});
+
+  final String texto;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        texto,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: cor,
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniMetricaPill extends StatelessWidget {
+  const _MiniMetricaPill({
+    required this.icon,
+    required this.valor,
+    required this.rotulo,
+    required this.cor,
+  });
+
+  final IconData icon;
+  final int valor;
+  final String rotulo;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12.5, color: cor),
+          const SizedBox(width: 4),
+          Text(
+            '$valor $rotulo',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: cor,
+            ),
+          ),
+        ],
       ),
     );
   }

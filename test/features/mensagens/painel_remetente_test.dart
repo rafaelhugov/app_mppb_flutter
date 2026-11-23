@@ -127,10 +127,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Aviso Geral da PGJ'), findsOneWidget);
-      expect(find.textContaining('500 dest.'), findsOneWidget);
-      expect(find.textContaining('420 entr.'), findsOneWidget);
-      expect(find.textContaining('310 lido(s)'), findsOneWidget);
-      expect(find.textContaining('295 ciente(s)'), findsOneWidget);
+      expect(find.text('500 dest.'), findsOneWidget);
+      expect(find.text('420 entr.'), findsOneWidget);
+      expect(find.text('310 lidos'), findsOneWidget);
+      expect(find.text('295 cientes'), findsOneWidget);
       expect(find.text('Novo Aviso'), findsOneWidget);
     },
   );

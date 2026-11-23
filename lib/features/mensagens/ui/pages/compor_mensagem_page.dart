@@ -251,40 +251,40 @@ class _ComporMensagemPageState extends ConsumerState<ComporMensagemPage> {
                       children: [
                         const SeletorDestinatariosWidget(),
                         const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: MensagensColors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: MensagensColors.green.withValues(alpha: 0.25),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.people_outline,
-                                color: MensagensColors.green,
-                                size: 20,
+                            decoration: BoxDecoration(
+                              color: MensagensColors.green.withValues(
+                                alpha: 0.08,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.people_outline_rounded,
+                                  color: MensagensColors.green,
+                                  size: 15,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
                                   state.calculandoPrevia
-                                      ? 'Calculando prévia de destinatários...'
-                                      : 'Alcance estimado: ${state.totalEstimado ?? 0} destinatário(s) ativo(s)',
+                                      ? 'Calculando alcance...'
+                                      : 'Alcance: ${state.totalEstimado ?? 0} destinatário(s)',
                                   style: const TextStyle(
                                     color: MensagensColors.green,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),

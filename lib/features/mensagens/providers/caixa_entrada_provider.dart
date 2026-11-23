@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
@@ -58,10 +59,40 @@ class CaixaEntradaNotifier extends Notifier<CaixaEntradaState> {
         Future.microtask(() => carregar());
       }
     });
+    final lifecycleListener = AppLifecycleListener(
+      onResume: () => unawaited(carregarSilencioso()),
+    );
+    ref.onDispose(lifecycleListener.dispose);
     if (isAuthenticated) {
       Future.microtask(() => carregar());
     }
     return const CaixaEntradaState();
+  }
+
+  Future<void> carregarSilencioso() async {
+    final auth = ref.read(authProvider);
+    if (!auth.isAuthenticated || state.isLoading) return;
+    try {
+      final repo = ref.read(mensagensRepositoryProvider);
+      final page = await repo.listarRecebidas(filtro: state.filtro, pagina: 0);
+      state = state.copyWith(
+        itens: page.itens,
+        totalNaoLidas: page.totalNaoLidas,
+        paginaAtual: page.pagina,
+        totalPaginas: page.totalPaginas,
+      );
+      final pendentesIds = page.itens
+          .where((m) => m.status == StatusDestinatario.pendente)
+          .map((m) => m.id)
+          .toList();
+      if (pendentesIds.isNotEmpty) {
+        unawaited(
+          repo.confirmarEntregaEmLote(pendentesIds).catchError((_) {}),
+        );
+      }
+    } catch (_) {
+      // Atualização silenciosa em segundo plano não exibe erro.
+    }
   }
 
   Future<void> carregar({String? filtro, bool forceRefresh = false}) async {

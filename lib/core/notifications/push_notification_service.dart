@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../firebase_options.dart';
+import '../network/api_client.dart';
 import 'notification_center_provider.dart';
 
 @pragma('vm:entry-point')
@@ -20,6 +23,45 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     );
   }
   await persistNotificationCenterRemoteMessage(message);
+  await _confirmarEntregaMensagemEmSegundoPlano(message);
+}
+
+Future<void> _confirmarEntregaMensagemEmSegundoPlano(
+  RemoteMessage message,
+) async {
+  if (message.data['tipo_evento']?.toString().trim() != 'MENSAGEM_AVISO') {
+    return;
+  }
+  final mensagemId = int.tryParse(
+    message.data['mensagem_id']?.toString().trim() ?? '',
+  );
+  if (mensagemId == null || mensagemId <= 0) return;
+
+  try {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'auth_token');
+    if (token == null || token.trim().isEmpty) return;
+
+    final base = apiBaseUrl.endsWith('/')
+        ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
+        : apiBaseUrl;
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: base,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+    );
+    await dio.post<void>(
+      '/api/mensagens/recebidas/confirmar-entrega',
+      data: {
+        'mensagemIds': [mensagemId],
+      },
+    );
+  } catch (_) {
+    // Falha silenciosa em segundo plano; será sincronizado ao abrir o app.
+  }
 }
 
 class PushTechnicalPayload {

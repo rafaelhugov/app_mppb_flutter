@@ -160,6 +160,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
             padding: EdgeInsets.all(metrics.isTablet ? 10 : 8),
             icon: _NotificationBell(count: unreadNotificationCount),
             onPressed: () {
+              unawaited(
+                ref.read(caixaEntradaProvider.notifier).carregarSilencioso(),
+              );
               NotificationCenterSheet.show(
                 context,
                 items: notificationItems,

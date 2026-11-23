@@ -19,6 +19,7 @@ class MensagensRepository {
 
   final Dio _dio;
   final Map<String, Uint8List?> _fotoCache = {};
+  final Map<String, Uint8List> _thumbCache = {};
 
   String get baseUrl => _dio.options.baseUrl;
 
@@ -109,6 +110,29 @@ class MensagensRepository {
       options: Options(responseType: ResponseType.bytes),
     );
     return resp.data ?? const [];
+  }
+
+  Future<Uint8List> baixarThumbnailBytes(
+    int mensagemId,
+    int anexoId, {
+    bool possuiThumbnail = true,
+  }) async {
+    final cacheKey = '$mensagemId:$anexoId:${possuiThumbnail ? "t" : "c"}';
+    final cached = _thumbCache[cacheKey];
+    if (cached != null) return cached;
+
+    final path = possuiThumbnail
+        ? '/api/mensagens/$mensagemId/anexos/$anexoId/thumbnail'
+        : '/api/mensagens/$mensagemId/anexos/$anexoId/conteudo';
+    final resp = await _dio.get<List<int>>(
+      path,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final bytes = Uint8List.fromList(resp.data ?? const []);
+    if (bytes.isNotEmpty) {
+      _thumbCache[cacheKey] = bytes;
+    }
+    return bytes;
   }
 
   // --- Remetente (Admin) ---

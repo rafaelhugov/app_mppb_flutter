@@ -158,7 +158,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Procuradoria-Geral de Justiça'), findsWidgets);
-      expect(find.text('Comunicado Oficial • URGENTE'), findsOneWidget);
+      expect(find.text('Comunicado Oficial • Urgente'), findsOneWidget);
       expect(find.text('pauta.pdf'), findsOneWidget);
       expect(find.text('Confirmar Ciência'), findsOneWidget);
 

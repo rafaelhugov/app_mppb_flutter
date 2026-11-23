@@ -30,6 +30,7 @@ class MidiaViewerPage extends ConsumerStatefulWidget {
 class _MidiaViewerPageState extends ConsumerState<MidiaViewerPage> {
   VideoPlayerController? _videoController;
   Uint8List? _docBytes;
+  Uint8List? _imgBytes;
   bool _carregando = false;
   String? _erro;
 
@@ -40,6 +41,8 @@ class _MidiaViewerPageState extends ConsumerState<MidiaViewerPage> {
       _iniciarVideo();
     } else if (widget.anexo.categoria == CategoriaAnexo.documento) {
       _carregarDocumento();
+    } else if (widget.anexo.categoria == CategoriaAnexo.imagem) {
+      _carregarImagem();
     }
   }
 
@@ -103,6 +106,37 @@ class _MidiaViewerPageState extends ConsumerState<MidiaViewerPage> {
         setState(() {
           _carregando = false;
           _erro = 'Não foi possível carregar o documento.';
+        });
+      }
+    }
+  }
+
+  Future<void> _carregarImagem() async {
+    setState(() {
+      _carregando = true;
+      _erro = null;
+    });
+    try {
+      final bytes = await ref
+          .read(mensagensRepositoryProvider)
+          .baixarAnexoBytes(widget.mensagemId, widget.anexo.id);
+      if (!mounted) return;
+      if (bytes.isEmpty) {
+        setState(() {
+          _carregando = false;
+          _erro = 'Falha ao carregar imagem.';
+        });
+        return;
+      }
+      setState(() {
+        _imgBytes = Uint8List.fromList(bytes);
+        _carregando = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _carregando = false;
+          _erro = 'Falha ao carregar imagem.';
         });
       }
     }
@@ -190,19 +224,21 @@ class _MidiaViewerPageState extends ConsumerState<MidiaViewerPage> {
 
     switch (widget.anexo.categoria) {
       case CategoriaAnexo.imagem:
-        final repo = ref.read(mensagensRepositoryProvider);
-        final token = ref.read(authProvider).token;
-        final url = repo.anexoConteudoUrl(widget.mensagemId, widget.anexo.id);
+        final imgBytes = _imgBytes;
+        if (imgBytes == null) {
+          return const Center(
+            child: Text(
+              'Falha ao carregar imagem.',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        }
         return InteractiveViewer(
           minScale: 0.8,
           maxScale: 4.0,
           child: Center(
-            child: Image.network(
-              url,
-              headers: {
-                if (token != null && token.isNotEmpty)
-                  'Authorization': 'Bearer $token',
-              },
+            child: Image.memory(
+              imgBytes,
               errorBuilder: (_, _, _) => const Text(
                 'Falha ao carregar imagem.',
                 style: TextStyle(color: Colors.white),

@@ -348,14 +348,14 @@ class _MensagemEnviadaCard extends StatelessWidget {
             : 'Aviso institucional');
 
     final (corPrioridade, rotuloPrioridade) = switch (mensagem.prioridade) {
-      PrioridadeMensagem.urgente => (MensagensColors.red, 'URGENTE'),
-      PrioridadeMensagem.importante => (MensagensColors.orange, 'IMPORTANTE'),
-      PrioridadeMensagem.normal => (MensagensColors.green, 'NORMAL'),
+      PrioridadeMensagem.urgente => (MensagensColors.red, 'Urgente'),
+      PrioridadeMensagem.importante => (MensagensColors.orange, 'Importante'),
+      PrioridadeMensagem.normal => (MensagensColors.green, 'Normal'),
     };
     final (corStatus, rotuloStatus) = switch (mensagem.statusPublicacao) {
-      'AGENDADA' => (MensagensColors.blue, 'AGENDADA'),
-      'CANCELADA' => (MensagensColors.red, 'CANCELADA'),
-      _ => (MensagensColors.green, 'ENVIADA'),
+      'AGENDADA' => (MensagensColors.blue, 'Agendada'),
+      'CANCELADA' => (MensagensColors.red, 'Cancelada'),
+      _ => (MensagensColors.green, 'Enviada'),
     };
     final previewLimpa = (mensagem.conteudo ?? '')
         .replaceAllMapped(

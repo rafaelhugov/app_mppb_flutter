@@ -164,17 +164,26 @@ class _MidiaViewerPageState extends ConsumerState<MidiaViewerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDocumento = widget.anexo.categoria == CategoriaAnexo.documento;
     return Scaffold(
-      backgroundColor: widget.anexo.categoria == CategoriaAnexo.documento
-          ? Colors.white
-          : Colors.black,
+      backgroundColor: isDocumento ? Colors.white : Colors.black,
+      extendBodyBehindAppBar: !isDocumento,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
-        foregroundColor: Colors.white,
+        backgroundColor: isDocumento ? Colors.white : Colors.transparent,
+        foregroundColor: isDocumento ? const Color(0xFF101828) : Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(
           widget.anexo.nomeOriginal,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: isDocumento
+              ? null
+              : const TextStyle(
+                  shadows: [
+                    Shadow(color: Colors.black54, blurRadius: 8),
+                  ],
+                ),
         ),
         actions: [
           IconButton(

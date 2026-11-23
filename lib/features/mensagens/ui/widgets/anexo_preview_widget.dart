@@ -21,7 +21,7 @@ class AnexoPreviewWidget extends ConsumerWidget {
   final MensagemAnexoModel anexo;
 
   void _abrirViewer(BuildContext context) {
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         builder: (_) => MidiaViewerPage(mensagemId: mensagemId, anexo: anexo),
       ),

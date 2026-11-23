@@ -341,11 +341,8 @@ class _MensagemEnviadaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titulo = (mensagem.titulo != null && mensagem.titulo!.isNotEmpty)
-        ? mensagem.titulo!
-        : (mensagem.anexos.isNotEmpty
-            ? 'Aviso com anexo'
-            : 'Aviso institucional');
+    final titulo = mensagem.titulo?.trim();
+    final temTitulo = titulo != null && titulo.isNotEmpty;
 
     final (corPrioridade, rotuloPrioridade) = switch (mensagem.prioridade) {
       PrioridadeMensagem.urgente => (MensagensColors.red, 'Urgente'),
@@ -434,19 +431,21 @@ class _MensagemEnviadaCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            titulo,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w700,
-                              color: MensagensColors.ink,
+                          if (temTitulo) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              titulo,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                                color: MensagensColors.ink,
+                              ),
                             ),
-                          ),
+                          ],
                           if (previewLimpa.isNotEmpty) ...[
-                            const SizedBox(height: 3),
+                            SizedBox(height: temTitulo ? 3 : 8),
                             Text(
                               previewLimpa,
                               maxLines: 1,

@@ -1,8 +1,125 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+class _ServiceShortcut {
+  const _ServiceShortcut({
+    required this.icon,
+    required this.label,
+    required this.route,
+  });
+
+  final IconData icon;
+  final String label;
+  final String route;
+}
+
 class ServicesBottomSheet {
+  static const List<_ServiceShortcut> _authenticatedShortcuts = [
+    _ServiceShortcut(
+      icon: Icons.newspaper,
+      label: 'Notícias',
+      route: '/noticias',
+    ),
+    _ServiceShortcut(
+      icon: Icons.live_tv_rounded,
+      label: 'TV MPPB',
+      route: '/videos',
+    ),
+    _ServiceShortcut(
+      icon: Icons.description,
+      label: 'Diário',
+      route: '/diario_oficial',
+    ),
+    _ServiceShortcut(
+      icon: Icons.verified_outlined,
+      label: 'Certidão',
+      route: '/certidao-extrajudicial',
+    ),
+    _ServiceShortcut(
+      icon: Icons.assignment,
+      label: 'Pagamentos',
+      route: '/pagamentos',
+    ),
+    _ServiceShortcut(
+      icon: Icons.assignment_ind,
+      label: 'Designações',
+      route: '/designacoes',
+    ),
+    _ServiceShortcut(
+      icon: Icons.gavel,
+      label: 'Processos',
+      route: '/processos',
+    ),
+    _ServiceShortcut(
+      icon: Icons.campaign_rounded,
+      label: 'Mensagens',
+      route: '/mensagens',
+    ),
+    _ServiceShortcut(
+      icon: Icons.contacts_rounded,
+      label: 'Contatos',
+      route: '/contatos',
+    ),
+    _ServiceShortcut(
+      icon: Icons.account_circle_rounded,
+      label: 'Perfil',
+      route: '/perfil',
+    ),
+    _ServiceShortcut(
+      icon: Icons.record_voice_over,
+      label: 'Ouvidoria',
+      route: '/ouvidoria',
+    ),
+  ];
+
+  static const List<_ServiceShortcut> _publicShortcuts = [
+    _ServiceShortcut(
+      icon: Icons.newspaper,
+      label: 'Notícias',
+      route: '/noticias',
+    ),
+    _ServiceShortcut(
+      icon: Icons.live_tv_rounded,
+      label: 'TV MPPB',
+      route: '/videos',
+    ),
+    _ServiceShortcut(
+      icon: Icons.description,
+      label: 'Diário',
+      route: '/diario_oficial',
+    ),
+    _ServiceShortcut(
+      icon: Icons.verified_outlined,
+      label: 'Certidão',
+      route: '/certidao-extrajudicial',
+    ),
+    _ServiceShortcut(
+      icon: Icons.gavel,
+      label: 'Processos',
+      route: '/processos',
+    ),
+    _ServiceShortcut(
+      icon: Icons.record_voice_over,
+      label: 'Ouvidoria',
+      route: '/ouvidoria',
+    ),
+    _ServiceShortcut(
+      icon: Icons.contacts_rounded,
+      label: 'Contatos',
+      route: '/contatos',
+    ),
+    _ServiceShortcut(
+      icon: Icons.lock,
+      label: 'Área Restrita',
+      route: '/login',
+    ),
+  ];
+
   static void show(BuildContext context, bool isAuthenticated) {
+    final shortcuts =
+        isAuthenticated ? _authenticatedShortcuts : _publicShortcuts;
+    final itemWidth = (MediaQuery.of(context).size.width - 70) / 4;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -68,142 +185,19 @@ class ServicesBottomSheet {
                     spacing: 10,
                     runSpacing: 10,
                     alignment: WrapAlignment.start,
-                    children: isAuthenticated
-                        ? [
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.newspaper,
-                                'Notícias',
-                                '/noticias',
-                              ),
+                    children: shortcuts
+                        .map(
+                          (item) => SizedBox(
+                            width: itemWidth,
+                            child: _buildMenuShortcut(
+                              ctx,
+                              item.icon,
+                              item.label,
+                              item.route,
                             ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.live_tv_rounded,
-                                'TV MPPB',
-                                '/videos',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.description,
-                                'Diário',
-                                '/diario_oficial',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.verified_outlined,
-                                'Certidão',
-                                '/certidao-extrajudicial',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.assignment,
-                                'Pagamentos',
-                                '/pagamentos',
-                              ),
-                            ),
-
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.assignment_ind,
-                                'Designações',
-                                '/designacoes',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.gavel,
-                                'Processos',
-                                '/processos',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.account_circle_rounded,
-                                'Perfil',
-                                '/perfil',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.record_voice_over,
-                                'Ouvidoria',
-                                '/ouvidoria',
-                              ),
-                            ),
-                          ]
-                        : [
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.record_voice_over,
-                                'Ouvidoria',
-                                '/ouvidoria',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.verified_outlined,
-                                'Certidão',
-                                '/certidao-extrajudicial',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.live_tv_rounded,
-                                'TV MPPB',
-                                '/videos',
-                              ),
-                            ),
-                            SizedBox(
-                              width:
-                                  (MediaQuery.of(context).size.width - 70) / 4,
-                              child: _buildMenuShortcut(
-                                ctx,
-                                Icons.lock,
-                                'Área Restrita',
-                                '/login',
-                              ),
-                            ),
-                          ],
+                          ),
+                        )
+                        .toList(),
                   ),
                 ],
               ),

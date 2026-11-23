@@ -180,21 +180,10 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
             title: 'Painel de Avisos',
             subtitle: '',
             icon: Icons.campaign_rounded,
-            rightWidget: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                MensagensHeaderIconButton(
-                  icon: Icons.groups_rounded,
-                  tooltip: 'Grupos personalizados',
-                  onPressed: () => context.push('/mensagens/painel/grupos'),
-                ),
-                const SizedBox(width: 6),
-                MensagensHeaderIconButton(
-                  icon: Icons.refresh_rounded,
-                  tooltip: 'Atualizar',
-                  onPressed: _carregar,
-                ),
-              ],
+            rightWidget: MensagensHeaderIconButton(
+              icon: Icons.refresh_rounded,
+              tooltip: 'Atualizar',
+              onPressed: _carregar,
             ),
           ),
           Padding(
@@ -202,38 +191,7 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
               horizontalPadding,
               4,
               horizontalPadding,
-              12,
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: MensagensColors.red,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  minimumSize: const Size(0, 44),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: () async {
-                  await context.push('/mensagens/painel/nova');
-                  if (mounted) _carregar();
-                },
-                icon: const Icon(Icons.send_rounded, size: 17),
-                label: const Text(
-                  'Novo Aviso',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              0,
-              horizontalPadding,
-              8,
+              10,
             ),
             child: MensagensSegmentedPillBar<bool>(
               selectedValue: _mostrarArquivadas,
@@ -251,6 +209,68 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
                   value: true,
                   icon: Icons.archive_outlined,
                   label: 'Arquivados',
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              0,
+              horizontalPadding,
+              10,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: MensagensColors.red,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(0, 38),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () async {
+                      await context.push('/mensagens/painel/nova');
+                      if (mounted) _carregar();
+                    },
+                    icon: const Icon(Icons.send_rounded, size: 15),
+                    label: const Text(
+                      'Novo Aviso',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: MensagensColors.surface,
+                      foregroundColor: MensagensColors.ink,
+                      minimumSize: const Size(0, 38),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      side: const BorderSide(color: MensagensColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => context.push('/mensagens/painel/grupos'),
+                    icon: const Icon(Icons.groups_rounded, size: 17),
+                    label: const Text(
+                      'Grupos',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

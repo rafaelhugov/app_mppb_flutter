@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/mensagens_repository.dart';
@@ -338,14 +339,45 @@ class EnvioMensagemNotifier extends Notifier<EnvioMensagemState> {
       );
       state = const EnvioMensagemState();
       return enviada;
-    } catch (_) {
+    } catch (e) {
       state = state.copyWith(
         enviandoMensagem: false,
-        errorMessage:
-            'Falha ao publicar o aviso. Verifique os destinatários e tente novamente.',
+        errorMessage: _extrairMensagemErroEnvio(e),
       );
       return null;
     }
+  }
+
+  String _extrairMensagemErroEnvio(Object e) {
+    if (e is DioException) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        return 'Tempo limite excedido ao publicar o aviso. Verifique sua conexão e tente novamente.';
+      }
+      final data = e.response?.data;
+      if (data is Map) {
+        for (final chave in const ['message', 'erro', 'detail', 'error']) {
+          final valor = data[chave]?.toString().trim();
+          if (valor != null && valor.isNotEmpty) {
+            return valor;
+          }
+        }
+      } else if (data is String && data.trim().isNotEmpty) {
+        return data.trim();
+      }
+      final status = e.response?.statusCode;
+      if (status == 400) {
+        return 'Dados inválidos ao publicar o aviso. Revise os campos e tente novamente.';
+      }
+      if (status == 403) {
+        return 'Você não tem permissão para publicar este aviso.';
+      }
+      if (status != null) {
+        return 'Falha ao publicar o aviso (HTTP $status). Tente novamente.';
+      }
+    }
+    return 'Não foi possível publicar o aviso. Verifique sua conexão e tente novamente.';
   }
 }
 

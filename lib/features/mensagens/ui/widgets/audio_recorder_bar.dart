@@ -172,9 +172,11 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
             Row(
               children: [
                 Expanded(
+                  flex: 2,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: MensagensColors.red,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       side: BorderSide(
                         color: MensagensColors.red.withValues(alpha: 0.35),
                       ),
@@ -199,7 +201,7 @@ class AudioRecorderBarState extends State<AudioRecorderBar> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: MensagensColors.green,

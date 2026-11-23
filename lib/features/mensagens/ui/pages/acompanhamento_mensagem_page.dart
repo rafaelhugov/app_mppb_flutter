@@ -1,14 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/ui/main_layout.dart';
 import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../models/acompanhamento_mensagem_model.dart';
 import '../../models/mensagem_aviso_model.dart';
 import '../../providers/acompanhamento_provider.dart';
+import '../widgets/anexo_preview_widget.dart';
 import '../widgets/mensagens_theme.dart';
 import '../widgets/remetente_avatar.dart';
 
@@ -108,151 +111,137 @@ class _AcompanhamentoMensagemPageState
     final horizontalPadding = MainLayout.horizontalPadding(context);
     final bottomPadding = MainLayout.contentBottomPadding(context);
 
-    return Column(
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        6,
+        horizontalPadding,
+        bottomPadding,
+      ),
       children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            4,
-            horizontalPadding,
-            8,
+        _MensagemEnviadaInlineCard(resumo: resumo),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: MensagensColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: MensagensColors.border),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D101828),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: MensagensColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: MensagensColors.border),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0D101828),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: MensagensColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: MensagensColors.border),
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  resumo.titulo ?? 'Aviso institucional #${resumo.id}',
-                  style: const TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w800,
-                    color: MensagensColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: MensagensColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: MensagensColors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _ResumoBox(
-                        titulo: 'Total',
-                        valor: resumo.totalDestinatarios,
-                        cor: MensagensColors.ink,
-                      ),
-                      _ResumoBox(
-                        titulo: 'Entregues',
-                        valor: resumo.totalEntregues,
-                        cor: MensagensColors.blue,
-                      ),
-                      _ResumoBox(
-                        titulo: 'Lidos',
-                        valor: resumo.totalLidos,
-                        cor: MensagensColors.green,
-                      ),
-                      if (resumo.exigeCiencia)
-                        _ResumoBox(
-                          titulo: 'Cientes',
-                          valor: resumo.totalCientes,
-                          cor: MensagensColors.orange,
-                        ),
-                      _ResumoBox(
-                        titulo: 'Pendentes',
-                        valor: resumo.totalPendentes,
-                        cor: MensagensColors.red,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _buscaCtrl,
-                  decoration: InputDecoration(
-                    hintText: 'Filtrar por nome, matrícula ou setor...',
-                    prefixIcon: const Icon(Icons.search),
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _ResumoBox(
+                      titulo: 'Total',
+                      valor: resumo.totalDestinatarios,
+                      cor: MensagensColors.ink,
                     ),
-                    suffixIcon: _busca.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _buscaCtrl.clear();
-                              setState(() => _busca = '');
-                            },
-                          )
-                        : null,
-                  ),
-                  onChanged: (v) => setState(() => _busca = v.trim()),
-                ),
-                const SizedBox(height: 10),
-                MensagensSegmentedPillBar<StatusDestinatario?>(
-                  maxWidth: double.infinity,
-                  selectedValue: _statusFiltro,
-                  onSelected: (novo) => setState(() => _statusFiltro = novo),
-                  items: const [
-                    MensagensSegmentItem(
-                      value: null,
-                      label: 'Todos',
+                    _ResumoBox(
+                      titulo: 'Entregues',
+                      valor: resumo.totalEntregues,
+                      cor: MensagensColors.blue,
                     ),
-                    MensagensSegmentItem(
-                      value: StatusDestinatario.lido,
-                      label: 'Lidos',
+                    _ResumoBox(
+                      titulo: 'Lidos',
+                      valor: resumo.totalLidos,
+                      cor: MensagensColors.green,
                     ),
-                    MensagensSegmentItem(
-                      value: StatusDestinatario.entregue,
-                      label: 'Entregues',
-                    ),
-                    MensagensSegmentItem(
-                      value: StatusDestinatario.pendente,
-                      label: 'Pendentes',
+                    if (resumo.exigeCiencia)
+                      _ResumoBox(
+                        titulo: 'Cientes',
+                        valor: resumo.totalCientes,
+                        cor: MensagensColors.orange,
+                      ),
+                    _ResumoBox(
+                      titulo: 'Pendentes',
+                      valor: resumo.totalPendentes,
+                      cor: MensagensColors.red,
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _buscaCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Filtrar por nome, matrícula ou setor...',
+                  prefixIcon: const Icon(Icons.search),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  suffixIcon: _busca.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _buscaCtrl.clear();
+                            setState(() => _busca = '');
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (v) => setState(() => _busca = v.trim()),
+              ),
+              const SizedBox(height: 10),
+              MensagensSegmentedPillBar<StatusDestinatario?>(
+                maxWidth: double.infinity,
+                selectedValue: _statusFiltro,
+                onSelected: (novo) => setState(() => _statusFiltro = novo),
+                items: const [
+                  MensagensSegmentItem(
+                    value: null,
+                    label: 'Todos',
+                  ),
+                  MensagensSegmentItem(
+                    value: StatusDestinatario.lido,
+                    label: 'Lidos',
+                  ),
+                  MensagensSegmentItem(
+                    value: StatusDestinatario.entregue,
+                    label: 'Entregues',
+                  ),
+                  MensagensSegmentItem(
+                    value: StatusDestinatario.pendente,
+                    label: 'Pendentes',
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        Expanded(
-          child: dados.destinatarios.isEmpty
-              ? const MensagensEmptyState(
-                  message: 'Nenhum destinatário encontrado neste filtro.',
-                  icon: Icons.people_outline,
-                )
-              : _buildSecoesWhatsApp(
-                  dados.destinatarios,
-                  horizontalPadding,
-                  bottomPadding,
-                ),
-        ),
+        const SizedBox(height: 10),
+        if (dados.destinatarios.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: MensagensEmptyState(
+              message: 'Nenhum destinatário encontrado neste filtro.',
+              icon: Icons.people_outline,
+            ),
+          )
+        else
+          ..._buildSecoesWhatsApp(dados.destinatarios),
       ],
     );
   }
 
-  Widget _buildSecoesWhatsApp(
-    List<DestinatarioStatusModel> lista,
-    double horizontalPadding,
-    double bottomPadding,
-  ) {
+  List<Widget> _buildSecoesWhatsApp(List<DestinatarioStatusModel> lista) {
     final cientes = lista.where((d) => d.dataCiencia != null).toList();
     final lidos = lista
         .where((d) => d.dataCiencia == null && d.dataLeitura != null)
@@ -274,18 +263,11 @@ class _AcompanhamentoMensagemPageState
         )
         .toList();
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-        horizontalPadding,
-        4,
-        horizontalPadding,
-        bottomPadding,
-      ),
-      children: [
-        if (cientes.isNotEmpty)
-          _SecaoConfirmacaoWhatsApp(
-            titulo: 'Ciente por',
-            icone: Icons.verified_rounded,
+    return [
+      if (cientes.isNotEmpty)
+        _SecaoConfirmacaoWhatsApp(
+          titulo: 'Ciente por',
+          icone: Icons.verified_rounded,
             corIcone: MensagensColors.green,
             itens: cientes,
             obterData: (d) => d.dataCiencia,
@@ -318,8 +300,7 @@ class _AcompanhamentoMensagemPageState
             obterData: (_) => null,
             formatarData: _formatarData,
           ),
-      ],
-    );
+    ];
   }
 }
 
@@ -499,6 +480,156 @@ class _ResumoBox extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MensagemEnviadaInlineCard extends StatelessWidget {
+  const _MensagemEnviadaInlineCard({required this.resumo});
+
+  final MensagemEnviadaModel resumo;
+
+  @override
+  Widget build(BuildContext context) {
+    final dataFormatada = resumo.dataEnvio != null
+        ? DateFormat('dd/MM/yyyy HH:mm').format(resumo.dataEnvio!)
+        : (resumo.dataAgendamento != null
+            ? 'Agendada para ${DateFormat('dd/MM/yyyy HH:mm').format(resumo.dataAgendamento!)}'
+            : '');
+    final temTitulo = resumo.titulo?.trim().isNotEmpty ?? false;
+    final temTexto = resumo.conteudo?.trim().isNotEmpty ?? false;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFEAE2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MensagensColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _InlineTag(label: resumo.prioridade.label),
+              _InlineTag(label: resumo.modalidade.label),
+              if (resumo.exigeCiencia)
+                const _InlineTag(label: 'Exige ciência'),
+              if (dataFormatada.isNotEmpty) _InlineTag(label: dataFormatada),
+            ],
+          ),
+          if (temTitulo || temTexto) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE7FFDB),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCDEAC0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (temTitulo)
+                    Text(
+                      resumo.titulo!,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: MensagensColors.ink,
+                      ),
+                    ),
+                  if (temTitulo && temTexto) const SizedBox(height: 6),
+                  if (temTexto)
+                    MarkdownBody(
+                      data: resumo.conteudo!,
+                      selectable: true,
+                      onTapLink: (_, href, _) {
+                        if (href != null && href.isNotEmpty) {
+                          final uri = Uri.tryParse(href);
+                          if (uri != null) {
+                            launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        }
+                      },
+                      styleSheet: MarkdownStyleSheet(
+                        p: const TextStyle(
+                          fontSize: 14,
+                          height: 1.4,
+                          color: MensagensColors.ink,
+                        ),
+                        strong: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: MensagensColors.ink,
+                        ),
+                        a: const TextStyle(
+                          color: MensagensColors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          for (final anexo in resumo.anexos) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE7FFDB),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCDEAC0)),
+              ),
+              child: AnexoPreviewWidget(
+                mensagemId: resumo.id,
+                anexo: anexo,
+              ),
+            ),
+          ],
+          if (!temTitulo && !temTexto && resumo.anexos.isEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Aviso institucional #${resumo.id}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: MensagensColors.ink,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineTag extends StatelessWidget {
+  const _InlineTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: MensagensColors.surface,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: MensagensColors.muted,
+        ),
+      ),
     );
   }
 }

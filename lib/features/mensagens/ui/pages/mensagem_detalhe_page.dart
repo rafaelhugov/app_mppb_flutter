@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/ui/app_feedback.dart';
 import '../../../../core/ui/main_layout.dart';
+import '../../models/mensagem_anexo_model.dart';
 import '../../models/mensagem_aviso_model.dart';
 import '../../providers/caixa_entrada_provider.dart';
+import '../widgets/anexo_preview_widget.dart';
 import '../widgets/mensagem_bolha_card.dart';
 import '../widgets/mensagens_theme.dart';
 import '../widgets/remetente_avatar.dart';
@@ -135,12 +138,7 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
                               _DataConversaPill(data: _mensagem!.dataEnvio!),
                               const SizedBox(height: 12),
                             ],
-                            MensagemBolhaCard(
-                              mensagem: _mensagem!,
-                              onConfirmarCiencia: _mensagem!.pendenteCiencia
-                                  ? _confirmarCiencia
-                                  : null,
-                            ),
+                            ..._buildBolhasConversa(_mensagem!),
                           ],
                         ),
                       ),
@@ -148,6 +146,36 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildBolhasConversa(MensagemAvisoModel msg) {
+    final temTexto = (msg.titulo?.trim().isNotEmpty ?? false) ||
+        (msg.conteudo?.trim().isNotEmpty ?? false);
+    final separarAnexos = temTexto && msg.anexos.isNotEmpty;
+
+    if (!separarAnexos) {
+      return [
+        MensagemBolhaCard(
+          mensagem: msg,
+          onConfirmarCiencia: msg.pendenteCiencia ? _confirmarCiencia : null,
+        ),
+      ];
+    }
+
+    return [
+      MensagemBolhaCard(
+        mensagem: msg,
+        incluirAnexos: false,
+        incluirCiencia: false,
+      ),
+      for (var i = 0; i < msg.anexos.length; i++)
+        _AnexoBolhaCard(
+          mensagem: msg,
+          anexo: msg.anexos[i],
+          incluirCiencia: i == msg.anexos.length - 1,
+          onConfirmarCiencia: msg.pendenteCiencia ? _confirmarCiencia : null,
+        ),
+    ];
   }
 }
 
@@ -168,7 +196,7 @@ class _WhatsAppChatHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final subtitulo = mensagem == null
         ? 'Carregando comunicado...'
-        : 'Comunicado Oficial • ${mensagem!.prioridade.apiValue}';
+        : 'Comunicado Oficial • ${mensagem!.prioridade.label}';
 
     return Container(
       decoration: const BoxDecoration(
@@ -299,6 +327,128 @@ class _DataConversaPill extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: MensagensColors.muted,
         ),
+      ),
+    );
+  }
+}
+
+class _AnexoBolhaCard extends StatelessWidget {
+  const _AnexoBolhaCard({
+    required this.mensagem,
+    required this.anexo,
+    required this.incluirCiencia,
+    this.onConfirmarCiencia,
+  });
+
+  final MensagemAvisoModel mensagem;
+  final MensagemAnexoModel anexo;
+  final bool incluirCiencia;
+  final VoidCallback? onConfirmarCiencia;
+
+  String _formatarData(DateTime? dt) {
+    if (dt == null) return '';
+    return DateFormat('dd/MM/yyyy HH:mm').format(dt);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+      decoration: BoxDecoration(
+        color: MensagensColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MensagensColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D101828),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AnexoPreviewWidget(mensagemId: mensagem.id, anexo: anexo),
+          if (incluirCiencia && mensagem.exigeCiencia) ...[
+            const SizedBox(height: 12),
+            if (mensagem.dataCiencia == null)
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: MensagensColors.green,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: onConfirmarCiencia,
+                  icon: const Icon(Icons.verified_outlined, size: 18),
+                  label: const Text(
+                    'Confirmar Ciência',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: MensagensColors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.verified,
+                      size: 16,
+                      color: MensagensColors.green,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'Ciência confirmada em ${_formatarData(mensagem.dataCiencia)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: MensagensColors.green,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                _formatarData(mensagem.dataEnvio),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: MensagensColors.muted,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.done_all,
+                size: 16,
+                color: mensagem.status == StatusDestinatario.lido
+                    ? MensagensColors.green
+                    : MensagensColors.muted,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

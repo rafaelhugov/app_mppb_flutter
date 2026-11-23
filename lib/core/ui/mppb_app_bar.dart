@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/designacoes/providers/designacoes_provider.dart';
+import '../../features/mensagens/providers/caixa_entrada_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
 import '../../features/noticias/ui/noticia_detalhes_page.dart';
 import '../../features/perfil/providers/preferencias_notificacao_provider.dart';
@@ -46,6 +47,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
     if (isAuthenticated) {
       final noticiaState = ref.watch(noticiaProvider);
       final designacoesState = ref.watch(designacoesProvider);
+      final caixaMensagensState = ref.watch(caixaEntradaProvider);
       final notificationState = ref.watch(notificationCenterProvider);
       final notificationPreferences = ref
           .watch(preferenciasNotificacaoProvider)
@@ -56,6 +58,7 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
       final notificationItems = buildNotificationCenterItems(
         noticias: noticiaState.noticias,
         designacoes: designacoesState.designacoes,
+        mensagens: caixaMensagensState.itens,
         readKeys: notificationState.readKeys,
         inboxItems: notificationState.inboxItems,
         includeNoticias: notificationPreferences.centralNoticias,
@@ -343,6 +346,9 @@ class MppbAppBar extends ConsumerWidget implements PreferredSizeWidget {
         return;
       case NotificationCenterItemType.live:
         context.go('/videos');
+        return;
+      case NotificationCenterItemType.mensagem:
+        context.go(item.targetRoute ?? '/mensagens');
         return;
     }
   }

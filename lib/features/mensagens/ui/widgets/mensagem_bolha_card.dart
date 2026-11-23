@@ -14,12 +14,16 @@ class MensagemBolhaCard extends StatelessWidget {
     this.onTap,
     this.onConfirmarCiencia,
     this.onArquivar,
+    this.incluirAnexos = true,
+    this.incluirCiencia = true,
   });
 
   final MensagemAvisoModel mensagem;
   final VoidCallback? onTap;
   final VoidCallback? onConfirmarCiencia;
   final VoidCallback? onArquivar;
+  final bool incluirAnexos;
+  final bool incluirCiencia;
 
   Color _corPrioridade(PrioridadeMensagem p) {
     return switch (p) {
@@ -31,9 +35,9 @@ class MensagemBolhaCard extends StatelessWidget {
 
   String _rotuloPrioridade(PrioridadeMensagem p) {
     return switch (p) {
-      PrioridadeMensagem.urgente => 'URGENTE',
-      PrioridadeMensagem.importante => 'IMPORTANTE',
-      PrioridadeMensagem.normal => 'AVISO',
+      PrioridadeMensagem.urgente => 'Urgente',
+      PrioridadeMensagem.importante => 'Importante',
+      PrioridadeMensagem.normal => 'Aviso',
     };
   }
 
@@ -123,11 +127,11 @@ class MensagemBolhaCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Text(
-                          'NOVO',
+                          'Novo',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -201,9 +205,10 @@ class MensagemBolhaCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                for (final anexo in mensagem.anexos)
-                  AnexoPreviewWidget(mensagemId: mensagem.id, anexo: anexo),
-                if (mensagem.exigeCiencia) ...[
+                if (incluirAnexos)
+                  for (final anexo in mensagem.anexos)
+                    AnexoPreviewWidget(mensagemId: mensagem.id, anexo: anexo),
+                if (incluirCiencia && mensagem.exigeCiencia) ...[
                   const SizedBox(height: 12),
                   if (mensagem.dataCiencia == null)
                     SizedBox(

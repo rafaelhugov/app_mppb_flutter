@@ -1,7 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../auth/providers/auth_provider.dart';
 import '../../data/mensagem_midia_cache.dart';
 import '../../data/mensagens_repository.dart';
 import '../../models/mensagem_anexo_model.dart';
@@ -20,7 +21,7 @@ class AnexoPreviewWidget extends ConsumerWidget {
   final MensagemAnexoModel anexo;
 
   void _abrirViewer(BuildContext context) {
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         builder: (_) => MidiaViewerPage(mensagemId: mensagemId, anexo: anexo),
       ),
@@ -34,57 +35,12 @@ class AnexoPreviewWidget extends ConsumerWidget {
         return AudioPlayerCard(mensagemId: mensagemId, anexo: anexo);
 
       case CategoriaAnexo.imagem:
-        final repo = ref.read(mensagensRepositoryProvider);
-        final token = ref.watch(authProvider).token;
-        final url = anexo.possuiThumbnail
-            ? repo.anexoThumbnailUrl(mensagemId, anexo.id)
-            : repo.anexoConteudoUrl(mensagemId, anexo.id);
         return Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: InkWell(
+          child: _ImagemPreviewCard(
+            mensagemId: mensagemId,
+            anexo: anexo,
             onTap: () => _abrirViewer(context),
-            borderRadius: BorderRadius.circular(12),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: 220,
-                  minHeight: 120,
-                  minWidth: double.infinity,
-                ),
-                child: Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  headers: {
-                    if (token != null && token.isNotEmpty)
-                      'Authorization': 'Bearer $token',
-                  },
-                  errorBuilder: (_, _, _) => Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: MensagensColors.background,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: MensagensColors.border),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.image_outlined,
-                          color: MensagensColors.muted,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Toque para abrir a imagem',
-                          style: TextStyle(color: MensagensColors.ink),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ),
         );
 
@@ -229,5 +185,137 @@ class AnexoPreviewWidget extends ConsumerWidget {
           ),
         );
     }
+  }
+}
+
+class _ImagemPreviewCard extends ConsumerStatefulWidget {
+  const _ImagemPreviewCard({
+    required this.mensagemId,
+    required this.anexo,
+    required this.onTap,
+  });
+
+  final int mensagemId;
+  final MensagemAnexoModel anexo;
+  final VoidCallback onTap;
+
+  @override
+  ConsumerState<_ImagemPreviewCard> createState() => _ImagemPreviewCardState();
+}
+
+class _ImagemPreviewCardState extends ConsumerState<_ImagemPreviewCard> {
+  Uint8List? _bytes;
+  bool _carregando = true;
+  bool _falhou = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregar();
+  }
+
+  Future<void> _carregar() async {
+    try {
+      final repo = ref.read(mensagensRepositoryProvider);
+      Uint8List bytes;
+      if (widget.anexo.possuiThumbnail) {
+        try {
+          bytes = await repo.baixarThumbnailBytes(
+            widget.mensagemId,
+            widget.anexo.id,
+            possuiThumbnail: true,
+          );
+        } catch (_) {
+          bytes = await repo.baixarThumbnailBytes(
+            widget.mensagemId,
+            widget.anexo.id,
+            possuiThumbnail: false,
+          );
+        }
+      } else {
+        bytes = await repo.baixarThumbnailBytes(
+          widget.mensagemId,
+          widget.anexo.id,
+          possuiThumbnail: false,
+        );
+      }
+      if (!mounted) return;
+      setState(() {
+        _bytes = bytes;
+        _carregando = false;
+        _falhou = bytes.isEmpty;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _carregando = false;
+        _falhou = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: widget.onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxHeight: 220,
+            minHeight: 120,
+            minWidth: double.infinity,
+          ),
+          child: _carregando
+              ? Container(
+                  height: 150,
+                  color: MensagensColors.background,
+                  alignment: Alignment.center,
+                  child: const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: MensagensColors.green,
+                    ),
+                  ),
+                )
+              : (!_falhou && _bytes != null && _bytes!.isNotEmpty)
+                  ? Image.memory(
+                      _bytes!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _fallback(),
+                    )
+                  : _fallback(),
+        ),
+      ),
+    );
+  }
+
+  Widget _fallback() {
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        color: MensagensColors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: MensagensColors.border),
+      ),
+      alignment: Alignment.center,
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_outlined,
+            color: MensagensColors.muted,
+          ),
+          SizedBox(width: 8),
+          Text(
+            'Toque para abrir a imagem',
+            style: TextStyle(color: MensagensColors.ink),
+          ),
+        ],
+      ),
+    );
   }
 }

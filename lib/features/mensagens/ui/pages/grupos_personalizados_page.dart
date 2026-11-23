@@ -45,23 +45,27 @@ class GruposPersonalizadosPage extends ConsumerWidget {
               horizontalPadding,
               8,
             ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 44,
+            child: Align(
+              alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: MensagensColors.green,
                   foregroundColor: Colors.white,
                   elevation: 0,
+                  minimumSize: const Size(0, 38),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 onPressed: () => _abrirEditorGrupo(context),
-                icon: const Icon(Icons.group_add_rounded, size: 18),
+                icon: const Icon(Icons.group_add_rounded, size: 17),
                 label: const Text(
                   'Novo Grupo',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),

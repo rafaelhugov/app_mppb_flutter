@@ -63,6 +63,7 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
   bool _showAllNews = false;
   bool _showAllLives = false;
   bool _showAllDesignations = false;
+  bool _showAllMessages = false;
   bool _showAllPayslips = false;
   bool _showAllPayments = false;
   bool _showAllLeaves = false;
@@ -76,6 +77,9 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
         ? 760.0
         : double.infinity;
     final heightFactor = responsive.isTablet ? 0.88 : 0.92;
+    final messageItems = widget.items
+        .where((item) => item.type == NotificationCenterItemType.mensagem)
+        .toList();
     final newsItems = widget.items
         .where((item) => item.type == NotificationCenterItemType.noticia)
         .toList();
@@ -220,6 +224,22 @@ class _NotificationCenterContentState extends State<NotificationCenterContent> {
                             ),
                           )
                         else ...[
+                          if (messageItems.isNotEmpty)
+                            _NotificationGroup(
+                              title: 'Mensagens e Avisos',
+                              count: messageItems.length,
+                              icon: Icons.campaign_rounded,
+                              accentColor: const Color(0xFF0F766E),
+                              items: messageItems,
+                              previewLimit: _previewLimit,
+                              showAll: _showAllMessages,
+                              onToggleShowAll: () {
+                                setState(
+                                  () => _showAllMessages = !_showAllMessages,
+                                );
+                              },
+                              onOpenItem: widget.onOpenItem,
+                            ),
                           if (newsItems.isNotEmpty)
                             _NotificationGroup(
                               title: 'Notícias',

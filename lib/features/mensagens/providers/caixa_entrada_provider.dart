@@ -50,11 +50,17 @@ class CaixaEntradaState {
 class CaixaEntradaNotifier extends Notifier<CaixaEntradaState> {
   @override
   CaixaEntradaState build() {
+    final isAuthenticated = ref.read(authProvider).isAuthenticated;
     ref.listen(authProvider, (previous, next) {
       if (!next.isAuthenticated) {
         state = const CaixaEntradaState();
+      } else if (!(previous?.isAuthenticated ?? false) && next.isAuthenticated) {
+        Future.microtask(() => carregar());
       }
     });
+    if (isAuthenticated) {
+      Future.microtask(() => carregar());
+    }
     return const CaixaEntradaState();
   }
 

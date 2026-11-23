@@ -1,12 +1,13 @@
 import 'mensagem_anexo_model.dart';
 
 enum PrioridadeMensagem {
-  normal('NORMAL'),
-  importante('IMPORTANTE'),
-  urgente('URGENTE');
+  normal('NORMAL', 'Normal'),
+  importante('IMPORTANTE', 'Importante'),
+  urgente('URGENTE', 'Urgente');
 
-  const PrioridadeMensagem(this.apiValue);
+  const PrioridadeMensagem(this.apiValue, this.label);
   final String apiValue;
+  final String label;
 
   static PrioridadeMensagem fromApi(String? value) {
     final normalized = value?.trim().toUpperCase();
@@ -18,12 +19,13 @@ enum PrioridadeMensagem {
 }
 
 enum ModalidadeEnvio {
-  broadcast('BROADCAST'),
-  multicast('MULTICAST'),
-  unicast('UNICAST');
+  broadcast('BROADCAST', 'Broadcast'),
+  multicast('MULTICAST', 'Multicast'),
+  unicast('UNICAST', 'Unicast');
 
-  const ModalidadeEnvio(this.apiValue);
+  const ModalidadeEnvio(this.apiValue, this.label);
   final String apiValue;
+  final String label;
 
   static ModalidadeEnvio fromApi(String? value) {
     final normalized = value?.trim().toUpperCase();

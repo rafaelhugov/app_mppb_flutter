@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../features/designacoes/models/designacao_ativa.dart';
+import '../../features/mensagens/models/mensagem_aviso_model.dart';
+import '../../features/mensagens/ui/widgets/mensagens_theme.dart';
 import '../../features/noticias/models/noticia.dart';
 import '../storage/secure_storage.dart';
 
@@ -19,6 +21,7 @@ enum NotificationCenterItemType {
   pagamento,
   afastamento,
   live,
+  mensagem,
 }
 
 class NotificationCenterItem {
@@ -216,14 +219,18 @@ List<NotificationCenterItem> buildNotificationCenterItems({
   required List<DesignacaoAtiva> designacoes,
   required Set<String> readKeys,
   required bool includeDesignacoes,
+  List<MensagemAvisoModel> mensagens = const [],
   List<NotificationCenterItem> inboxItems = const [],
   bool includeNoticias = true,
   bool includeContracheques = true,
   bool includePagamentos = true,
   bool includeAfastamentos = true,
   bool includeLives = true,
+  bool includeMensagens = true,
 }) {
   final items = <NotificationCenterItem>[
+    if (includeMensagens)
+      ...mensagens.where((m) => m.naoLida).map(_mensagemItem),
     if (includeNoticias) ...noticias.map(_noticiaItem),
     if (includeDesignacoes) ...designacoes.map(_designacaoItem),
     ...inboxItems.where(
@@ -234,6 +241,7 @@ List<NotificationCenterItem> buildNotificationCenterItems({
         NotificationCenterItemType.pagamento => includePagamentos,
         NotificationCenterItemType.afastamento => includeAfastamentos,
         NotificationCenterItemType.live => includeLives,
+        NotificationCenterItemType.mensagem => includeMensagens,
       },
     ),
   ];
@@ -303,6 +311,7 @@ NotificationCenterItemType? _functionalType(String? eventType) {
     'AFASTAMENTO_STATUS_ALTERADO' ||
     'AFASTAMENTO_MOVIMENTACAO' => NotificationCenterItemType.afastamento,
     'NOVA_LIVE' => NotificationCenterItemType.live,
+    'NOVA_MENSAGEM' || 'MENSAGEM_AVISO' => NotificationCenterItemType.mensagem,
     _ => null,
   };
 }
@@ -315,6 +324,7 @@ String _routeForType(NotificationCenterItemType type) {
     NotificationCenterItemType.noticia => '/noticias',
     NotificationCenterItemType.designacao => '/designacoes',
     NotificationCenterItemType.live => '/videos',
+    NotificationCenterItemType.mensagem => '/mensagens',
   };
 }
 
@@ -326,6 +336,7 @@ String _defaultTitle(NotificationCenterItemType type) {
     NotificationCenterItemType.noticia => 'Nova notícia',
     NotificationCenterItemType.designacao => 'Nova designação',
     NotificationCenterItemType.live => 'Transmissão ao vivo',
+    NotificationCenterItemType.mensagem => 'Novo aviso institucional',
   };
 }
 
@@ -433,6 +444,36 @@ NotificationCenterItem _designacaoItem(DesignacaoAtiva designacao) {
     type: NotificationCenterItemType.designacao,
     title: _requiredText(designacao.titulo, 'Nova designação'),
     subtitle: subtitle.isEmpty ? 'Designação ativa' : subtitle,
+  );
+}
+
+NotificationCenterItem _mensagemItem(MensagemAvisoModel mensagem) {
+  final remetente = formatarNomeProprio(mensagem.remetenteNome);
+  final tituloLimpo = mensagem.titulo?.trim();
+  final textoLimpo = (mensagem.conteudo ?? '')
+      .replaceAllMapped(RegExp(r'\[([^\]]+)\]\([^)]+\)'), (m) => m.group(1) ?? '')
+      .replaceAll('**', '')
+      .replaceAll('~~', '')
+      .replaceAll('*', '')
+      .replaceAll(RegExp(r'\s*\n+\s*'), ' ')
+      .trim();
+
+  final title = (tituloLimpo != null && tituloLimpo.isNotEmpty)
+      ? tituloLimpo
+      : remetente;
+  final subtitle = textoLimpo.isNotEmpty
+      ? (tituloLimpo != null && tituloLimpo.isNotEmpty
+          ? '$remetente • $textoLimpo'
+          : textoLimpo)
+      : (mensagem.anexos.isNotEmpty ? '$remetente • Anexo enviado' : remetente);
+
+  return NotificationCenterItem(
+    key: 'mensagem:${mensagem.id}',
+    type: NotificationCenterItemType.mensagem,
+    title: title,
+    subtitle: subtitle,
+    targetRoute: '/mensagens/${mensagem.id}',
+    receivedAt: mensagem.dataEnvio,
   );
 }
 

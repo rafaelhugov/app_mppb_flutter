@@ -111,250 +111,137 @@ class _AcompanhamentoMensagemPageState
     final horizontalPadding = MainLayout.horizontalPadding(context);
     final bottomPadding = MainLayout.contentBottomPadding(context);
 
-    return Column(
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        6,
+        horizontalPadding,
+        bottomPadding,
+      ),
       children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            4,
-            horizontalPadding,
-            8,
+        _MensagemEnviadaInlineCard(resumo: resumo),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: MensagensColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: MensagensColors.border),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D101828),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: MensagensColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: MensagensColors.border),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0D101828),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: MensagensColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: MensagensColors.border),
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Expanded(
-                      child: Text(
-                        resumo.titulo ?? 'Aviso institucional #${resumo.id}',
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w800,
-                          color: MensagensColors.ink,
-                        ),
-                      ),
+                    _ResumoBox(
+                      titulo: 'Total',
+                      valor: resumo.totalDestinatarios,
+                      cor: MensagensColors.ink,
                     ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () => _abrirModalMensagemEnviada(context, resumo),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: MensagensColors.green.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: MensagensColors.green.withValues(alpha: 0.28),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.visibility_outlined,
-                              size: 14,
-                              color: MensagensColors.green,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Ver aviso',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: MensagensColors.green,
-                              ),
-                            ),
-                          ],
-                        ),
+                    _ResumoBox(
+                      titulo: 'Entregues',
+                      valor: resumo.totalEntregues,
+                      cor: MensagensColors.blue,
+                    ),
+                    _ResumoBox(
+                      titulo: 'Lidos',
+                      valor: resumo.totalLidos,
+                      cor: MensagensColors.green,
+                    ),
+                    if (resumo.exigeCiencia)
+                      _ResumoBox(
+                        titulo: 'Cientes',
+                        valor: resumo.totalCientes,
+                        cor: MensagensColors.orange,
                       ),
+                    _ResumoBox(
+                      titulo: 'Pendentes',
+                      valor: resumo.totalPendentes,
+                      cor: MensagensColors.red,
                     ),
                   ],
                 ),
-                if ((resumo.conteudo?.trim().isNotEmpty ?? false) ||
-                    resumo.anexos.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  InkWell(
-                    onTap: () => _abrirModalMensagemEnviada(context, resumo),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (resumo.conteudo?.trim().isNotEmpty ?? false)
-                          Text(
-                            resumo.conteudo!
-                                .replaceAllMapped(
-                                  RegExp(r'\[([^\]]+)\]\([^)]+\)'),
-                                  (m) => m.group(1) ?? '',
-                                )
-                                .replaceAll('**', '')
-                                .replaceAll('~~', '')
-                                .replaceAll('*', '')
-                                .replaceAll(RegExp(r'\s*\n+\s*'), ' ')
-                                .trim(),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              color: MensagensColors.muted,
-                              height: 1.35,
-                            ),
-                          ),
-                        if (resumo.anexos.isNotEmpty) ...[
-                          if (resumo.conteudo?.trim().isNotEmpty ?? false)
-                            const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.attach_file,
-                                size: 14,
-                                color: MensagensColors.muted,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${resumo.anexos.length} ${resumo.anexos.length == 1 ? 'anexo' : 'anexos'}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: MensagensColors.muted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _buscaCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Filtrar por nome, matrícula ou setor...',
+                  prefixIcon: const Icon(Icons.search),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  suffixIcon: _busca.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _buscaCtrl.clear();
+                            setState(() => _busca = '');
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (v) => setState(() => _busca = v.trim()),
+              ),
+              const SizedBox(height: 10),
+              MensagensSegmentedPillBar<StatusDestinatario?>(
+                maxWidth: double.infinity,
+                selectedValue: _statusFiltro,
+                onSelected: (novo) => setState(() => _statusFiltro = novo),
+                items: const [
+                  MensagensSegmentItem(
+                    value: null,
+                    label: 'Todos',
+                  ),
+                  MensagensSegmentItem(
+                    value: StatusDestinatario.lido,
+                    label: 'Lidos',
+                  ),
+                  MensagensSegmentItem(
+                    value: StatusDestinatario.entregue,
+                    label: 'Entregues',
+                  ),
+                  MensagensSegmentItem(
+                    value: StatusDestinatario.pendente,
+                    label: 'Pendentes',
                   ),
                 ],
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: MensagensColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: MensagensColors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _ResumoBox(
-                        titulo: 'Total',
-                        valor: resumo.totalDestinatarios,
-                        cor: MensagensColors.ink,
-                      ),
-                      _ResumoBox(
-                        titulo: 'Entregues',
-                        valor: resumo.totalEntregues,
-                        cor: MensagensColors.blue,
-                      ),
-                      _ResumoBox(
-                        titulo: 'Lidos',
-                        valor: resumo.totalLidos,
-                        cor: MensagensColors.green,
-                      ),
-                      if (resumo.exigeCiencia)
-                        _ResumoBox(
-                          titulo: 'Cientes',
-                          valor: resumo.totalCientes,
-                          cor: MensagensColors.orange,
-                        ),
-                      _ResumoBox(
-                        titulo: 'Pendentes',
-                        valor: resumo.totalPendentes,
-                        cor: MensagensColors.red,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _buscaCtrl,
-                  decoration: InputDecoration(
-                    hintText: 'Filtrar por nome, matrícula ou setor...',
-                    prefixIcon: const Icon(Icons.search),
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    suffixIcon: _busca.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _buscaCtrl.clear();
-                              setState(() => _busca = '');
-                            },
-                          )
-                        : null,
-                  ),
-                  onChanged: (v) => setState(() => _busca = v.trim()),
-                ),
-                const SizedBox(height: 10),
-                MensagensSegmentedPillBar<StatusDestinatario?>(
-                  maxWidth: double.infinity,
-                  selectedValue: _statusFiltro,
-                  onSelected: (novo) => setState(() => _statusFiltro = novo),
-                  items: const [
-                    MensagensSegmentItem(
-                      value: null,
-                      label: 'Todos',
-                    ),
-                    MensagensSegmentItem(
-                      value: StatusDestinatario.lido,
-                      label: 'Lidos',
-                    ),
-                    MensagensSegmentItem(
-                      value: StatusDestinatario.entregue,
-                      label: 'Entregues',
-                    ),
-                    MensagensSegmentItem(
-                      value: StatusDestinatario.pendente,
-                      label: 'Pendentes',
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-        Expanded(
-          child: dados.destinatarios.isEmpty
-              ? const MensagensEmptyState(
-                  message: 'Nenhum destinatário encontrado neste filtro.',
-                  icon: Icons.people_outline,
-                )
-              : _buildSecoesWhatsApp(
-                  dados.destinatarios,
-                  horizontalPadding,
-                  bottomPadding,
-                ),
-        ),
+        const SizedBox(height: 10),
+        if (dados.destinatarios.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: MensagensEmptyState(
+              message: 'Nenhum destinatário encontrado neste filtro.',
+              icon: Icons.people_outline,
+            ),
+          )
+        else
+          ..._buildSecoesWhatsApp(dados.destinatarios),
       ],
     );
   }
 
-  Widget _buildSecoesWhatsApp(
-    List<DestinatarioStatusModel> lista,
-    double horizontalPadding,
-    double bottomPadding,
-  ) {
+  List<Widget> _buildSecoesWhatsApp(List<DestinatarioStatusModel> lista) {
     final cientes = lista.where((d) => d.dataCiencia != null).toList();
     final lidos = lista
         .where((d) => d.dataCiencia == null && d.dataLeitura != null)
@@ -376,18 +263,11 @@ class _AcompanhamentoMensagemPageState
         )
         .toList();
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-        horizontalPadding,
-        4,
-        horizontalPadding,
-        bottomPadding,
-      ),
-      children: [
-        if (cientes.isNotEmpty)
-          _SecaoConfirmacaoWhatsApp(
-            titulo: 'Ciente por',
-            icone: Icons.verified_rounded,
+    return [
+      if (cientes.isNotEmpty)
+        _SecaoConfirmacaoWhatsApp(
+          titulo: 'Ciente por',
+          icone: Icons.verified_rounded,
             corIcone: MensagensColors.green,
             itens: cientes,
             obterData: (d) => d.dataCiencia,
@@ -420,8 +300,7 @@ class _AcompanhamentoMensagemPageState
             obterData: (_) => null,
             formatarData: _formatarData,
           ),
-      ],
-    );
+    ];
   }
 }
 
@@ -605,168 +484,133 @@ class _ResumoBox extends StatelessWidget {
   }
 }
 
-void _abrirModalMensagemEnviada(
-  BuildContext context,
-  MensagemEnviadaModel resumo,
-) {
-  final dataFormatada = resumo.dataEnvio != null
-      ? DateFormat('dd/MM/yyyy HH:mm').format(resumo.dataEnvio!)
-      : (resumo.dataAgendamento != null
-          ? 'Agendada para ${DateFormat('dd/MM/yyyy HH:mm').format(resumo.dataAgendamento!)}'
-          : '');
-  final temTexto = resumo.conteudo?.trim().isNotEmpty ?? false;
+class _MensagemEnviadaInlineCard extends StatelessWidget {
+  const _MensagemEnviadaInlineCard({required this.resumo});
 
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: MensagensColors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (ctx) => DraggableScrollableSheet(
-      initialChildSize: 0.65,
-      minChildSize: 0.4,
-      maxChildSize: 0.92,
-      expand: false,
-      builder: (_, scrollController) => SafeArea(
-        top: false,
-        child: Column(
-          children: [
+  final MensagemEnviadaModel resumo;
+
+  @override
+  Widget build(BuildContext context) {
+    final dataFormatada = resumo.dataEnvio != null
+        ? DateFormat('dd/MM/yyyy HH:mm').format(resumo.dataEnvio!)
+        : (resumo.dataAgendamento != null
+            ? 'Agendada para ${DateFormat('dd/MM/yyyy HH:mm').format(resumo.dataAgendamento!)}'
+            : '');
+    final temTitulo = resumo.titulo?.trim().isNotEmpty ?? false;
+    final temTexto = resumo.conteudo?.trim().isNotEmpty ?? false;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFEAE2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MensagensColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _InlineTag(label: resumo.prioridade.label),
+              _InlineTag(label: resumo.modalidade.label),
+              if (resumo.exigeCiencia)
+                const _InlineTag(label: 'Exige ciência'),
+              if (dataFormatada.isNotEmpty) _InlineTag(label: dataFormatada),
+            ],
+          ),
+          if (temTitulo || temTexto) ...[
             const SizedBox(height: 10),
             Container(
-              width: 40,
-              height: 4,
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
-                color: MensagensColors.border,
-                borderRadius: BorderRadius.circular(2),
+                color: const Color(0xFFE7FFDB),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCDEAC0)),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Aviso enviado',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: MensagensColors.ink,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: MensagensColors.muted),
-                    onPressed: () => Navigator.of(ctx).pop(),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: MensagensColors.border),
-            Expanded(
-              child: ListView(
-                controller: scrollController,
-                padding: const EdgeInsets.all(16),
-                children: [
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      _ModalTag(label: resumo.prioridade.label),
-                      _ModalTag(label: resumo.modalidade.label),
-                      if (resumo.exigeCiencia)
-                        const _ModalTag(label: 'Exige ciência'),
-                      if (dataFormatada.isNotEmpty)
-                        _ModalTag(label: dataFormatada),
-                    ],
-                  ),
-                  if (resumo.titulo != null &&
-                      resumo.titulo!.trim().isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                  if (temTitulo)
                     Text(
                       resumo.titulo!,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: MensagensColors.ink,
                       ),
                     ),
-                  ],
-                  if (temTexto) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: MensagensColors.background,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: MensagensColors.border),
-                      ),
-                      child: MarkdownBody(
-                        data: resumo.conteudo!,
-                        selectable: true,
-                        onTapLink: (_, href, _) {
-                          if (href != null && href.isNotEmpty) {
-                            final uri = Uri.tryParse(href);
-                            if (uri != null) {
-                              launchUrl(
-                                uri,
-                                mode: LaunchMode.externalApplication,
-                              );
-                            }
+                  if (temTitulo && temTexto) const SizedBox(height: 6),
+                  if (temTexto)
+                    MarkdownBody(
+                      data: resumo.conteudo!,
+                      selectable: true,
+                      onTapLink: (_, href, _) {
+                        if (href != null && href.isNotEmpty) {
+                          final uri = Uri.tryParse(href);
+                          if (uri != null) {
+                            launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
                           }
-                        },
-                        styleSheet: MarkdownStyleSheet(
-                          p: const TextStyle(
-                            fontSize: 14,
-                            height: 1.45,
-                            color: MensagensColors.ink,
-                          ),
-                          strong: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: MensagensColors.ink,
-                          ),
-                          a: const TextStyle(
-                            color: MensagensColors.blue,
-                            decoration: TextDecoration.underline,
-                          ),
+                        }
+                      },
+                      styleSheet: MarkdownStyleSheet(
+                        p: const TextStyle(
+                          fontSize: 14,
+                          height: 1.4,
+                          color: MensagensColors.ink,
+                        ),
+                        strong: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: MensagensColors.ink,
+                        ),
+                        a: const TextStyle(
+                          color: MensagensColors.blue,
+                          decoration: TextDecoration.underline,
                         ),
                       ),
-                    ),
-                  ],
-                  if (resumo.anexos.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    for (final anexo in resumo.anexos)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                        decoration: BoxDecoration(
-                          color: MensagensColors.background,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: MensagensColors.border),
-                        ),
-                        child: AnexoPreviewWidget(
-                          mensagemId: resumo.id,
-                          anexo: anexo,
-                        ),
-                      ),
-                  ],
-                  if (!temTexto && resumo.anexos.isEmpty)
-                    const Text(
-                      'Sem conteúdo textual ou anexos.',
-                      style: TextStyle(color: MensagensColors.muted),
                     ),
                 ],
               ),
             ),
           ],
-        ),
+          for (final anexo in resumo.anexos) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE7FFDB),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCDEAC0)),
+              ),
+              child: AnexoPreviewWidget(
+                mensagemId: resumo.id,
+                anexo: anexo,
+              ),
+            ),
+          ],
+          if (!temTitulo && !temTexto && resumo.anexos.isEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Aviso institucional #${resumo.id}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: MensagensColors.ink,
+              ),
+            ),
+          ],
+        ],
       ),
-    ),
-  );
+    );
+  }
 }
 
-class _ModalTag extends StatelessWidget {
-  const _ModalTag({required this.label});
+class _InlineTag extends StatelessWidget {
+  const _InlineTag({required this.label});
 
   final String label;
 
@@ -775,13 +619,13 @@ class _ModalTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: MensagensColors.surfaceMuted,
+        color: MensagensColors.surface,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 11.5,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           color: MensagensColors.muted,
         ),

@@ -19,10 +19,13 @@ class MensagemConversaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final remetenteFormatado = mensagem.remetenteNome?.trim().isNotEmpty == true
+        ? formatarNomeProprio(mensagem.remetenteNome)
+        : '';
     final titulo = (mensagem.titulo != null && mensagem.titulo!.trim().isNotEmpty)
         ? mensagem.titulo!.trim()
-        : (mensagem.remetenteNome?.trim().isNotEmpty == true
-              ? mensagem.remetenteNome!.trim()
+        : (remetenteFormatado.isNotEmpty
+              ? remetenteFormatado
               : 'Comunicado Institucional');
     final preview = _buildPreviewText();
     final horaTexto = _formatarHorarioWhatsApp(mensagem.dataEnvio);

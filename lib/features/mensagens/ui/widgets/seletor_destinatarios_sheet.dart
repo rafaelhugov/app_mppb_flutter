@@ -299,7 +299,7 @@ class _SeletorDestinatariosWidgetState
                   matricula: d.matricula,
                   size: 24,
                 ),
-                label: Text('${d.nome} (${d.matricula})'),
+                label: Text('${formatarNomeProprio(d.nome)} (${d.matricula})'),
                 onDeleted: () {
                   final nova = state.destinatariosUnicast
                       .where((item) => item.matricula != d.matricula)
@@ -335,7 +335,7 @@ class _SeletorDestinatariosWidgetState
                     size: 38,
                   ),
                   title: Text(
-                    item.nome,
+                    formatarNomeProprio(item.nome),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(

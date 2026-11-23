@@ -100,8 +100,9 @@ class MensagemBolhaCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        mensagem.remetenteNome ??
-                            'Procuradoria-Geral de Justiça',
+                        mensagem.remetenteNome?.trim().isNotEmpty == true
+                            ? formatarNomeProprio(mensagem.remetenteNome)
+                            : 'Procuradoria-Geral de Justiça',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(

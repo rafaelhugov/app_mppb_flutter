@@ -238,128 +238,232 @@ class _AcompanhamentoMensagemPageState
                   message: 'Nenhum destinatário encontrado neste filtro.',
                   icon: Icons.people_outline,
                 )
-              : ListView.builder(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    4,
-                    horizontalPadding,
-                    bottomPadding,
-                  ),
-                  itemCount: dados.destinatarios.length,
-                  itemBuilder: (context, index) {
-                    final d = dados.destinatarios[index];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 5),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: MensagensColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: MensagensColors.border),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x08101828),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              RemetenteAvatar(
-                                nome: d.nome,
-                                matricula: d.matricula,
-                                size: 42,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      d.nome,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14,
-                                        color: MensagensColors.ink,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      d.setor != null && d.setor!.isNotEmpty
-                                          ? 'Mat. ${d.matricula} • ${d.setor}'
-                                          : 'Mat. ${d.matricula}',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: MensagensColors.muted,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              _StatusBadge(
-                                status: d.status,
-                                ciente: d.dataCiencia != null,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          const Divider(
-                            height: 1,
-                            color: MensagensColors.border,
-                          ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            children: [
-                              _ConfirmacaoChip(
-                                icon: Icons.done_all_rounded,
-                                label: 'Entregue',
-                                valor: d.dataEntrega != null
-                                    ? _formatarData(d.dataEntrega)
-                                    : 'Aguardando',
-                                ativo: d.dataEntrega != null,
-                                corAtiva: MensagensColors.blue,
-                              ),
-                              _ConfirmacaoChip(
-                                icon: Icons.visibility_rounded,
-                                label: 'Lido',
-                                valor: d.dataLeitura != null
-                                    ? _formatarData(d.dataLeitura)
-                                    : 'Não lido',
-                                ativo: d.dataLeitura != null,
-                                corAtiva: MensagensColors.green,
-                              ),
-                              if (d.dataCiencia != null ||
-                                  dados.resumo.exigeCiencia)
-                                _ConfirmacaoChip(
-                                  icon: Icons.verified_rounded,
-                                  label: 'Ciente',
-                                  valor: d.dataCiencia != null
-                                      ? _formatarData(d.dataCiencia)
-                                      : 'Pendente',
-                                  ativo: d.dataCiencia != null,
-                                  corAtiva: MensagensColors.green,
-                                  corInativa: MensagensColors.orange,
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+              : _buildSecoesWhatsApp(
+                  dados.destinatarios,
+                  horizontalPadding,
+                  bottomPadding,
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSecoesWhatsApp(
+    List<DestinatarioStatusModel> lista,
+    double horizontalPadding,
+    double bottomPadding,
+  ) {
+    final cientes = lista.where((d) => d.dataCiencia != null).toList();
+    final lidos = lista
+        .where((d) => d.dataCiencia == null && d.dataLeitura != null)
+        .toList();
+    final entregues = lista
+        .where(
+          (d) =>
+              d.dataCiencia == null &&
+              d.dataLeitura == null &&
+              d.dataEntrega != null,
+        )
+        .toList();
+    final pendentes = lista
+        .where(
+          (d) =>
+              d.dataCiencia == null &&
+              d.dataLeitura == null &&
+              d.dataEntrega == null,
+        )
+        .toList();
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        4,
+        horizontalPadding,
+        bottomPadding,
+      ),
+      children: [
+        if (cientes.isNotEmpty)
+          _SecaoConfirmacaoWhatsApp(
+            titulo: 'Ciente por',
+            icone: Icons.verified_rounded,
+            corIcone: MensagensColors.green,
+            itens: cientes,
+            obterData: (d) => d.dataCiencia,
+            formatarData: _formatarData,
+          ),
+        if (lidos.isNotEmpty)
+          _SecaoConfirmacaoWhatsApp(
+            titulo: 'Lida por',
+            icone: Icons.done_all_rounded,
+            corIcone: const Color(0xFF53BDEB),
+            itens: lidos,
+            obterData: (d) => d.dataLeitura,
+            formatarData: _formatarData,
+          ),
+        if (entregues.isNotEmpty)
+          _SecaoConfirmacaoWhatsApp(
+            titulo: 'Entregue para',
+            icone: Icons.done_all_rounded,
+            corIcone: MensagensColors.muted,
+            itens: entregues,
+            obterData: (d) => d.dataEntrega,
+            formatarData: _formatarData,
+          ),
+        if (pendentes.isNotEmpty)
+          _SecaoConfirmacaoWhatsApp(
+            titulo: 'Pendente',
+            icone: Icons.schedule_rounded,
+            corIcone: MensagensColors.muted,
+            itens: pendentes,
+            obterData: (_) => null,
+            formatarData: _formatarData,
+          ),
+      ],
+    );
+  }
+}
+
+class _SecaoConfirmacaoWhatsApp extends StatelessWidget {
+  const _SecaoConfirmacaoWhatsApp({
+    required this.titulo,
+    required this.icone,
+    required this.corIcone,
+    required this.itens,
+    required this.obterData,
+    required this.formatarData,
+  });
+
+  final String titulo;
+  final IconData icone;
+  final Color corIcone;
+  final List<DestinatarioStatusModel> itens;
+  final DateTime? Function(DestinatarioStatusModel) obterData;
+  final String Function(DateTime?) formatarData;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: MensagensColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MensagensColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: Row(
+              children: [
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: MensagensColors.ink,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '(${itens.length})',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: MensagensColors.muted,
+                  ),
+                ),
+                const Spacer(),
+                Icon(icone, size: 17, color: corIcone),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: MensagensColors.border),
+          for (var i = 0; i < itens.length; i++) ...[
+            _LinhaDestinatarioDiscreta(
+              destinatario: itens[i],
+              dataTexto: obterData(itens[i]) != null
+                  ? formatarData(obterData(itens[i]))
+                  : 'Aguardando',
+            ),
+            if (i < itens.length - 1)
+              const Divider(
+                height: 1,
+                indent: 66,
+                endIndent: 14,
+                color: MensagensColors.border,
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LinhaDestinatarioDiscreta extends StatelessWidget {
+  const _LinhaDestinatarioDiscreta({
+    required this.destinatario,
+    required this.dataTexto,
+  });
+
+  final DestinatarioStatusModel destinatario;
+  final String dataTexto;
+
+  @override
+  Widget build(BuildContext context) {
+    final nomeFormatado = formatarNomeProprio(destinatario.nome);
+    final subtitulo =
+        destinatario.setor != null && destinatario.setor!.trim().isNotEmpty
+            ? '${destinatario.setor!.trim()} • Mat. ${destinatario.matricula}'
+            : 'Mat. ${destinatario.matricula}';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          RemetenteAvatar(
+            nome: nomeFormatado,
+            matricula: destinatario.matricula,
+            size: 38,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nomeFormatado,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: MensagensColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: MensagensColors.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            dataTexto,
+            style: const TextStyle(
+              fontSize: 11.5,
+              color: MensagensColors.muted,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -395,119 +499,6 @@ class _ResumoBox extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status, this.ciente = false});
-
-  final StatusDestinatario status;
-  final bool ciente;
-
-  @override
-  Widget build(BuildContext context) {
-    final (cor, icone, texto) = ciente
-        ? (MensagensColors.green, Icons.verified_rounded, 'CIENTE')
-        : switch (status) {
-            StatusDestinatario.lido => (
-              MensagensColors.green,
-              Icons.visibility_rounded,
-              'LIDO',
-            ),
-            StatusDestinatario.entregue => (
-              MensagensColors.blue,
-              Icons.done_all_rounded,
-              'ENTREGUE',
-            ),
-            StatusDestinatario.pendente => (
-              MensagensColors.muted,
-              Icons.schedule_rounded,
-              'PENDENTE',
-            ),
-          };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: cor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: cor.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icone, size: 12.5, color: cor),
-          const SizedBox(width: 4),
-          Text(
-            texto,
-            style: TextStyle(
-              color: cor,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConfirmacaoChip extends StatelessWidget {
-  const _ConfirmacaoChip({
-    required this.icon,
-    required this.label,
-    required this.valor,
-    required this.ativo,
-    required this.corAtiva,
-    this.corInativa = MensagensColors.muted,
-  });
-
-  final IconData icon;
-  final String label;
-  final String valor;
-  final bool ativo;
-  final Color corAtiva;
-  final Color corInativa;
-
-  @override
-  Widget build(BuildContext context) {
-    final cor = ativo ? corAtiva : corInativa;
-    final bg = ativo
-        ? corAtiva.withValues(alpha: 0.1)
-        : MensagensColors.surfaceMuted;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(
-          color: ativo ? cor.withValues(alpha: 0.25) : MensagensColors.border,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13.5, color: cor),
-          const SizedBox(width: 5),
-          Text(
-            '$label: ',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: ativo ? MensagensColors.ink : MensagensColors.muted,
-            ),
-          ),
-          Text(
-            valor,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: ativo ? FontWeight.w600 : FontWeight.w500,
-              color: cor,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

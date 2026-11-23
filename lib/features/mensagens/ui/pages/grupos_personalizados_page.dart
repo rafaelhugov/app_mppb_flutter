@@ -95,60 +95,122 @@ class GruposPersonalizadosPage extends ConsumerWidget {
                     final g = grupos[index];
                     return Container(
                       margin: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: MensagensColors.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: MensagensColors.border),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x0D101828),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
+                            color: Color(0x0A101828),
+                            blurRadius: 10,
+                            offset: Offset(0, 3),
                           ),
                         ],
                       ),
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: MensagensColors.brandDark,
-                          foregroundColor: Colors.white,
-                          child: Icon(Icons.groups_rounded),
-                        ),
-                        title: Text(
-                          g.nome,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: MensagensColors.ink,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: MensagensColors.green.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.groups_rounded,
+                                  color: MensagensColors.green,
+                                  size: 21,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      g.nome,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                        color: MensagensColors.ink,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: MensagensColors.surfaceMuted,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '${g.quantidadeMembros} participante(s)',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: MensagensColors.muted,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Editar grupo',
+                                visualDensity: VisualDensity.compact,
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                  size: 20,
+                                  color: MensagensColors.ink,
+                                ),
+                                onPressed: () =>
+                                    _abrirEditorGrupo(context, existente: g),
+                              ),
+                              IconButton(
+                                tooltip: 'Remover grupo',
+                                visualDensity: VisualDensity.compact,
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: MensagensColors.red,
+                                ),
+                                onPressed: () => ref
+                                    .read(gruposMensagemProvider.notifier)
+                                    .remover(g.id),
+                              ),
+                            ],
                           ),
-                        ),
-                        subtitle: Text(
-                          '${g.quantidadeMembros} participante(s)'
-                          '${g.descricao != null && g.descricao!.isNotEmpty ? " • ${g.descricao}" : ""}',
-                          style: const TextStyle(color: MensagensColors.muted),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: 'Editar grupo',
-                              icon: const Icon(
-                                Icons.edit_outlined,
-                                color: MensagensColors.ink,
-                              ),
-                              onPressed: () =>
-                                  _abrirEditorGrupo(context, existente: g),
+                          if (g.descricao != null &&
+                              g.descricao!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            const Divider(
+                              height: 1,
+                              color: MensagensColors.border,
                             ),
-                            IconButton(
-                              tooltip: 'Remover grupo',
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: MensagensColors.red,
+                            const SizedBox(height: 8),
+                            Text(
+                              g.descricao!.trim(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                height: 1.35,
+                                color: MensagensColors.muted,
                               ),
-                              onPressed: () => ref
-                                  .read(gruposMensagemProvider.notifier)
-                                  .remover(g.id),
                             ),
                           ],
-                        ),
+                        ],
                       ),
                     );
                   },

@@ -96,7 +96,7 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
     final horizontalPadding = MainLayout.horizontalPadding(context);
     final bottomPadding = MainLayout.contentBottomPadding(context);
     final remetente = _mensagem?.remetenteNome?.trim().isNotEmpty == true
-        ? _mensagem!.remetenteNome!.trim()
+        ? formatarNomeProprio(_mensagem!.remetenteNome)
         : 'Comunicado Institucional';
 
     return Scaffold(
@@ -171,24 +171,40 @@ class _WhatsAppChatHeader extends StatelessWidget {
         : 'Comunicado Oficial • ${mensagem!.prioridade.apiValue}';
 
     return Container(
-      color: MensagensColors.brandDark,
+      decoration: const BoxDecoration(
+        color: MensagensColors.surface,
+        border: Border(
+          bottom: BorderSide(color: MensagensColors.border),
+        ),
+      ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(4, 8, 8, 10),
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                tooltip: 'Voltar',
-                onPressed: onBack,
+              Material(
+                color: MensagensColors.surfaceMuted,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: onBack,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: MensagensColors.ink,
+                      size: 18,
+                    ),
+                  ),
+                ),
               ),
+              const SizedBox(width: 10),
               RemetenteAvatar(
                 nome: remetente,
                 matricula: mensagem?.remetenteMatricula,
                 prioridade: mensagem?.prioridade ?? PrioridadeMensagem.normal,
-                size: 38,
-                darkHeader: true,
+                size: 40,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -201,7 +217,7 @@ class _WhatsAppChatHeader extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: MensagensColors.ink,
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
                       ),
@@ -212,7 +228,7 @@ class _WhatsAppChatHeader extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Color(0xFFCBD5E1),
+                        color: MensagensColors.muted,
                         fontSize: 12,
                       ),
                     ),
@@ -225,7 +241,7 @@ class _WhatsAppChatHeader extends StatelessWidget {
                     mensagem?.arquivada == true
                         ? Icons.unarchive_outlined
                         : Icons.archive_outlined,
-                    color: Colors.white,
+                    color: MensagensColors.ink,
                   ),
                   tooltip: mensagem?.arquivada == true
                       ? 'Desarquivar'

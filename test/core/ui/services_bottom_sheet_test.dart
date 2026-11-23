@@ -35,13 +35,13 @@ void main() {
         expect(find.text(label), findsOneWidget);
       }
 
-      expect(find.text('Mensagens'), findsNothing);
+      expect(find.text('Avisos'), findsNothing);
       expect(find.text('Pagamentos'), findsNothing);
     },
   );
 
   testWidgets(
-    'ServicesBottomSheet exibe todos os atalhos logados incluindo Mensagens e Contatos',
+    'ServicesBottomSheet exibe todos os atalhos logados incluindo Avisos e Contatos',
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -67,7 +67,7 @@ void main() {
         'Pagamentos',
         'Designações',
         'Processos',
-        'Mensagens',
+        'Avisos',
         'Contatos',
         'Perfil',
         'Ouvidoria',
@@ -79,3 +79,4 @@ void main() {
     },
   );
 }
+

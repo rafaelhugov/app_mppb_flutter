@@ -52,7 +52,7 @@ class ServicesBottomSheet {
     ),
     _ServiceShortcut(
       icon: Icons.campaign_rounded,
-      label: 'Mensagens',
+      label: 'Avisos',
       route: '/mensagens',
     ),
     _ServiceShortcut(

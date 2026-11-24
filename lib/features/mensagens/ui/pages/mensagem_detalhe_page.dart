@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/ui/app_feedback.dart';
@@ -91,7 +92,22 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
       context,
       novoEstado ? 'Aviso arquivado.' : 'Aviso movido para a caixa.',
     );
-    Navigator.of(context).pop();
+    _voltarParaLista();
+  }
+
+  void _voltarParaLista() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+    final router = GoRouter.maybeOf(context);
+    if (router != null) {
+      if (router.canPop()) {
+        router.pop();
+      } else {
+        router.go('/mensagens');
+      }
+    }
   }
 
   @override
@@ -109,7 +125,7 @@ class _MensagemDetalhePageState extends ConsumerState<MensagemDetalhePage> {
           _WhatsAppChatHeader(
             remetente: remetente,
             mensagem: _mensagem,
-            onBack: () => Navigator.of(context).maybePop(),
+            onBack: _voltarParaLista,
             onToggleArchive: _mensagem != null ? _alternarArquivo : null,
           ),
           Expanded(

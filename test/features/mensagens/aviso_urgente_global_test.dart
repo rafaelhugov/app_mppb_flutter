@@ -144,7 +144,13 @@ void main() {
     await tester.tap(find.text('Abrir'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Comunicado Urgente'), findsOneWidget);
+    expect(
+      find.text(
+        'Você recebeu 1 aviso marcado como urgente aguardando sua leitura.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Comunicado Urgente'), findsNothing);
     expect(find.text('Depois'), findsOneWidget);
     expect(find.text('Ler agora'), findsOneWidget);
 

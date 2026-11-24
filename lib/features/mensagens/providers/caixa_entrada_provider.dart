@@ -26,6 +26,16 @@ class CaixaEntradaState {
   final int paginaAtual;
   final int totalPaginas;
 
+  List<MensagemAvisoModel> get urgentesNaoLidas => itens
+      .where(
+        (m) =>
+            m.prioridade == PrioridadeMensagem.urgente &&
+            m.status != StatusDestinatario.lido,
+      )
+      .toList(growable: false);
+
+  int get totalUrgentesNaoLidas => urgentesNaoLidas.length;
+
   CaixaEntradaState copyWith({
     List<MensagemAvisoModel>? itens,
     String? filtro,

@@ -6,6 +6,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/mensagens/models/mensagem_aviso_model.dart';
+import '../../features/mensagens/providers/caixa_entrada_provider.dart';
+import '../../features/mensagens/ui/widgets/aviso_urgente_global_banner.dart';
 import '../network/connectivity_provider.dart';
 import 'mppb_app_bar.dart';
 import 'responsive_layout.dart';
@@ -86,6 +89,61 @@ class _MainLayoutState extends ConsumerState<MainLayout>
   late final AnimationController _crestIntroController;
   bool _showCrestIntro = false;
   bool _hasPlayedAuthenticatedIntro = false;
+  final Set<int> _avisosUrgentesModalProcessados = <int>{};
+  bool _modalUrgenteAberto = false;
+
+  void _abrirAvisosUrgentes(
+    BuildContext context,
+    List<MensagemAvisoModel> urgentes,
+  ) {
+    if (urgentes.length == 1) {
+      context.go('/mensagens/${urgentes.first.id}');
+      return;
+    }
+    context.go('/mensagens');
+  }
+
+  void _verificarModalAvisoUrgente({
+    required bool isAuthenticated,
+    required String location,
+    required List<MensagemAvisoModel> urgentes,
+  }) {
+    if (!isAuthenticated) {
+      _avisosUrgentesModalProcessados.clear();
+      return;
+    }
+    if (urgentes.isEmpty ||
+        _modalUrgenteAberto ||
+        location == '/login' ||
+        location.startsWith('/mensagens')) {
+      return;
+    }
+    final temNovoUrgente = urgentes.any(
+      (m) => !_avisosUrgentesModalProcessados.contains(m.id),
+    );
+    if (!temNovoUrgente) {
+      return;
+    }
+    _avisosUrgentesModalProcessados.addAll(urgentes.map((m) => m.id));
+    _modalUrgenteAberto = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        _modalUrgenteAberto = false;
+        return;
+      }
+      try {
+        final lerAgora = await mostrarModalAvisoUrgente(
+          context,
+          urgentes: urgentes,
+        );
+        if (lerAgora == true && mounted) {
+          _abrirAvisosUrgentes(context, urgentes);
+        }
+      } finally {
+        _modalUrgenteAberto = false;
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -781,6 +839,14 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     }
 
     _maybeStartCrestIntro(isAuthenticated: isAuthenticated, location: location);
+    final urgentes = isAuthenticated
+        ? ref.watch(caixaEntradaProvider).urgentesNaoLidas
+        : const <MensagemAvisoModel>[];
+    _verificarModalAvisoUrgente(
+      isAuthenticated: isAuthenticated,
+      location: location,
+      urgentes: urgentes,
+    );
 
     return PopScope(
       canPop: false,
@@ -806,7 +872,19 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                   ),
             body: NotificationListener<ScrollNotification>(
               onNotification: _handleScrollNotification,
-              child: widget.child,
+              child: Column(
+                children: [
+                  if (isAuthenticated &&
+                      !isHiddenPage &&
+                      !location.startsWith('/mensagens') &&
+                      urgentes.isNotEmpty)
+                    AvisoUrgenteGlobalBanner(
+                      urgentes: urgentes,
+                      onTap: () => _abrirAvisosUrgentes(context, urgentes),
+                    ),
+                  Expanded(child: widget.child),
+                ],
+              ),
             ),
             bottomNavigationBar: isDockHidden
                 ? null

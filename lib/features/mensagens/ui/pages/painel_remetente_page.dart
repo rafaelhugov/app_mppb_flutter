@@ -221,54 +221,53 @@ class _PainelRemetentePageState extends ConsumerState<PainelRemetentePage> {
               10,
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: MensagensColors.red,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size(0, 38),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: MensagensColors.surface,
+                    foregroundColor: MensagensColors.ink,
+                    minimumSize: const Size(0, 34),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    side: const BorderSide(color: MensagensColors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    onPressed: () async {
-                      await context.push('/mensagens/painel/nova');
-                      if (mounted) _carregar();
-                    },
-                    icon: const Icon(Icons.send_rounded, size: 15),
-                    label: const Text(
-                      'Novo Aviso',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  ),
+                  onPressed: () => context.push('/mensagens/painel/grupos'),
+                  icon: const Icon(Icons.groups_rounded, size: 15),
+                  label: const Text(
+                    'Grupos',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: MensagensColors.surface,
-                      foregroundColor: MensagensColors.ink,
-                      minimumSize: const Size(0, 38),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      side: const BorderSide(color: MensagensColors.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: MensagensColors.red,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size(0, 34),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    onPressed: () => context.push('/mensagens/painel/grupos'),
-                    icon: const Icon(Icons.groups_rounded, size: 17),
-                    label: const Text(
-                      'Grupos',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  ),
+                  onPressed: () async {
+                    await context.push('/mensagens/painel/nova');
+                    if (mounted) _carregar();
+                  },
+                  icon: const Icon(Icons.send_rounded, size: 14),
+                  label: const Text(
+                    'Novo Aviso',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),

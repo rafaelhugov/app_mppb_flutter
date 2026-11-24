@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../features/mensagens/providers/permissao_mensagens_provider.dart';
 
 class ServicesBottomSheet {
   static void show(BuildContext context, bool isAuthenticated) {
@@ -160,6 +163,38 @@ class ServicesBottomSheet {
                                 'Ouvidoria',
                                 '/ouvidoria',
                               ),
+                            ),
+                            SizedBox(
+                              width:
+                                  (MediaQuery.of(context).size.width - 70) / 4,
+                              child: _buildMenuShortcut(
+                                ctx,
+                                Icons.campaign_rounded,
+                                'Avisos',
+                                '/mensagens',
+                              ),
+                            ),
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final podeEnviar =
+                                    ref
+                                        .watch(podeEnviarMensagensProvider)
+                                        .asData
+                                        ?.value ??
+                                    false;
+                                if (!podeEnviar) return const SizedBox.shrink();
+                                return SizedBox(
+                                  width:
+                                      (MediaQuery.of(context).size.width - 70) /
+                                      4,
+                                  child: _buildMenuShortcut(
+                                    ctx,
+                                    Icons.edit_notifications_rounded,
+                                    'Painel Avisos',
+                                    '/mensagens/painel',
+                                  ),
+                                );
+                              },
                             ),
                           ]
                         : [

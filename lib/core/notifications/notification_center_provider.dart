@@ -261,8 +261,13 @@ NotificationCenterItem? notificationCenterItemFromRemoteMessage(
   if (type == null) return null;
 
   final route = message.data['rota']?.toString().trim();
-  if (route != _routeForType(type)) return null;
+  final expectedRoute = _routeForType(type);
+  final rotaValida = type == NotificationCenterItemType.mensagem
+      ? (route == expectedRoute || (route?.startsWith('$expectedRoute/') ?? false))
+      : route == expectedRoute;
+  if (!rotaValida) return null;
 
+  final mensagemId = message.data['mensagem_id']?.toString().trim();
   final eventId = message.data['id_evento_notificacao']?.toString().trim();
   final messageId = message.messageId?.trim();
   final fallbackId =
@@ -274,7 +279,11 @@ NotificationCenterItem? notificationCenterItemFromRemoteMessage(
       : fallbackId;
 
   return NotificationCenterItem(
-    key: 'push:$keyPart',
+    key: (type == NotificationCenterItemType.mensagem &&
+            mensagemId != null &&
+            mensagemId.isNotEmpty)
+        ? 'mensagem:$mensagemId'
+        : 'push:$keyPart',
     type: type,
     title: _requiredText(message.notification?.title, _defaultTitle(type)),
     subtitle: _requiredText(

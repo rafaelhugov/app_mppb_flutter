@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ui/app_feedback.dart';
 import '../../../../core/ui/main_layout.dart';
 import '../../../../core/ui/widgets/hero_header_publico.dart';
 import '../../models/grupo_mensagem_model.dart';
@@ -10,6 +11,46 @@ import 'grupo_editor_page.dart';
 
 class GruposPersonalizadosPage extends ConsumerWidget {
   const GruposPersonalizadosPage({super.key});
+
+  Future<void> _confirmarRemocao(
+    BuildContext context,
+    WidgetRef ref,
+    GrupoPersonalizadoModel grupo,
+  ) async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remover grupo'),
+        content: Text(
+          'Deseja realmente remover o grupo "${grupo.nome}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: MensagensColors.red,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Remover'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true) return;
+    try {
+      await ref.read(gruposMensagemProvider.notifier).remover(grupo.id);
+    } catch (_) {
+      if (context.mounted) {
+        AppFeedback.showError(
+          context,
+          'Não foi possível remover o grupo. Tente novamente.',
+        );
+      }
+    }
+  }
 
   Future<void> _abrirEditorGrupo(
     BuildContext context, {
@@ -189,9 +230,8 @@ class GruposPersonalizadosPage extends ConsumerWidget {
                                   size: 20,
                                   color: MensagensColors.red,
                                 ),
-                                onPressed: () => ref
-                                    .read(gruposMensagemProvider.notifier)
-                                    .remover(g.id),
+                                onPressed: () =>
+                                    _confirmarRemocao(context, ref, g),
                               ),
                             ],
                           ),

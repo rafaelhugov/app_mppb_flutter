@@ -12,8 +12,10 @@ import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/noticias/providers/noticia_provider.dart';
 import '../../features/pagamentos/providers/pagamentos_provider.dart';
 import '../../features/videos/providers/videos_provider.dart';
+import '../../features/mensagens/data/mensagens_repository.dart';
 import '../../features/mensagens/providers/caixa_entrada_provider.dart';
 import '../router/app_router.dart';
+import 'foreground_push_banner.dart';
 import 'notification_center_provider.dart';
 import 'push_notification_service.dart';
 
@@ -114,7 +116,9 @@ class PushNavigationService {
   final Future<void> Function() refreshPagamentos;
   final Future<void> Function() refreshAfastamentos;
   final Future<void> Function()? refreshMensagens;
+  final Future<void> Function(int mensagemId)? confirmarEntregaMensagem;
   final Future<void> Function(RemoteMessage message)? recordNotification;
+  final void Function(RemoteMessage message)? onForegroundNotification;
 
   StreamSubscription<RemoteMessage>? _foregroundSubscription;
   StreamSubscription<RemoteMessage>? _openedSubscription;
@@ -132,7 +136,9 @@ class PushNavigationService {
     required this.refreshPagamentos,
     required this.refreshAfastamentos,
     this.refreshMensagens,
+    this.confirmarEntregaMensagem,
     this.recordNotification,
+    this.onForegroundNotification,
   });
 
   void start() {
@@ -151,8 +157,22 @@ class PushNavigationService {
 
   Future<void> handleForegroundMessage(RemoteMessage message) async {
     await recordNotification?.call(message);
+    onForegroundNotification?.call(message);
+    final payload = gateway.technicalPayload(message);
+    if (isAuthenticated() && _isAllowedMensagemAvisoPayload(payload)) {
+      final mensagemId = int.tryParse(
+        message.data['mensagem_id']?.toString().trim() ?? '',
+      );
+      if (mensagemId != null && mensagemId > 0) {
+        try {
+          await confirmarEntregaMensagem?.call(mensagemId);
+        } catch (_) {
+          // Falha silenciosa; o carregamento da caixa de entrada também sincroniza.
+        }
+      }
+    }
     await handleForegroundPayload(
-      gateway.technicalPayload(message),
+      payload,
       messageKey: _messageKey(message),
     );
   }
@@ -453,7 +473,8 @@ final pushNavigationDelegateProvider = Provider<PushNavigationDelegate>((ref) {
 });
 
 final pushNavigationServiceProvider = Provider<PushNavigationService>((ref) {
-  final service = PushNavigationService(
+  late final PushNavigationService service;
+  service = PushNavigationService(
     gateway: ref.read(pushMessageGatewayProvider),
     navigator: ref.read(pushNavigationDelegateProvider),
     isAuthenticated: () => ref.read(authProvider).isAuthenticated,
@@ -477,6 +498,11 @@ final pushNavigationServiceProvider = Provider<PushNavigationService>((ref) {
           .read(caixaEntradaProvider.notifier)
           .carregar(forceRefresh: true);
     },
+    confirmarEntregaMensagem: (mensagemId) {
+      return ref
+          .read(mensagensRepositoryProvider)
+          .confirmarEntregaEmLote([mensagemId]);
+    },
     refreshVideos: ({bool isUserRefresh = true}) {
       return ref
           .read(videosProvider.notifier)
@@ -486,6 +512,22 @@ final pushNavigationServiceProvider = Provider<PushNavigationService>((ref) {
       return ref
           .read(notificationCenterProvider.notifier)
           .recordRemoteMessage(message);
+    },
+    onForegroundNotification: (message) {
+      unawaited(
+        PushNotificationService.instance.showForegroundSystemNotification(
+          message,
+        ),
+      );
+      final navigatorKey = ref
+          .read(appRouterProvider)
+          .routerDelegate
+          .navigatorKey;
+      showForegroundPushBanner(
+        navigatorKey: navigatorKey,
+        message: message,
+        onTap: () => unawaited(service.handleOpenedMessage(message)),
+      );
     },
   );
 

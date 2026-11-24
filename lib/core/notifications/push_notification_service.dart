@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../firebase_options.dart';
@@ -173,6 +175,11 @@ class PushNotificationService {
   static bool get isFirebaseReady => Firebase.apps.isNotEmpty;
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+  static const String _androidChannelId = 'mppb_alertas';
+  static const String _androidChannelName = 'Alertas e Avisos MPPB+';
+  bool _localNotificationsInitialized = false;
   final StreamController<RemoteMessage> _foregroundMessages =
       StreamController<RemoteMessage>.broadcast();
   final StreamController<RemoteMessage> _openedMessages =
@@ -197,6 +204,7 @@ class PushNotificationService {
   }
 
   Future<void> _initialize() async {
+    await _initializeLocalNotifications();
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     FirebaseMessaging.onMessage.listen(_foregroundMessages.add);
     FirebaseMessaging.onMessageOpenedApp.listen(_openedMessages.add);
@@ -277,6 +285,107 @@ class PushNotificationService {
     } catch (e) {
       if (kDebugMode) {
         debugPrint('FCM public topics unavailable: $e');
+      }
+    }
+  }
+
+  Future<void> _initializeLocalNotifications() async {
+    if (!isSupportedPlatform || _localNotificationsInitialized) {
+      return;
+    }
+    try {
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
+      const darwinSettings = DarwinInitializationSettings();
+      const settings = InitializationSettings(
+        android: androidSettings,
+        iOS: darwinSettings,
+      );
+      await _localNotifications.initialize(
+        settings,
+        onDidReceiveNotificationResponse: (response) {
+          final rawPayload = response.payload?.trim();
+          if (rawPayload == null || rawPayload.isEmpty) return;
+          try {
+            final decoded = jsonDecode(rawPayload);
+            if (decoded is Map<String, dynamic>) {
+              _openedMessages.add(RemoteMessage(data: decoded));
+            }
+          } catch (_) {}
+        },
+      );
+
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final androidPlugin = _localNotifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        await androidPlugin?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _androidChannelId,
+            _androidChannelName,
+            description:
+                'Notificações de comunicados, avisos e atualizações do MPPB+',
+            importance: Importance.high,
+            playSound: true,
+            enableVibration: true,
+          ),
+        );
+      }
+      _localNotificationsInitialized = true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Falha ao inicializar notificações locais: $e');
+      }
+    }
+  }
+
+  Future<void> showForegroundSystemNotification(RemoteMessage message) async {
+    if (defaultTargetPlatform != TargetPlatform.android ||
+        !_localNotificationsInitialized) {
+      return;
+    }
+    final title =
+        message.notification?.title?.trim() ??
+        message.data['titulo']?.toString().trim() ??
+        '';
+    final body =
+        message.notification?.body?.trim() ??
+        message.data['corpo']?.toString().trim() ??
+        message.data['resumo']?.toString().trim() ??
+        '';
+    if (title.isEmpty && body.isEmpty) {
+      return;
+    }
+    final id =
+        (message.messageId ??
+                message.data['id_evento_notificacao']?.toString() ??
+                DateTime.now().millisecondsSinceEpoch.toString())
+            .hashCode &
+        0x7fffffff;
+    try {
+      await _localNotifications.show(
+        id,
+        title.isEmpty ? 'MPPB+' : title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _androidChannelId,
+            _androidChannelName,
+            channelDescription:
+                'Notificações de comunicados, avisos e atualizações do MPPB+',
+            importance: Importance.high,
+            priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+          ),
+        ),
+        payload: jsonEncode(message.data),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Falha ao exibir notificação local em primeiro plano: $e');
       }
     }
   }

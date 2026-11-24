@@ -514,6 +514,11 @@ final pushNavigationServiceProvider = Provider<PushNavigationService>((ref) {
           .recordRemoteMessage(message);
     },
     onForegroundNotification: (message) {
+      unawaited(
+        PushNotificationService.instance.showForegroundSystemNotification(
+          message,
+        ),
+      );
       final navigatorKey = ref
           .read(appRouterProvider)
           .routerDelegate

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ui/pages/pdf_viewer_page.dart';
 import '../../data/mensagem_midia_cache.dart';
 import '../../data/mensagens_repository.dart';
 import '../../models/mensagem_anexo_model.dart';
@@ -20,7 +21,23 @@ class AnexoPreviewWidget extends ConsumerWidget {
   final int mensagemId;
   final MensagemAnexoModel anexo;
 
-  void _abrirViewer(BuildContext context) {
+  bool get _isPdf =>
+      anexo.nomeOriginal.toLowerCase().endsWith('.pdf') ||
+      anexo.mimeType.toLowerCase().contains('pdf');
+
+  void _abrirViewer(BuildContext context, WidgetRef ref) {
+    if (anexo.categoria == CategoriaAnexo.documento && _isPdf) {
+      PdfViewerPage.open(
+        context,
+        title: anexo.nomeOriginal,
+        fileName: anexo.nomeOriginal,
+        bytesFuture: ref
+            .read(mensagensRepositoryProvider)
+            .baixarAnexoBytes(mensagemId, anexo.id)
+            .then(Uint8List.fromList),
+      );
+      return;
+    }
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         builder: (_) => MidiaViewerPage(mensagemId: mensagemId, anexo: anexo),
@@ -40,7 +57,7 @@ class AnexoPreviewWidget extends ConsumerWidget {
           child: _ImagemPreviewCard(
             mensagemId: mensagemId,
             anexo: anexo,
-            onTap: () => _abrirViewer(context),
+            onTap: () => _abrirViewer(context, ref),
           ),
         );
 
@@ -48,7 +65,7 @@ class AnexoPreviewWidget extends ConsumerWidget {
         return Padding(
           padding: const EdgeInsets.only(top: 8),
           child: InkWell(
-            onTap: () => _abrirViewer(context),
+            onTap: () => _abrirViewer(context, ref),
             borderRadius: BorderRadius.circular(12),
             child: Container(
               height: 150,
@@ -111,7 +128,7 @@ class AnexoPreviewWidget extends ConsumerWidget {
         return Padding(
           padding: const EdgeInsets.only(top: 8),
           child: InkWell(
-            onTap: () => _abrirViewer(context),
+            onTap: () => _abrirViewer(context, ref),
             borderRadius: BorderRadius.circular(12),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

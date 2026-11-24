@@ -5,9 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../features/designacoes/models/designacao_ativa.dart';
+import '../../features/designacoes/providers/designacoes_provider.dart';
 import '../../features/mensagens/models/mensagem_aviso_model.dart';
+import '../../features/mensagens/providers/caixa_entrada_provider.dart';
 import '../../features/mensagens/ui/widgets/mensagens_theme.dart';
 import '../../features/noticias/models/noticia.dart';
+import '../../features/noticias/providers/noticia_provider.dart';
+import '../../features/perfil/providers/preferencias_notificacao_provider.dart';
 import '../storage/secure_storage.dart';
 
 const _readKeysStorageKey = 'notification_center_read_keys_v1';
@@ -195,6 +199,16 @@ class NotificationCenterNotifier extends Notifier<NotificationCenterState> {
     final updated = {...state.readKeys, ...sanitizedKeys};
     state = state.copyWith(readKeys: updated);
     await _persist(updated);
+  }
+
+  Future<void> markTypeAsRead(
+    NotificationCenterItemType type,
+    List<NotificationCenterItem> items,
+  ) async {
+    final keys = items
+        .where((item) => !item.isRead && item.type == type)
+        .map((item) => item.key);
+    await markAllAsRead(keys);
   }
 
   Future<void> _persist(Set<String> keys) async {
@@ -498,3 +512,36 @@ String _requiredText(String? value, String fallback) {
   final text = value?.trim();
   return text == null || text.isEmpty ? fallback : text;
 }
+
+int unreadCountForType(
+  List<NotificationCenterItem> items,
+  NotificationCenterItemType type,
+) {
+  return items.where((item) => !item.isRead && item.type == type).length;
+}
+
+final notificationCenterItemsProvider = Provider<List<NotificationCenterItem>>((
+  ref,
+) {
+  final noticiaState = ref.watch(noticiaProvider);
+  final designacoesState = ref.watch(designacoesProvider);
+  final caixaMensagensState = ref.watch(caixaEntradaProvider);
+  final notificationState = ref.watch(notificationCenterProvider);
+  final notificationPreferences = ref
+      .watch(preferenciasNotificacaoProvider)
+      .preferencias;
+
+  return buildNotificationCenterItems(
+    noticias: noticiaState.noticias,
+    designacoes: designacoesState.designacoes,
+    mensagens: caixaMensagensState.itens,
+    readKeys: notificationState.readKeys,
+    inboxItems: notificationState.inboxItems,
+    includeNoticias: notificationPreferences.centralNoticias,
+    includeDesignacoes: notificationPreferences.centralDesignacoes,
+    includeContracheques: notificationPreferences.centralContracheques,
+    includePagamentos: notificationPreferences.centralPagamentos,
+    includeAfastamentos: notificationPreferences.centralAfastamentos,
+    includeLives: notificationPreferences.centralLives,
+  );
+});

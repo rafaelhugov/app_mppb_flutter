@@ -10,6 +10,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../carteira/models/usuario_carteira.dart';
 import '../../carteira/providers/carteira_provider.dart';
 import '../../../core/network/connectivity_provider.dart';
+import '../../../core/notifications/notification_center_provider.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/ui/main_layout.dart';
 import '../../../core/ui/responsive_layout.dart';
@@ -440,11 +441,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       icon: Icons.grid_view_rounded,
                       iconColor: const Color(0xFF2563EB),
                       services: [
-                        const _DashboardService(
+                        _DashboardService(
                           title: 'Afastamento',
                           subtitle: 'Concessões',
                           icon: Icons.event_available_rounded,
                           route: '/concessao-afastamento',
+                          notificationType:
+                              NotificationCenterItemType.afastamento,
+                          badgeCount: unreadCountForType(
+                            ref.watch(notificationCenterItemsProvider),
+                            NotificationCenterItemType.afastamento,
+                          ),
                         ),
                         _DashboardService(
                           title: 'Avisos',
@@ -455,23 +462,41 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                               .watch(caixaEntradaProvider)
                               .totalNaoLidas,
                         ),
-                        const _DashboardService(
+                        _DashboardService(
                           title: 'Contracheque',
                           subtitle: 'Demonstrativo',
                           icon: Icons.receipt_long_rounded,
                           route: '/contracheque',
+                          notificationType:
+                              NotificationCenterItemType.contracheque,
+                          badgeCount: unreadCountForType(
+                            ref.watch(notificationCenterItemsProvider),
+                            NotificationCenterItemType.contracheque,
+                          ),
                         ),
-                        const _DashboardService(
+                        _DashboardService(
                           title: 'Designações',
                           subtitle: 'Ativas',
                           icon: Icons.assignment_ind,
                           route: '/designacoes',
+                          notificationType:
+                              NotificationCenterItemType.designacao,
+                          badgeCount: unreadCountForType(
+                            ref.watch(notificationCenterItemsProvider),
+                            NotificationCenterItemType.designacao,
+                          ),
                         ),
-                        const _DashboardService(
+                        _DashboardService(
                           title: 'Pagamentos',
                           subtitle: 'Área Financeira',
                           icon: Icons.assignment,
                           route: '/pagamentos',
+                          notificationType:
+                              NotificationCenterItemType.pagamento,
+                          badgeCount: unreadCountForType(
+                            ref.watch(notificationCenterItemsProvider),
+                            NotificationCenterItemType.pagamento,
+                          ),
                         ),
                         if (ref.watch(podeEnviarMensagensProvider).asData?.value ??
                             false)
@@ -905,12 +930,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     IconData icon,
     String route, {
     int badgeCount = 0,
+    NotificationCenterItemType? notificationType,
   }) {
     final responsive = MppbResponsive.of(context);
     final isTablet = responsive.isTablet;
 
     return InkWell(
-      onTap: () => context.go(route),
+      onTap: () {
+        if (notificationType != null) {
+          final items = ref.read(notificationCenterItemsProvider);
+          unawaited(
+            ref
+                .read(notificationCenterProvider.notifier)
+                .markTypeAsRead(notificationType, items),
+          );
+        }
+        context.go(route);
+      },
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
@@ -1057,6 +1093,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
               service.icon,
               service.route,
               badgeCount: service.badgeCount,
+              notificationType: service.notificationType,
             );
           },
         ),
@@ -1094,6 +1131,7 @@ class _DashboardService {
   final IconData icon;
   final String route;
   final int badgeCount;
+  final NotificationCenterItemType? notificationType;
 
   const _DashboardService({
     required this.title,
@@ -1101,6 +1139,7 @@ class _DashboardService {
     required this.icon,
     required this.route,
     this.badgeCount = 0,
+    this.notificationType,
   });
 }
 

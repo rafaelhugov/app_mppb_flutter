@@ -441,6 +441,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                       iconColor: const Color(0xFF2563EB),
                       services: [
                         const _DashboardService(
+                          title: 'Afastamento',
+                          subtitle: 'Concessões',
+                          icon: Icons.event_available_rounded,
+                          route: '/concessao-afastamento',
+                        ),
+                        _DashboardService(
+                          title: 'Avisos',
+                          subtitle: 'Comunicados',
+                          icon: Icons.campaign_rounded,
+                          route: '/mensagens',
+                          badgeCount: ref
+                              .watch(caixaEntradaProvider)
+                              .totalNaoLidas,
+                        ),
+                        const _DashboardService(
                           title: 'Contracheque',
                           subtitle: 'Demonstrativo',
                           icon: Icons.receipt_long_rounded,
@@ -453,25 +468,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                           route: '/designacoes',
                         ),
                         const _DashboardService(
-                          title: 'Afastamento',
-                          subtitle: 'Concessões',
-                          icon: Icons.event_available_rounded,
-                          route: '/concessao-afastamento',
-                        ),
-                        const _DashboardService(
                           title: 'Pagamentos',
                           subtitle: 'Área Financeira',
                           icon: Icons.assignment,
                           route: '/pagamentos',
-                        ),
-                        _DashboardService(
-                          title: 'Avisos',
-                          subtitle: 'Comunicados',
-                          icon: Icons.campaign_rounded,
-                          route: '/mensagens',
-                          badgeCount: ref
-                              .watch(caixaEntradaProvider)
-                              .totalNaoLidas,
                         ),
                         if (ref.watch(podeEnviarMensagensProvider).asData?.value ??
                             false)

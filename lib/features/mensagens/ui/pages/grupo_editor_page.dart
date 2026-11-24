@@ -93,6 +93,13 @@ class _GrupoEditorPageState extends ConsumerState<GrupoEditorPage> {
         );
       }
       if (mounted) Navigator.of(context).pop(true);
+    } catch (_) {
+      if (mounted) {
+        AppFeedback.showError(
+          context,
+          'Não foi possível salvar o grupo. Tente novamente.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _salvando = false);
     }

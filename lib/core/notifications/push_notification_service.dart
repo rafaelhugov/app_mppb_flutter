@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../firebase_options.dart';
 import '../network/api_client.dart';
+import '../version/app_version_info.dart';
 import 'notification_center_provider.dart';
 
 @pragma('vm:entry-point')
@@ -42,6 +43,7 @@ Future<void> _confirmarEntregaMensagemEmSegundoPlano(
     final token = await storage.read(key: 'auth_token');
     if (token == null || token.trim().isEmpty) return;
 
+    await AppVersionInfo.ensureInitialized();
     final base = apiBaseUrl.endsWith('/')
         ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
         : apiBaseUrl;
@@ -50,7 +52,12 @@ Future<void> _confirmarEntregaMensagemEmSegundoPlano(
         baseUrl: base,
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: {
+          'Authorization': 'Bearer $token',
+          'X-App-Build': '${AppVersionInfo.appBuildNumber}',
+          'X-App-Version': AppVersionInfo.appVersion,
+          'X-App-Platform': AppVersionInfo.platformName,
+        },
       ),
     );
     await dio.post<void>(

@@ -19,6 +19,7 @@ import '../../noticias/ui/widgets/news_carousel.dart';
 import '../../videos/providers/videos_provider.dart';
 import '../../videos/ui/widgets/videos_carousel.dart';
 import '../../contatos/ui/widgets/secao_institucional.dart';
+import '../../mensagens/providers/caixa_entrada_provider.dart';
 import '../../mensagens/providers/permissao_mensagens_provider.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -463,11 +464,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                           icon: Icons.assignment,
                           route: '/pagamentos',
                         ),
-                        const _DashboardService(
+                        _DashboardService(
                           title: 'Avisos',
                           subtitle: 'Comunicados',
                           icon: Icons.campaign_rounded,
                           route: '/mensagens',
+                          badgeCount: ref
+                              .watch(caixaEntradaProvider)
+                              .totalNaoLidas,
                         ),
                         if (ref.watch(podeEnviarMensagensProvider).asData?.value ??
                             false)
@@ -899,8 +903,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     String title,
     String subtitle,
     IconData icon,
-    String route,
-  ) {
+    String route, {
+    int badgeCount = 0,
+  }) {
     final responsive = MppbResponsive.of(context);
     final isTablet = responsive.isTablet;
 
@@ -933,6 +938,32 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
                   size: isTablet ? 96 : 86,
                 ),
               ),
+              if (badgeCount > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 18,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD62828),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   isTablet ? 15 : 12,
@@ -1025,6 +1056,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
               service.subtitle,
               service.icon,
               service.route,
+              badgeCount: service.badgeCount,
             );
           },
         ),
@@ -1061,12 +1093,14 @@ class _DashboardService {
   final String subtitle;
   final IconData icon;
   final String route;
+  final int badgeCount;
 
   const _DashboardService({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.route,
+    this.badgeCount = 0,
   });
 }
 

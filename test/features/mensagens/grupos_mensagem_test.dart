@@ -52,6 +52,19 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
+        find.text('Deseja realmente remover o grupo "Comissão de Segurança"?'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Comissão de Segurança'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Remover grupo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Remover'));
+      await tester.pumpAndSettle();
+
+      expect(
         find.text('Nenhum grupo personalizado cadastrado.'),
         findsOneWidget,
       );
